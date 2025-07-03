@@ -18,18 +18,26 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@payloadcms/db-postgres": "3.44.0",
     "@payloadcms/next": "3.44.0",
     "@payloadcms/payload-cloud": "3.44.0",
     "@payloadcms/richtext-lexical": "3.44.0",
     "@payloadcms/ui": "3.44.0",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tailwindcss/postcss": "^4.1.11",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
+    "lucide-react": "^0.525.0",
     "next": "15.3.2",
     "payload": "3.44.0",
+    "postcss": "^8.5.6",
     "react": "19.1.0",
     "sharp": "0.32.6",
-    "@payloadcms/db-postgres": "3.44.0"
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
     "@playwright/test": "1.50.0",
@@ -44,6 +52,7 @@
     "playwright": "1.50.0",
     "playwright-core": "1.50.0",
     "prettier": "^3.4.2",
+    "tw-animate-css": "^1.3.4",
     "typescript": "5.7.3",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.3"
@@ -58,5 +67,6 @@
       "esbuild",
       "unrs-resolver"
     ]
-  }
+  },
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }
