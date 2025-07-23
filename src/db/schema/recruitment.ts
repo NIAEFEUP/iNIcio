@@ -4,33 +4,33 @@ import { user } from "./auth";
 import { recruitmentPhase } from "./recruitment_phase";
 
 export const recruitment = pgTable("recruitment", {
-	year: integer().primaryKey(),
+  year: integer().primaryKey(),
 });
 
 export const usersToRecruitments = pgTable(
-	"users_to_recruitments",
-	{
-		userId: text("user_id")
-			.notNull()
-			.references(() => user.id),
-		recruitmentYear: integer("recruitment_year")
-			.notNull()
-			.references(() => recruitment.year),
-	},
-	(table) => [primaryKey({ columns: [table.userId, table.recruitmentYear] })],
+  "users_to_recruitments",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+    recruitmentYear: integer("recruitment_year")
+      .notNull()
+      .references(() => recruitment.year),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.recruitmentYear] })],
 );
 
 export const recruitmentRelations = relations(recruitment, ({ many }) => ({
-	userToRecruitment: many(usersToRecruitments),
-	phases: many(recruitmentPhase),
+  userToRecruitment: many(usersToRecruitments),
+  phases: many(recruitmentPhase),
 }));
 
 export const usersToRecruitmentsRelations = relations(
-	usersToRecruitments,
-	({ one }) => ({
-		user: one(user, {
-			fields: [usersToRecruitments.userId],
-			references: [user.id],
-		}),
-	}),
+  usersToRecruitments,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [usersToRecruitments.userId],
+      references: [user.id],
+    }),
+  }),
 );
