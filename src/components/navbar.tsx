@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -19,7 +19,9 @@ export default function Navbar({ className, role }: Props) {
   };
 
   return (
-    <div className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm`}>
+    <div
+      className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm`}
+    >
       <div className="flex justify-between items-center">
         <Link href="/">
           <img src="/logo.svg" alt="Logo" />
@@ -29,14 +31,17 @@ export default function Navbar({ className, role }: Props) {
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? (<ChevronUp />) : (<ChevronDown />)}
+          {isMenuOpen ? <ChevronUp /> : <ChevronDown />}
         </button>
       </div>
 
       {/* Menu options */}
       <div
-        className={`flex-col md:flex-row flex gap-5 transition-all duration-300 ease-in-out ${isMenuOpen ? "mt-5 opacity-100 max-h-screen" : "opacity-0 max-h-0 overflow-hidden"
-          } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
+        className={`flex-col md:flex-row flex gap-5 transition-all duration-300 ease-in-out ${
+          isMenuOpen
+            ? "mt-5 opacity-100 max-h-screen"
+            : "opacity-0 max-h-0 overflow-hidden"
+        } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
         <Link href="https://niaefeup.pt">Site do NI</Link>
         <Link href="/alocacoes">Alocações</Link>
