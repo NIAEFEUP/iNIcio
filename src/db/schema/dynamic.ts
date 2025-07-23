@@ -36,9 +36,9 @@ export const dynamicRelations = relations(dynamic, ({ many }) => ({
 export const candidateToDynamicRelations = relations(
   candidateToDynamic,
   ({ one }) => ({
-    candidate: one(dynamic, {
+    candidate: one(candidate, {
       fields: [candidateToDynamic.candidateId],
-      references: [dynamic.id],
+      references: [candidate.userId],
     }),
     dynamic: one(dynamic, {
       fields: [candidateToDynamic.dynamicId],

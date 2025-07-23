@@ -4,7 +4,7 @@ import { user } from "./auth";
 import { recruitmentPhase } from "./recruitment_phase";
 
 export const recruitment = pgTable("recruitment", {
-  year: integer().primaryKey(),
+  year: integer("year").primaryKey(),
 });
 
 export const usersToRecruitments = pgTable(
