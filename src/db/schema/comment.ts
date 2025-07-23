@@ -19,7 +19,7 @@ export const interviewComment = pgTable("interview_comment", {
 export const interviewCommentRelations = relations(
   interviewComment,
   ({ one }) => ({
-    dynamic: one(interview, {
+    interview: one(interview, {
       fields: [interviewComment.interviewId],
       references: [interview.id],
     }),
