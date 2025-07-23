@@ -1,4 +1,4 @@
-import { pgTable, serial, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
 import { interview } from "./interview";
 import { recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { application } from "./application";
 export const interviewComment = pgTable("interview_comment", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  interviewId: serial("interview_id")
+  interviewId: integer("interview_id")
     .notNull()
     .references(() => interview.id, { onDelete: "cascade" }),
   authorId: text("author_id")
@@ -33,7 +33,7 @@ export const interviewCommentRelations = relations(
 export const dynamicComment = pgTable("dynamic_comment", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  dynamicId: serial("dynamic_id")
+  dynamicId: integer("dynamic_id")
     .notNull()
     .references(() => dynamic.id, { onDelete: "cascade" }),
   authorId: text("author_id")
@@ -55,7 +55,7 @@ export const dynamicCommentRelations = relations(dynamicComment, ({ one }) => ({
 export const applicationComment = pgTable("application_comment", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  applicationId: serial("application_id")
+  applicationId: integer("application_id")
     .notNull()
     .references(() => application.id, { onDelete: "cascade" }),
   authorId: text("author_id")

@@ -10,6 +10,7 @@ import { candidate } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { applicationToTag } from "./tag";
 import { applicationComment } from "./comment";
+import { appreciation } from "./appreciation";
 
 export const application = pgTable("application", {
   id: serial("id").primaryKey(),
@@ -33,7 +34,7 @@ export const applicationRelations = relations(application, ({ one, many }) => ({
     fields: [application.candidateId],
     references: [candidate.userId],
   }),
-  appreciations: many(application),
+  appreciations: many(appreciation),
   applicationToTags: many(applicationToTag),
   comments: many(applicationComment),
 }));

@@ -1,4 +1,4 @@
-import { pgTable, serial, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
 import { application } from "./application";
 import { relations } from "drizzle-orm";
 
@@ -8,10 +8,10 @@ export const tag = pgTable("tag", {
 });
 
 export const applicationToTag = pgTable("application_to_tag", {
-  applicationId: serial("application_id")
+  applicationId: integer("application_id")
     .notNull()
     .references(() => application.id, { onDelete: "cascade" }),
-  tagId: serial("tag_id")
+  tagId: integer("tag_id")
     .notNull()
     .references(() => tag.id, { onDelete: "cascade" }),
 });

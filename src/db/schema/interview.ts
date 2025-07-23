@@ -1,5 +1,5 @@
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
-import { candidate } from "./user_roles";
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";
 
@@ -15,8 +15,8 @@ export const interview = pgTable("interview", {
 export const recruiterToInterview = pgTable("recruiter_to_interview", {
   recruiterId: text("recruiter_id")
     .notNull()
-    .references(() => candidate.userId, { onDelete: "cascade" }),
-  interviewId: serial("interview_id")
+    .references(() => recruiter.userId, { onDelete: "cascade" }),
+  interviewId: integer("interview_id")
     .notNull()
     .references(() => interview.id, { onDelete: "cascade" }),
 });
@@ -33,9 +33,9 @@ export const interviewRelations = relations(interview, ({ one, many }) => ({
 export const recruiterToInterviewRelations = relations(
   recruiterToInterview,
   ({ one }) => ({
-    recruiter: one(candidate, {
+    recruiter: one(recruiter, {
       fields: [recruiterToInterview.recruiterId],
-      references: [candidate.userId],
+      references: [recruiter.userId],
     }),
     interview: one(interview, {
       fields: [recruiterToInterview.interviewId],

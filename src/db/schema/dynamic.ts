@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { dynamicComment } from "./comment";
 
@@ -13,7 +13,7 @@ export const candidateToDynamic = pgTable("candidate_to_dynamic", {
   candidateId: text("candidate_id")
     .notNull()
     .references(() => candidate.userId, { onDelete: "cascade" }),
-  dynamicId: serial("dynamic_id")
+  dynamicId: integer("dynamic_id")
     .notNull()
     .references(() => dynamic.id, { onDelete: "cascade" }),
 });
@@ -22,7 +22,7 @@ export const recruiterToDynamic = pgTable("recruiter_to_dynamic", {
   recruiterId: text("recruiter_id")
     .notNull()
     .references(() => recruiter.userId, { onDelete: "cascade" }),
-  dynamicId: serial("dynamic_id")
+  dynamicId: integer("dynamic_id")
     .notNull()
     .references(() => dynamic.id, { onDelete: "cascade" }),
 });
@@ -50,9 +50,9 @@ export const candidateToDynamicRelations = relations(
 export const recruiterToDynamicRelations = relations(
   recruiterToDynamic,
   ({ one }) => ({
-    recruiter: one(dynamic, {
+    recruiter: one(recruiter, {
       fields: [recruiterToDynamic.recruiterId],
-      references: [dynamic.id],
+      references: [recruiter.userId],
     }),
     dynamic: one(dynamic, {
       fields: [recruiterToDynamic.dynamicId],
