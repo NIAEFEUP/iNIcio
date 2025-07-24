@@ -19,7 +19,7 @@ export default function Navbar({ className, role }: Props) {
   };
 
   return (
-    <div className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm`}>
+    <nav className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm mb-20`}>
       <div className="flex justify-between items-center">
         <Link href="/">
           <img src="/logo.svg" alt="Logo" />
@@ -60,6 +60,6 @@ export default function Navbar({ className, role }: Props) {
           </Link>
         ) : null}
       </div>
-    </div>
+    </nav>
   );
 }
