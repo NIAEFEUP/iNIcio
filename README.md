@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# iNIcio — Recruitment Website for NIAEFEUP
 
-## Getting Started
+This repository contains the source code for **iNIcio**, the recruitment platform for the Núcleo de Informática da AEFEUP (NIAEFEUP). It is built with **Next.js** for the frontend and backend logic, and uses **Drizzle ORM** with a **PostgreSQL** database for data management.
 
-First, run the development server:
+---
+
+## 🚀 Getting Started
+
+Follow these steps to get the project running locally:
+
+### 1. Install dependencies
+
+This will also automatically register the pre-commit hook that formats your code on commit.
+
+```bash
+npm install
+```
+
+### 2. Start the PostgreSQL database
+
+Make sure you have **Docker** installed. Then, run the following command to start the PostgreSQL database:
+
+```bash
+docker compose up -d
+```
+
+### 3. Setup environment variables
+
+Copy the `.env.example` file to `.env` and fill in the required environment variables:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file to set your database connection string and other necessary configurations.
+
+### 4. Push the schema to the database
+
+This will apply the current schema to the running PostgreSQL container.
+
+```bash
+npx drizzle-kit push
+```
+
+### 5. Start the development server
+
+Run the following command to start the Next.js development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧪 Useful Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Format code manually
+npm run format:fix
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run lint checks
+npm run lint
 
-## Learn More
+# Start & stop the PostgreSQL database
+docker compose down
+docker compose up -d
 
-To learn more about Next.js, take a look at the following resources:
+# Push the schema to the database
+npx drizzle-kit push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🗄️ Database & Drizzle ORM
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project uses [Drizzle ORM](https://orm.drizzle.team/) with a **PostgreSQL** database for managing and querying data.
 
-## Deploy on Vercel
+### 📁 Directory Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+└── db/
+    ├── db.ts               # Initializes the Drizzle instance
+    └── schema/             # Contains schema definition files (tables, relations, enums)
+        ├── index.ts        # Aggregates all schema definitions
+        ├── interview.ts
+        ├── recruitment.ts
+        └── ...
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🧠 Initialization (db.ts)
+
+The `db.ts` file initializes the Drizzle ORM instance and connects to the PostgreSQL database using the connection string defined in the `.env` file.
+
+```typescript
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "./schema";
+
+export const db = drizzle(process.env.DATABASE_URL!, { schema });
+```
+
+This ensures the app reuses a single database connection and schema reference instead of re-creating it in multiple places.
+
+You can import the database like so:
+
+```typescript
+import { db } from "@/db/db";
+```
+
+### 📚 Schema Files
+
+- All database tables and relationships are defined inside `src/db/schema/` as individual `.ts` files.
+
+- Each file exports one or more tables (or enums, views, etc.).
+
+- There's an `index.ts` file inside `schema/` that re-exports everything. This is required so Drizzle can register the full schema when initializing.
+
+**Whenever you create a new file inside `schema/`, make sure to add its exports to index.ts.**
+
+### ⚠️ Migrations in Production
+
+Once the website is in production, you should **not** edit existing schema files directly. Instead, use Drizzle migrations to apply changes.
