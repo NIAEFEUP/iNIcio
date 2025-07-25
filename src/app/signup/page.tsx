@@ -63,7 +63,7 @@ export default function SignUp() {
           //show loading
         },
         onSuccess: (ctx) => {
-          router.push("/application");
+          router.push("/");
         },
         onError: (ctx) => {
           setErrorMEssage(ctx.error.message);

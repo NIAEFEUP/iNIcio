@@ -4,15 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ChevronUp, ChevronDown } from "lucide-react";
+import type { User } from "@/lib/auth";
 
 type Props = {
   className?: string;
-  role: string;
+  user: User | null;
 };
 
-export default function Navbar({ className, role }: Props) {
+export default function Navbar({ className, user }: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuthenticated = true;
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -35,7 +35,6 @@ export default function Navbar({ className, role }: Props) {
         </button>
       </div>
 
-      {/* Menu options */}
       <div
         className={`flex-col md:flex-row flex gap-5 transition-all duration-300 ease-in-out ${
           isMenuOpen
@@ -46,7 +45,7 @@ export default function Navbar({ className, role }: Props) {
         <Link href="https://niaefeup.pt">Site do NI</Link>
         <Link href="/alocacoes">Alocações</Link>
         <Link href="/candidatos">Candidatos</Link>
-        {!isAuthenticated ? (
+        {!user ? (
           <>
             <Link href="/login">Login</Link>
             <Link href="/registo">
@@ -59,7 +58,7 @@ export default function Navbar({ className, role }: Props) {
           </Link>
         )}
 
-        {role == "admin" ? (
+        {user && user.role === "admin" ? (
           <Link className="text-primary" href="/admin">
             <span className="text-primary">AdminUI</span>
           </Link>

@@ -5,6 +5,5 @@ import { authClient } from "@/lib/auth-client";
 export async function POST(req: NextApiRequest) {
   console.log(req);
 
-
-  return NextResponse.json({ "hello": "world" });
+  return NextResponse.json({ hello: "world" });
 }
