@@ -3,7 +3,6 @@
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,49 +16,60 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignUp() {
   const router = useRouter();
 
-  const formSchema = z.object({
-    "name": z.string().min(1, { message: "O nome é obrigatório" }),
-    "surname": z.string().min(1, { message: "O apelido é obrigatório" }),
-    "email": z.email({ error: "O email é inválido" }).min(1, { message: "O email é obrigatório" }),
-    "password": z.string().min(8, { message: "A palavra-passe deve ter no mínimo 8 caracteres" }),
-    "confirm-password": z.string(),
-  }).refine((data) => data.password === data["confirm-password"], {
-    message: "As palavras-passe não coincidem",
-    path: ["confirm-password"],
-  });
+  const [errorMessage, setErrorMEssage] = useState<string | null>(null);
+
+  const formSchema = z
+    .object({
+      name: z.string().min(1, { message: "O nome é obrigatório" }),
+      surname: z.string().min(1, { message: "O apelido é obrigatório" }),
+      email: z
+        .email({ error: "O email é inválido" })
+        .min(1, { message: "O email é obrigatório" }),
+      password: z
+        .string()
+        .min(8, { message: "A palavra-passe deve ter no mínimo 8 caracteres" }),
+      "confirm-password": z.string(),
+    })
+    .refine((data) => data.password === data["confirm-password"], {
+      message: "As palavras-passe não coincidem",
+      path: ["confirm-password"],
+    });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      "name": "",
-      "surname": "",
-      "email": "",
-      "password": "",
+      name: "",
+      surname: "",
+      email: "",
+      password: "",
       "confirm-password": "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { data, error } = await authClient.signUp.email({
-      email: values.email,
-      password: values.password,
-      name: values.name
-    }, {
-      onRequest: (ctx) => {
-        //show loading
+    const {} = await authClient.signUp.email(
+      {
+        email: values.email,
+        password: values.password,
+        name: values.name,
       },
-      onSuccess: (ctx) => {
-        router.push("/application");
+      {
+        onRequest: (ctx) => {
+          //show loading
+        },
+        onSuccess: (ctx) => {
+          router.push("/application");
+        },
+        onError: (ctx) => {
+          setErrorMEssage(ctx.error.message);
+        },
       },
-      onError: (ctx) => {
-        // display the error message
-        alert(ctx.error.message);
-      },
-    });
+    );
   }
 
   function onReset() {
@@ -211,6 +221,7 @@ export default function SignUp() {
                 </FormItem>
               )}
             />
+            <p className="col-span-12">{errorMessage}</p>
             <FormField
               control={form.control}
               name="submit-button-0"

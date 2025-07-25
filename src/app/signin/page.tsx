@@ -9,6 +9,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -21,37 +23,44 @@ import { useState } from "react";
 export default function SignIn() {
   const router = useRouter();
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formSchema = z.object({
-    "email": z.email({ error: "O email é inválido" }).min(1, { message: "O email é obrigatório" }),
-    "password": z.string().min(1, { message: "A palavra-passe é obrigatória" }),
-  })
+    email: z
+      .email({ error: "O email é inválido" })
+      .min(1, { message: "O email é obrigatório" }),
+    password: z.string().min(1, { message: "A palavra-passe é obrigatória" }),
+    rememberMe: z.boolean().optional(),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      "email": "",
-      "password": "",
+      email: "",
+      password: "",
+      rememberMe: false,
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { email, password } = values
+    const { email, password, rememberMe } = values;
 
-    const { data, error } = await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: "/",
-      rememberMe: false
-    }, {
-      onSuccess: (ctx) => {
-        router.push("/")
+    const {} = await authClient.signIn.email(
+      {
+        email,
+        password,
+        callbackURL: "/",
+        rememberMe: rememberMe,
       },
-      onError: (ctx) => {
-        setErrorMessage(ctx.error.message);
+      {
+        onSuccess: (ctx) => {
+          router.push("/");
+        },
+        onError: (ctx) => {
+          setErrorMessage(ctx.error.message);
+        },
       },
-    })
+    );
   }
 
   function onReset() {
@@ -121,9 +130,34 @@ export default function SignIn() {
                 </FormItem>
               )}
             />
-            {errorMessage &&
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
+                  <div className="w-full flex flex-row gap-x-2">
+                    <FormControl>
+                      <Checkbox
+                        onCheckedChange={(value) => {
+                          form.setValue("rememberMe", Boolean(value.valueOf()));
+                        }}
+                        key="remember-me-input-0"
+                        id="remember-me-input-0"
+                        className=" "
+                        {...field}
+                      />
+                    </FormControl>
+
+                    <FormLabel className="flex shrink-0">Lembrar-me</FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {errorMessage && (
               <p className="text-sm col-span-12">{errorMessage}</p>
-            }
+            )}
             <FormField
               control={form.control}
               name="submit-button-0"
