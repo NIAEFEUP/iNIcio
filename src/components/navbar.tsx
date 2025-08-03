@@ -48,7 +48,7 @@ export default function Navbar({ className, user }: Props) {
         {!user ? (
           <>
             <Link href="/login">Login</Link>
-            <Link href="/registo">
+            <Link href="/signup">
               <span className="text-primary">Registo</span>
             </Link>
           </>
