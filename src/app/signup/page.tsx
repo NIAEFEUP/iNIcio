@@ -59,10 +59,10 @@ export default function SignUp() {
         name: values.name,
       },
       {
-        onRequest: (ctx) => {
+        onRequest: () => {
           //show loading
         },
-        onSuccess: (ctx) => {
+        onSuccess: () => {
           router.push("/");
         },
         onError: (ctx) => {
@@ -222,32 +222,18 @@ export default function SignUp() {
               )}
             />
             <p className="col-span-12">{errorMessage}</p>
-            <FormField
-              control={form.control}
-              name="submit-button-0"
-              render={({ field }) => (
-                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                  <FormLabel className="hidden shrink-0">Submit</FormLabel>
-
-                  <div className="w-full">
-                    <FormControl>
-                      <Button
-                        key="submit-button-0"
-                        id="submit-button-0"
-                        name=""
-                        className="w-full"
-                        type="submit"
-                        variant="default"
-                      >
-                        Registar
-                      </Button>
-                    </FormControl>
-
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="w-full">
+              <Button
+                key="submit-button-0"
+                id="submit-button-0"
+                name=""
+                className="w-full"
+                type="submit"
+                variant="default"
+              >
+                Registar
+              </Button>
+            </div>
           </div>
         </form>
       </Form>

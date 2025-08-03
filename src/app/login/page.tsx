@@ -53,7 +53,7 @@ export default function SignIn() {
         rememberMe: rememberMe,
       },
       {
-        onSuccess: (ctx) => {
+        onSuccess: () => {
           router.push("/");
         },
         onError: (ctx) => {
@@ -133,7 +133,7 @@ export default function SignIn() {
             <FormField
               control={form.control}
               name="rememberMe"
-              render={({ field }) => (
+              render={({}) => (
                 <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
                   <div className="w-full flex flex-row gap-x-2">
                     <FormControl>
@@ -144,7 +144,6 @@ export default function SignIn() {
                         key="remember-me-input-0"
                         id="remember-me-input-0"
                         className=" "
-                        {...field}
                       />
                     </FormControl>
 
@@ -158,32 +157,19 @@ export default function SignIn() {
             {errorMessage && (
               <p className="text-sm col-span-12">{errorMessage}</p>
             )}
-            <FormField
-              control={form.control}
-              name="submit-button-0"
-              render={({ field }) => (
-                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                  <FormLabel className="hidden shrink-0">Submit</FormLabel>
 
-                  <div className="w-full">
-                    <FormControl>
-                      <Button
-                        key="submit-button-0"
-                        id="submit-button-0"
-                        name=""
-                        className="w-full"
-                        type="submit"
-                        variant="default"
-                      >
-                        Login
-                      </Button>
-                    </FormControl>
-
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="w-full">
+              <Button
+                key="submit-button-0"
+                id="submit-button-0"
+                name=""
+                className="w-full"
+                type="submit"
+                variant="default"
+              >
+                Login
+              </Button>
+            </div>
           </div>
         </form>
       </Form>
