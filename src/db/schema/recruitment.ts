@@ -32,5 +32,9 @@ export const usersToRecruitmentsRelations = relations(
       fields: [usersToRecruitments.userId],
       references: [user.id],
     }),
+    recruitment: one(recruitment, {
+      fields: [usersToRecruitments.recruitmentYear],
+      references: [recruitment.year],
+    }),
   }),
 );
