@@ -4,8 +4,9 @@ import { relations } from "drizzle-orm";
 import { recruitmentPhaseStatus } from "./recruitment_phase";
 import { application } from "./application";
 import { usersToRecruitments } from "./recruitment";
-import { interview } from "./interview";
+import { interview, recruiterToInterview } from "./interview";
 import { candidateToDynamic, recruiterToDynamic } from "./dynamic";
+import { appreciation } from "./appreciation";
 
 export const recruiter = pgTable("recruiter", {
   userId: text("user_id")
@@ -41,10 +42,24 @@ export const recruiterToCandidate = pgTable("recruiter_to_candidate", {
     .references(() => candidate.userId),
 });
 
+export const recruiterToCandidateRelations = relations(
+  recruiterToCandidate,
+  ({ one }) => ({
+    recruiter: one(recruiter, {
+      fields: [recruiterToCandidate.recruiterId],
+      references: [recruiter.userId],
+    }),
+    candidate: one(candidate, {
+      fields: [recruiterToCandidate.candidateId],
+      references: [candidate.userId],
+    }),
+  }),
+);
+
 export const recruiterRelations = relations(recruiter, ({ many }) => ({
   knownCandidates: many(recruiterToCandidate),
-  appreciations: many(application),
-  interviews: many(interview),
+  appreciations: many(appreciation),
+  interviews: many(recruiterToInterview),
   dynamics: many(recruiterToDynamic),
 }));
 

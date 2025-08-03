@@ -1,4 +1,3 @@
-import Image from "next/image";
 import "./globals.css";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ export default function Home() {
           </h1>
           <div className="flex flex-col lg:flex-row justify-center lg:gap-5">
             <Button size="lg" className="mt-10">
-              <a href="registo">Regista-te →</a>
+              <a href="signup">Regista-te →</a>
             </Button>
             <Button size="lg" variant="outline" className="mt-10" asChild>
               <a
