@@ -1,12 +1,6 @@
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+"use client";
+
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -15,6 +9,7 @@ import { Candidate, RecruiterToCandidate } from "@/lib/db";
 import { User } from "better-auth";
 
 import Image from "next/image";
+import { startTransition, use, useOptimistic, useState } from "react";
 
 export interface FriendChooseCardProps {
   candidate: User;
@@ -29,24 +24,45 @@ export default function FriendChooseCard({
     (friend) => friend.candidateId === candidate.id,
   );
 
+  const [checked, setChecked] = useState(isFriend);
+
+  const addFriend = async () => {
+    setChecked(!checked);
+
+    const result = await fetch("/api/friends", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        candidateId: candidate.id,
+      }),
+    });
+
+    if (!result.ok) {
+      setChecked(!checked);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col items-center">
         <CardTitle>{candidate.name}</CardTitle>
-        <Image
-          src="logo.svg"
+        <img
+          src={`${candidate.image}`}
           alt="Friend"
           width={200}
           height={200}
           className="rounded-full"
-        ></Image>
+        ></img>
       </CardHeader>
       <CardFooter>
         <div className="flex items-center gap-3">
           <Checkbox
             id={`knows-candidate-${candidate.id}`}
             className="border border-2 border-black"
-            checked={isFriend}
+            checked={checked}
+            onCheckedChange={addFriend}
           />
           <Label htmlFor={`knows-candidate-${candidate.id}`}>Conheço</Label>
         </div>

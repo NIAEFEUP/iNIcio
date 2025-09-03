@@ -12,10 +12,7 @@ export const db = drizzle(process.env.DATABASE_URL!, { schema });
 
 export const getAllCandidateUsers = async () => {
   return await db
-    .select({
-      candidate: schema.candidate,
-      user: schema.user,
-    })
+    .select()
     .from(schema.candidate)
     .innerJoin(schema.user, eq(schema.candidate.userId, schema.user.id))
     .then((res) => res.map((row) => row.user));
