@@ -1,13 +1,14 @@
+import { isRecruitmentActive } from "@/lib/recruitment";
 import "./globals.css";
 
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
-  const isRecruitmentActive = true; // [BACKEND INTEGRATION]
+export default async function Home() {
+  const recruitmentActive = await isRecruitmentActive();
 
   return (
     <div className="h-full flex flex-col items-center justify-center">
-      {isRecruitmentActive ? (
+      {recruitmentActive ? (
         <>
           <h1 className="font-bold text-5xl px-5 lg:text-9xl md:w-1/2 text-center">
             Queres fazer parte do <span className="text-primary">NIAEFEUP</span>
