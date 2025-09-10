@@ -5,6 +5,7 @@ import { recruitmentPhase } from "./recruitment_phase";
 
 export const recruitment = pgTable("recruitment", {
   year: integer("year").primaryKey(),
+  active: text("active").notNull().default("true"),
 });
 
 export const usersToRecruitments = pgTable(
