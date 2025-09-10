@@ -1,4 +1,4 @@
-import { application, applicationComment } from "@/db/schema";
+import { application, applicationComment, user } from "@/db/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -25,5 +25,6 @@ export async function getApplicationComments(candidateId: string) {
   return await db
     .select()
     .from(applicationComment)
-    .where(eq(applicationComment.applicationId, app[0].id));
+    .where(eq(applicationComment.applicationId, app[0].id))
+    .fullJoin(user, eq(applicationComment.authorId, user.id));
 }

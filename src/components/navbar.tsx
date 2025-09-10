@@ -44,7 +44,7 @@ export default function Navbar({ className, user }: Props) {
       >
         <Link href="https://niaefeup.pt">Site do NI</Link>
         <Link href="/alocacoes">Alocações</Link>
-        <Link href="/candidatos">Candidatos</Link>
+        <Link href="/candidates">Candidatos</Link>
         {!user ? (
           <>
             <Link href="/login">Login</Link>

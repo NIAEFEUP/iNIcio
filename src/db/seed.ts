@@ -5,10 +5,12 @@ import {
   recruiterToCandidate,
   recruiter,
   account,
+  application,
 } from "./schema";
 
 async function main() {
   await db.delete(recruiterToCandidate);
+  await db.delete(application);
   await db.delete(candidate);
   await db.delete(recruiter);
   await db.delete(account);
@@ -46,8 +48,18 @@ async function main() {
     userId: "2",
   });
 
-  await db.insert(recruiter).values({
-    userId: "3",
+  // await db.insert(recruiter).values({
+  //   userId: "3",
+  // });
+
+  await db.insert(application).values({
+    candidateId: "1",
+    submittedAt: new Date(),
+    studentNumber: 1,
+    linkedIn: "https://www.linkedin.com/in/tomas-palma-dev/",
+    github: "https://github.com/tomaspalma",
+    personalWebsite: "https://tomaspalma.dev",
+    accepted: false,
   });
 }
 

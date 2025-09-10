@@ -13,13 +13,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { authClient } from "@/lib/auth-client";
-import { addApplicationComment } from "@/lib/comment";
-import { Candidate, User } from "@/lib/db";
+import { ApplicationComment, User } from "@/lib/db";
 import { Send } from "lucide-react";
 import { useState } from "react";
 
 interface CandidateCommentsProps {
-  comments: Comment[];
+  comments: Array<{ application_comment: ApplicationComment; user: User }>;
   candidate: User;
 }
 
@@ -28,6 +27,8 @@ export default function CandidateComments({
   candidate,
 }: CandidateCommentsProps) {
   const { data: session } = authClient.useSession();
+
+  console.log("comments: ", comments);
 
   const [commentValue, setCommentValue] = useState<string | undefined>(
     undefined,
@@ -76,12 +77,12 @@ export default function CandidateComments({
         )}
 
         {comments?.map((comment) => (
-          <TableRow key={comment.id}>
+          <TableRow key={comment.application_comment.id}>
             <TableCell className="font-medium w-1/6">
-              {comment.author}
+              {comment.user.name}
             </TableCell>
             <TableCell className="font-medium break-words whitespace-normal w-5/6">
-              {comment.content}
+              {comment.application_comment.content}
             </TableCell>
           </TableRow>
         ))}
