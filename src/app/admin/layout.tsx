@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function FriendsLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export default async function FriendsLayout({
     headers: await headers(),
   });
 
-  if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
+  if (session?.user.role !== "admin") {
     return redirect("/");
   }
 
