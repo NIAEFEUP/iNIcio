@@ -1,4 +1,4 @@
-import CandidatesClient from "@/components/friends/candidates-client";
+import CandidatesClient from "@/components/candidates/candidates-client";
 import { auth } from "@/lib/auth";
 import { getAllCandidateUsers } from "@/lib/db";
 import { getFriendsOf } from "@/lib/friend";

@@ -16,7 +16,7 @@ export interface FriendChooseCardProps {
   friends: Array<RecruiterToCandidate>;
 }
 
-export default function FriendChooseCard({
+export default function CandidateCard({
   candidate,
   friends,
 }: FriendChooseCardProps) {

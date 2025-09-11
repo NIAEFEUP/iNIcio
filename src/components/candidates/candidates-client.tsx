@@ -1,9 +1,9 @@
 "use client";
 
-import FriendChooseCard from "@/components/friends/friend-choose-card";
 import { Input } from "@/components/ui/input";
 import { User } from "@/lib/db";
 import { useEffect, useState } from "react";
+import CandidateCard from "./candidate-card";
 
 interface CandidatesClientProps {
   candidates: Array<User>;
@@ -42,7 +42,7 @@ export default function CandidatesClient({
       </div>
       <div className="mx-64 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredCandidates.map((candidate: User) => (
-          <FriendChooseCard
+          <CandidateCard
             key={candidate.id}
             candidate={candidate}
             friends={friends}
