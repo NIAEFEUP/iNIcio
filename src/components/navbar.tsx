@@ -54,18 +54,18 @@ export default function Navbar({ className, user }: Props) {
           </>
         ) : (
           <>
+            {user && user.role === "admin" ? (
+              <Link className="text-primary" href="/admin">
+                <span className="text-primary">AdminUI</span>
+              </Link>
+            ) : null}
+
             <Link className="text-primary" href="/perfil">
               <span className="text-primary">Perfil</span>
             </Link>
             <LogoutButton />
           </>
         )}
-
-        {user && user.role === "admin" ? (
-          <Link className="text-primary" href="/admin">
-            <span className="text-primary">AdminUI</span>
-          </Link>
-        ) : null}
       </div>
     </nav>
   );

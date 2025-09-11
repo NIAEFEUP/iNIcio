@@ -4,6 +4,7 @@ import * as schema from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export type Candidate = typeof schema.candidate.$inferSelect;
+export type Recruiter = typeof schema.recruiter.$inferSelect;
 export type RecruiterToCandidate =
   typeof schema.recruiterToCandidate.$inferSelect;
 export type User = typeof schema.user.$inferSelect;

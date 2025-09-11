@@ -12,7 +12,10 @@ export async function PUT(req: Request) {
     headers: await headers(),
   });
 
-  if (!session || session.user.role !== "recruiter")
+  if (
+    !session ||
+    (session.user.role !== "recruiter" && session.user.role !== "admin")
+  )
     return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();
