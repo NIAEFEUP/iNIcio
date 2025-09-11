@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ChevronUp, ChevronDown } from "lucide-react";
 import type { User } from "@/lib/auth";
+import LogoutButton from "./logout/logout-button";
 
 type Props = {
   className?: string;
@@ -42,7 +43,6 @@ export default function Navbar({ className, user }: Props) {
             : "opacity-0 max-h-0 overflow-hidden"
         } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
-        <Link href="https://niaefeup.pt">Site do NI</Link>
         <Link href="/alocacoes">Alocações</Link>
         <Link href="/candidates">Candidatos</Link>
         {!user ? (
@@ -53,9 +53,12 @@ export default function Navbar({ className, user }: Props) {
             </Link>
           </>
         ) : (
-          <Link className="text-primary" href="/perfil">
-            <span className="text-primary">Perfil</span>
-          </Link>
+          <>
+            <Link className="text-primary" href="/perfil">
+              <span className="text-primary">Perfil</span>
+            </Link>
+            <LogoutButton />
+          </>
         )}
 
         {user && user.role === "admin" ? (
