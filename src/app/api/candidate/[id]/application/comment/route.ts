@@ -9,13 +9,14 @@ import { eq } from "drizzle-orm";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: any,
 ) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const { id: candidateId } = await params;
+  const { id: candidateId } = await context.params;
 
   // if (!session || session.user.role !== "recruiter")
   //   return new Response("Unauthorized", { status: 401 });

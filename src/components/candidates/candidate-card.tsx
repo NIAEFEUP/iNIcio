@@ -9,6 +9,7 @@ import { Candidate, RecruiterToCandidate } from "@/lib/db";
 import { User } from "better-auth";
 
 import Image from "next/image";
+import Link from "next/link";
 import { startTransition, use, useOptimistic, useState } from "react";
 
 export interface FriendChooseCardProps {
@@ -46,8 +47,12 @@ export default function CandidateCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-center">
-        <CardTitle>{candidate.name}</CardTitle>
+      <CardHeader className="flex flex-col items-center gap-4">
+        <CardTitle>
+          <Link href={`/candidate/${candidate.id}`} className="hover:underline">
+            {candidate.name}
+          </Link>
+        </CardTitle>
         <img
           src={`${candidate.image}`}
           alt="Friend"
