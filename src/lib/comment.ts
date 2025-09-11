@@ -3,7 +3,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export async function addApplicationComment(
-  applicationId: string,
+  applicationId: number,
   content: string,
   authorId: string,
 ) {

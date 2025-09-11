@@ -2,15 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
 import { authClient } from "@/lib/auth-client";
@@ -19,7 +11,10 @@ import { Send } from "lucide-react";
 import { useState } from "react";
 
 interface CandidateCommentsProps {
-  comments: Array<{ application_comment: ApplicationComment; user: User }>;
+  comments: Array<{
+    user: User | null;
+    application_comment: ApplicationComment | null;
+  }>;
   candidate: User;
 }
 
@@ -31,8 +26,8 @@ export default function CandidateComments({
 
   const [commentsState, setCommentsState] = useState<
     Array<{
-      application_comment: ApplicationComment;
-      user: User;
+      user: User | null;
+      application_comment: ApplicationComment | null;
     }>
   >(comments);
 
@@ -49,11 +44,24 @@ export default function CandidateComments({
 
     setCommentsState([
       {
+        user: session
+          ? {
+              id: session.user.id,
+              name: session.user.name,
+              email: session.user.email,
+              emailVerified: session.user.emailVerified,
+              image: session.user.image ?? null,
+              createdAt: new Date(), // or session.user.createdAt
+              updatedAt: new Date(),
+              role: "recruiter" as const, // must provide
+            }
+          : null,
         application_comment: {
+          id: 0,
           content: commentValue,
-          authorId: session?.user.id,
+          authorId: session ? session.user.id : "",
+          applicationId: 0,
         },
-        user: session?.user,
       },
       ...commentsState,
     ]);
@@ -76,7 +84,7 @@ export default function CandidateComments({
 
       if (!res.ok) {
         setCommentValue(prevComment);
-        setCommentsState(comments);
+        setCommentsState(comments ?? []);
       }
     } catch (error) {
       console.error(error);
@@ -115,10 +123,10 @@ export default function CandidateComments({
           {commentsState?.map((comment) => (
             <TableRow key={crypto.randomUUID()}>
               <TableCell className="font-medium w-1/6">
-                {comment.user.name}
+                {comment.user?.name}
               </TableCell>
               <TableCell className="font-medium break-words whitespace-normal w-5/6">
-                {comment.application_comment.content}
+                {comment.application_comment?.content}
               </TableCell>
             </TableRow>
           ))}

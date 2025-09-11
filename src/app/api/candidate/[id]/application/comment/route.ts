@@ -31,7 +31,11 @@ export async function POST(
   if (app.length === 0)
     return new Response("Application not found", { status: 404 });
 
-  await addApplicationComment(app[0].id, json.content, session.user.id);
+  await addApplicationComment(
+    app[0].id,
+    json.content,
+    session ? session.user.id : "",
+  );
 
   return new Response();
 }

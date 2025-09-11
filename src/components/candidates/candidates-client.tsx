@@ -7,7 +7,10 @@ import CandidateCard from "./candidate-card";
 
 interface CandidatesClientProps {
   candidates: Array<User>;
-  friends: Array<User>;
+  friends: Array<{
+    recruiterId: string;
+    candidateId: string;
+  }>;
 }
 
 export default function CandidatesClient({

@@ -6,9 +6,8 @@ import { getApplicationComments } from "@/lib/comment";
 import { getUser } from "@/lib/db";
 
 type CandidatePageProps = {
-  params: {
-    id: string;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any;
 };
 
 export default async function CandidatePage({ params }: CandidatePageProps) {
@@ -16,6 +15,13 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const candidate = await getUser(id);
   const comments = await getApplicationComments(id);
+
+  const answers = [
+    {
+      title: "Primeiro título",
+      content: "Primeiro conteúdo",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-8 mx-32">
@@ -26,7 +32,9 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
       <section className="flex flex-row">
         <CandidateQuickInfo candidate={candidate} />
-        <CandidateAnswers candidate={candidate} />
+        {answers.map((answer) => (
+          <CandidateAnswers key={crypto.randomUUID()} answer={answer} />
+        ))}
       </section>
     </div>
   );
