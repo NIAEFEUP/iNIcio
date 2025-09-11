@@ -44,7 +44,7 @@ export default function Navbar({ className, user }: Props) {
         } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
         <Link href="/alocacoes">Alocações</Link>
-        <Link href="/candidatos">Candidatos</Link>
+        <Link href="/candidates">Candidatos</Link>
         {!user ? (
           <>
             <Link href="/login">Login</Link>
