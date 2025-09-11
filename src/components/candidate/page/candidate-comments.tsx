@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -28,7 +29,12 @@ export default function CandidateComments({
 }: CandidateCommentsProps) {
   const { data: session } = authClient.useSession();
 
-  console.log("comments: ", comments);
+  const [commentsState, setCommentsState] = useState<
+    Array<{
+      application_comment: ApplicationComment;
+      user: User;
+    }>
+  >(comments);
 
   const [commentValue, setCommentValue] = useState<string | undefined>(
     undefined,
@@ -37,56 +43,87 @@ export default function CandidateComments({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    await fetch(`/api/candidate/${candidate.id}/application/comment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    if (!commentValue) return;
+
+    const prevComment = commentValue;
+
+    setCommentsState([
+      {
+        application_comment: {
+          content: commentValue,
+          authorId: session?.user.id,
+        },
+        user: session?.user,
       },
-      body: JSON.stringify({
-        content: commentValue,
-      }),
-    });
+      ...commentsState,
+    ]);
+
+    setCommentValue("");
+
+    try {
+      const res = await fetch(
+        `/api/candidate/${candidate.id}/application/comment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: commentValue,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        setCommentValue(prevComment);
+        setCommentsState(comments);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <Table>
-      <TableBody>
-        {session && (
-          <TableRow>
-            <TableCell className="font-medium w-1/6">
-              {session.user.name}
-            </TableCell>
-            <TableCell className="w-5/6">
-              <form
-                className="flex flex-row items-center gap-4"
-                onSubmit={handleSubmit}
-              >
-                <Textarea
-                  placeholder="Adicionar comentário"
-                  className="w-5/6"
-                  required
-                  value={commentValue}
-                  onChange={(e) => setCommentValue(e.target.value)}
-                />
-                <Button variant="outline" type="submit">
-                  <Send />
-                </Button>
-              </form>
-            </TableCell>
-          </TableRow>
-        )}
+    <ScrollArea className="h-64">
+      <Table>
+        <TableBody>
+          {session && (
+            <TableRow>
+              <TableCell className="font-medium w-1/6">
+                {session.user.name}
+              </TableCell>
+              <TableCell className="w-5/6">
+                <form
+                  className="flex flex-row items-center gap-4"
+                  onSubmit={handleSubmit}
+                >
+                  <Textarea
+                    placeholder="Adicionar comentário"
+                    className="w-5/6"
+                    required
+                    value={commentValue}
+                    onChange={(e) => setCommentValue(e.target.value)}
+                  />
+                  <Button variant="outline" type="submit">
+                    <Send />
+                  </Button>
+                </form>
+              </TableCell>
+            </TableRow>
+          )}
 
-        {comments?.map((comment) => (
-          <TableRow key={comment.application_comment.id}>
-            <TableCell className="font-medium w-1/6">
-              {comment.user.name}
-            </TableCell>
-            <TableCell className="font-medium break-words whitespace-normal w-5/6">
-              {comment.application_comment.content}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          {commentsState?.map((comment) => (
+            <TableRow key={crypto.randomUUID()}>
+              <TableCell className="font-medium w-1/6">
+                {comment.user.name}
+              </TableCell>
+              <TableCell className="font-medium break-words whitespace-normal w-5/6">
+                {comment.application_comment.content}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </ScrollArea>
   );
 }

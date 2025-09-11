@@ -20,7 +20,7 @@ export default function CandidateQuickInfo({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tomás Palma</CardTitle>
+        <CardTitle className="text-center">Tomás Palma</CardTitle>
         <CardDescription>
           <img src="https://picsum.photos/200" alt="Picture of the author" />
         </CardDescription>
