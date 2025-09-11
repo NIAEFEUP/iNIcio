@@ -14,7 +14,7 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["recruiter", "candidate"] }).notNull(),
+  role: text("role", { enum: ["recruiter", "candidate", "admin"] }).notNull(),
 });
 
 export const session = pgTable("session", {

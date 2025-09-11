@@ -51,9 +51,9 @@ export default function CandidateComments({
               email: session.user.email,
               emailVerified: session.user.emailVerified,
               image: session.user.image ?? null,
-              createdAt: new Date(), // or session.user.createdAt
+              createdAt: new Date(),
               updatedAt: new Date(),
-              role: "recruiter" as const, // must provide
+              role: "recruiter" as const,
             }
           : null,
         application_comment: {
