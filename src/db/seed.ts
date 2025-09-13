@@ -6,9 +6,11 @@ import {
   recruiter,
   account,
   application,
+  recruitmentPhase,
 } from "./schema";
 
 async function main() {
+  await db.delete(recruitmentPhase);
   await db.delete(recruiterToCandidate);
   await db.delete(application);
   await db.delete(candidate);
