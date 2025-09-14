@@ -1,5 +1,5 @@
 import SchedulingCalendar from "@/components/scheduling/scheduling-calendar";
-import { getDynamicSlots } from "@/lib/recruitment";
+import { getDynamicSlots, isRecruitmentPhaseDone } from "@/lib/recruitment";
 
 export default async function CandidateDynamicSchedule() {
   async function confirm() {

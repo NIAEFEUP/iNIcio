@@ -11,7 +11,7 @@ const progressPhaseActions: { [key: string]: () => void } = {
 };
 
 interface ProgressPhaseCardShowcaseProps {
-  progressPhases: Array<RecruitmentPhase>;
+  progressPhases: Array<RecruitmentPhase & { checked: boolean }>;
 }
 
 export default function ProgressPhaseCardShowcase({
@@ -20,7 +20,8 @@ export default function ProgressPhaseCardShowcase({
   return (
     <>
       <div className="flex flex-col  justify-center mx-auto">
-        {progressPhases.map((phase, idx) => {
+        {progressPhases.map(async (phase, idx) => {
+          console.log("PHASE: ", phase);
           return (
             <div key={`${phase.title}-${idx}`}>
               <ProgressPhaseCard
@@ -30,6 +31,7 @@ export default function ProgressPhaseCardShowcase({
                 description={phase.description}
                 width={128}
                 onClick={progressPhaseActions[phase.title.trim().toLowerCase()]}
+                checked={phase.checked}
               />
 
               {idx !== progressPhases.length - 1 && (

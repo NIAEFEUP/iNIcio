@@ -2,6 +2,7 @@ import {
   recruitment,
   recruitmentPhase,
   recruitmentPhaseSlot,
+  recruitmentPhaseStatus,
 } from "@/db/schema";
 import { db } from "./db";
 import { and, eq, or } from "drizzle-orm";
@@ -72,4 +73,24 @@ export async function getDynamicSlots() {
     );
 
   return dynamicSlots;
+}
+
+export async function isRecruitmentPhaseDone(
+  userId: string | undefined,
+  phaseId: number,
+) {
+  if (!userId) return false;
+
+  const phase = await db
+    .select()
+    .from(recruitmentPhaseStatus)
+    .where(
+      and(
+        eq(recruitmentPhaseStatus.userId, userId),
+        eq(recruitmentPhaseStatus.phaseId, phaseId),
+        eq(recruitmentPhaseStatus.status, "done"),
+      ),
+    );
+
+  return phase.length > 0;
 }
