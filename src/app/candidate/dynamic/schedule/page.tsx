@@ -1,6 +1,6 @@
 import SchedulingCalendar from "@/components/scheduling/scheduling-calendar";
 
-export default async function CandidateInterviewSchedule() {
+export default async function CandidateDynamicSchedule() {
   async function confirm() {
     "use server";
 
@@ -9,9 +9,7 @@ export default async function CandidateInterviewSchedule() {
 
   return (
     <>
-      <h1 className="text-4xl text-center font-bold">
-        Agenda a tua entrevista
-      </h1>
+      <h1 className="text-4xl text-center font-bold">Agenda a tua dinâmica</h1>
 
       <SchedulingCalendar
         confirmAction={confirm}
