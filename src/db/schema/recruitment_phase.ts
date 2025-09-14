@@ -15,6 +15,12 @@ export const recruitmentPhaseSlot = pgTable("recruitment_phase_slot", {
   id: serial("id").primaryKey(),
   start: timestamp("start").notNull(),
   duration: integer("duration").notNull(),
+  type: text("type", {
+    enum: ["interview", "dynamic", "interview-dynamic"],
+  }).default("interview-dynamic"),
+  recruitmentYear: integer("recruitment_year")
+    .notNull()
+    .references(() => recruitment.year),
 });
 
 export const recruitmentPhase = pgTable(
