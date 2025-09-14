@@ -29,9 +29,7 @@ export const recruitmentPhase = pgTable(
     end: timestamp("end").notNull(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    slot: integer("slot")
-      .notNull()
-      .references(() => recruitmentPhaseSlot.id),
+    slot: integer("slot").references(() => recruitmentPhaseSlot.id),
   },
   (table) => [check("start_before_end", sql`${table.start} < ${table.end}`)],
 );

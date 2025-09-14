@@ -1,5 +1,6 @@
 "use client";
 
+import { RecruitmentPhase } from "@/lib/db";
 import ProgressPhaseCard from "./progress-phase-card";
 
 import { redirect } from "next/navigation";
@@ -9,7 +10,13 @@ const progressPhaseActions: { [key: string]: () => void } = {
   dinâmica: () => redirect("/candidate/dynamic/schedule"),
 };
 
-export default function ProgressPhaseCardShowcase({ progressPhases }) {
+interface ProgressPhaseCardShowcaseProps {
+  progressPhases: Array<RecruitmentPhase>;
+}
+
+export default function ProgressPhaseCardShowcase({
+  progressPhases,
+}: ProgressPhaseCardShowcaseProps) {
   return (
     <>
       <div className="flex flex-col  justify-center mx-auto">

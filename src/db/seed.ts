@@ -7,6 +7,7 @@ import {
   account,
   application,
   recruitmentPhase,
+  recruitment,
 } from "./schema";
 
 async function main() {
@@ -17,6 +18,7 @@ async function main() {
   await db.delete(recruiter);
   await db.delete(account);
   await db.delete(user);
+  await db.delete(recruitment);
 
   await db.insert(user).values({
     id: "1",
@@ -62,6 +64,29 @@ async function main() {
     github: "https://github.com/tomaspalma",
     personalWebsite: "https://tomaspalma.dev",
     accepted: false,
+  });
+
+  await db.insert(recruitment).values({
+    year: 2025,
+    active: "true",
+  });
+
+  await db.insert(recruitmentPhase).values({
+    recruitmentYear: 2025,
+    role: "candidate",
+    start: new Date(),
+    end: new Date("2025-09-19T16:00:00.000Z"),
+    title: "Entrevista",
+    description: "Marca a tua entrevista",
+  });
+
+  await db.insert(recruitmentPhase).values({
+    recruitmentYear: 2025,
+    role: "candidate",
+    start: new Date(),
+    end: new Date("2025-09-20T16:00:00.000Z"),
+    title: "Dinâmica",
+    description: "Marca a tua dinâmica",
   });
 }
 
