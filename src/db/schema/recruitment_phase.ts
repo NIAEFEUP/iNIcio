@@ -11,7 +11,7 @@ import {
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
 
-export const recruitmentPhaseSlot = pgTable("recruitment_phase_slot", {
+export const slot = pgTable("slot", {
   id: serial("id").primaryKey(),
   start: timestamp("start").notNull(),
   duration: integer("duration").notNull(),
@@ -35,7 +35,6 @@ export const recruitmentPhase = pgTable(
     end: timestamp("end").notNull(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    slot: integer("slot").references(() => recruitmentPhaseSlot.id),
   },
   (table) => [check("start_before_end", sql`${table.start} < ${table.end}`)],
 );
@@ -48,10 +47,6 @@ export const recruitmentPhaseRelations = relations(
       references: [recruitment.year],
     }),
     statuses: many(recruitmentPhaseStatus),
-    slot: one(recruitmentPhaseSlot, {
-      fields: [recruitmentPhase.slot],
-      references: [recruitmentPhaseSlot.id],
-    }),
   }),
 );
 

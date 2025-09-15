@@ -8,11 +8,11 @@ import {
   application,
   recruitmentPhase,
   recruitment,
-  recruitmentPhaseSlot,
+  slot,
 } from "./schema";
 
 async function main() {
-  await db.delete(recruitmentPhaseSlot);
+  await db.delete(slot);
   await db.delete(recruitmentPhase);
   await db.delete(recruiterToCandidate);
   await db.delete(application);
@@ -91,7 +91,7 @@ async function main() {
     description: "Marca a tua dinâmica",
   });
 
-  await db.insert(recruitmentPhaseSlot).values({
+  await db.insert(slot).values({
     id: 1,
     start: new Date("2025-09-19T01:00:00.000Z"),
     duration: 30,
@@ -99,7 +99,7 @@ async function main() {
     recruitmentYear: 2025,
   });
 
-  await db.insert(recruitmentPhaseSlot).values({
+  await db.insert(slot).values({
     id: 2,
     start: new Date("2025-09-20T10:00:00.000Z"),
     duration: 30,
@@ -107,7 +107,7 @@ async function main() {
     recruitmentYear: 2025,
   });
 
-  await db.insert(recruitmentPhaseSlot).values({
+  await db.insert(slot).values({
     id: 3,
     start: new Date("2025-09-20T16:00:00.000Z"),
     duration: 30,
@@ -115,7 +115,7 @@ async function main() {
     recruitmentYear: 2025,
   });
 
-  await db.insert(recruitmentPhaseSlot).values({
+  await db.insert(slot).values({
     id: 4,
     start: new Date("2025-09-18T16:00:00.000Z"),
     duration: 30,
@@ -123,7 +123,7 @@ async function main() {
     recruitmentYear: 2025,
   });
 
-  await db.insert(recruitmentPhaseSlot).values({
+  await db.insert(slot).values({
     id: 5,
     start: new Date("2025-09-22T16:00:00.000Z"),
     duration: 30,

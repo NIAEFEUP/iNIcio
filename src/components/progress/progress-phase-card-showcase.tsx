@@ -3,11 +3,9 @@
 import { RecruitmentPhase } from "@/lib/db";
 import ProgressPhaseCard from "./progress-phase-card";
 
-import { redirect } from "next/navigation";
-
-const progressPhaseActions: { [key: string]: () => void } = {
-  entrevista: () => redirect("/candidate/interview/schedule"),
-  dinâmica: () => redirect("/candidate/dynamic/schedule"),
+const progressPhaseActions: { [key: string]: string } = {
+  entrevista: "/candidate/interview/schedule",
+  dinâmica: "/candidate/dynamic/schedule",
 };
 
 interface ProgressPhaseCardShowcaseProps {
@@ -20,8 +18,7 @@ export default function ProgressPhaseCardShowcase({
   return (
     <>
       <div className="flex flex-col  justify-center mx-auto">
-        {progressPhases.map(async (phase, idx) => {
-          console.log("PHASE: ", phase);
+        {progressPhases.map((phase, idx) => {
           return (
             <div key={`${phase.title}-${idx}`}>
               <ProgressPhaseCard
@@ -30,7 +27,9 @@ export default function ProgressPhaseCardShowcase({
                 title={phase.title}
                 description={phase.description}
                 width={128}
-                onClick={progressPhaseActions[phase.title.trim().toLowerCase()]}
+                redirectUrl={
+                  progressPhaseActions[phase.title.trim().toLowerCase()]
+                }
                 checked={phase.checked}
               />
 

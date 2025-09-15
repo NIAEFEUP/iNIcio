@@ -1,11 +1,11 @@
 import {
   recruitment,
   recruitmentPhase,
-  recruitmentPhaseSlot,
   recruitmentPhaseStatus,
+  slot,
 } from "@/db/schema";
-import { db } from "./db";
-import { and, eq, or } from "drizzle-orm";
+import { db, RecruitmentPhase, Slot } from "./db";
+import { and, eq, or, sql } from "drizzle-orm";
 
 export async function isRecruitmentActive() {
   const currentYear = new Date().getFullYear();
@@ -36,17 +36,14 @@ export async function getInterviewSlots() {
 
   const interviewSlots = await db
     .select()
-    .from(recruitmentPhaseSlot)
+    .from(slot)
     .where(
       or(
         and(
-          eq(recruitmentPhaseSlot.type, "interview-dynamic"),
-          eq(recruitmentPhaseSlot.recruitmentYear, currentYear),
+          eq(slot.type, "interview-dynamic"),
+          eq(slot.recruitmentYear, currentYear),
         ),
-        and(
-          eq(recruitmentPhaseSlot.type, "interview"),
-          eq(recruitmentPhaseSlot.recruitmentYear, currentYear),
-        ),
+        and(eq(slot.type, "interview"), eq(slot.recruitmentYear, currentYear)),
       ),
     );
 
@@ -58,16 +55,13 @@ export async function getDynamicSlots() {
 
   const dynamicSlots = await db
     .select()
-    .from(recruitmentPhaseSlot)
+    .from(slot)
     .where(
       or(
+        and(eq(slot.type, "dynamic"), eq(slot.recruitmentYear, currentYear)),
         and(
-          eq(recruitmentPhaseSlot.type, "dynamic"),
-          eq(recruitmentPhaseSlot.recruitmentYear, currentYear),
-        ),
-        and(
-          eq(recruitmentPhaseSlot.type, "interview-dynamic"),
-          eq(recruitmentPhaseSlot.recruitmentYear, currentYear),
+          eq(slot.type, "interview-dynamic"),
+          eq(slot.recruitmentYear, currentYear),
         ),
       ),
     );
@@ -93,4 +87,29 @@ export async function isRecruitmentPhaseDone(
     );
 
   return phase.length > 0;
+}
+
+export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
+  const phaseStatus = await db
+    .select({
+      phaseId: recruitmentPhaseStatus.phaseId,
+      status: recruitmentPhaseStatus.status,
+      title: recruitmentPhase.title,
+    })
+    .from(recruitmentPhaseStatus)
+    .innerJoin(
+      recruitmentPhase,
+      eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
+    )
+    .where(
+      and(
+        eq(recruitmentPhaseStatus.userId, userId),
+        eq(recruitmentPhase.title, "Entrevista"),
+      ),
+    );
+
+  await db
+    .update(recruitmentPhaseStatus)
+    .set({ status: "done" })
+    .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
 }

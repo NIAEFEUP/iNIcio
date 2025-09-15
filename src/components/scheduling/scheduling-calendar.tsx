@@ -16,7 +16,7 @@ interface SchedulingCalendarProps {
   slots: Array<Slot>;
   multipleSlots?: boolean;
   confirmMessage?: string;
-  confirmAction: () => Promise<boolean>;
+  confirmAction: (slot: Array<Slot>) => Promise<boolean>;
 }
 
 export default function SchedulingCalendar({
@@ -83,7 +83,7 @@ export default function SchedulingCalendar({
   };
 
   const handleConfirm = async () => {
-    if (await confirmAction()) {
+    if (await confirmAction(selectedSlots)) {
       setIsConfirmed(true);
     }
   };
@@ -205,7 +205,7 @@ export default function SchedulingCalendar({
             <div className="flex items-center gap-3">
               <CheckCircle className="h-6 w-6 text-green-600" />
               <div>
-                <h3 className="font-semibold text-green-800 dark:text-green-200">
+                <h3 className="font-semibold text-green-800 dark:text-green-200 text-center">
                   Confirmado!
                 </h3>
                 <p className="text-green-700 dark:text-green-300">
