@@ -31,6 +31,8 @@ export default function ProgressPhaseCardShowcase({
                   progressPhaseActions[phase.title.trim().toLowerCase()]
                 }
                 checked={phase.checked}
+                phaseStart={phase.start}
+                phaseEnd={phase.end}
               />
 
               {idx !== progressPhases.length - 1 && (

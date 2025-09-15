@@ -31,8 +31,8 @@ export const recruitmentPhase = pgTable(
       .notNull()
       .references(() => recruitment.year),
     role: text("role", { enum: ["recruiter", "candidate"] }).notNull(),
-    start: timestamp("start").notNull(),
-    end: timestamp("end").notNull(),
+    start: timestamp("start"),
+    end: timestamp("end"),
     title: text("title").notNull(),
     description: text("description").notNull(),
   },

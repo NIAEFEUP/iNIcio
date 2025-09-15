@@ -43,8 +43,20 @@ export default function Navbar({ className, user }: Props) {
             : "opacity-0 max-h-0 overflow-hidden"
         } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
-        <Link href="/alocacoes">Alocações</Link>
-        <Link href="/candidates">Candidatos</Link>
+        {user && (user.role === "recruiter" || user.role === "admin") && (
+          <>
+            <Link href="/alocacoes">Alocações</Link>
+            <Link href="/candidates">Candidatos</Link>
+          </>
+        )}
+
+        {user && user.role === "candidate" && (
+          <>
+            <Link href="/candidate/progress">Progresso</Link>
+            <Link href="/agendamento">Agendamento</Link>
+          </>
+        )}
+
         {!user ? (
           <>
             <Link href="/login">Login</Link>

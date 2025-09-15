@@ -18,6 +18,8 @@ interface ProgressPhaseCardProps {
   width?: number;
   checked?: boolean;
   redirectUrl: string;
+  phaseStart: Date | null;
+  phaseEnd: Date | null;
 }
 
 export default function ProgressPhaseCard({
@@ -27,6 +29,8 @@ export default function ProgressPhaseCard({
   width = 128,
   checked = false,
   redirectUrl,
+  phaseStart,
+  phaseEnd,
 }: ProgressPhaseCardProps) {
   return (
     <div
@@ -42,7 +46,14 @@ export default function ProgressPhaseCard({
           <Checkbox checked={checked} disabled={!checked} />
         </CardHeader>
         <CardContent>
-          <CardDescription>{description}</CardDescription>
+          <CardDescription className="flex flex-col gap-y-2">
+            <span>{description}</span>
+            {phaseEnd && (
+              <span className="font-bold">
+                Até {phaseEnd.toLocaleString("pt-PT")}
+              </span>
+            )}
+          </CardDescription>
         </CardContent>
       </Card>
     </div>
