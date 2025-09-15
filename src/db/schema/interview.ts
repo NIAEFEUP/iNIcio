@@ -2,14 +2,17 @@ import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";
+import { slot } from "./recruitment_phase";
 
 export const interview = pgTable("interview", {
   id: serial("id").primaryKey(),
-  datetime: timestamp("datetime").notNull().defaultNow(),
   content: text("content").notNull(),
   candidateId: text("candidate_id")
     .notNull()
     .references(() => candidate.userId, { onDelete: "cascade" }),
+  slot: integer("slot")
+    .notNull()
+    .references(() => slot.id),
 });
 
 export const recruiterToInterview = pgTable("recruiter_to_interview", {
@@ -28,6 +31,10 @@ export const interviewRelations = relations(interview, ({ one, many }) => ({
   }),
   recruiters: many(recruiterToInterview),
   comments: many(interviewComment),
+  slot: one(slot, {
+    fields: [interview.slot],
+    references: [slot.id],
+  }),
 }));
 
 export const recruiterToInterviewRelations = relations(

@@ -11,6 +11,18 @@ import {
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
 
+export const slot = pgTable("slot", {
+  id: serial("id").primaryKey(),
+  start: timestamp("start").notNull(),
+  duration: integer("duration").notNull(),
+  type: text("type", {
+    enum: ["interview", "dynamic", "interview-dynamic"],
+  }).default("interview-dynamic"),
+  recruitmentYear: integer("recruitment_year")
+    .notNull()
+    .references(() => recruitment.year),
+});
+
 export const recruitmentPhase = pgTable(
   "recruitment_phase",
   {
@@ -19,8 +31,8 @@ export const recruitmentPhase = pgTable(
       .notNull()
       .references(() => recruitment.year),
     role: text("role", { enum: ["recruiter", "candidate"] }).notNull(),
-    start: timestamp("start").notNull(),
-    end: timestamp("end").notNull(),
+    start: timestamp("start"),
+    end: timestamp("end"),
     title: text("title").notNull(),
     description: text("description").notNull(),
   },
