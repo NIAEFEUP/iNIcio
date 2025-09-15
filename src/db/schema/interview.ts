@@ -6,7 +6,6 @@ import { slot } from "./recruitment_phase";
 
 export const interview = pgTable("interview", {
   id: serial("id").primaryKey(),
-  datetime: timestamp("datetime").notNull().defaultNow(),
   content: text("content").notNull(),
   candidateId: text("candidate_id")
     .notNull()

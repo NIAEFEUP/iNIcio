@@ -27,7 +27,6 @@ export async function tryToAddCandidateToDynamic(
       .values({
         slotId: slot.id,
         content: "",
-        datetime: new Date(),
       })
       .returning({ id: dynamic.id });
 

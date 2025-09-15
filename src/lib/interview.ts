@@ -9,6 +9,5 @@ export default async function addInterviewWithSlot(
     slot: slot.id,
     candidateId: candidateId,
     content: "",
-    datetime: new Date(),
   });
 }

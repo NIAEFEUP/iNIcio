@@ -1,9 +1,7 @@
 import SchedulingCalendar from "@/components/scheduling/scheduling-calendar";
 import { auth } from "@/lib/auth";
 import { Slot } from "@/lib/db";
-import addCandidateToDynamic, {
-  tryToAddCandidateToDynamic,
-} from "@/lib/dynamic";
+import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
 import {
   getDynamicSlots,
   markDynamicRecruitmentPhaseAsDone,
@@ -34,7 +32,11 @@ export default async function CandidateDynamicSchedule() {
     <>
       <h1 className="text-4xl text-center font-bold">Agenda a tua dinâmica</h1>
 
-      <SchedulingCalendar confirmAction={confirm} slots={slots} />
+      <SchedulingCalendar
+        confirmAction={confirm}
+        slots={slots}
+        confirmUrl="/candidate/progress"
+      />
     </>
   );
 }

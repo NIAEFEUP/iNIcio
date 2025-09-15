@@ -34,7 +34,11 @@ export default async function CandidateInterviewSchedule() {
         Agenda a tua entrevista
       </h1>
 
-      <SchedulingCalendar confirmAction={confirm} slots={slots} />
+      <SchedulingCalendar
+        confirmAction={confirm}
+        slots={slots}
+        confirmUrl="/candidate/progress"
+      />
     </>
   );
 }

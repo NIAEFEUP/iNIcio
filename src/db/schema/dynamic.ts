@@ -6,7 +6,6 @@ import { slot } from "./recruitment_phase";
 
 export const dynamic = pgTable("dynamic", {
   id: serial("id").primaryKey(),
-  datetime: timestamp("datetime").notNull().defaultNow(),
   content: text("content").notNull(),
   slotId: integer("slot_id")
     .notNull()
