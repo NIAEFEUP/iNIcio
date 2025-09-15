@@ -113,3 +113,28 @@ export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
     .set({ status: "done" })
     .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
 }
+
+export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
+  const phaseStatus = await db
+    .select({
+      phaseId: recruitmentPhaseStatus.phaseId,
+      status: recruitmentPhaseStatus.status,
+      title: recruitmentPhase.title,
+    })
+    .from(recruitmentPhaseStatus)
+    .innerJoin(
+      recruitmentPhase,
+      eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
+    )
+    .where(
+      and(
+        eq(recruitmentPhaseStatus.userId, userId),
+        eq(recruitmentPhase.title, "Dinâmica"),
+      ),
+    );
+
+  await db
+    .update(recruitmentPhaseStatus)
+    .set({ status: "done" })
+    .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+}

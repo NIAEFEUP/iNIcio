@@ -3,6 +3,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
 import { eq } from "drizzle-orm";
 
+export type CandidateToDynamic = typeof schema.candidateToDynamic.$inferSelect;
+export type Dynamic = typeof schema.dynamic.$inferSelect;
 export type RecruitmentPhase = typeof schema.recruitmentPhase.$inferSelect;
 export type Slot = typeof schema.slot.$inferSelect;
 export type Candidate = typeof schema.candidate.$inferSelect;

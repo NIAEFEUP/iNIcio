@@ -1,7 +1,13 @@
 import SchedulingCalendar from "@/components/scheduling/scheduling-calendar";
 import { auth } from "@/lib/auth";
 import { Slot } from "@/lib/db";
-import { getDynamicSlots, isRecruitmentPhaseDone } from "@/lib/recruitment";
+import addCandidateToDynamic, {
+  tryToAddCandidateToDynamic,
+} from "@/lib/dynamic";
+import {
+  getDynamicSlots,
+  markDynamicRecruitmentPhaseAsDone,
+} from "@/lib/recruitment";
 import { headers } from "next/headers";
 
 export default async function CandidateDynamicSchedule() {
@@ -13,6 +19,11 @@ export default async function CandidateDynamicSchedule() {
     });
 
     if (!session?.user.id) return false;
+
+    for (const slot of slots) {
+      await tryToAddCandidateToDynamic(session.user.id, slot);
+      await markDynamicRecruitmentPhaseAsDone(session.user.id);
+    }
 
     return true;
   }
