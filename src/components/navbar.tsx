@@ -15,8 +15,6 @@ type Props = {
 export default function Navbar({ className }: Props) {
   const { data: session } = authClient.useSession();
 
-  console.log("SESSION: ", session);
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -78,7 +76,7 @@ export default function Navbar({ className }: Props) {
               </Link>
             ) : null}
 
-            <Link className="text-primary" href="/perfil">
+            <Link className="text-primary" href="/profile">
               <span className="text-primary">Perfil</span>
             </Link>
             <LogoutButton />

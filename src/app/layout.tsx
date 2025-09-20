@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 
 import NavbarController from "@/components/navbar-controller";
+import { Toaster } from "sonner";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className={`flex flex-col h-screen antialiased`}>
         <NavbarController />
         <main className="grow">{children}</main>
+        <Toaster />
       </body>
     </html>
   );

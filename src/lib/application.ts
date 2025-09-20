@@ -15,7 +15,7 @@ export async function getApplication(id: string): Promise<Application | null> {
 }
 
 export async function getApplicationInterests(
-  application: Application | null,
+  application: Application | null | undefined,
 ): Promise<string[]> {
   if (!application) return [];
 

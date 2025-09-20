@@ -32,7 +32,7 @@ export default function CandidateAnswer({
           </Button>
         </CollapsibleTrigger>
 
-        <h4 className="text-lg font-semibold">{title}</h4>
+        <h4 className="text-lg">{title}</h4>
       </div>
       <CollapsibleContent className="flex flex-col gap-2 w-full ml-4">
         <div className="px-4 py-2 font-mono text-sm">{content}</div>
