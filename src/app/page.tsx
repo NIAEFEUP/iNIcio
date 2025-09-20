@@ -2,32 +2,16 @@ import { isRecruitmentActive } from "@/lib/recruitment";
 import "./globals.css";
 
 import { Button } from "@/components/ui/button";
+import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 
 export default async function Home() {
   const recruitmentActive = await isRecruitmentActive();
 
   return (
-    <div className="h-full flex flex-col items-center justify-center">
+    <div className="h-full flex flex-col items-center">
       {recruitmentActive ? (
         <>
-          <h1 className="font-bold text-5xl px-5 lg:text-9xl md:w-1/2 text-center">
-            Queres fazer parte do <span className="text-primary">NIAEFEUP</span>
-            ?
-          </h1>
-          <div className="flex flex-col lg:flex-row justify-center lg:gap-5">
-            <Button size="lg" className="mt-10">
-              <a href="signup">Regista-te →</a>
-            </Button>
-            <Button size="lg" variant="outline" className="mt-10" asChild>
-              <a
-                href="https://niaefeup.pt/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Visita o nosso site !
-              </a>
-            </Button>
-          </div>
+          <RecruitmentActiveMessage />
         </>
       ) : (
         <div className="flex flex-col items-center gap-10 lg:w-1/2">
