@@ -23,6 +23,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function Candidatura() {
   const formSchema = z.object({
@@ -77,6 +78,8 @@ export default function Candidatura() {
     mode: "onSubmit",
   });
 
+  const router = useRouter();
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const res = await fetch("/api/application", {
@@ -86,6 +89,10 @@ export default function Candidatura() {
         },
         body: JSON.stringify(values),
       });
+
+      if (res.ok) {
+        router.push("/candidate/progress");
+      }
     } catch (error) {
       console.error(error);
     }

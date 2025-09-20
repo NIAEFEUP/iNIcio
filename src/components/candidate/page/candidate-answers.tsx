@@ -1,45 +1,41 @@
 "use client";
 
-import { User } from "@/lib/db";
-
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
+import { Application } from "@/lib/db";
+import CandidateAnswer from "./candidate-answer";
 
 export interface CandidateAnswersProps {
-  answer: {
-    title: string;
-    content: string;
-  };
+  application: Application | null;
 }
 
-export default function CandidateAnswers({ answer }: CandidateAnswersProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
+export default function CandidateAnswers({
+  application,
+}: CandidateAnswersProps) {
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="flex flex-col gap-2 ml-8"
-    >
-      <div className="flex items-center justify-between gap-4 px-4">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
-            <ChevronsUpDown />
-            <span className="sr-only">Toggle</span>
-          </Button>
-        </CollapsibleTrigger>
+    <div className="flex flex-col gap-4 w-3/4">
+      <CandidateAnswer
+        title="Interesse nas escolhas"
+        content={application ? application.interestJustification : ""}
+      />
 
-        <h4 className="text-lg font-semibold">{answer.title}</h4>
-      </div>
-      <CollapsibleContent className="flex flex-col gap-2 w-full ml-4">
-        <div className="px-4 py-2 font-mono text-sm">{answer.content}</div>
-      </CollapsibleContent>
-    </Collapsible>
+      <CandidateAnswer
+        title="Porquê o NI?"
+        content={application ? application.motivation : ""}
+      />
+
+      <CandidateAnswer
+        title="O que poderíamos ganhar contigo?"
+        content={application ? application.selfPromotion : ""}
+      />
+
+      <CandidateAnswer
+        title="Tens alguma sugestão?"
+        content={application ? application.suggestions : ""}
+      />
+
+      <CandidateAnswer
+        title="Com que tecnologias/ferramentas já trabalhaste?"
+        content={application ? application.experience : ""}
+      />
+    </div>
   );
 }

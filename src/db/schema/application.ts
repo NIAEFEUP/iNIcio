@@ -11,6 +11,7 @@ import { relations } from "drizzle-orm";
 import { applicationToTag } from "./tag";
 import { applicationComment } from "./comment";
 import { appreciation } from "./appreciation";
+import { user } from "@/drizzle/schema";
 
 export const application = pgTable("application", {
   id: serial("id").primaryKey(),
@@ -34,17 +35,12 @@ export const application = pgTable("application", {
   accepted: boolean("accepted").notNull().default(false),
   candidateId: text("candidate_id")
     .notNull()
-    .references(() => candidate.userId, { onDelete: "cascade" }),
-});
-
-export const interests = pgTable("interests", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
+    .references(() => user.id),
 });
 
 export const applicationInterests = pgTable("application_interests", {
-  applicationId: integer("application_id").notNull().unique(),
-  interest: integer("interest").notNull().unique(),
+  applicationId: integer("application_id").notNull(),
+  interest: text("interest").notNull(),
 });
 
 export const applicationRelations = relations(application, ({ one, many }) => ({

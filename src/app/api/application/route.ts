@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
 
-import { application } from "@/db/schema";
+import { application, applicationInterests } from "@/db/schema";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -38,12 +38,12 @@ export async function POST(req: Request) {
       })
       .returning({ id: application.id });
 
-    // for (const interest of json.interests) {
-    //   await tx.insert(applicationInterests).values({
-    //     applicationId: app[0].id,
-    //     interest: interest,
-    //   });
-    // }
+    for (const interest of json.interests) {
+      await tx.insert(applicationInterests).values({
+        applicationId: app[0].id,
+        interest: interest,
+      });
+    }
   });
 
   return new Response();

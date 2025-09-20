@@ -37,6 +37,10 @@ export default async function CandidateProgress() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-4xl text-center font-bold">Progresso</h1>
+      <p className="text-center">
+        Agora que complestaste a tua candidatura, tens outras tarefas para
+        realizar!
+      </p>
 
       <ProgressPhaseCardShowcase progressPhases={progressPhases} />
     </div>
