@@ -3,18 +3,14 @@ import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
 
-import {
-  application,
-  applicationInterests,
-  recruiterToCandidate,
-} from "@/db/schema";
-import { and, eq } from "drizzle-orm";
-import { areFriends } from "@/lib/friend";
+import { application } from "@/db/schema";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  if (!session) return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();
 
@@ -38,7 +34,7 @@ export async function POST(req: Request) {
         selfPromotion: json.self_promotion,
         suggestions: json.suggestions,
         accepted: false,
-        candidateId: "1",
+        candidateId: session.user.id,
       })
       .returning({ id: application.id });
 
