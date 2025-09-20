@@ -26,17 +26,11 @@ import { Button } from "@/components/ui/button";
 
 export default function Candidatura() {
   const formSchema = z.object({
-    name: z.string().min(1, { message: "This field is required" }),
-    surname: z.string().min(1, { message: "This field is required" }),
-    email: z
-      .string()
-      .email({ message: "Invalid email address" })
-      .min(1, { message: "This field is required" }),
     phone: z.string().min(1, { message: "This field is required" }),
-    student_year: z.string().min(1, { message: "This field is required" }),
+    student_number: z.string().min(1, { message: "This field is required" }),
     degree: z.string().min(1, { message: "This field is required" }),
     curricular_year: z.string().min(1, { message: "This field is required" }),
-    "profile-picture": z.string().min(1, { message: "This field is required" }),
+    profile_picture: z.string().min(1, { message: "This field is required" }),
     curriculum: z.string().min(1, { message: "This field is required" }),
     linkedin: z.string().url().optional(),
     github: z.string().url().optional(),
@@ -46,13 +40,13 @@ export default function Candidatura() {
       .refine((value) => value.some((item) => item), {
         message: "You have to select at least one item.",
       }),
-    "interest-justification": z
+    interest_justification: z
       .string()
       .min(1, { message: "This field is required" }),
     experience: z.string(),
     motivation: z.string().min(1, { message: "This field is required" }),
-    "self-promotion": z.string().min(1, { message: "This field is required" }),
-    "recruitment-first-interaction": z
+    self_promotion: z.string().min(1, { message: "This field is required" }),
+    recruitment_first_interaction: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
         message: "You have to select at least one item.",
@@ -63,31 +57,38 @@ export default function Candidatura() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      surname: "",
-      email: "",
       phone: "",
-      student_year: "",
+      student_number: "",
       degree: "",
       curricular_year: "",
-      "profile-picture": "",
+      profile_picture: "",
       curriculum: "",
       linkedin: "",
       github: "",
       website: "",
       interests: [],
-      "interest-justification": "",
+      interest_justification: "",
       experience: "",
       motivation: "",
-      "self-promotion": "",
-      "recruitment-first-interaction": [],
+      self_promotion: "",
+      recruitment_first_interaction: [],
       suggestions: "",
     },
     mode: "onSubmit",
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const res = await fetch("/api/application", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function onReset() {
@@ -96,88 +97,16 @@ export default function Candidatura() {
   }
 
   return (
-    <div className="h-full flex flex-col items-center justify-center">
+    <div className="h-full flex flex-col mx-128">
+      <h1 className="text-2xl font-bold text-center">
+        Formulário de candidatura
+      </h1>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 border shadow-md p-5 m-5 rounded-md"
         >
           {/* Form Section */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem className="col-span-6 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Nome</FormLabel>
-
-                <div className="w-full">
-                  <FormControl>
-                    <div className="relative w-full">
-                      <Input
-                        key="text-input-0"
-                        placeholder="Primeiro Nome"
-                        type="text"
-                        className=" "
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="surname"
-            render={({ field }) => (
-              <FormItem className="col-span-6 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Apelido</FormLabel>
-
-                <div className="w-full">
-                  <FormControl>
-                    <div className="relative w-full">
-                      <Input
-                        key="text-input-1"
-                        placeholder="Apelido"
-                        type="text"
-                        className=" "
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                <FormLabel className="flex shrink-0">Email</FormLabel>
-
-                <div className="w-full">
-                  <FormControl>
-                    <div className="relative w-full">
-                      <Input
-                        key="email-input-0"
-                        placeholder="email@gmail.com"
-                        type="email"
-                        className=" "
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="phone"
@@ -207,7 +136,7 @@ export default function Candidatura() {
           />
           <FormField
             control={form.control}
-            name="student_year"
+            name="student_number"
             render={({ field }) => (
               <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
                 <FormLabel className="flex shrink-0">
@@ -337,7 +266,7 @@ export default function Candidatura() {
           />
           <FormField
             control={form.control}
-            name="profile-picture"
+            name="profile_picture"
             render={({ field }) => (
               <FormItem className="col-span-6 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
                 <FormLabel className="flex shrink-0">Fotografia</FormLabel>
@@ -487,7 +416,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "projetos"
+                                    "projetos",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -498,8 +427,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "projetos"
-                                          )
+                                              value !== "projetos",
+                                          ),
                                         );
                                   }}
                                 />
@@ -526,7 +455,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "imagem"
+                                    "imagem",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -537,8 +466,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "imagem"
-                                          )
+                                              value !== "imagem",
+                                          ),
                                         );
                                   }}
                                 />
@@ -565,7 +494,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "comunicacao"
+                                    "comunicacao",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -576,8 +505,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "comunicacao"
-                                          )
+                                              value !== "comunicacao",
+                                          ),
                                         );
                                   }}
                                 />
@@ -612,8 +541,8 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "sinf"
-                                          )
+                                            (value: string) => value !== "sinf",
+                                          ),
                                         );
                                   }}
                                 />
@@ -648,8 +577,8 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "uni"
-                                          )
+                                            (value: string) => value !== "uni",
+                                          ),
                                         );
                                   }}
                                 />
@@ -684,8 +613,8 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "tts"
-                                          )
+                                            (value: string) => value !== "tts",
+                                          ),
                                         );
                                   }}
                                 />
@@ -712,7 +641,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "eventos"
+                                    "eventos",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -723,8 +652,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "eventos"
-                                          )
+                                              value !== "eventos",
+                                          ),
                                         );
                                   }}
                                 />
@@ -751,7 +680,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "nitsig"
+                                    "nitsig",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -762,8 +691,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "nitsig"
-                                          )
+                                              value !== "nitsig",
+                                          ),
                                         );
                                   }}
                                 />
@@ -790,7 +719,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "website"
+                                    "website",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -801,8 +730,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "website"
-                                          )
+                                              value !== "website",
+                                          ),
                                         );
                                   }}
                                 />
@@ -829,7 +758,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "niployments"
+                                    "niployments",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -840,8 +769,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "niployments"
-                                          )
+                                              value !== "niployments",
+                                          ),
                                         );
                                   }}
                                 />
@@ -865,7 +794,7 @@ export default function Candidatura() {
           />
           <FormField
             control={form.control}
-            name="interest-justification"
+            name="interest_justification"
             render={({ field }) => (
               <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
                 <FormLabel className="flex shrink-0">
@@ -933,7 +862,7 @@ export default function Candidatura() {
           />
           <FormField
             control={form.control}
-            name="self-promotion"
+            name="self_promotion"
             render={({ field }) => (
               <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
                 <FormLabel className="flex shrink-0">
@@ -957,7 +886,7 @@ export default function Candidatura() {
           />
           <FormField
             control={form.control}
-            name="recruitment-first-interaction"
+            name="recruitment_first_interaction"
             render={({ field }) => (
               <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
                 <FormLabel className="flex shrink-0">
@@ -968,7 +897,7 @@ export default function Candidatura() {
                   <FormControl>
                     <div className="grid w-full gap-2">
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -979,7 +908,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "instagram"
+                                    "instagram",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -990,8 +919,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "instagram"
-                                          )
+                                              value !== "instagram",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1007,7 +936,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1018,7 +947,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "amigos"
+                                    "amigos",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -1029,8 +958,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "amigos"
-                                          )
+                                              value !== "amigos",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1046,7 +975,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1057,7 +986,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "professores"
+                                    "professores",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -1068,8 +997,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "professores"
-                                          )
+                                              value !== "professores",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1085,7 +1014,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1104,8 +1033,9 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "email"
-                                          )
+                                            (value: string) =>
+                                              value !== "email",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1121,7 +1051,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1132,7 +1062,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "aefeup"
+                                    "aefeup",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -1143,8 +1073,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "aefeup"
-                                          )
+                                              value !== "aefeup",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1160,7 +1090,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1179,8 +1109,9 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "banca"
-                                          )
+                                            (value: string) =>
+                                              value !== "banca",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1196,7 +1127,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1207,7 +1138,7 @@ export default function Candidatura() {
                               <FormControl>
                                 <Checkbox
                                   checked={OptionField.value?.includes(
-                                    "open_day"
+                                    "open_day",
                                   )}
                                   onCheckedChange={(checked: any) => {
                                     return checked
@@ -1218,8 +1149,8 @@ export default function Candidatura() {
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
                                             (value: string) =>
-                                              value !== "open_day"
-                                          )
+                                              value !== "open_day",
+                                          ),
                                         );
                                   }}
                                 />
@@ -1235,7 +1166,7 @@ export default function Candidatura() {
                       />
 
                       <FormField
-                        name="recruitment-first-interaction"
+                        name="recruitment_first_interaction"
                         control={form.control}
                         render={({ field: OptionField }) => {
                           return (
@@ -1254,8 +1185,9 @@ export default function Candidatura() {
                                         ])
                                       : OptionField.onChange(
                                           OptionField.value?.filter(
-                                            (value: string) => value !== "outro"
-                                          )
+                                            (value: string) =>
+                                              value !== "outro",
+                                          ),
                                         );
                                   }}
                                 />

@@ -19,14 +19,32 @@ export const application = pgTable("application", {
   linkedIn: text("linkedin"),
   github: text("github"),
   personalWebsite: text("personal_website"),
-
-  // TODO: remaining forms fields
-  //
+  phone: text("phone"),
+  studentYear: text("student_year"),
+  degree: text("degree"),
+  curricularYear: text("curricular_year"),
+  profilePicture: text("profile_picture"),
+  curriculum: text("curriculum"),
+  experience: text("experience"),
+  motivation: text("motivation"),
+  selfPromotion: text("self_promotion"),
+  interestJustification: text("interest_justification"),
+  recruitmentFirstInteraction: text("recruitment_first_interaction"),
+  suggestions: text("suggestions"),
   accepted: boolean("accepted").notNull().default(false),
   candidateId: text("candidate_id")
     .notNull()
-    .references(() => candidate.userId, { onDelete: "cascade" })
-    .unique(),
+    .references(() => candidate.userId, { onDelete: "cascade" }),
+});
+
+export const interests = pgTable("interests", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+export const applicationInterests = pgTable("application_interests", {
+  applicationId: integer("application_id").notNull().unique(),
+  interest: integer("interest").notNull().unique(),
 });
 
 export const applicationRelations = relations(application, ({ one, many }) => ({
