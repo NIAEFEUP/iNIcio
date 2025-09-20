@@ -1,25 +1,28 @@
-"use client"
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
 
-import { ChevronUp, ChevronDown } from "lucide-react"; 
+import { ChevronUp, ChevronDown } from "lucide-react";
+import type { User } from "@/lib/auth";
+import LogoutButton from "./logout/logout-button";
 
 type Props = {
   className?: string;
-  role: string;
+  user: User | null;
 };
 
-export default function Navbar({ className, role }: Props) {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isAuthenticated = true;
+export default function Navbar({ className, user }: Props) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   return (
-    <div className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm`}>
+    <nav
+      className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm mb-20`}
+    >
       <div className="flex justify-between items-center">
         <Link href="/">
           <img src="/logo.svg" alt="Logo" />
@@ -29,38 +32,53 @@ export default function Navbar({ className, role }: Props) {
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? (<ChevronUp />) : (<ChevronDown />)}
+          {isMenuOpen ? <ChevronUp /> : <ChevronDown />}
         </button>
       </div>
 
-      {/* Menu options */}
       <div
         className={`flex-col md:flex-row flex gap-5 transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "mt-5 opacity-100 max-h-screen" : "opacity-0 max-h-0 overflow-hidden"
-        } md:flex`}
+          isMenuOpen
+            ? "mt-5 opacity-100 max-h-screen"
+            : "opacity-0 max-h-0 overflow-hidden"
+        } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
-        <Link href="https://niaefeup.pt">Site do NI</Link>
-        <Link href="/alocacoes">Alocações</Link>
-        <Link href="/candidatos">Candidatos</Link>
-        {!isAuthenticated ? (
+        {user && (user.role === "recruiter" || user.role === "admin") && (
+          <>
+            <Link href="/alocacoes">Alocações</Link>
+            <Link href="/candidates">Candidatos</Link>
+          </>
+        )}
+
+        {user && user.role === "candidate" && (
+          <>
+            <Link href="/candidate/progress">Progresso</Link>
+            <Link href="/agendamento">Agendamento</Link>
+          </>
+        )}
+
+        {!user ? (
           <>
             <Link href="/login">Login</Link>
-            <Link href="/registo">
+            <Link href="/signup">
               <span className="text-primary">Registo</span>
             </Link>
           </>
         ) : (
-          <Link className="text-primary" href="/perfil">
-            <span className="text-primary">Perfil</span>
-          </Link>
-        )}
+          <>
+            {user && user.role === "admin" ? (
+              <Link className="text-primary" href="/admin">
+                <span className="text-primary">AdminUI</span>
+              </Link>
+            ) : null}
 
-        {role == "admin" ? (
-          <Link className="text-primary" href="/admin">
-            <span className="text-primary">AdminUI</span>
-          </Link>
-        ) : null}
+            <Link className="text-primary" href="/perfil">
+              <span className="text-primary">Perfil</span>
+            </Link>
+            <LogoutButton />
+          </>
+        )}
       </div>
-    </div>
+    </nav>
   );
 }
