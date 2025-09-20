@@ -1232,9 +1232,7 @@ export default function Candidatura() {
 
           {/* Submit Button */}
 
-          <Button size="lg" type="submit">
-            Submit
-          </Button>
+          <Button type="submit">Submeter</Button>
         </form>
       </Form>
     </div>
