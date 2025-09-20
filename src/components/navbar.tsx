@@ -6,13 +6,17 @@ import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import type { User } from "@/lib/auth";
 import LogoutButton from "./logout/logout-button";
+import { authClient } from "@/lib/auth-client";
 
 type Props = {
   className?: string;
-  user: User | null;
 };
 
-export default function Navbar({ className, user }: Props) {
+export default function Navbar({ className }: Props) {
+  const { data: session } = authClient.useSession();
+
+  console.log("SESSION: ", session);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -43,21 +47,23 @@ export default function Navbar({ className, user }: Props) {
             : "opacity-0 max-h-0 overflow-hidden"
         } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
-        {user && (user.role === "recruiter" || user.role === "admin") && (
-          <>
-            <Link href="/alocacoes">Alocações</Link>
-            <Link href="/candidates">Candidatos</Link>
-          </>
-        )}
+        {session &&
+          (session.user.role === "recruiter" ||
+            session.user.role === "admin") && (
+            <>
+              <Link href="/alocacoes">Alocações</Link>
+              <Link href="/candidates">Candidatos</Link>
+            </>
+          )}
 
-        {user && user.role === "candidate" && (
+        {session && session.user.role === "candidate" && (
           <>
             <Link href="/candidate/progress">Progresso</Link>
             <Link href="/agendamento">Agendamento</Link>
           </>
         )}
 
-        {!user ? (
+        {!session ? (
           <>
             <Link href="/login">Login</Link>
             <Link href="/signup">
@@ -66,7 +72,7 @@ export default function Navbar({ className, user }: Props) {
           </>
         ) : (
           <>
-            {user && user.role === "admin" ? (
+            {session && session.user.role === "admin" ? (
               <Link className="text-primary" href="/admin">
                 <span className="text-primary">AdminUI</span>
               </Link>
