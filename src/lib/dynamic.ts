@@ -1,4 +1,4 @@
-import { candidateToDynamic, dynamic } from "@/db/schema";
+import { candidateToDynamic, dynamic, slot } from "@/db/schema";
 import { db, Slot } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -14,24 +14,40 @@ export async function addCandidateToDynamic(
 
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
-  slot: Slot,
+  slotParam: Slot,
 ) {
-  const possibleDynamic = await db
-    .select()
-    .from(dynamic)
-    .where(eq(dynamic.slotId, slot.id));
+  await db.transaction(async (trx) => {
+    const s = await trx
+      .select()
+      .from(slot)
+      .where(eq(slot.id, slotParam.id))
+      .for("update");
 
-  if (possibleDynamic.length === 0) {
-    const [insertedDynamic] = await db
-      .insert(dynamic)
-      .values({
-        slotId: slot.id,
-        content: "",
-      })
-      .returning({ id: dynamic.id });
+    if (s.length > 0) {
+      await trx
+        .update(slot)
+        .set({ quantity: s[0].quantity - 1 })
+        .where(eq(slot.id, slotParam.id));
 
-    addCandidateToDynamic(candidateId, insertedDynamic.id);
-  } else {
-    addCandidateToDynamic(candidateId, possibleDynamic[0].id);
-  }
+      const possibleDynamic = await trx
+        .select()
+        .from(dynamic)
+        .where(eq(dynamic.slotId, slotParam.id))
+        .for("update");
+
+      if (possibleDynamic.length === 0) {
+        const [insertedDynamic] = await trx
+          .insert(dynamic)
+          .values({
+            slotId: slotParam.id,
+            content: "",
+          })
+          .returning({ id: dynamic.id });
+
+        addCandidateToDynamic(candidateId, insertedDynamic.id);
+      } else {
+        addCandidateToDynamic(candidateId, possibleDynamic[0].id);
+      }
+    }
+  });
 }

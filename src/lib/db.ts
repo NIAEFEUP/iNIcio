@@ -32,3 +32,11 @@ export const getUser = async (id: string) => {
     .where(eq(schema.user.id, id))
     .then((res) => res[0]);
 };
+
+export const getRecruitmentCandidatePhases = async () => {
+  return await db
+    .select()
+    .from(schema.recruitmentPhase)
+    .where(eq(schema.recruitmentPhase.role, "candidate"))
+    .then((res) => res);
+};

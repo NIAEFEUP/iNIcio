@@ -80,6 +80,9 @@ export default function SignUp() {
   return (
     <div className="flex flex-col w-1/2 mx-auto gap-y-4">
       <h1 className="text-center text-3xl font-bold">Registo</h1>
+      <p className="text-center">
+        Após o registo, serás redirecionado para o formulário de candidatura
+      </p>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
