@@ -15,6 +15,7 @@ export const slot = pgTable("slot", {
   id: serial("id").primaryKey(),
   start: timestamp("start").notNull(),
   duration: integer("duration").notNull(),
+  quantity: integer("quantity").notNull().default(1),
   type: text("type", {
     enum: ["interview", "dynamic", "interview-dynamic"],
   }).default("interview-dynamic"),

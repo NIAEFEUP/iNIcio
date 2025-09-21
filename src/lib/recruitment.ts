@@ -5,7 +5,7 @@ import {
   slot,
 } from "@/db/schema";
 import { db, RecruitmentPhase, Slot } from "./db";
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, gt, or, sql } from "drizzle-orm";
 
 export async function isRecruitmentActive() {
   const currentYear = new Date().getFullYear();
@@ -34,39 +34,57 @@ export async function getRecruitmentPhases() {
 export async function getInterviewSlots() {
   const currentYear = new Date().getFullYear();
 
-  const interviewSlots = await db
-    .select()
-    .from(slot)
-    .where(
-      or(
+  return await db.transaction(async (trx) => {
+    const interviewSlots = await trx
+      .select()
+      .from(slot)
+      .where(
         and(
-          eq(slot.type, "interview-dynamic"),
-          eq(slot.recruitmentYear, currentYear),
+          or(
+            and(
+              eq(slot.type, "interview-dynamic"),
+              eq(slot.recruitmentYear, currentYear),
+            ),
+            and(
+              eq(slot.type, "interview"),
+              eq(slot.recruitmentYear, currentYear),
+            ),
+          ),
+          gt(slot.quantity, 0),
         ),
-        and(eq(slot.type, "interview"), eq(slot.recruitmentYear, currentYear)),
-      ),
-    );
+      )
+      .for("update");
 
-  return interviewSlots;
+    return interviewSlots;
+  });
 }
 
 export async function getDynamicSlots() {
   const currentYear = new Date().getFullYear();
 
-  const dynamicSlots = await db
-    .select()
-    .from(slot)
-    .where(
-      or(
-        and(eq(slot.type, "dynamic"), eq(slot.recruitmentYear, currentYear)),
+  return await db.transaction(async (trx) => {
+    const dynamicSlots = await trx
+      .select()
+      .from(slot)
+      .where(
         and(
-          eq(slot.type, "interview-dynamic"),
-          eq(slot.recruitmentYear, currentYear),
+          or(
+            and(
+              eq(slot.type, "dynamic"),
+              eq(slot.recruitmentYear, currentYear),
+            ),
+            and(
+              eq(slot.type, "interview-dynamic"),
+              eq(slot.recruitmentYear, currentYear),
+            ),
+          ),
+          gt(slot.quantity, 0),
         ),
-      ),
-    );
+      )
+      .for("update");
 
-  return dynamicSlots;
+    return dynamicSlots;
+  });
 }
 
 export async function isRecruitmentPhaseDone(
