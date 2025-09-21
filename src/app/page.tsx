@@ -4,6 +4,8 @@ import "./globals.css";
 import { Button } from "@/components/ui/button";
 import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 
+import { Bell, Clock, Heart, ArrowRight, Link } from "lucide-react";
+
 export default async function Home() {
   const recruitmentActive = await isRecruitmentActive();
 
@@ -14,17 +16,40 @@ export default async function Home() {
           <RecruitmentActiveMessage />
         </>
       ) : (
-        <div className="flex flex-col items-center gap-10 lg:w-1/2">
-          <h1 className="font-bold px-5 text-5xl lg:text-9xl text-center">
-            De momento <span className="text-primary">não</span> estamos a
-            recrutar 😔
-          </h1>
-          <div className="text-3xl w-[75%] text-justify lg:text-center">
-            Se tiveres interesse em juntar-te à equipa do{" "}
-            <span className="text-primary">NIAEFEUP</span>, contacta-nos para
-            saberes quando vamos abrir o próximo recrutamento.
-          </div>{" "}
-        </div>
+        <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
+          <div className="container mx-auto px-4 text-center">
+            <div className="max-w-4xl mx-auto">
+              {/* Status indicator */}
+              <div className="inline-flex items-center gap-2 bg-muted/50 text-muted-foreground px-4 py-2 rounded-full text-sm mb-8">
+                <Clock className="h-4 w-4" />
+                Estado do Recrutamento
+              </div>
+
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
+                De momento <span className="text-primary">não</span> estamos
+                <br />
+                <span className="text-foreground">a recrutar</span>
+              </h1>
+
+              <div className="flex justify-center mb-8">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                  <span className="text-3xl">😔</span>
+                </div>
+              </div>
+
+              <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
+                Se tiveres interesse em juntar-te à equipa do{" "}
+                <span className="text-primary font-semibold">NIAEFEUP</span>,
+                contacta-nos para saberes quando vamos abrir o próximo
+                recrutamento.
+              </p>
+            </div>
+          </div>
+
+          {/* Decorative elements */}
+          <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
+          <div className="absolute bottom-20 right-10 w-32 h-32 bg-accent/10 rounded-full blur-xl"></div>
+        </section>
       )}
     </div>
   );
