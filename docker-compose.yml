@@ -1,4 +1,11 @@
 services:
+  websocket:
+    image: lakhoune/yjs-websocket
+    ports:
+      - "1234:1234"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1234
   db:
     image: postgres:17
     restart: always

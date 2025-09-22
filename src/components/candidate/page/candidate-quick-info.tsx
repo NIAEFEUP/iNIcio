@@ -27,7 +27,7 @@ export default function CandidateQuickInfo({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-center">{candidate.name}</CardTitle>
+        <CardTitle className="text-center">{candidate?.name}</CardTitle>
         <CardDescription>
           <img src="https://picsum.photos/200" alt="Picture of the author" />
         </CardDescription>
