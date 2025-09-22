@@ -27,3 +27,20 @@ export default async function addInterviewWithSlot(
     }
   });
 }
+
+export async function getInterview(candidateId: string) {
+  const interviews = await db
+    .select()
+    .from(interview)
+    .where(eq(interview.candidateId, candidateId));
+  return interviews[0];
+}
+
+export async function updateInterview(candidateId: string, content: any) {
+  await db.transaction(async (trx) => {
+    await trx
+      .update(interview)
+      .set({ content: content })
+      .where(eq(interview.candidateId, candidateId));
+  });
+}

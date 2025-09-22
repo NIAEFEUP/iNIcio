@@ -1,13 +1,32 @@
+"use server";
+
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import { Separator } from "@/components/ui/separator";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import { getUser } from "@/lib/db";
+import { db, getUser } from "@/lib/db";
 import { getApplication, getApplicationInterests } from "@/lib/application";
+import { getInterview, updateInterview } from "@/lib/interview";
+import { eq } from "drizzle-orm";
+import { interview } from "@/db/schema";
 
 export default async function InterviewPage({ params }: any) {
+  const { id } = await params;
+
+  async function handleSave(content: any) {
+    "use server";
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    await updateInterview(id, content);
+
+    return true;
+  }
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -17,7 +36,7 @@ export default async function InterviewPage({ params }: any) {
   const applicationInterests = await getApplicationInterests(application);
   const comments = [];
 
-  const { id } = await params;
+  const interview = await getInterview(id);
 
   return (
     <>
@@ -38,6 +57,8 @@ export default async function InterviewPage({ params }: any) {
             roomId={`interview-${id}`}
             websocketUrl="ws://0.0.0.0:1234"
             userName={session ? session.user.name : ""}
+            interview={interview}
+            saveHandler={handleSave}
           />
         </section>
       </div>

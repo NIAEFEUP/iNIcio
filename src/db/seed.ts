@@ -11,12 +11,14 @@ import {
   slot,
   interview,
   dynamic,
+  recruitmentPhaseStatus,
 } from "./schema";
 
 async function main() {
   await db.delete(interview);
   await db.delete(dynamic);
   await db.delete(slot);
+  await db.delete(recruitmentPhaseStatus);
   await db.delete(recruitmentPhase);
   await db.delete(recruiterToCandidate);
   await db.delete(application);
@@ -133,6 +135,17 @@ async function main() {
     duration: 30,
     type: "interview-dynamic",
     recruitmentYear: 2025,
+  });
+
+  await db.insert(interview).values({
+    content: [
+      {
+        type: "paragraph",
+        content: "Olá, tudo bem?",
+      },
+    ],
+    candidateId: "1",
+    slot: 1,
   });
 }
 

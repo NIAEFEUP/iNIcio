@@ -1,4 +1,11 @@
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  serial,
+  text,
+  jsonb,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";
@@ -6,7 +13,7 @@ import { slot } from "./recruitment_phase";
 
 export const interview = pgTable("interview", {
   id: serial("id").primaryKey(),
-  content: text("content").notNull(),
+  content: jsonb("content").notNull().default([]),
   candidateId: text("candidate_id")
     .notNull()
     .references(() => candidate.userId, { onDelete: "cascade" }),
