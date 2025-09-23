@@ -43,6 +43,16 @@ export const applicationInterests = pgTable("application_interests", {
   interest: text("interest").notNull(),
 });
 
+export const applicationInterestsRelations = relations(
+  applicationInterests,
+  ({ one }) => ({
+    application: one(application, {
+      fields: [applicationInterests.applicationId],
+      references: [application.id],
+    }),
+  }),
+);
+
 export const applicationRelations = relations(application, ({ one, many }) => ({
   candidate: one(candidate, {
     fields: [application.candidateId],
@@ -51,4 +61,5 @@ export const applicationRelations = relations(application, ({ one, many }) => ({
   appreciations: many(appreciation),
   applicationToTags: many(applicationToTag),
   comments: many(applicationComment),
+  interests: many(applicationInterests),
 }));

@@ -51,3 +51,38 @@ export async function tryToAddCandidateToDynamic(
     }
   });
 }
+
+export async function getDynamic(dynamicId: number) {
+  return await db.query.dynamic.findFirst({
+    where: eq(dynamic.id, dynamicId),
+    with: {
+      candidates: {
+        with: {
+          candidate: {
+            with: {
+              user: true,
+              application: {
+                with: {
+                  interests: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function updateDynamic(dynamicId: number, content: any) {
+  await db.transaction(async (trx) => {
+    try {
+      await trx
+        .update(dynamic)
+        .set({ content: content })
+        .where(eq(dynamic.id, dynamicId));
+    } catch (e) {
+      console.error(e);
+    }
+  });
+}

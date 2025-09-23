@@ -1,12 +1,12 @@
 import { relations } from "drizzle-orm";
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { dynamicComment } from "./comment";
 import { slot } from "./recruitment_phase";
 
 export const dynamic = pgTable("dynamic", {
   id: serial("id").primaryKey(),
-  content: text("content").notNull(),
+  content: jsonb("content"),
   slotId: integer("slot_id")
     .notNull()
     .references(() => slot.id),
@@ -31,7 +31,7 @@ export const recruiterToDynamic = pgTable("recruiter_to_dynamic", {
 });
 
 export const dynamicRelations = relations(dynamic, ({ many }) => ({
-  candidate: many(candidateToDynamic),
+  candidates: many(candidateToDynamic),
   recruiters: many(recruiterToDynamic),
   comments: many(dynamicComment),
 }));

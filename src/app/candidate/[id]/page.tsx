@@ -13,7 +13,6 @@ import { getApplicationComments } from "@/lib/comment";
 import { getUser } from "@/lib/db";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 type CandidatePageProps = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

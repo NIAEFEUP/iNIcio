@@ -65,6 +65,10 @@ export const recruiterRelations = relations(recruiter, ({ many }) => ({
 
 export const candidateRelations = relations(candidate, ({ many, one }) => ({
   knownRecruiters: many(recruiterToCandidate),
+  user: one(user, {
+    fields: [candidate.userId],
+    references: [user.id],
+  }),
   application: one(application, {
     fields: [candidate.userId],
     references: [application.candidateId],

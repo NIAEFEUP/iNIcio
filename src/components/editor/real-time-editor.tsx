@@ -15,7 +15,7 @@ interface RealTimeEditorProps {
   roomId: string;
   websocketUrl: string;
   userName: string;
-  interview: Interview;
+  entity: { content: string } & Record<string, any>;
   saveHandler: (content: any) => void;
 }
 
@@ -23,7 +23,7 @@ export default function RealTimeEditor({
   roomId,
   websocketUrl,
   userName,
-  interview,
+  entity,
   saveHandler,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => new Y.Doc(), []);
@@ -51,7 +51,7 @@ export default function RealTimeEditor({
       }
 
       if (editor.document.length === 1) {
-        editor.insertBlocks(interview.content, editor.document[0]);
+        editor.insertBlocks(entity?.content, editor.document[0]);
       }
     }
 
@@ -62,7 +62,7 @@ export default function RealTimeEditor({
     provider.on("sync", setDefault);
 
     return () => provider.off("sync", setDefault);
-  }, [provider, editor, interview?.content]);
+  }, [provider, editor, entity?.content]);
 
   useEffect(() => {
     const id = setInterval(() => {

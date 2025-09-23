@@ -17,6 +17,8 @@ import { redirect } from "next/navigation";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
+import EditorFrame from "@/components/editor/editor-frame";
+import CommentFrame from "@/components/comments/comment-frame";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -76,32 +78,24 @@ export default async function InterviewPage({ params }: any) {
                 applicationInterests={applicationInterests}
               />
 
-              <CandidateComments
-                comments={comments}
-                saveToDatabase={handleCommentSave}
-              />
+              <CommentFrame>
+                <CandidateComments
+                  comments={comments}
+                  saveToDatabase={handleCommentSave}
+                />
+              </CommentFrame>
             </div>
 
             <div className="lg:col-span-4">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Editor de Texto
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-full">
-                  <div className="space-y-4 h-full flex flex-col">
-                    <RealTimeEditor
-                      roomId={`interview-${id}`}
-                      websocketUrl="ws://0.0.0.0:1234"
-                      userName={session ? session.user.name : ""}
-                      interview={interview}
-                      saveHandler={handleContentSave}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <EditorFrame>
+                <RealTimeEditor
+                  roomId={`interview-${id}`}
+                  websocketUrl={process.env.WEBSOCKET_URL}
+                  userName={session ? session.user.name : ""}
+                  entity={interview}
+                  saveHandler={handleContentSave}
+                />
+              </EditorFrame>
             </div>
           </div>
         </div>

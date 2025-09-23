@@ -50,7 +50,7 @@ export async function addInterviewComment(
   content: string,
   candidateId: string,
 ): Promise<boolean> {
-  await db.transaction(async (trx) => {
+  return await db.transaction(async (trx) => {
     const i = await trx
       .select()
       .from(interview)
