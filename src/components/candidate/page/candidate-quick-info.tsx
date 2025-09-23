@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +14,7 @@ import { Application, User } from "@/lib/db";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Building2, Calendar, PersonStanding } from "lucide-react";
+import { getCandidateDynamic } from "@/lib/dynamic";
 
 interface CandidateQuickInfoProps {
   candidate: User;
@@ -23,11 +22,13 @@ interface CandidateQuickInfoProps {
   applicationInterests: string[];
 }
 
-export default function CandidateQuickInfo({
+export default async function CandidateQuickInfo({
   candidate,
   application,
   applicationInterests,
 }: CandidateQuickInfoProps) {
+  const dynamic = await getCandidateDynamic(candidate.id);
+
   return (
     <Card>
       <CardContent className="space-y-4">
@@ -72,7 +73,7 @@ export default function CandidateQuickInfo({
         </div>
       </CardContent>
       <CardFooter className="text-sm flex flex-row gap-2 items-center justify-center">
-        <Link href={`/candidate/${candidate?.id}/dynamic`}>Dinâmica</Link>
+        <Link href={`/dynamic/${dynamic?.id}`}>Dinâmica</Link>
         <Link href={`/candidate/${candidate?.id}/interview`}>Entrevista</Link>
       </CardFooter>
     </Card>

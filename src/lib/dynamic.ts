@@ -74,6 +74,28 @@ export async function getDynamic(dynamicId: number) {
   });
 }
 
+export async function getCandidateDynamic(candidateId: string) {
+  return await db.query.dynamic.findFirst({
+    with: {
+      candidates: {
+        where: eq(candidateToDynamic.candidateId, candidateId),
+        with: {
+          candidate: {
+            with: {
+              user: true,
+              application: {
+                with: {
+                  interests: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 export async function updateDynamic(dynamicId: number, content: any) {
   await db.transaction(async (trx) => {
     try {
