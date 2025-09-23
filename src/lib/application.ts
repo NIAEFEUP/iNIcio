@@ -15,6 +15,14 @@ export async function getApplication(id: string): Promise<Application | null> {
   return app[0];
 }
 
+export async function getAllPossibleApplicationInterests(): Promise<string[]> {
+  const interests = await db
+    .selectDistinct({ interest: applicationInterests.interest })
+    .from(applicationInterests);
+
+  return interests.map((i) => i.interest);
+}
+
 export async function getApplicationInterests(
   application: Application | null | undefined,
 ): Promise<string[]> {
