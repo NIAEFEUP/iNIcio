@@ -17,7 +17,7 @@ export default function ProgressPhaseCardShowcase({
 }: ProgressPhaseCardShowcaseProps) {
   return (
     <>
-      <div className="flex flex-col  justify-center mx-auto">
+      <div className="flex flex-col gap-4 justify-center mx-128">
         {progressPhases.map((phase, idx) => {
           return (
             <div key={`${phase.title}-${idx}`}>
@@ -35,9 +35,9 @@ export default function ProgressPhaseCardShowcase({
                 phaseEnd={phase.end}
               />
 
-              {idx !== progressPhases.length - 1 && (
-                <div className="relative left-1/2 h-16 w-1 bg-gray-300" />
-              )}
+              {/* {idx !== progressPhases.length - 1 && ( */}
+              {/*   <div className="relative left-1/2 h-16 w-1 bg-gray-300" /> */}
+              {/* )} */}
             </div>
           );
         })}
