@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -5,32 +7,71 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Application, User } from "@/lib/db";
+import { Application, Dynamic, RecruiterToCandidate, User } from "@/lib/db";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Calendar, PersonStanding } from "lucide-react";
-import { getCandidateDynamic } from "@/lib/dynamic";
+import { Building2, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface CandidateQuickInfoProps {
   candidate: User;
   application: Application | null;
   applicationInterests: string[];
+  dynamic: Dynamic | null;
+  friendCheckboxActive?: boolean;
+  friends?: Array<RecruiterToCandidate>;
 }
 
-export default async function CandidateQuickInfo({
+export default function CandidateQuickInfo({
   candidate,
   application,
   applicationInterests,
+  dynamic,
+  friendCheckboxActive = false,
+  friends = [],
 }: CandidateQuickInfoProps) {
-  const dynamic = await getCandidateDynamic(candidate.id);
+  const isFriend = friends.some(
+    (friend) => friend.candidateId === candidate.id,
+  );
+
+  const [checked, setChecked] = useState<boolean>(isFriend);
+
+  const addFriend = async () => {
+    setChecked(!checked);
+
+    const result = await fetch("/api/friends", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        candidateId: candidate.id,
+      }),
+    });
+
+    if (!result.ok) {
+      setChecked(!checked);
+    }
+  };
 
   return (
     <Card>
+      {friendCheckboxActive && (
+        <CardHeader className="flex flex-row items-center">
+          <Checkbox
+            id={`knows-candidate-${candidate.id}`}
+            className="border border-2 border-black"
+            checked={checked}
+            onCheckedChange={addFriend}
+          />
+          <Label htmlFor={`knows-candidate-${candidate.id}`}>Conheço</Label>
+        </CardHeader>
+      )}
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
@@ -38,8 +79,9 @@ export default async function CandidateQuickInfo({
             <AvatarFallback>{candidate?.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="text-xl font-semibold">{candidate?.name}</h3>
-            <p className="text-muted-foreground">Candidato</p>
+            <Link href={`/candidate/${candidate?.id}`}>
+              <h3 className="text-xl font-semibold">{candidate?.name}</h3>
+            </Link>
           </div>
         </div>
 

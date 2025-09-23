@@ -87,5 +87,5 @@ export const candidateRelations = relations(candidate, ({ many, one }) => ({
     fields: [candidate.userId],
     references: [interview.candidateId],
   }),
-  dynamics: many(candidateToDynamic),
+  dynamic: one(candidateToDynamic),
 }));

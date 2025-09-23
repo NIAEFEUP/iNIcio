@@ -4,8 +4,9 @@ import CommentFrame from "@/components/comments/comment-frame";
 import EditorFrame from "@/components/editor/editor-frame";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { auth } from "@/lib/auth";
-import { getDynamic, updateDynamic } from "@/lib/dynamic";
+import { createDynamicComment, getDynamic, updateDynamic } from "@/lib/dynamic";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -17,8 +18,7 @@ export default async function DynamicPage({ params }: any) {
   async function handleContentSave(content: any) {
     "use server";
 
-    // CHANGE ROLE
-    // if (session?.user.role !== "recruiter") redirect("/");
+    if (!session || session?.user.role !== "recruiter") redirect("/");
 
     await updateDynamic(id, content);
 
@@ -28,10 +28,9 @@ export default async function DynamicPage({ params }: any) {
   async function handleCommentSave(content: string) {
     "use server";
 
-    // CHANGE ROLE
-    // if (session?.user.role !== "recruiter") redirect("/");
+    if (!session || session?.user.role !== "recruiter") redirect("/");
 
-    // await createDynamicComment(id, content);
+    await createDynamicComment(id, content, session?.user.id);
 
     return true;
   }
@@ -47,6 +46,7 @@ export default async function DynamicPage({ params }: any) {
             candidate={candidate.candidate.user}
             application={candidate.candidate.application}
             interests={candidate.candidate.application?.interests}
+            dynamic={dynamic}
           />
         ))}
       </div>

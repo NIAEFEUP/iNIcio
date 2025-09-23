@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
+import { getCandidateDynamic } from "@/lib/dynamic";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -65,6 +66,7 @@ export default async function InterviewPage({ params }: any) {
   const comments = [];
 
   const interview = await getInterview(id);
+  const dynamic = await getCandidateDynamic(id);
 
   return (
     <>
@@ -76,6 +78,7 @@ export default async function InterviewPage({ params }: any) {
                 candidate={candidate}
                 application={application}
                 applicationInterests={applicationInterests}
+                dynamic={dynamic}
               />
 
               <CommentFrame>

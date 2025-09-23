@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { getApplicationComments } from "@/lib/comment";
 
 import { getUser } from "@/lib/db";
+import { getCandidateDynamic } from "@/lib/dynamic";
 
 import { headers } from "next/headers";
 
@@ -31,6 +32,8 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const applicationInterests = await getApplicationInterests(application);
   const comments = await getApplicationComments(id);
 
+  const dynamic = await getCandidateDynamic(id);
+
   const saveToDatabase = async (content: string) => {
     "use server";
 
@@ -44,6 +47,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
           candidate={candidate}
           application={application}
           applicationInterests={applicationInterests}
+          dynamic={dynamic}
         />
         <CandidateAnswers key={crypto.randomUUID()} application={application} />
       </section>

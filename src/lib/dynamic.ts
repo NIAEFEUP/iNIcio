@@ -1,4 +1,4 @@
-import { candidateToDynamic, dynamic, slot } from "@/db/schema";
+import { candidateToDynamic, dynamic, dynamicComment, slot } from "@/db/schema";
 import { db, Slot } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -107,4 +107,39 @@ export async function updateDynamic(dynamicId: number, content: any) {
       console.error(e);
     }
   });
+}
+
+export async function createDynamicComment(
+  dynamicId: number,
+  content: string,
+  authorId: string,
+) {
+  await db.transaction(async (trx) => {
+    try {
+      await trx
+        .insert(dynamicComment)
+        .values({
+          content: content,
+          dynamicId: dynamicId,
+          authorId: authorId,
+        })
+        .returning({ id: dynamicComment.id });
+    } catch (e) {
+      console.error(e);
+    }
+  });
+}
+
+export async function getAllCandidatesWithDynamic() {
+  const candidates = await db.query.candidate.findMany({
+    with: {
+      user: true,
+      dynamic: true,
+    },
+  });
+
+  return candidates.map((c) => ({
+    ...c.user,
+    dynamic: c.dynamic,
+  }));
 }
