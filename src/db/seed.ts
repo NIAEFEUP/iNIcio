@@ -61,6 +61,34 @@ async function main() {
     userId: "2",
   });
 
+  await db.insert(user).values({
+    id: "3",
+    name: "Recrutador 1",
+    email: "teste@teste.com",
+    emailVerified: true,
+    image:
+      "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSsuz2-gtje6NEAJQN1o9Nt-2vqFFuzXiuSa66ySKTnCKso2JPquWNlrGgC5ejIHyad3Itp5h2XkSESUmj1SZgHhCIFVa1ZuDm4efLyEUqz",
+    role: "recruiter",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.insert(account).values({
+    id: "1",
+    accountId: "1",
+    providerId: "1",
+    userId: "3",
+    accessToken: "1",
+    refreshToken: "1",
+    idToken: "1",
+    accessTokenExpiresAt: new Date(),
+    refreshTokenExpiresAt: new Date(),
+    scope: "1",
+    password: "testeteste",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
   // await db.insert(recruiter).values({
   //   userId: "3",
   // });

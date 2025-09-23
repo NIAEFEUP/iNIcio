@@ -8,6 +8,12 @@ import { interview, recruiterToInterview } from "./interview";
 import { candidateToDynamic, recruiterToDynamic } from "./dynamic";
 import { appreciation } from "./appreciation";
 
+export const admin = pgTable("admin", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id),
+});
+
 export const recruiter = pgTable("recruiter", {
   userId: text("user_id")
     .primaryKey()
@@ -28,6 +34,10 @@ export const userRelations = relations(user, ({ one, many }) => ({
   candidate: one(candidate, {
     fields: [user.id],
     references: [candidate.userId],
+  }),
+  admin: one(admin, {
+    fields: [user.id],
+    references: [admin.userId],
   }),
   recruitmentPhaseStatuses: many(recruitmentPhaseStatus),
   userToRecruitment: many(usersToRecruitments),
