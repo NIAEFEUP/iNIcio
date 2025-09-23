@@ -72,5 +72,11 @@ export default function RealTimeEditor({
     return () => clearInterval(id);
   });
 
-  return <BlockNoteView className="w-full mx-4 p-4 h-128" editor={editor} />;
+  return (
+    <BlockNoteView
+      className="bg-white w-full mx-4 p-4"
+      editor={editor}
+      data-color-scheme="light"
+    />
+  );
 }

@@ -2,7 +2,11 @@ import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import { Separator } from "@/components/ui/separator";
-import { getApplication, getApplicationInterests } from "@/lib/application";
+import {
+  getApplication,
+  getApplicationInterests,
+  submitApplicationComment,
+} from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getApplicationComments } from "@/lib/comment";
 
@@ -19,7 +23,7 @@ type CandidatePageProps = {
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (session?.user.role !== "recruiter") redirect("/");
+  // if (session?.user.role !== "recruiter") redirect("/");
 
   const { id } = await params;
 
@@ -27,6 +31,12 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const application = await getApplication(id);
   const applicationInterests = await getApplicationInterests(application);
   const comments = await getApplicationComments(id);
+
+  const saveToDatabase = async (content: string) => {
+    "use server";
+
+    return await submitApplicationComment(id, content);
+  };
 
   return (
     <div className="flex flex-col gap-16 mx-32">
@@ -42,7 +52,10 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
       <section className="flex flex-col gap-4">
         <Separator />
         <h2 className="text-2xl font-bold">Comentários</h2>
-        <CandidateComments comments={comments} candidate={candidate} />
+        <CandidateComments
+          comments={comments}
+          saveToDatabase={saveToDatabase}
+        />
       </section>
     </div>
   );

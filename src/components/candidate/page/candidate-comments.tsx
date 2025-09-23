@@ -15,12 +15,12 @@ interface CandidateCommentsProps {
     user: User | null;
     application_comment: ApplicationComment | null;
   }>;
-  candidate: User;
+  saveToDatabase: (content: string) => Promise<boolean>;
 }
 
 export default function CandidateComments({
   comments,
-  candidate,
+  saveToDatabase,
 }: CandidateCommentsProps) {
   const { data: session } = authClient.useSession();
 
@@ -69,20 +69,9 @@ export default function CandidateComments({
     setCommentValue("");
 
     try {
-      const res = await fetch(
-        `/api/candidate/${candidate.id}/application/comment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: commentValue,
-          }),
-        },
-      );
+      const res = await saveToDatabase(commentValue);
 
-      if (!res.ok) {
+      if (!res) {
         setCommentValue(prevComment);
         setCommentsState(comments ?? []);
       }

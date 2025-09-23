@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import {
   Card,
   CardContent,
@@ -12,6 +14,8 @@ import {
 } from "@/components/ui/card";
 import { Application, User } from "@/lib/db";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+import { Building2, Calendar, PersonStanding } from "lucide-react";
 
 interface CandidateQuickInfoProps {
   candidate: User;
@@ -26,33 +30,50 @@ export default function CandidateQuickInfo({
 }: CandidateQuickInfoProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-center">{candidate?.name}</CardTitle>
-        <CardDescription>
-          <img src="https://picsum.photos/200" alt="Picture of the author" />
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-row gap-2">
-          <p className="font-bold">Curso:</p>
-          <p className="uppercase">{application?.degree}</p>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={"" || "/placeholder.svg"} alt={candidate?.name} />
+            <AvatarFallback>{candidate?.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="text-xl font-semibold">{candidate?.name}</h3>
+            <p className="text-muted-foreground">Candidato</p>
+          </div>
         </div>
-        <div className="flex flex-row gap-2">
-          <p className="font-bold">Ano:</p>
-          <p>{application?.curricularYear}</p>
-        </div>
-        <div className="flex flex-col">
-          <p className="font-bold">Departamentos:</p>
-          <div className="flex flex-row flex-wrap">
-            {applicationInterests?.map((interest) => (
-              <Badge key={crypto.randomUUID()}>{interest}</Badge>
-            ))}
+
+        <Separator />
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Curso:</span>
+            <span className="text-sm text-muted-foreground">
+              {application?.degree}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Ano:</span>
+            <span className="text-sm text-muted-foreground">
+              {application?.curricularYear}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Departamentos:</span>
+            <div className="flex flex-wrap gap-2">
+              {applicationInterests?.map((interest) => (
+                <Badge key={crypto.randomUUID()}>{interest}</Badge>
+              ))}
+            </div>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-sm flex flex-row gap-2">
-        <Link href="/perfil">Dinâmica</Link>
-        <Link href="/perfil">Entrevista</Link>
+      <CardFooter className="text-sm flex flex-row gap-2 items-center justify-center">
+        <Link href={`/candidate/${candidate?.id}/dynamic`}>Dinâmica</Link>
+        <Link href={`/candidate/${candidate?.id}/interview`}>Entrevista</Link>
       </CardFooter>
     </Card>
   );

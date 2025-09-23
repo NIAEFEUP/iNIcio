@@ -1,4 +1,4 @@
-import { interview, slot } from "@/db/schema";
+import { interview, interviewComment, slot } from "@/db/schema";
 import { db, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 
@@ -42,5 +42,34 @@ export async function updateInterview(candidateId: string, content: any) {
       .update(interview)
       .set({ content: content })
       .where(eq(interview.candidateId, candidateId));
+  });
+}
+
+export async function addInterviewComment(
+  authorId: string,
+  content: string,
+  candidateId: string,
+): Promise<boolean> {
+  await db.transaction(async (trx) => {
+    const i = await trx
+      .select()
+      .from(interview)
+      .where(eq(interview.candidateId, candidateId))
+      .for("update");
+
+    if (i.length === 0) return false;
+
+    try {
+      await trx.insert(interviewComment).values({
+        content: content,
+        authorId: authorId,
+        interviewId: i[0].id,
+      });
+
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   });
 }
