@@ -46,20 +46,22 @@ export default function Navbar({ className }: Props) {
         } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
       >
         {session &&
-          (session.user.role === "recruiter" ||
-            session.user.role === "admin") && (
+          (("role" in session.user && session.user.role === "recruiter") ||
+            ("role" in session.user && session.user.role === "admin")) && (
             <>
               <Link href="/alocacoes">Alocações</Link>
               <Link href="/candidates">Candidatos</Link>
             </>
           )}
 
-        {session && session.user.role === "candidate" && (
-          <>
-            <Link href="/candidate/progress">Progresso</Link>
-            <Link href="/agendamento">Agendamento</Link>
-          </>
-        )}
+        {session &&
+          "role" in session.user &&
+          session.user.role === "candidate" && (
+            <>
+              <Link href="/candidate/progress">Progresso</Link>
+              <Link href="/agendamento">Agendamento</Link>
+            </>
+          )}
 
         {!session ? (
           <>
@@ -70,7 +72,9 @@ export default function Navbar({ className }: Props) {
           </>
         ) : (
           <>
-            {session && session.user.role === "admin" ? (
+            {session &&
+            "role" in session.user &&
+            session.user.role === "admin" ? (
               <Link className="text-primary" href="/admin">
                 <span className="text-primary">AdminUI</span>
               </Link>

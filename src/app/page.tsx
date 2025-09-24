@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { isRecruitmentActive } from "@/lib/recruitment";
 import "./globals.css";
 

@@ -1,44 +1,60 @@
-ARG INICIO_VARS_METHOD=dotenv
+FROM node:22.12.0-alpine AS base
 
-FROM node:21-alpine3.19 AS build
+WORKDIR /app
 
-RUN mkdir -p /usr/src/inicio
-WORKDIR /usr/src/inicio
+RUN npm install -g corepack@latest
 
-COPY .*rc ./
-COPY *.json ./
-COPY .prettier* ./
-COPY next.config.ts ./
+# Install dependencies only when needed
+FROM base AS deps
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+COPY package.json . 
+
+COPY package-lock.json* .
 
 RUN npm install
 
-COPY public/ public/
-COPY src/ src/
+# Development environment run
+FROM base AS dev
 
-FROM build AS dev
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-EXPOSE $PORT
+EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+RUN npm run dev
 
-# prod-build-with-dotenv
-FROM build AS prod-build-with-dotenv
-
-ARG INICIO_DOTENV_FILE=.env.production
-COPY ${INICIO_DOTENV_FILE} .env.production
-
-# prod-build-with-var
-FROM build AS prod-build-with-content-var
+# Build using GH secrets (for registry)
+FROM base AS prod-build-with-content-vars
 
 ARG INICIO_VARS_CONTENT
-RUN echo "${INICIO_VARS_CONTENT}" | base64 -d > .env.production
+RUN echo "${INICIO_VARS_CONTENT}" | base64 -d > .env
 
-# prod-build
-FROM prod-build-with-${INICIO_VARS_METHOD} AS prod-build
+# Build source code for production
+FROM prod-build-with-content-vars AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 RUN npm run build
 
-# prod
-FROM nginx:alpine AS prod
+# Production image, copy all the files and run next
+FROM base AS prod 
+ENV NODE_ENV production
 
-COPY --from=prod-build /usr/src/tts-fe/build /usr/share/nginx/html
-COPY nginx.tts.conf /etc/nginx/conf.d/default.conf
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+CMD HOSTNAME="0.0.0.0" node server.js

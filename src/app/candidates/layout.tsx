@@ -11,9 +11,9 @@ export default async function FriendsLayout({
     headers: await headers(),
   });
 
-  if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
-    return redirect("/");
-  }
+  // if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
+  //   return redirect("/");
+  // }
 
   return <>{children}</>;
 }

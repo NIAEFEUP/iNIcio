@@ -45,7 +45,11 @@ export default async function DynamicPage({ params }: any) {
             key={candidate.candidateId}
             candidate={candidate.candidate.user}
             application={candidate.candidate.application}
-            interests={candidate.candidate.application?.interests}
+            applicationInterests={
+              candidate.candidate.application?.interests.map(
+                (i) => i.interest,
+              ) ?? []
+            }
             dynamic={dynamic}
           />
         ))}

@@ -8,14 +8,12 @@ import "@blocknote/core/fonts/inter.css";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { getRandomColor } from "@/lib/color";
-import { Interview } from "@/lib/db";
-import { BlockNoteEditor } from "@blocknote/core";
 
 interface RealTimeEditorProps {
   roomId: string;
   websocketUrl: string;
   userName: string;
-  entity: { content: string } & Record<string, any>;
+  entity: { content: any } & Record<string, any>;
   saveHandler: (content: any) => void;
 }
 
@@ -27,7 +25,9 @@ export default function RealTimeEditor({
   saveHandler,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => new Y.Doc(), []);
-  const provider = useMemo(
+  const provider:
+    | WebsocketProvider
+    | (WebsocketProvider & { isReady: boolean }) = useMemo(
     () => new WebsocketProvider(websocketUrl, roomId, doc),
     [doc, websocketUrl, roomId],
   );
@@ -55,7 +55,7 @@ export default function RealTimeEditor({
       }
     }
 
-    if (provider.isReady) {
+    if ("isReady" in provider && provider.isReady) {
       setDefault();
     }
 

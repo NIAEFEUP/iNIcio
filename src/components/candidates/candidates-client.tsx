@@ -25,7 +25,10 @@ import { availableCourses, availableCurricularYears } from "@/lib/constants";
 
 interface CandidatesClientProps {
   candidates: Array<
-    User & { knownRecruiters: RecruiterToCandidate } & {
+    User & {
+      knownRecruiters: RecruiterToCandidate[];
+    } & {
+      dynamic: { candidateId: string; dynamicId: number };
       application: (Application & { interests: string[] }) | null;
     }
   >;
@@ -265,6 +268,9 @@ export default function CandidatesClient({
         {filteredCandidates.map(
           (
             candidate: User & {
+              knownRecruiters: RecruiterToCandidate[];
+            } & {
+              dynamic: { candidateId: string; dynamicId: number };
               application: (Application & { interests: string[] }) | null;
             },
           ) => (
