@@ -11,12 +11,12 @@ export default async function Friends() {
   });
 
   const candidates = await getAllCandidatesWithDynamic();
-  const friends = await getFriendsOf(session ? session.user.id : "");
+
+  console.log("CANDIDATES: ", candidates);
 
   return (
     <CandidatesClient
       candidates={candidates}
-      friends={friends}
       availableDepartments={await getAllPossibleApplicationInterests()}
     />
   );

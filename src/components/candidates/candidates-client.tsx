@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Application, User } from "@/lib/db";
+import { Application, RecruiterToCandidate, User } from "@/lib/db";
 import { useEffect, useState } from "react";
 import CandidateQuickInfo from "../candidate/page/candidate-quick-info";
 
@@ -25,12 +25,10 @@ import { availableCourses, availableCurricularYears } from "@/lib/constants";
 
 interface CandidatesClientProps {
   candidates: Array<
-    User & { application: (Application & { interests: string[] }) | null }
+    User & { knownRecruiters: RecruiterToCandidate } & {
+      application: (Application & { interests: string[] }) | null;
+    }
   >;
-  friends: Array<{
-    recruiterId: string;
-    candidateId: string;
-  }>;
   availableDepartments: Array<string>;
 }
 
@@ -42,7 +40,6 @@ type CandidatesPageFilter = {
 
 export default function CandidatesClient({
   candidates,
-  friends,
   availableDepartments,
 }: CandidatesClientProps) {
   const [query, setQuery] = useState<string>("");
@@ -278,7 +275,7 @@ export default function CandidatesClient({
               applicationInterests={candidate.application.interests}
               dynamic={null}
               friendCheckboxActive={true}
-              friends={friends}
+              friends={candidate.knownRecruiters}
             />
           ),
         )}

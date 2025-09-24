@@ -140,6 +140,7 @@ export async function getAllCandidatesWithDynamic() {
           interests: true,
         },
       },
+      knownRecruiters: true,
     },
   });
 
@@ -147,5 +148,6 @@ export async function getAllCandidatesWithDynamic() {
     ...c.user,
     dynamic: c.dynamic,
     application: c.application,
+    knownRecruiters: c.knownRecruiters,
   }));
 }
