@@ -1,7 +1,7 @@
 "use client";
 
 import { Slot } from "@/lib/db";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, CheckCircle, Clock } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "../ui/button";
 
-import { getDateString, getTimeString } from "@/lib/date";
+import { getDateString, getDateStringPT, getTimeString } from "@/lib/date";
 
 import { useRouter } from "next/navigation";
 
@@ -18,6 +18,7 @@ interface SchedulingCalendarProps {
   multipleSlots?: boolean;
   confirmAction: (slot: Array<Slot>) => Promise<boolean>;
   confirmUrl: string;
+  chosenSlot: Slot | null;
 }
 
 export default function SchedulingCalendar({
@@ -25,8 +26,11 @@ export default function SchedulingCalendar({
   multipleSlots = false,
   confirmAction,
   confirmUrl,
+  chosenSlot,
 }: SchedulingCalendarProps) {
   const router = useRouter();
+
+  console.log("CHOSEN SLOT: ", chosenSlot);
 
   const [selectedSlots, setSelectedSlots] = useState<Array<Slot>>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -107,6 +111,33 @@ export default function SchedulingCalendar({
               </CardHeader>
               <Button onClick={handleConfirm}>Confirmar</Button>
             </div>
+          </Card>
+        )}
+
+        {selectedSlots.length === 0 && chosenSlot && (
+          <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-green-800 dark:text-green-200">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-semibold">
+                    Entrevista Agendada
+                  </div>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-green-700 dark:text-green-300">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{getDateStringPT(chosenSlot.start)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{getTimeString(chosenSlot.start)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
           </Card>
         )}
 

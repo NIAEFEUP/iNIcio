@@ -19,11 +19,27 @@ export default async function addInterviewWithSlot(
         .set({ quantity: s[0].quantity - 1 })
         .where(eq(slot.id, slotParam.id));
 
-      await trx.insert(interview).values({
-        slot: slotParam.id,
-        candidateId: candidateId,
-        content: "",
+      const i = await trx.query.interview.findFirst({
+        where: eq(interview.candidateId, candidateId),
+        with: {
+          slot: true,
+        },
       });
+
+      if (i) {
+        await trx
+          .update(interview)
+          .set({ slot: slotParam.id })
+          .where(eq(interview.id, i.id));
+
+        await trx.update(slot).set({ quantity: s[0].quantity + 1 });
+      } else {
+        await trx.insert(interview).values({
+          slot: slotParam.id,
+          candidateId: candidateId,
+          content: "",
+        });
+      }
     }
   });
 }
