@@ -266,11 +266,11 @@ export default function RecruitmentAdminClient({
                     </TableCell>
                     <TableCell className="text-card-foreground">
                       {" "}
-                      {formatDate(recruitment.start)}{" "}
+                      {recruitment.start.toLocaleString("pt-PT")}
                     </TableCell>
                     <TableCell className="text-card-foreground">
                       {" "}
-                      {formatDate(recruitment.end)}{" "}
+                      {recruitment.end.toLocaleString("pt-PT")}
                     </TableCell>
                     <TableCell>
                       <Badge
