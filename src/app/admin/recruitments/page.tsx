@@ -1,4 +1,5 @@
 import RecruitmentAdminClient from "@/components/admin/recruitment-admin-client";
+import { Recruitment } from "@/lib/db";
 import {
   addRecruitment,
   deleteRecruitment,
