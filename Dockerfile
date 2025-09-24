@@ -1,15 +1,13 @@
 FROM node:22.12.0-alpine AS base
 
+WORKDIR /app
+
 RUN npm install -g corepack@latest
 
 # Install dependencies only when needed
 FROM base AS deps
 
-WORKDIR /app
-
 RUN apk add --no-cache libc6-compat
-
-WORKDIR /app
 
 COPY package.json . 
 
