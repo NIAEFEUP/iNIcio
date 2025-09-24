@@ -18,9 +18,15 @@ export default function AdminResources({
   return (
     <>
       <ResourceCard
-        title="Fases de recrutamento"
+        title="Recrutamentos"
+        quantityText="Gerir recrutamentos"
+        onClick={() => redirect("/admin/recruitments")}
+      />
+
+      <ResourceCard
+        title="Fases de Recrutamento"
         quantityText="Gerir fases"
-        onClick={() => redirect("/phases")}
+        onClick={() => redirect("/admin/phases")}
       />
 
       <ResourceCard

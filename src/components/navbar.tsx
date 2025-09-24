@@ -10,9 +10,10 @@ import { authClient } from "@/lib/auth-client";
 
 type Props = {
   className?: string;
+  isAdmin: boolean;
 };
 
-export default function Navbar({ className }: Props) {
+export default function Navbar({ className, isAdmin }: Props) {
   const { data: session } = authClient.useSession();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,9 +73,7 @@ export default function Navbar({ className }: Props) {
           </>
         ) : (
           <>
-            {session &&
-            "role" in session.user &&
-            session.user.role === "admin" ? (
+            {session && isAdmin ? (
               <Link className="text-primary" href="/admin">
                 <span className="text-primary">AdminUI</span>
               </Link>

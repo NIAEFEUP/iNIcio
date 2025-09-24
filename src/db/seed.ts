@@ -13,9 +13,11 @@ import {
   dynamic,
   recruitmentPhaseStatus,
   candidateToDynamic,
+  admin,
 } from "./schema";
 
 async function main() {
+  await db.delete(admin);
   await db.delete(interview);
   await db.delete(dynamic);
   await db.delete(slot);
@@ -180,6 +182,8 @@ async function main() {
   await db.insert(recruitment).values({
     year: 2025,
     active: "true",
+    start: new Date(),
+    end: new Date("2025-09-30T16:00:00.000Z"),
   });
 
   await db.insert(recruitmentPhase).values({

@@ -1,4 +1,7 @@
+import { admin } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -11,7 +14,11 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  if (session?.user.role !== "admin") {
+  const isAdmin = await db.query.admin.findFirst({
+    where: eq(admin.userId, session.user.id),
+  });
+
+  if (!isAdmin) {
     return redirect("/");
   }
 

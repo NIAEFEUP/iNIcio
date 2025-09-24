@@ -4,8 +4,39 @@ import {
   recruitmentPhaseStatus,
   slot,
 } from "@/db/schema";
-import { db, RecruitmentPhase, Slot } from "./db";
+import { db, Recruitment, RecruitmentPhase, Slot } from "./db";
 import { and, eq, gt, or, sql } from "drizzle-orm";
+
+export async function getRecruitments() {
+  const recruitments = await db.select().from(recruitment);
+
+  return recruitments;
+}
+
+export async function addRecruitment(r: Recruitment) {
+  await db.insert(recruitment).values({
+    year: r.year,
+    start: r.start,
+    end: r.end,
+    active: r.active,
+  });
+}
+
+export async function editRecruitment(r: Recruitment) {
+  await db
+    .update(recruitment)
+    .set({
+      year: r.year,
+      start: r.start,
+      end: r.end,
+      active: r.active,
+    })
+    .where(eq(recruitment.year, r.year));
+}
+
+export async function deleteRecruitment(year: number) {
+  await db.delete(recruitment).where(eq(recruitment.year, year));
+}
 
 export async function isRecruitmentActive() {
   const currentYear = new Date().getFullYear();

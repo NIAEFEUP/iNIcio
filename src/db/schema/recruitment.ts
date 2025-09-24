@@ -1,10 +1,18 @@
 import { relations } from "drizzle-orm";
-import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import { recruitmentPhase } from "./recruitment_phase";
 
 export const recruitment = pgTable("recruitment", {
   year: integer("year").primaryKey(),
+  start: timestamp("start").notNull().defaultNow(),
+  end: timestamp("end").notNull(),
   active: text("active").notNull().default("true"),
 });
 
