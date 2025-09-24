@@ -70,6 +70,35 @@ export default function CandidatesClient({
     );
   }, [query, candidates]);
 
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setFilteredCandidates(candidates);
+      return;
+    }
+
+    if (filters.departments.length > 0) {
+      setFilteredCandidates(
+        candidates.filter((c) =>
+          c.application.interests.some((i) =>
+            filters.departments.includes(i.toLowerCase()),
+          ),
+        ),
+      );
+    }
+
+    if (filters.course !== "all") {
+      setFilteredCandidates(
+        candidates.filter((c) => c.application.degree === filters.course),
+      );
+    }
+
+    if (filters.year !== "all") {
+      setFilteredCandidates(
+        candidates.filter((c) => c.application.curricularYear === filters.year),
+      );
+    }
+  }, [filters, candidates, hasActiveFilters]);
+
   const handleDepartmentFilter = (department: string, checked: boolean) => {
     setFilters((prev) => ({
       ...prev,
