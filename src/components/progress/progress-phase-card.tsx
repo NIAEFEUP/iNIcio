@@ -87,9 +87,9 @@ export default function ProgressPhaseCard({
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
-            {eventDateText && (
-              <>
+          {eventDateText && (
+            <>
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
                 <p>{eventDateText}</p>
                 <Button
                   size="sm"
@@ -101,9 +101,9 @@ export default function ProgressPhaseCard({
                 >
                   Reagendar {title}
                 </Button>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

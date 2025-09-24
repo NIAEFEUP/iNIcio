@@ -32,6 +32,8 @@ export default function ProgressPhaseCardShowcase({
     <>
       <div className="flex flex-col gap-4 justify-center items-center">
         {progressPhases.map((phase, idx) => {
+          const date = getEventDate(phase, candidate);
+
           return (
             <div key={`${phase.title}-${idx}`} className="w-full max-w-[50em]">
               <ProgressPhaseCard
@@ -46,7 +48,9 @@ export default function ProgressPhaseCardShowcase({
                 checked={phase.checked}
                 phaseStart={phase.start}
                 phaseEnd={phase.end}
-                eventDateText={`${phase.title} em ${getEventDate(phase, candidate)}`}
+                eventDateText={
+                  date && `${phase.title} em ${getEventDate(phase, candidate)}`
+                }
               />
             </div>
           );
