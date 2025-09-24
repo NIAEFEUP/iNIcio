@@ -135,11 +135,17 @@ export async function getAllCandidatesWithDynamic() {
     with: {
       user: true,
       dynamic: true,
+      application: {
+        with: {
+          interests: true,
+        },
+      },
     },
   });
 
   return candidates.map((c) => ({
     ...c.user,
     dynamic: c.dynamic,
+    application: c.application,
   }));
 }

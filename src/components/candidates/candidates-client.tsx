@@ -1,9 +1,8 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { User } from "@/lib/db";
+import { Application, User } from "@/lib/db";
 import { useEffect, useState } from "react";
-import CandidateCard from "./candidate-card";
 import CandidateQuickInfo from "../candidate/page/candidate-quick-info";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,9 @@ import {
 import { availableCourses, availableCurricularYears } from "@/lib/constants";
 
 interface CandidatesClientProps {
-  candidates: Array<User>;
+  candidates: Array<
+    User & { application: (Application & { interests: string[] }) | null }
+  >;
   friends: Array<{
     recruiterId: string;
     candidateId: string;
@@ -96,7 +97,6 @@ export default function CandidatesClient({
           onChange={(e) => setQuery(e.target.value)}
         ></Input>
         <div className="flex flex-wrap items-center gap-4">
-          {/* Course Filter */}
           <Select
             value={filters.course}
             onValueChange={(value) =>
@@ -116,7 +116,6 @@ export default function CandidatesClient({
             </SelectContent>
           </Select>
 
-          {/* Year Filter */}
           <Select
             value={filters.year}
             onValueChange={(value) =>
@@ -136,7 +135,6 @@ export default function CandidatesClient({
             </SelectContent>
           </Select>
 
-          {/* Department Filter */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2 bg-transparent">
@@ -180,7 +178,6 @@ export default function CandidatesClient({
             </PopoverContent>
           </Popover>
 
-          {/* Clear Filters */}
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -239,17 +236,23 @@ export default function CandidatesClient({
       </div>
 
       <div className="mx-64 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {filteredCandidates.map((candidate: User) => (
-          <CandidateQuickInfo
-            key={candidate.id}
-            candidate={candidate}
-            application={null}
-            applicationInterests={[]}
-            dynamic={null}
-            friendCheckboxActive={true}
-            friends={friends}
-          />
-        ))}
+        {filteredCandidates.map(
+          (
+            candidate: User & {
+              application: (Application & { interests: string[] }) | null;
+            },
+          ) => (
+            <CandidateQuickInfo
+              key={candidate.id}
+              candidate={candidate}
+              application={candidate.application}
+              applicationInterests={candidate.application.interests}
+              dynamic={null}
+              friendCheckboxActive={true}
+              friends={friends}
+            />
+          ),
+        )}
 
         {filteredCandidates.length === 0 && (
           <p className="col-span-full text-center text-muted-foreground">
