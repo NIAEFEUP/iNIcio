@@ -1,7 +1,5 @@
 FROM node:22.12.0-alpine AS base
 
-WORKDIR /app
-
 RUN npm install -g corepack@latest
 
 # Install dependencies only when needed
