@@ -59,4 +59,5 @@ COPY --from=builder /app/drizzle.config.json ./drizzle.config.json
 
 USER nextjs
 EXPOSE 3000
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD npx drizzle-kit push && HOSTNAME="0.0.0.0" node server.js
+
