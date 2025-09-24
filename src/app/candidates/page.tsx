@@ -12,8 +12,6 @@ export default async function Friends() {
 
   const candidates = await getAllCandidatesWithDynamic();
 
-  console.log("CANDIDATES: ", candidates);
-
   return (
     <CandidatesClient
       candidates={candidates}

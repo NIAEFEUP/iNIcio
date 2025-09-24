@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, Clock } from "lucide-react";
+import { Interview } from "@/lib/db";
+import Link from "next/link";
 
 interface ProgressPhaseCardProps {
   number: number;
@@ -23,6 +25,7 @@ interface ProgressPhaseCardProps {
   redirectUrl: string;
   phaseStart: Date | null;
   phaseEnd: Date | null;
+  eventDate?: string | null;
 }
 
 export default function ProgressPhaseCard({
@@ -34,7 +37,10 @@ export default function ProgressPhaseCard({
   redirectUrl,
   phaseStart,
   phaseEnd,
+  eventDate = null,
 }: ProgressPhaseCardProps) {
+  const router = useRouter();
+
   return (
     <div
       onClick={() => {
@@ -81,15 +87,23 @@ export default function ProgressPhaseCard({
               )}
             </div>
           </div>
-          {/* <div className="mt-4 pt-4 border-t border-green-200"> */}
-          {/*   <Button */}
-          {/*     size="sm" */}
-          {/*     variant="outline" */}
-          {/*     className="bg-transparent border-green-300 text-green-700 hover:bg-green-100" */}
-          {/*   > */}
-          {/*     Reagendar {title} */}
-          {/*   </Button> */}
-          {/* </div> */}
+          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
+            {eventDate && (
+              <>
+                <p>Entrevista marcada em: {eventDate}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent border-green-300 text-green-700 hover:bg-green-100"
+                  onClick={() => {
+                    router.push(`${redirectUrl}`);
+                  }}
+                >
+                  Reagendar {title}
+                </Button>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -10,10 +10,20 @@ const progressPhaseActions: { [key: string]: string } = {
 
 interface ProgressPhaseCardShowcaseProps {
   progressPhases: Array<RecruitmentPhase & { checked: boolean }>;
+  candidate: any;
 }
+
+const getEventDate = (phase: RecruitmentPhase, candidate: any) => {
+  if (phase.title.trim().toLowerCase() === "entrevista") {
+    return candidate?.interview?.slot?.start?.toLocaleString("pt-PT");
+  }
+
+  return null;
+};
 
 export default function ProgressPhaseCardShowcase({
   progressPhases,
+  candidate,
 }: ProgressPhaseCardShowcaseProps) {
   return (
     <>
@@ -33,11 +43,8 @@ export default function ProgressPhaseCardShowcase({
                 checked={phase.checked}
                 phaseStart={phase.start}
                 phaseEnd={phase.end}
+                eventDate={getEventDate(phase, candidate)}
               />
-
-              {/* {idx !== progressPhases.length - 1 && ( */}
-              {/*   <div className="relative left-1/2 h-16 w-1 bg-gray-300" /> */}
-              {/* )} */}
             </div>
           );
         })}

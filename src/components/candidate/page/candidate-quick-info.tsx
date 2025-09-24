@@ -59,6 +59,8 @@ export default function CandidateQuickInfo({
     }
   };
 
+  console.log("INTERESTS: ", applicationInterests);
+
   return (
     <Card>
       {friendCheckboxActive && (

@@ -10,10 +10,10 @@ export default async function FriendsLayout({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-
-  if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
-    return redirect("/");
-  }
-
+  //
+  // if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
+  //   return redirect("/");
+  // }
+  //
   return <>{children}</>;
 }

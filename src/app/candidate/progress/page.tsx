@@ -1,5 +1,6 @@
 import ProgressPhaseCardShowcase from "@/components/progress/progress-phase-card-showcase";
 import { auth } from "@/lib/auth";
+import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import {
   getRecruitmentPhases,
   isRecruitmentPhaseDone,
@@ -34,6 +35,9 @@ export default async function CandidateProgress() {
     }),
   );
 
+  const candidateWithInterviewAndDynamic =
+    await getCandidateWithInterviewAndDynamic(session?.user.id);
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-4xl text-center font-bold">Progresso</h1>
@@ -42,7 +46,10 @@ export default async function CandidateProgress() {
         realizar!
       </p>
 
-      <ProgressPhaseCardShowcase progressPhases={progressPhases} />
+      <ProgressPhaseCardShowcase
+        progressPhases={progressPhases}
+        candidate={candidateWithInterviewAndDynamic}
+      />
     </div>
   );
 }

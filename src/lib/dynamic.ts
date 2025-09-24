@@ -147,7 +147,10 @@ export async function getAllCandidatesWithDynamic() {
   return candidates.map((c) => ({
     ...c.user,
     dynamic: c.dynamic,
-    application: c.application,
+    application: {
+      ...c.application,
+      interests: c.application.interests.map((i) => i.interest),
+    },
     knownRecruiters: c.knownRecruiters,
   }));
 }
