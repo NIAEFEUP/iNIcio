@@ -25,7 +25,7 @@ interface ProgressPhaseCardProps {
   redirectUrl: string;
   phaseStart: Date | null;
   phaseEnd: Date | null;
-  eventDate?: string | null;
+  eventDateText?: string | null;
 }
 
 export default function ProgressPhaseCard({
@@ -37,7 +37,7 @@ export default function ProgressPhaseCard({
   redirectUrl,
   phaseStart,
   phaseEnd,
-  eventDate = null,
+  eventDateText = null,
 }: ProgressPhaseCardProps) {
   const router = useRouter();
 
@@ -88,9 +88,9 @@ export default function ProgressPhaseCard({
             </div>
           </div>
           <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
-            {eventDate && (
+            {eventDateText && (
               <>
-                <p>Entrevista marcada em: {eventDate}</p>
+                <p>{eventDateText}</p>
                 <Button
                   size="sm"
                   variant="outline"

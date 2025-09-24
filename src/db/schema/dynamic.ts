@@ -30,10 +30,14 @@ export const recruiterToDynamic = pgTable("recruiter_to_dynamic", {
     .references(() => dynamic.id, { onDelete: "cascade" }),
 });
 
-export const dynamicRelations = relations(dynamic, ({ many }) => ({
+export const dynamicRelations = relations(dynamic, ({ many, one }) => ({
   candidates: many(candidateToDynamic),
   recruiters: many(recruiterToDynamic),
   comments: many(dynamicComment),
+  slot: one(slot, {
+    fields: [dynamic.slotId],
+    references: [slot.id],
+  }),
 }));
 
 export const candidateToDynamicRelations = relations(

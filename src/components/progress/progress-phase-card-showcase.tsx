@@ -16,6 +16,9 @@ interface ProgressPhaseCardShowcaseProps {
 const getEventDate = (phase: RecruitmentPhase, candidate: any) => {
   if (phase.title.trim().toLowerCase() === "entrevista") {
     return candidate?.interview?.slot?.start?.toLocaleString("pt-PT");
+  } else if (phase.title.trim().toLowerCase() === "dinâmica") {
+    console.log("DYNAMIC: ", candidate?.dynamic);
+    return candidate?.dynamic?.dynamic?.slot?.start?.toLocaleString("pt-PT");
   }
 
   return null;
@@ -27,10 +30,10 @@ export default function ProgressPhaseCardShowcase({
 }: ProgressPhaseCardShowcaseProps) {
   return (
     <>
-      <div className="flex flex-col gap-4 justify-center mx-128">
+      <div className="flex flex-col gap-4 justify-center items-center">
         {progressPhases.map((phase, idx) => {
           return (
-            <div key={`${phase.title}-${idx}`}>
+            <div key={`${phase.title}-${idx}`} className="w-full max-w-[50em]">
               <ProgressPhaseCard
                 key={idx}
                 number={idx + 1}
@@ -43,7 +46,7 @@ export default function ProgressPhaseCardShowcase({
                 checked={phase.checked}
                 phaseStart={phase.start}
                 phaseEnd={phase.end}
-                eventDate={getEventDate(phase, candidate)}
+                eventDateText={`${phase.title} em ${getEventDate(phase, candidate)}`}
               />
             </div>
           );

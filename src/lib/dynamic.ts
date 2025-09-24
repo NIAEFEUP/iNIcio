@@ -17,6 +17,27 @@ export async function tryToAddCandidateToDynamic(
   slotParam: Slot,
 ) {
   await db.transaction(async (trx) => {
+    const candidateDynamic = await db.query.candidateToDynamic.findFirst({
+      where: eq(candidateToDynamic.candidateId, candidateId),
+      with: {
+        dynamic: {
+          with: {
+            slot: true,
+          },
+        },
+      },
+    });
+
+    if (candidateToDynamic) {
+      await trx
+        .update(slot)
+        .set({ quantity: candidateDynamic.dynamic.slot.quantity - 1 })
+        .where(eq(slot.id, slotParam.id));
+      await trx
+        .delete(candidateToDynamic)
+        .where(eq(candidateToDynamic.candidateId, candidateId));
+    }
+
     const s = await trx
       .select()
       .from(slot)

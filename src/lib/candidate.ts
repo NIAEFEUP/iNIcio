@@ -9,7 +9,15 @@ export default async function getCandidateWithInterviewAndDynamic(
     where: eq(candidate.userId, candidateId),
     with: {
       user: true,
-      dynamic: true,
+      dynamic: {
+        with: {
+          dynamic: {
+            with: {
+              slot: true,
+            },
+          },
+        },
+      },
       interview: {
         with: {
           slot: true,

@@ -30,8 +30,6 @@ export default function SchedulingCalendar({
 }: SchedulingCalendarProps) {
   const router = useRouter();
 
-  console.log("CHOSEN SLOT: ", chosenSlot);
-
   const [selectedSlots, setSelectedSlots] = useState<Array<Slot>>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
 
@@ -122,9 +120,7 @@ export default function SchedulingCalendar({
                   <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-lg font-semibold">
-                    Entrevista Agendada
-                  </div>
+                  <div className="text-lg font-semibold">Agendado</div>
                   <div className="flex items-center gap-4 mt-2 text-sm text-green-700 dark:text-green-300">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
