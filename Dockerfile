@@ -1,66 +1,44 @@
-# syntax=docker.io/docker/dockerfile:1
+ARG INICIO_VARS_METHOD=dotenv
 
-FROM node:21-alpine AS base
+FROM node:21-alpine3.19 AS build
 
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
+RUN mkdir -p /usr/src/inicio
+WORKDIR /usr/src/inicio
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+COPY .*rc ./
+COPY *.json ./
+COPY .prettier* ./
+COPY next.config.ts ./
 
+RUN npm install
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY public/ public/
+COPY src/ src/
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+FROM build AS dev
 
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+EXPOSE $PORT
 
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
+CMD ["npm", "run", "dev"]
 
-ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
+# prod-build-with-dotenv
+FROM build AS prod-build-with-dotenv
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+ARG INICIO_DOTENV_FILE=.env.production
+COPY ${INICIO_DOTENV_FILE} .env.production
 
-COPY --from=builder /app/public ./public
+# prod-build-with-var
+FROM build AS prod-build-with-content-var
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+ARG INICIO_VARS_CONTENT
+RUN echo "${INICIO_VARS_CONTENT}" | base64 -d > .env.production
 
-USER nextjs
+# prod-build
+FROM prod-build-with-${INICIO_VARS_METHOD} AS prod-build
+RUN npm run build
 
-EXPOSE 3000
+# prod
+FROM nginx:alpine AS prod
 
-ENV PORT=3000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+COPY --from=prod-build /usr/src/tts-fe/build /usr/share/nginx/html
+COPY nginx.tts.conf /etc/nginx/conf.d/default.conf
