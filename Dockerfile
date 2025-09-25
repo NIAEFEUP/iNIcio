@@ -7,7 +7,8 @@ RUN npm install -g corepack@latest
 # Dependencies stage
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-COPY package.json package-lock.json* ./
+COPY package.json ./ 
+COPY package-lock.json ./
 RUN npm ci --include=dev
 
 # ----------------------------------------
