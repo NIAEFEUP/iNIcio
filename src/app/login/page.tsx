@@ -102,7 +102,7 @@ export default function SignIn() {
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
-                          placeholder="seu@email.com"
+                          placeholder="email@email.com"
                           type="email"
                           className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                           {...field}

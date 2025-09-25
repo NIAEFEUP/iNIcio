@@ -116,7 +116,7 @@ export default function SignUp() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
-                            placeholder="Seu nome"
+                            placeholder="Nome"
                             type="text"
                             className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                             {...field}
@@ -139,7 +139,7 @@ export default function SignUp() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
-                            placeholder="Seu apelido"
+                            placeholder="Apelido"
                             type="text"
                             className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                             {...field}
@@ -164,7 +164,7 @@ export default function SignUp() {
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
-                          placeholder="seu@email.com"
+                          placeholder="email@email.com"
                           type="email"
                           className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                           {...field}
