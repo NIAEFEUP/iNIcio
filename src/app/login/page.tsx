@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Lock, User, Mail, Eye } from "lucide-react";
+import { Lock, User, Mail, Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignIn() {
