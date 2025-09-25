@@ -62,6 +62,35 @@ export async function getRecruitmentPhases() {
   return recruitmentPhases;
 }
 
+export async function addRecruitmentPhase(r: RecruitmentPhase) {
+  await db.insert(recruitmentPhase).values({
+    recruitmentYear: r.recruitmentYear,
+    title: r.title,
+    description: r.description,
+    start: r.start,
+    end: r.end,
+    role: r.role,
+  });
+}
+
+export async function editRecruitmentPhase(r: RecruitmentPhase) {
+  await db
+    .update(recruitmentPhase)
+    .set({
+      recruitmentYear: r.recruitmentYear,
+      title: r.title,
+      description: r.description,
+      start: r.start,
+      end: r.end,
+      role: r.role,
+    })
+    .where(eq(recruitmentPhase.id, r.id));
+}
+
+export async function deleteRecruitmentPhase(id: number) {
+  await db.delete(recruitmentPhase).where(eq(recruitmentPhase.id, id));
+}
+
 export async function getInterviewSlots() {
   const currentYear = new Date().getFullYear();
 
