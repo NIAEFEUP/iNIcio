@@ -44,13 +44,13 @@ export default function AdminResources({
       <ResourceCard
         title="Entrevistas"
         quantityText="Gerir slots ou perguntas"
-        onClick={() => redirect("/interviews")}
+        onClick={() => redirect("/admin/interviews")}
       />
 
       <ResourceCard
         title="Dinâmicas"
         quantityText="Gerir slots ou perguntas"
-        onClick={() => redirect("/dynamics")}
+        onClick={() => redirect("/admin/dynamics")}
       />
 
       <ResourceCard

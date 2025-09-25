@@ -7,6 +7,12 @@ import {
 import { db, Recruitment, RecruitmentPhase, Slot } from "./db";
 import { and, eq, gt, or, sql } from "drizzle-orm";
 
+export async function getLatestRecruitment() {
+  return await db.query.recruitment.findFirst({
+    orderBy: (recruitment, { desc }) => [desc(recruitment.year)],
+  });
+}
+
 export async function getRecruitments() {
   const recruitments = await db.select().from(recruitment);
 
