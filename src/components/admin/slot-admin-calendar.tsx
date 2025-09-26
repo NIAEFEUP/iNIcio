@@ -17,7 +17,7 @@ import { Calendar, Clock, Plus, Trash2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-import { Slot } from "@/lib/db";
+import { NewSlot, Slot } from "@/lib/db";
 import { Checkbox } from "../ui/checkbox";
 import { SlotOperation } from "@/app/admin/interviews/page";
 
@@ -176,7 +176,7 @@ export default function SlotAdminCalendar({
         { type: "remove", slot: currentSlots[existingIndex] },
       ]);
     } else {
-      const newSlot: Slot = {
+      const newSlot: NewSlot = {
         start,
         duration: slotConfig[slotType].duration,
         quantity: slotConfig[slotType].quantity,
@@ -364,7 +364,6 @@ export default function SlotAdminCalendar({
                     {dates.map((date) => {
                       const cellKey = getCellKey(date, time);
                       const existingSlot = getSlotForCell(date, time);
-                      console.log("whaty: ", existingSlot);
                       const isSlotSelected =
                         selectedSlot &&
                         existingSlot &&

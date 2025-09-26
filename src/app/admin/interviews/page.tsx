@@ -3,28 +3,69 @@ import { Calendar } from "lucide-react";
 import SlotAdminCalendar from "@/components/admin/slot-admin-calendar";
 
 import { getLatestRecruitment } from "@/lib/recruitment";
-import { db, Slot } from "@/lib/db";
+import { db, NewSlot, Slot } from "@/lib/db";
 
 import { slot } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import getExistingSlots from "@/lib/slot";
 
 export type SlotOperation = {
   type: "add" | "remove";
-  slot: Slot;
+  slot: Slot | NewSlot;
+};
+
+const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
+  const opMap = new Map<string, SlotOperation>();
+
+  for (const op of operations) {
+    const key = `${op.slot.type}-${op.slot.start.getTime()}`;
+
+    if (!opMap.has(key)) {
+      opMap.set(key, op);
+    } else {
+      const existing = opMap.get(key)!;
+
+      if (
+        (existing.type === "add" && op.type === "remove") ||
+        (existing.type === "remove" && op.type === "add")
+      ) {
+        opMap.delete(key);
+      } else {
+        opMap.set(key, op);
+      }
+    }
+  }
+
+  return Array.from(opMap.values());
 };
 
 export default async function SlotsPage() {
   const saveSlots = async (slots: SlotOperation[]) => {
     "use server";
 
-    for (const s of slots) {
-      if (s.type === "add") {
-        await db.insert(slot).values(s.slot);
-      } else {
-        await db.delete(slot).where(eq(slot.id, s.slot.id));
+    const reconciled = reconcileOperations(slots);
+
+    await db.transaction(async (tx) => {
+      for (const s of reconciled) {
+        if (s.type === "add") {
+          const existing = await tx
+            .select()
+            .from(slot)
+            .where(
+              and(
+                eq(slot.start, s.slot.start),
+                eq(slot.type, s.slot.type),
+                eq(slot.recruitmentYear, s.slot.recruitmentYear),
+                eq(slot.duration, s.slot.duration),
+              ),
+            );
+
+          if (existing.length === 0) await tx.insert(slot).values(s.slot);
+        } else {
+          await tx.delete(slot).where(eq(slot.id, s.slot.id));
+        }
       }
-    }
+    });
   };
 
   const latestRecruitment = await getLatestRecruitment();

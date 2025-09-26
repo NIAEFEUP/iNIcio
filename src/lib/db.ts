@@ -10,6 +10,7 @@ export type CandidateToDynamic = typeof schema.candidateToDynamic.$inferSelect;
 export type Dynamic = typeof schema.dynamic.$inferSelect;
 export type RecruitmentPhase = typeof schema.recruitmentPhase.$inferSelect;
 export type Slot = typeof schema.slot.$inferSelect;
+export type NewSlot = typeof schema.slot.$inferInsert;
 export type Candidate = typeof schema.candidate.$inferSelect;
 export type Recruiter = typeof schema.recruiter.$inferSelect;
 export type RecruiterToCandidate =
