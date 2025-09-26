@@ -9,8 +9,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { Checkbox } from "@/components/ui/checkbox";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,11 +17,15 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Lock, User, Mail, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignIn() {
   const router = useRouter();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const formSchema = z.object({
     email: z
@@ -69,110 +71,135 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex flex-col w-1/2 mx-auto gap-y-4">
-      <h1 className="text-center text-3xl font-bold">Login</h1>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          onReset={onReset}
-          className="space-y-8 @container"
-        >
-          <div className="grid grid-cols-12 gap-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                  <FormLabel className="flex shrink-0">Email</FormLabel>
-
-                  <div className="w-full">
-                    <FormControl>
-                      <div className="relative w-full">
-                        <Input
-                          key="email-input-0"
-                          placeholder=""
-                          type="email"
-                          id="email-input-0"
-                          className=" "
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className="col-span-12 col-start-auto flex self-end flex-col gap-2 space-y-0 items-start">
-                  <FormLabel className="flex shrink-0">Palavra-Passe</FormLabel>
-
-                  <div className="w-full">
-                    <FormControl>
-                      <div className="relative w-full">
-                        <Input
-                          key="password-input-0"
-                          placeholder=""
-                          type="password"
-                          id="password-input-0"
-                          className=" "
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="rememberMe"
-              render={({}) => (
-                <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
-                  <div className="w-full flex flex-row gap-x-2">
-                    <FormControl>
-                      <Checkbox
-                        onCheckedChange={(value) => {
-                          form.setValue("rememberMe", Boolean(value.valueOf()));
-                        }}
-                        key="remember-me-input-0"
-                        id="remember-me-input-0"
-                        className=" "
-                      />
-                    </FormControl>
-
-                    <FormLabel className="flex shrink-0">Lembrar-me</FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {errorMessage && (
-              <p className="text-sm col-span-12">{errorMessage}</p>
-            )}
-
-            <div className="w-full">
-              <Button
-                key="submit-button-0"
-                id="submit-button-0"
-                name=""
-                className="w-full"
-                type="submit"
-                variant="default"
-              >
-                Login
-              </Button>
-            </div>
+    <div className="flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+            <User className="w-8 h-8 text-primary" />
           </div>
-        </form>
-      </Form>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Entra na tua conta
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              onReset={onReset}
+              className="space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">
+                      Email
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="email@email.com"
+                          type="email"
+                          className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">
+                      Palavra-Passe
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="Mínimo 8 caracteres"
+                          type={showPassword ? "text" : "password"}
+                          className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({}) => (
+                  <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
+                    <div className="w-full flex flex-row gap-x-2">
+                      <FormControl>
+                        <Checkbox
+                          onCheckedChange={(value) => {
+                            form.setValue(
+                              "rememberMe",
+                              Boolean(value.valueOf()),
+                            );
+                          }}
+                          key="remember-me-input-0"
+                          id="remember-me-input-0"
+                          className=" "
+                        />
+                      </FormControl>
+
+                      <FormLabel className="flex shrink-0">
+                        Lembrar-me
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-600 text-sm">{errorMessage}</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isLoading ? "A entrar..." : "Entrar"}
+              </Button>
+            </form>
+          </Form>
+        </div>
+
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Ao registares-te, concordas com os nossos termos de serviço e política
+          de privacidade.
+        </p>
+      </div>
     </div>
   );
 }
