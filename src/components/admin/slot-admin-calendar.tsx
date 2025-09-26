@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { Slot } from "@/lib/db";
 import { Checkbox } from "../ui/checkbox";
+import { SlotOperation } from "@/app/admin/interviews/page";
 
 interface SlotAdminCalendarProps {
   recruitmentYear: number;
@@ -26,7 +27,7 @@ interface SlotAdminCalendarProps {
     interview: Slot[];
     dynamic: Slot[];
   };
-  saveSlots: (slots: Slot[]) => Promise<void>;
+  saveSlots: (slots: SlotOperation[]) => Promise<void>;
 }
 
 enum SlotType {
@@ -49,11 +50,21 @@ export default function SlotAdminCalendar({
 
   const [slotType, setSlotType] = useState<SlotType>(SlotType.interview);
 
-  const [selectedCells, setSelectedCells] = useState<Array<string>>([]);
+  const [slotOperations, setSlotOperations] = useState<SlotOperation[]>([]);
 
   const [slotConfig, setSlotConfig] = useState({
-    duration: 30,
-    quantity: 1,
+    interview: {
+      startHour: 9,
+      endHour: 19,
+      duration: 30,
+      quantity: 2,
+    },
+    dynamic: {
+      startHour: 9,
+      endHour: 19,
+      duration: 45,
+      quantity: 5,
+    },
   });
 
   const [isSelecting, setIsSelecting] = useState(false);
@@ -69,24 +80,29 @@ export default function SlotAdminCalendar({
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         slots.push({
           start: new Date(date),
-          duration: slotConfig.duration,
-          quantity: slotConfig.quantity,
+          duration: slotConfig[slotType].duration,
+          quantity: slotConfig[slotType].quantity,
           type: slotType,
           recruitmentYear: recruitmentYear,
         });
       }
     }
 
-    console.log("slots: ", slots);
-
     return slots;
   };
 
-  // Generate time slots (9 AM to 6 PM, 30-minute intervals)
   const generateTimeSlots = () => {
     const times = [];
-    for (let hour = 9; hour < 18; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+    for (
+      let hour = slotConfig[slotType].startHour;
+      hour <= slotConfig[slotType].endHour;
+      hour++
+    ) {
+      for (
+        let minute = 0;
+        minute < 60;
+        minute += slotConfig[slotType].duration
+      ) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         times.push(timeString);
       }
@@ -94,15 +110,15 @@ export default function SlotAdminCalendar({
     return times;
   };
 
-  // Generate dates for the next 14 days
   const generateDates = () => {
     const dates = [];
-    const today = new Date();
-    for (let i = 0; i < 14; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date);
+    const start = new Date(2025, 9, 13); // Months are 0-indexed (9 = October)
+    const end = new Date(2025, 9, 17);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
     }
+
     return dates;
   };
 
@@ -133,45 +149,61 @@ export default function SlotAdminCalendar({
 
     // 2️⃣ Compute end datetime based on duration
     const end = new Date(start);
-    end.setMinutes(start.getMinutes() + slotConfig.duration);
+    end.setMinutes(start.getMinutes() + slotConfig[slotType].duration);
 
-    setSlots((prev) => {
-      // Get current slots of this type
-      const currentSlots = prev[slotType];
+    const currentSlots = slots[slotType];
 
-      // 3️⃣ Check if a slot already exists with same start & end
-      const existingIndex = currentSlots.findIndex(
-        (slot) =>
-          slot.start.getTime() === start.getTime() &&
-          slot.start.getTime() + slot.duration * 60000 === end.getTime(),
-      );
+    // 3️⃣ Check if a slot already exists with same start & end
+    const existingIndex = currentSlots.findIndex(
+      (slot) =>
+        slot.start.getTime() === start.getTime() &&
+        slot.start.getTime() + slot.duration * 60000 === end.getTime(),
+    );
 
-      if (existingIndex !== -1) {
-        slots[slotType] = currentSlots.filter((_, i) => i != existingIndex);
+    if (existingIndex !== -1) {
+      slots[slotType] = currentSlots.filter((_, i) => i != existingIndex);
 
-        setSlots(slots);
-      } else {
-        const newSlot: Slot = {
-          start,
-          duration: slotConfig.duration,
-          quantity: slotConfig.quantity,
-          type: slotType as Slot["type"],
-          recruitmentYear,
-        };
-        return { ...prev, [slotType]: [...currentSlots, newSlot] };
-      }
-    });
+      setSlots(slots);
+      setSlotOperations((prev) => [
+        ...prev.filter(
+          (s) =>
+            !(
+              s.type === "remove" &&
+              s.slot.start.getTime() === start.getTime() &&
+              s.slot.start.getTime() + s.slot.duration * 60000 === end.getTime()
+            ),
+        ),
+        { type: "remove", slot: currentSlots[existingIndex] },
+      ]);
+    } else {
+      const newSlot: Slot = {
+        start,
+        duration: slotConfig[slotType].duration,
+        quantity: slotConfig[slotType].quantity,
+        type: slotType,
+        recruitmentYear,
+      };
+
+      setSlots({ ...slots, [slotType]: [...currentSlots, newSlot] });
+      setSlotOperations((prev) => [
+        ...prev.filter(
+          (s) =>
+            !(
+              s.type === "remove" &&
+              s.slot.start.getTime() === start.getTime() &&
+              s.slot.start.getTime() + s.slot.duration * 60000 === end.getTime()
+            ),
+        ),
+        { type: "add", slot: newSlot },
+      ]);
+    }
 
     setIsSelecting(true);
   };
 
-  console.log("slots: ", slots);
-
-  console.log("selected cells: ", selectedCells);
-
   const handleSaveSlots = async () => {
     try {
-      saveSlots(slots[slotType]);
+      saveSlots(slotOperations);
       toast("Slots guardados");
     } catch (error) {
       toast("Erro ao guardar slots: " + error);
@@ -184,26 +216,6 @@ export default function SlotAdminCalendar({
       dayNumber: date.getDate(),
       month: date.toLocaleDateString("en-US", { month: "short" }),
     };
-  };
-
-  const handleCheckboxChange = (date: Date, checked: boolean) => {
-    if (checked) {
-      setSlots((prev) => {
-        return {
-          ...prev,
-          [slotType]: [...prev[slotType], ...generateSlotsForDate(date)],
-        };
-      });
-    } else {
-      setSlots((prev) => {
-        return {
-          ...prev,
-          [slotType]: prev[slotType].filter(
-            (slot) => slot.start.getTime() !== date.getTime(),
-          ),
-        };
-      });
-    }
   };
 
   const getTypeColor = (type: string) => {
@@ -221,24 +233,21 @@ export default function SlotAdminCalendar({
     <div className="space-y-6">
       {/* Configuration Panel */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Slot Configuration
-          </CardTitle>
-        </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Label htmlFor="duration">Duração (minutos)</Label>
               <Input
                 id="duration"
                 type="number"
-                value={slotConfig.duration}
+                value={slotConfig[slotType].duration}
                 onChange={(e) =>
                   setSlotConfig((prev) => ({
                     ...prev,
-                    duration: Number.parseInt(e.target.value) || 30,
+                    [slotType]: {
+                      ...prev[slotType],
+                      duration: Number.parseInt(e.target.value) || 30,
+                    },
                   }))
                 }
                 min="15"
@@ -247,15 +256,18 @@ export default function SlotAdminCalendar({
               />
             </div>
             <div>
-              <Label htmlFor="quantity">Quantity</Label>
+              <Label htmlFor="quantity">Quantidade</Label>
               <Input
                 id="quantity"
                 type="number"
-                value={slotConfig.quantity}
+                value={slotConfig[slotType].quantity}
                 onChange={(e) =>
                   setSlotConfig((prev) => ({
                     ...prev,
-                    quantity: Number.parseInt(e.target.value) || 1,
+                    [slotType]: {
+                      ...prev[slotType],
+                      quantity: Number.parseInt(e.target.value) || 1,
+                    },
                   }))
                 }
                 min="1"
@@ -263,7 +275,7 @@ export default function SlotAdminCalendar({
               />
             </div>
             <div>
-              <Label htmlFor="type">Type</Label>
+              <Label htmlFor="type">Tipo</Label>
               <Select
                 value={slotType}
                 onValueChange={(value: any) => setSlotType(value)}
@@ -305,10 +317,6 @@ export default function SlotAdminCalendar({
             <Calendar className="h-5 w-5" />
             Calendário
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Clica e arrasta para criar slots. Clica em slots existentes para
-            remover.
-          </p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -329,12 +337,6 @@ export default function SlotAdminCalendar({
                         className="text-center p-3 border-b font-medium min-w-[120px]"
                       >
                         <div className="flex flex-col items-center gap-1">
-                          <Checkbox
-                            key={date.getDay()}
-                            onCheckedChange={(checked: boolean) =>
-                              handleCheckboxChange(date, checked)
-                            }
-                          />
                           <span className="text-sm text-muted-foreground">
                             {dateInfo.dayName}
                           </span>
@@ -362,7 +364,7 @@ export default function SlotAdminCalendar({
                     {dates.map((date) => {
                       const cellKey = getCellKey(date, time);
                       const existingSlot = getSlotForCell(date, time);
-                      const isSelected = false; //selectedCells?.includes(cellKey)
+                      console.log("whaty: ", existingSlot);
                       const isSlotSelected =
                         selectedSlot &&
                         existingSlot &&
@@ -374,8 +376,6 @@ export default function SlotAdminCalendar({
                             className={cn(
                               "w-full h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer",
                               "hover:border-gray-300",
-                              isSelected &&
-                                "border-blue-400 bg-blue-100 border-solid",
                               existingSlot &&
                                 !isSlotSelected &&
                                 `${getTypeColor(existingSlot.type)} border-solid border-transparent text-white`,
@@ -408,50 +408,6 @@ export default function SlotAdminCalendar({
           </div>
         </CardContent>
       </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Slots</p>
-                <p className="text-2xl font-bold">{slots[slotType].length}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Capacity</p>
-                <p className="text-2xl font-bold">
-                  {slots[slotType].reduce(
-                    (sum, slot) => sum + slot.quantity,
-                    0,
-                  )}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Recruitment Year
-                </p>
-                <p className="text-2xl font-bold">{recruitmentYear}</p>
-              </div>
-              <Badge variant="outline">{recruitmentYear}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

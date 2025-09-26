@@ -42,15 +42,9 @@ export default function AdminResources({
       />
 
       <ResourceCard
-        title="Entrevistas"
-        quantityText="Gerir slots ou perguntas"
+        title="Slots"
+        quantityText="Gerir slots"
         onClick={() => redirect("/admin/interviews")}
-      />
-
-      <ResourceCard
-        title="Dinâmicas"
-        quantityText="Gerir slots ou perguntas"
-        onClick={() => redirect("/admin/dynamics")}
       />
 
       <ResourceCard

@@ -6,19 +6,30 @@ import { getLatestRecruitment } from "@/lib/recruitment";
 import { db, Slot } from "@/lib/db";
 
 import { slot } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import getExistingSlots from "@/lib/slot";
+
+export type SlotOperation = {
+  type: "add" | "remove";
+  slot: Slot;
+};
 
 export default async function SlotsPage() {
-  const saveSlots = async (slots: Slot[]) => {
+  const saveSlots = async (slots: SlotOperation[]) => {
     "use server";
 
-    await db.transaction(async (trx) => {
-      for (const s of slots) {
-        await trx.insert(slot).values(s);
+    for (const s of slots) {
+      if (s.type === "add") {
+        await db.insert(slot).values(s.slot);
+      } else {
+        await db.delete(slot).where(eq(slot.id, s.slot.id));
       }
-    });
+    }
   };
 
   const latestRecruitment = await getLatestRecruitment();
+
+  const existingSlots = await getExistingSlots(latestRecruitment?.year);
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,6 +47,7 @@ export default async function SlotsPage() {
         {latestRecruitment && (
           <SlotAdminCalendar
             recruitmentYear={latestRecruitment.year}
+            existingSlots={existingSlots}
             saveSlots={saveSlots}
           />
         )}
