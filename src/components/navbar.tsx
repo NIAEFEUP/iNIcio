@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ChevronUp, ChevronDown } from "lucide-react";
-import type { User } from "@/lib/auth";
 import LogoutButton from "./logout/logout-button";
 import { authClient } from "@/lib/auth-client";
 

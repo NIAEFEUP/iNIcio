@@ -56,9 +56,14 @@ export default function SignIn() {
       },
       {
         onSuccess: () => {
+          setIsLoading(false);
           router.push("/");
         },
+        onRequest: () => {
+          setIsLoading(true);
+        },
         onError: (ctx) => {
+          setIsLoading(false);
           setErrorMessage(ctx.error.message);
         },
       },

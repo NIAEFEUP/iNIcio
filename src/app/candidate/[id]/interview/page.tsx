@@ -4,7 +4,6 @@ import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-imp
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
-import { Separator } from "@/components/ui/separator";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { getUser } from "@/lib/db";
 import { getApplication, getApplicationInterests } from "@/lib/application";
@@ -13,13 +12,12 @@ import {
   getInterview,
   updateInterview,
 } from "@/lib/interview";
-import { redirect } from "next/navigation";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
 import { getCandidateDynamic } from "@/lib/dynamic";
+import { isRecruiter } from "@/lib/recruiter";
+import { redirect } from "next/navigation";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -31,8 +29,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    // CHANGE ROLE
-    // if (session?.user.role !== "recruiter") redirect("/");
+    if (!isRecruiter(session?.user.id)) redirect("/");
 
     await updateInterview(id, content);
 
@@ -46,8 +43,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    // CHANGE ROLE
-    // if (session?.user.role !== "recruiter") redirect("/");
+    if (!isRecruiter(session?.user.id)) redirect("/");
 
     return await addInterviewComment(
       session ? session.user.id : "",

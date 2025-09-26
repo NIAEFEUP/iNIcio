@@ -12,18 +12,19 @@ import { getApplicationComments } from "@/lib/comment";
 
 import { getUser } from "@/lib/db";
 import { getCandidateDynamic } from "@/lib/dynamic";
+import { isRecruiter } from "@/lib/recruiter";
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 type CandidatePageProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any;
 };
 
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  // if (session?.user.role !== "recruiter") redirect("/");
+  if (!isRecruiter(session?.user.id)) redirect("/");
 
   const { id } = await params;
 

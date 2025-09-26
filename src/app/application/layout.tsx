@@ -12,13 +12,13 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  // if (session?.user) {
-  //   const application = await getApplication(session?.user.id);
-  //
-  //   if (application) {
-  //     redirect("/candidate/progress");
-  //   }
-  // }
-  //
+  if (session?.user) {
+    const application = await getApplication(session?.user.id);
+
+    if (application) {
+      redirect("/candidate/progress");
+    }
+  }
+
   return <>{children}</>;
 }

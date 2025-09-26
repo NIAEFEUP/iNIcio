@@ -1,9 +1,6 @@
 import AdminResources from "@/components/admin/admin-resources";
-import ResourceCard from "@/components/admin/resource-card";
 import { candidate, recruiter } from "@/db/schema";
 import { db } from "@/lib/db";
-
-import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
   const recruiters = await db.select().from(recruiter);

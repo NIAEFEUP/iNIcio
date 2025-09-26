@@ -65,12 +65,14 @@ export default function SignUp() {
       },
       {
         onRequest: () => {
-          //show loading
+          setIsLoading(true);
         },
         onSuccess: () => {
+          setIsLoading(false);
           router.push("/application");
         },
         onError: (ctx) => {
+          setIsLoading(false);
           setErrorMessage(ctx.error.message);
         },
       },

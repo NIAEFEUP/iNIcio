@@ -14,13 +14,13 @@ export default async function CandidateProgressLayout({
 
   const application = await getApplication(session?.user.id);
 
-  // if (!application) {
-  //   return redirect("/application");
-  // }
-  //
-  // if (session?.user.role !== "candidate") {
-  //   return redirect("/");
-  // }
-  //
+  if (!application) {
+    return redirect("/application");
+  }
+
+  if (session?.user.role !== "candidate") {
+    return redirect("/");
+  }
+
   return <>{children}</>;
 }

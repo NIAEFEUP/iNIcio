@@ -1,11 +1,4 @@
-import {
-  integer,
-  pgTable,
-  serial,
-  text,
-  jsonb,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";

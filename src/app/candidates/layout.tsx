@@ -1,4 +1,6 @@
+import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
+import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -11,9 +13,9 @@ export default async function FriendsLayout({
     headers: await headers(),
   });
 
-  // if (session?.user.role !== "recruiter" && session?.user.role !== "admin") {
-  //   return redirect("/");
-  // }
+  if (!isRecruiter(session?.user.id) && !isAdmin(session?.user.id)) {
+    return redirect("/");
+  }
 
   return <>{children}</>;
 }

@@ -7,11 +7,7 @@ import { addApplicationComment } from "@/lib/comment";
 import { application } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function POST(
-  req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context: any,
-) {
+export async function POST(req: Request, context: any) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });

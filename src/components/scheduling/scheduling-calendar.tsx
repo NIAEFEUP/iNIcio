@@ -31,7 +31,7 @@ export default function SchedulingCalendar({
   const router = useRouter();
 
   const [selectedSlots, setSelectedSlots] = useState<Array<Slot>>([]);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isConfirmed] = useState(false);
 
   const getUniqueTimeSlots = () => {
     return [

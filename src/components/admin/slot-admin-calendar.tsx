@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Plus, Trash2, Save } from "lucide-react";
+import { Calendar, Clock, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 import { NewSlot, Slot } from "@/lib/db";
-import { Checkbox } from "../ui/checkbox";
 import { SlotOperation } from "@/app/admin/interviews/page";
 
 interface SlotAdminCalendarProps {
@@ -67,29 +65,9 @@ export default function SlotAdminCalendar({
     },
   });
 
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [selectedSlot] = useState<Slot | null>(null);
 
   const tableRef = useRef<HTMLTableElement>(null);
-
-  const generateSlotsForDate = (date: Date) => {
-    const slots = [];
-
-    for (let hour = 9; hour < 18; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        slots.push({
-          start: new Date(date),
-          duration: slotConfig[slotType].duration,
-          quantity: slotConfig[slotType].quantity,
-          type: slotType,
-          recruitmentYear: recruitmentYear,
-        });
-      }
-    }
-
-    return slots;
-  };
 
   const generateTimeSlots = () => {
     const times = [];
@@ -141,8 +119,6 @@ export default function SlotAdminCalendar({
   };
 
   const handleCellClick = (date: Date, time: string) => {
-    setIsSelecting(false);
-
     const [hours, minutes] = time.split(":").map(Number);
     const start = new Date(date);
     start.setHours(hours, minutes, 0, 0);
@@ -197,8 +173,6 @@ export default function SlotAdminCalendar({
         { type: "add", slot: newSlot },
       ]);
     }
-
-    setIsSelecting(true);
   };
 
   const handleSaveSlots = async () => {

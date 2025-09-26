@@ -4,8 +4,8 @@ import {
   recruitmentPhaseStatus,
   slot,
 } from "@/db/schema";
-import { db, Recruitment, RecruitmentPhase, Slot } from "./db";
-import { and, eq, gt, or, sql } from "drizzle-orm";
+import { db, Recruitment, RecruitmentPhase } from "./db";
+import { and, eq, gt, or } from "drizzle-orm";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({

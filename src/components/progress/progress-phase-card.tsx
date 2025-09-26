@@ -1,29 +1,18 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { redirect, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, Clock } from "lucide-react";
-import { Interview } from "@/lib/db";
-import Link from "next/link";
 
 interface ProgressPhaseCardProps {
   number: number;
   title: string;
   description: string;
-  width?: number;
   checked?: boolean;
   redirectUrl: string;
-  phaseStart: Date | null;
   phaseEnd: Date | null;
   eventDateText?: string | null;
 }
@@ -32,10 +21,8 @@ export default function ProgressPhaseCard({
   number,
   title,
   description,
-  width = 128,
   checked = false,
   redirectUrl,
-  phaseStart,
   phaseEnd,
   eventDateText = null,
 }: ProgressPhaseCardProps) {

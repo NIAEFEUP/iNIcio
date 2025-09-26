@@ -3,10 +3,9 @@ export const dynamic = "force-dynamic";
 import { isRecruitmentActive } from "@/lib/recruitment";
 import "./globals.css";
 
-import { Button } from "@/components/ui/button";
 import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 
-import { Bell, Clock, Heart, ArrowRight, Link } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export default async function Home() {
   const recruitmentActive = await isRecruitmentActive();

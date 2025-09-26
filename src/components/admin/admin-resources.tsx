@@ -1,8 +1,7 @@
 "use client";
 
-import { Candidate, Recruiter, User } from "@/lib/db";
+import { Candidate, Recruiter } from "@/lib/db";
 import ResourceCard from "./resource-card";
-import { useRouter } from "next/router";
 
 import { redirect } from "next/navigation";
 
