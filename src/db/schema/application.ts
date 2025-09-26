@@ -17,6 +17,7 @@ export const application = pgTable("application", {
   id: serial("id").primaryKey(),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   studentNumber: integer("student_number").notNull(),
+  fullName: text("full_name").notNull(),
   linkedIn: text("linkedin"),
   github: text("github"),
   personalWebsite: text("personal_website"),

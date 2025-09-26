@@ -46,6 +46,7 @@ export default function Candidatura() {
     self_promotion: "",
     recruitment_first_interaction: [] as string[],
     suggestions: "",
+    fullname: "",
   });
 
   const router = useRouter();
@@ -124,11 +125,26 @@ export default function Candidatura() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <User className="h-4 w-4 text-primary" />
+                  Nome Completo *
+                </label>
+                <input
+                  type="text"
+                  name="fullname"
+                  placeholder="Nome completo"
+                  value={formData.fullname}
+                  onChange={handleInputChange}
+                  className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
+                  required
+                />
+              </div>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <Phone className="h-4 w-4 text-primary" />
-                    Número de Telemóvel
+                    Número de Telemóvel *
                   </label>
                   <input
                     type="tel"
@@ -144,7 +160,7 @@ export default function Candidatura() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <GraduationCap className="h-4 w-4 text-primary" />
-                    Número Mecanográfico
+                    Número Mecanográfico *
                   </label>
                   <input
                     type="text"
@@ -161,7 +177,7 @@ export default function Candidatura() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Curso
+                    Curso *
                   </label>
                   <select
                     name="degree"
@@ -198,7 +214,7 @@ export default function Candidatura() {
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <Calendar className="h-4 w-4 text-primary" />
-                    Ano Curricular
+                    Ano Curricular *
                   </label>
                   <select
                     name="curricular_year"
@@ -274,7 +290,6 @@ export default function Candidatura() {
                       }));
                     }}
                     className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    required
                   />
                 </div>
               </div>
@@ -362,7 +377,7 @@ export default function Candidatura() {
             <CardContent>
               <div>
                 <label className="text-base font-medium mb-4 block">
-                  O que te vês a fazer no NIAEFEUP?
+                  O que te vês a fazer no NIAEFEUP? *
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
@@ -420,7 +435,7 @@ export default function Candidatura() {
                 <div>
                   <CardTitle className="text-xl">Questões</CardTitle>
                   <CardDescription>
-                    Conta-nos mais sobre ti e a tua motivação
+                    Conta-nos mais sobre ti e a tua motivação *
                   </CardDescription>
                 </div>
               </div>
@@ -428,7 +443,7 @@ export default function Candidatura() {
             <CardContent className="space-y-8">
               <div>
                 <label className="text-base font-medium mb-2 block">
-                  Qual o teu interesse na opção/opções que escolheste?
+                  Qual o teu interesse na opção/opções que escolheste? *
                 </label>
                 <textarea
                   name="interest_justification"
@@ -443,7 +458,7 @@ export default function Candidatura() {
               <div>
                 <label className="text-base font-medium mb-2 block">
                   Com que tecnologias/ferramentas já trabalhaste? (ex. React,
-                  Photoshop, etc.)
+                  Photoshop, etc.) *
                 </label>
                 <textarea
                   name="experience"
@@ -456,7 +471,7 @@ export default function Candidatura() {
 
               <div>
                 <label className="text-base font-medium mb-2 block">
-                  Porquê o NI?
+                  Porquê o NI? *
                 </label>
                 <textarea
                   name="motivation"
@@ -471,7 +486,7 @@ export default function Candidatura() {
               <div>
                 <label className="text-base font-medium mb-2 block">
                   O que achas que o NIAEFEUP pode ganhar ao receber-te como
-                  membro?
+                  membro? *
                 </label>
                 <textarea
                   name="self_promotion"

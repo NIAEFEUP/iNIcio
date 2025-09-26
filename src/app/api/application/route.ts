@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const app = await tx
       .insert(application)
       .values({
+        fullName: json.fullname,
         submittedAt: new Date(),
         studentNumber: json.student_number,
         linkedIn: json.linkedIn,
