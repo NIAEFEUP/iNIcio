@@ -3,16 +3,24 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
   isAdmin: boolean;
+  isRecruiter: boolean;
+  isCandidate: boolean;
 };
 
-export default function Navbar({ className, isAdmin }: Props) {
+export default function Navbar({
+  className,
+  isAdmin,
+  isRecruiter,
+  isCandidate,
+}: Props) {
   const { data: session } = authClient.useSession();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,67 +31,195 @@ export default function Navbar({ className, isAdmin }: Props) {
 
   return (
     <nav
-      className={`${className} flex flex-col md:flex-row justify-between p-5 text-2xl shadow-sm mb-20`}
+      className={cn(
+        "mb-20 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        className,
+      )}
     >
-      <div className="flex justify-between items-center">
-        <Link href="/">
-          <img src="/logo.svg" alt="Logo" />
-        </Link>
-        <button
-          className="md:hidden text-2xl"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex items-center space-x-2 transition-opacity hover:opacity-80"
+          >
+            <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-8">
+            {session && (isRecruiter || isAdmin) && (
+              <>
+                <Link
+                  href="/alocacoes"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Alocações
+                </Link>
+                <Link
+                  href="/candidates"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Candidatos
+                </Link>
+              </>
+            )}
+
+            {session && isCandidate && (
+              <>
+                <Link
+                  href="/candidate/progress"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Progresso
+                </Link>
+                <Link
+                  href="/agendamento"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Agendamento
+                </Link>
+              </>
+            )}
+
+            {!session ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  Registo
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                {session && isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                  >
+                    AdminUI
+                  </Link>
+                )}
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                >
+                  Perfil
+                </Link>
+                <LogoutButton />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="inline-flex items-center justify-center rounded-md p-2 text-foreground/60 transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 md:hidden"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-in-out md:hidden",
+            isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0",
+          )}
         >
-          {isMenuOpen ? <ChevronUp /> : <ChevronDown />}
-        </button>
-      </div>
+          <div className="space-y-1 pt-2">
+            {session && (isRecruiter || isAdmin) && (
+              <>
+                <Link
+                  href="/alocacoes"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Alocações
+                </Link>
+                <Link
+                  href="/candidates"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Candidatos
+                </Link>
+              </>
+            )}
 
-      <div
-        className={`flex-col md:flex-row flex gap-5 transition-all duration-300 ease-in-out ${
-          isMenuOpen
-            ? "mt-5 opacity-100 max-h-screen"
-            : "opacity-0 max-h-0 overflow-hidden"
-        } md:opacity-100 md:max-h-full md:overflow-visible md:flex`}
-      >
-        {session &&
-          (("role" in session.user && session.user.role === "recruiter") ||
-            ("role" in session.user && session.user.role === "admin")) && (
-            <>
-              <Link href="/alocacoes">Alocações</Link>
-              <Link href="/candidates">Candidatos</Link>
-            </>
-          )}
+            {session && isCandidate && (
+              <>
+                <Link
+                  href="/candidate/progress"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Progresso
+                </Link>
+                <Link
+                  href="/agendamento"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Agendamento
+                </Link>
+              </>
+            )}
 
-        {session &&
-          "role" in session.user &&
-          session.user.role === "candidate" && (
-            <>
-              <Link href="/candidate/progress">Progresso</Link>
-              <Link href="/agendamento">Agendamento</Link>
-            </>
-          )}
-
-        {!session ? (
-          <>
-            <Link href="/login">Login</Link>
-            <Link href="/signup">
-              <span className="text-primary">Registo</span>
-            </Link>
-          </>
-        ) : (
-          <>
-            {session && isAdmin ? (
-              <Link className="text-primary" href="/admin">
-                <span className="text-primary">AdminUI</span>
-              </Link>
-            ) : null}
-
-            <Link className="text-primary" href="/profile">
-              <span className="text-primary">Perfil</span>
-            </Link>
-            <LogoutButton />
-          </>
-        )}
+            {!session ? (
+              <div className="space-y-1 pt-2">
+                <Link
+                  href="/login"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Registo
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-1 pt-2">
+                {session && isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    AdminUI
+                  </Link>
+                )}
+                <Link
+                  href="/profile"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Perfil
+                </Link>
+                <div className="px-3 py-2">
+                  <LogoutButton />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );

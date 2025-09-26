@@ -2,6 +2,12 @@ import { candidate } from "@/db/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
+export async function isCandidate(candidateId: string) {
+  return await db.query.candidate.findFirst({
+    where: eq(candidate.userId, candidateId),
+  });
+}
+
 export default async function getCandidateWithInterviewAndDynamic(
   candidateId: string,
 ) {
