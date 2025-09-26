@@ -12,13 +12,13 @@ jobs:
       name: ${{ github.ref_name }}
 
     steps:
-    - name: Upload to NIployments register
-      uses: NIAEFEUP/push-to-niployments@v2.2
-      with:
-        docker_dockerfile: Dockerfile
-        docker_context: .
-        docker_build_args: |
-          INICIO_VARS_CONTENT=${{ secrets.INICIO_VARS_CONTENT }}
-        NIPLOYMENTS_REGISTRY_URL: ${{ vars.NIPLOYMENTS_REGISTRY_URL }}
-        NIPLOYMENTS_REGISTRY_USERNAME: ${{ vars.NIPLOYMENTS_REGISTRY_USERNAME }}
-        NIPLOYMENTS_REGISTRY_PASSWORD: ${{ secrets.NIPLOYMENTS_REGISTRY_PASSWORD }}
+      - name: Upload to NIployments register
+        uses: NIAEFEUP/push-to-niployments@v2.2
+        with:
+          docker_dockerfile: Dockerfile
+          docker_context: .
+          docker_build_args: |
+            INICIO_VARS_CONTENT=${{ secrets.INICIO_VARS_CONTENT }}
+          NIPLOYMENTS_REGISTRY_URL: ${{ vars.NIPLOYMENTS_REGISTRY_URL }}
+          NIPLOYMENTS_REGISTRY_USERNAME: ${{ vars.NIPLOYMENTS_REGISTRY_USERNAME }}
+          NIPLOYMENTS_REGISTRY_PASSWORD: ${{ secrets.NIPLOYMENTS_REGISTRY_PASSWORD }}
