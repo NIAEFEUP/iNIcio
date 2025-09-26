@@ -16,61 +16,67 @@ export async function tryToAddCandidateToDynamic(
   candidateId: string,
   slotParam: Slot,
 ) {
-  await db.transaction(async (trx) => {
-    const candidateDynamic = await db.query.candidateToDynamic.findFirst({
-      where: eq(candidateToDynamic.candidateId, candidateId),
-      with: {
-        dynamic: {
-          with: {
-            slot: true,
+  try {
+    await db.transaction(async (trx) => {
+      const candidateDynamic = await db.query.candidateToDynamic.findFirst({
+        where: eq(candidateToDynamic.candidateId, candidateId),
+        with: {
+          dynamic: {
+            with: {
+              slot: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (candidateToDynamic) {
-      await trx
-        .update(slot)
-        .set({ quantity: candidateDynamic.dynamic.slot.quantity - 1 })
-        .where(eq(slot.id, slotParam.id));
-      await trx
-        .delete(candidateToDynamic)
-        .where(eq(candidateToDynamic.candidateId, candidateId));
-    }
+      if (candidateDynamic) {
+        await trx
+          .update(slot)
+          .set({ quantity: candidateDynamic.dynamic.slot.quantity - 1 })
+          .where(eq(slot.id, slotParam.id));
+        await trx
+          .delete(candidateToDynamic)
+          .where(eq(candidateToDynamic.candidateId, candidateId));
+      }
 
-    const s = await trx
-      .select()
-      .from(slot)
-      .where(eq(slot.id, slotParam.id))
-      .for("update");
-
-    if (s.length > 0) {
-      await trx
-        .update(slot)
-        .set({ quantity: s[0].quantity - 1 })
-        .where(eq(slot.id, slotParam.id));
-
-      const possibleDynamic = await trx
+      const s = await trx
         .select()
-        .from(dynamic)
-        .where(eq(dynamic.slotId, slotParam.id))
+        .from(slot)
+        .where(eq(slot.id, slotParam.id))
         .for("update");
 
-      if (possibleDynamic.length === 0) {
-        const [insertedDynamic] = await trx
-          .insert(dynamic)
-          .values({
-            slotId: slotParam.id,
-            content: "",
-          })
-          .returning({ id: dynamic.id });
+      console.log("slot: ", s);
 
-        addCandidateToDynamic(candidateId, insertedDynamic.id);
-      } else {
-        addCandidateToDynamic(candidateId, possibleDynamic[0].id);
+      if (s.length > 0) {
+        await trx
+          .update(slot)
+          .set({ quantity: s[0].quantity - 1 })
+          .where(eq(slot.id, slotParam.id));
+
+        const possibleDynamic = await trx
+          .select()
+          .from(dynamic)
+          .where(eq(dynamic.slotId, slotParam.id))
+          .for("update");
+
+        if (possibleDynamic.length === 0) {
+          const [insertedDynamic] = await trx
+            .insert(dynamic)
+            .values({
+              slotId: slotParam.id,
+              content: "",
+            })
+            .returning({ id: dynamic.id });
+
+          addCandidateToDynamic(candidateId, insertedDynamic.id);
+        } else {
+          addCandidateToDynamic(candidateId, possibleDynamic[0].id);
+        }
       }
-    }
-  });
+    });
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export async function getDynamic(dynamicId: number) {

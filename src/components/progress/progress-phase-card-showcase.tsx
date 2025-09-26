@@ -17,7 +17,6 @@ const getEventDate = (phase: RecruitmentPhase, candidate: any) => {
   if (phase.title.trim().toLowerCase() === "entrevista") {
     return candidate?.interview?.slot?.start?.toLocaleString("pt-PT");
   } else if (phase.title.trim().toLowerCase() === "dinâmica") {
-    console.log("DYNAMIC: ", candidate?.dynamic);
     return candidate?.dynamic?.dynamic?.slot?.start?.toLocaleString("pt-PT");
   }
 
