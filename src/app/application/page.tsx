@@ -91,7 +91,7 @@ export default function Candidatura() {
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Erro ao submeter candidatura. Tenta novamente.");
+      alert("Erro ao submeter candidatura. Tenta novamente: " + error);
     }
   };
 
@@ -126,7 +126,7 @@ export default function Candidatura() {
     }));
     setFormData((prev) => ({
       ...prev,
-      profile_picture: result.url,
+      profile_picture: result.fileName,
     }));
   };
 
@@ -137,7 +137,7 @@ export default function Candidatura() {
     }));
     setFormData((prev) => ({
       ...prev,
-      curriculum: result.url,
+      curriculum: result.fileName,
     }));
   };
 

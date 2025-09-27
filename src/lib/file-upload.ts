@@ -2,7 +2,9 @@ import {
   S3Client,
   DeleteObjectCommand,
   HeadObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,13 +20,13 @@ if (
 }
 
 const s3Config = {
-  endpoint: process.env.NEXT_PUBLIC_S3_ENDPOINT || "http://localhost:9000",
+  endpoint: process.env.NEXT_PUBLIC_S3_ENDPOINT || "http://localhost:9001",
   region: process.env.NEXT_PUBLIC_S3_REGION || "us-east-1",
   credentials: {
     accessKeyId: process.env.NEXT_PUBLIC_S3_ACCESS_KEY,
     secretAccessKey: process.env.NEXT_PUBLIC_S3_SECRET_KEY,
   },
-  forcePathStyle: true, // Required for MinIO
+  forcePathStyle: true,
 };
 
 const s3Client = new S3Client(s3Config);
@@ -195,8 +197,23 @@ export async function fileExists(fileName: string): Promise<boolean> {
   }
 }
 
-export function getPublicUrl(fileName: string): string {
-  return `${s3Config.endpoint}/${BUCKET_NAME}/${fileName}`;
+export function fromFullUrlToPath(url: string) {
+  if (url.startsWith("https")) {
+    return url.split("/").splice(4).join("/");
+  }
+
+  return url;
+}
+
+export async function getFilenameUrl(key: string): Promise<string> {
+  if (!key) return "";
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.NEXT_PUBLIC_S3_BUCKET,
+    Key: fromFullUrlToPath(key),
+  });
+
+  return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
 export async function replaceFile(

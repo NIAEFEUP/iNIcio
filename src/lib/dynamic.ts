@@ -1,6 +1,14 @@
-import { candidateToDynamic, dynamic, dynamicComment, slot } from "@/db/schema";
+import {
+  candidate,
+  candidateToDynamic,
+  dynamic,
+  dynamicComment,
+  slot,
+} from "@/db/schema";
 import { db, Slot } from "./db";
 import { eq } from "drizzle-orm";
+import { getFilenameUrl } from "./file-upload";
+import { application } from "@/drizzle/schema";
 
 export async function addCandidateToDynamic(
   candidateId: string,
@@ -44,8 +52,6 @@ export async function tryToAddCandidateToDynamic(
         .from(slot)
         .where(eq(slot.id, slotParam.id))
         .for("update");
-
-      console.log("slot: ", s);
 
       if (s.length > 0) {
         await trx
@@ -159,6 +165,13 @@ export async function createDynamicComment(
 
 export async function getAllCandidatesWithDynamic() {
   const candidates = await db.query.candidate.findMany({
+    where: (candidate, { exists }) =>
+      exists(
+        db
+          .select()
+          .from(application)
+          .where(eq(application.candidateId, candidate.userId)),
+      ),
     with: {
       user: true,
       dynamic: true,
@@ -171,13 +184,16 @@ export async function getAllCandidatesWithDynamic() {
     },
   });
 
-  return candidates.map((c) => ({
-    ...c.user,
-    dynamic: c.dynamic,
-    application: {
-      ...c.application,
-      interests: c.application.interests.map((i) => i.interest),
-    },
-    knownRecruiters: c.knownRecruiters,
-  }));
+  return await Promise.all(
+    candidates.map(async (c) => ({
+      ...c.user,
+      dynamic: c.dynamic,
+      application: {
+        ...c.application,
+        profilePicture: await getFilenameUrl(c.application?.profilePicture),
+        interests: c.application?.interests.map((i) => i.interest),
+      },
+      knownRecruiters: c.knownRecruiters,
+    })),
+  );
 }

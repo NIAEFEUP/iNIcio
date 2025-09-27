@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { candidate } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { fromFullUrlToPath } from "@/lib/file-upload";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -35,8 +36,8 @@ export async function POST(req: Request) {
         studentYear: json.student_year,
         degree: json.degree,
         curricularYear: json.curricular_year,
-        profilePicture: json.profile_picture,
-        curriculum: json.curriculum,
+        profilePicture: fromFullUrlToPath(json.profile_picture),
+        curriculum: fromFullUrlToPath(json.curriculum),
         experience: json.experience,
         motivation: json.motivation,
         selfPromotion: json.self_promotion,

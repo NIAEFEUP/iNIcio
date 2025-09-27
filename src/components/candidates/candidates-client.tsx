@@ -65,7 +65,7 @@ export default function CandidatesClient({
 
     setFilteredCandidates(
       candidates.filter((c) =>
-        c.name.toLowerCase().trim().includes(query.toLowerCase().trim()),
+        c.name?.toLowerCase().trim().includes(query.toLowerCase().trim()),
       ),
     );
   }, [query, candidates]);
@@ -275,10 +275,10 @@ export default function CandidatesClient({
             },
           ) => (
             <CandidateQuickInfo
-              key={candidate.id}
+              key={candidate.id || crypto.randomUUID()}
               candidate={candidate}
               application={candidate.application}
-              applicationInterests={candidate.application.interests}
+              applicationInterests={candidate.application?.interests}
               dynamic={null}
               friendCheckboxActive={true}
               friends={candidate.knownRecruiters}

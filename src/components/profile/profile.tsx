@@ -7,15 +7,18 @@ import { GraduationCap } from "lucide-react";
 import { Application } from "@/lib/db";
 import { authClient } from "@/lib/auth-client";
 import CandidateAnswer from "../candidate/page/candidate-answer";
+import { getFilenameUrl } from "@/lib/file-upload";
 
 interface ProfileProps {
   application: Application | null | undefined;
   applicationInterests: string[];
+  pictureUrl: string | null;
 }
 
 export default function Profile({
   application,
   applicationInterests,
+  pictureUrl,
 }: ProfileProps) {
   const { data: session } = authClient.useSession();
 
@@ -25,7 +28,7 @@ export default function Profile({
         <div className="flex gap-8 mb-8 p-6 bg-muted/30 rounded-lg">
           <Avatar className="w-28 h-28 ring-2 ring-primary/20">
             <AvatarImage
-              src={session?.user?.image || "/professional-student-portrait.png"}
+              src={pictureUrl || "/professional-student-portrait.png"}
               alt={session?.user?.name || "Profile"}
             />
             <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
