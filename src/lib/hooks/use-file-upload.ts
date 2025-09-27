@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { validateFile, FileValidationResult } from "@/lib/file-upload";
+import { validateFile, FileValidationResult } from "@/lib/file-validate";
 
 export interface UploadState {
   isUploading: boolean;

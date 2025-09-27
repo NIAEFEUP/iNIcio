@@ -1,3 +1,7 @@
+import "server-only";
+
+import { validateFile } from "@/lib/file-validate";
+
 import {
   S3Client,
   DeleteObjectCommand,
@@ -10,75 +14,33 @@ import { v4 as uuidv4 } from "uuid";
 
 // Ensure required environment variables are set
 if (
-  !process.env.NEXT_PUBLIC_S3_ACCESS_KEY ||
-  !process.env.NEXT_PUBLIC_S3_SECRET_KEY ||
-  !process.env.NEXT_PUBLIC_S3_BUCKET
+  !process.env.S3_ACCESS_KEY ||
+  !process.env.S3_SECRET_KEY ||
+  !process.env.S3_BUCKET
 ) {
   throw new Error(
-    "Missing required S3 configuration: NEXT_PUBLIC_S3_ACCESS_KEY, NEXT_PUBLIC_S3_SECRET_KEY, and NEXT_PUBLIC_S3_BUCKET must be set in environment variables.",
+    "Missing required S3 configuration: S3_ACCESS_KEY, S3_SECRET_KEY, and S3_BUCKET must be set in environment variables.",
   );
 }
 
 const s3Config = {
-  endpoint: process.env.NEXT_PUBLIC_S3_ENDPOINT || "http://localhost:9001",
-  region: process.env.NEXT_PUBLIC_S3_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT || "http://localhost:9001",
+  region: process.env.S3_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_S3_ACCESS_KEY,
-    secretAccessKey: process.env.NEXT_PUBLIC_S3_SECRET_KEY,
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
   },
   forcePathStyle: true,
 };
 
 const s3Client = new S3Client(s3Config);
-const BUCKET_NAME = process.env.NEXT_PUBLIC_S3_BUCKET;
-
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
-const ALLOWED_DOCUMENT_TYPES = ["application/pdf"];
-
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 10MB
+const BUCKET_NAME = process.env.S3_BUCKET;
 
 export interface UploadResult {
   success: boolean;
   fileName?: string;
   url?: string;
   error?: string;
-}
-
-export interface FileValidationResult {
-  isValid: boolean;
-  error?: string;
-}
-
-export function validateFile(
-  file: File,
-  type: "image" | "document",
-): FileValidationResult {
-  const allowedTypes =
-    type === "image" ? ALLOWED_IMAGE_TYPES : ALLOWED_DOCUMENT_TYPES;
-  const maxSize = type === "image" ? MAX_IMAGE_SIZE : MAX_DOCUMENT_SIZE;
-
-  if (!allowedTypes.includes(file.type)) {
-    return {
-      isValid: false,
-      error: `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`,
-    };
-  }
-
-  if (file.size > maxSize) {
-    const maxSizeMB = maxSize / (1024 * 1024);
-    return {
-      isValid: false,
-      error: `File size exceeds ${maxSizeMB}MB limit`,
-    };
-  }
-
-  return { isValid: true };
 }
 
 export function generateFileName(
@@ -209,7 +171,7 @@ export async function getFilenameUrl(key: string): Promise<string> {
   if (!key) return "";
 
   const command = new GetObjectCommand({
-    Bucket: process.env.NEXT_PUBLIC_S3_BUCKET,
+    Bucket: process.env.S3_BUCKET,
     Key: fromFullUrlToPath(key),
   });
 

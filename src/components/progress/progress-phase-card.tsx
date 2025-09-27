@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { redirect, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle, Clock } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Lock } from "lucide-react";
 
 interface ProgressPhaseCardProps {
   number: number;
@@ -13,6 +13,7 @@ interface ProgressPhaseCardProps {
   description: string;
   checked?: boolean;
   redirectUrl: string;
+  phaseStart: Date | null;
   phaseEnd: Date | null;
   eventDateText?: string | null;
 }
@@ -24,32 +25,60 @@ export default function ProgressPhaseCard({
   checked = false,
   redirectUrl,
   phaseEnd,
+  phaseStart,
   eventDateText = null,
 }: ProgressPhaseCardProps) {
   const router = useRouter();
 
+  const available = phaseStart && phaseEnd && new Date() > phaseStart;
+
+  function getBackgroundColor() {
+    if (checked && available) return "bg-green-200";
+    if (!checked && available) return "bg-amber-100";
+    if (!checked && !available) return "bg-gray-200";
+  }
+
+  function getTextColor() {
+    if (checked && available) return "text-green-700";
+    if (!checked && available) return "text-amber-700";
+    if (!checked && !available) return "text-gray-700";
+  }
+
+  function getBorderColor() {
+    if (checked && available) return "border-green-200";
+    if (!checked && available) return "border-amber-200";
+    if (!checked && !available) return "border-gray-200";
+  }
+
+  function getIcon() {
+    if (checked && available) return <CheckCircle className="h-6 w-6" />;
+    if (!checked && available) return <Clock className="h-6 w-6" />;
+    if (!checked && !available) return <Lock className="h-6 w-6" />;
+  }
+
+  function getSoonText() {
+    if (phaseStart) {
+      return `Abre em ${phaseStart.toLocaleString("pt-PT")}`;
+    }
+
+    return "Em breve";
+  }
+
   return (
     <div
       onClick={() => {
-        if (!checked) redirect(redirectUrl);
+        if (!checked && available) redirect(redirectUrl);
       }}
     >
-      <Card
-        className={cn(
-          checked
-            ? "border-green-200 bg-green-50/50"
-            : "border-amber-200 bg-amber-50/50",
-        )}
-      >
+      <Card className={cn(getBorderColor(), getBackgroundColor())}>
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div
                 className={cn(
                   "flex items-center justify-center w-8 h-8",
-                  checked
-                    ? "bg-green-100 text-green-700"
-                    : "bg-amber-100 text-amber-700",
+                  getTextColor(),
+                  getBackgroundColor(),
                   "rounded-full font-bold text-sm",
                 )}
               >
@@ -62,17 +91,17 @@ export default function ProgressPhaseCard({
                 <p className="text-muted-foreground mb-3">{description}</p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Até {phaseEnd.toLocaleString("pt-PT")}</span>
+                  {available ? (
+                    <p className="font-bold">
+                      Até {phaseEnd.toLocaleString("pt-PT")}
+                    </p>
+                  ) : (
+                    <p className="font-bold">{getSoonText()}</p>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {checked ? (
-                <CheckCircle className="h-6 w-6 text-green-500" />
-              ) : (
-                <Clock className="h-6 w-6 text-amber-500" />
-              )}
-            </div>
+            <div className="flex items-center gap-3">{getIcon()}</div>
           </div>
           {eventDateText && (
             <>
