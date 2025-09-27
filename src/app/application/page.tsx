@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ProfileImageUpload } from "@/components/ui/profile-image-upload";
+import { CVUpload } from "@/components/ui/cv-upload";
 import {
   User,
   Phone,
@@ -49,24 +51,47 @@ export default function Candidatura() {
     fullname: "",
   });
 
+  const [uploadedFiles, setUploadedFiles] = useState({
+    profileImage: null as { fileName: string; url: string } | null,
+    cv: null as { fileName: string; url: string } | null,
+  });
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!uploadedFiles.profileImage) {
+      alert("Por favor submete uma fotografia.");
+      return;
+    }
+
+    const submissionData = {
+      ...formData,
+      profile_picture: uploadedFiles.profileImage?.url || "",
+      curriculum: uploadedFiles.cv?.url || "",
+    };
+
     try {
       const res = await fetch("/api/application", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       if (res.ok) {
         router.push("/candidate/progress");
+      } else {
+        const errorData = await res.json();
+        alert(
+          `Erro ao submeter candidatura: ${errorData.message || "Erro desconhecido"}`,
+        );
       }
     } catch (error) {
-      console.error(error);
+      console.error("Submission error:", error);
+      alert("Erro ao submeter candidatura. Tenta novamente.");
     }
   };
 
@@ -89,6 +114,36 @@ export default function Candidatura() {
         ? prev[fieldName].filter((item) => item !== value)
         : [...prev[fieldName], value],
     }));
+  };
+
+  const handleProfileImageSuccess = (result: {
+    fileName: string;
+    url: string;
+  }) => {
+    setUploadedFiles((prev) => ({
+      ...prev,
+      profileImage: result,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      profile_picture: result.url,
+    }));
+  };
+
+  const handleCVSuccess = (result: { fileName: string; url: string }) => {
+    setUploadedFiles((prev) => ({
+      ...prev,
+      cv: result,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      curriculum: result.url,
+    }));
+  };
+
+  const handleUploadError = (error: string) => {
+    console.error("Upload error:", error);
+    // TODO: toast notification
   };
 
   return (
@@ -252,45 +307,32 @@ export default function Candidatura() {
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-3">
                     <Camera className="h-4 w-4 text-primary" />
-                    Fotografia
+                    Fotografia *
                   </label>
-                  <input
-                    type="file"
-                    name="profile_picture"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      setFormData((prev) => ({
-                        ...prev,
-                        profile_picture: file ? file.name : "",
-                      }));
-                    }}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <ProfileImageUpload
+                    onSuccess={handleProfileImageSuccess}
+                    onError={handleUploadError}
                     required
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-2">
                     Escolhe uma foto onde sejas facilmente identificável.
                   </p>
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-3">
                     <FileText className="h-4 w-4 text-primary" />
                     CV
                   </label>
-                  <input
-                    type="file"
-                    name="curriculum"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      setFormData((prev) => ({
-                        ...prev,
-                        curriculum: file ? file.name : "",
-                      }));
-                    }}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <CVUpload
+                    onSuccess={handleCVSuccess}
+                    onError={handleUploadError}
                   />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Submete o teu CV em formato PDF.
+                  </p>
                 </div>
               </div>
             </CardContent>

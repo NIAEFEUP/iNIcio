@@ -13,6 +13,8 @@
     "seed": "node --import tsx ./src/db/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.896.0",
+    "@aws-sdk/lib-storage": "^3.896.0",
     "@blocknote/core": "^0.39.1",
     "@blocknote/mantine": "^0.39.1",
     "@blocknote/react": "^0.39.1",
@@ -36,6 +38,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.2",
+    "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.3",
     "drizzle-seed": "^0.3.1",
     "husky": "^9.1.7",
@@ -51,9 +54,9 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "ts-node": "^10.9.2",
+    "uuid": "^13.0.0",
     "y-websocket": "^3.0.0",
-    "zod": "^4.0.5",
-    "drizzle-kit": "^0.31.4"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -62,6 +65,7 @@
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.3",
     "lint-staged": "^16.1.2",

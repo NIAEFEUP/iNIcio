@@ -7,8 +7,10 @@ import {
   application,
   applicationInterests,
   recruitmentPhaseStatus,
+  user,
 } from "@/db/schema";
 import { candidate } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -43,6 +45,16 @@ export async function POST(req: Request) {
         candidateId: session.user.id,
       })
       .returning({ id: application.id });
+
+    if (json.profile_picture) {
+      await tx
+        .update(user)
+        .set({
+          image: json.profile_picture,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, session.user.id));
+    }
 
     for (const interest of json.interests) {
       await tx.insert(applicationInterests).values({
