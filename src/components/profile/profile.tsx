@@ -25,11 +25,11 @@ export default function Profile({
         <div className="flex gap-8 mb-8 p-6 bg-muted/30 rounded-lg">
           <Avatar className="w-28 h-28 ring-2 ring-primary/20">
             <AvatarImage
-              src="/professional-student-portrait.png"
-              alt="Tomás Palma"
+              src={session?.user?.image || "/professional-student-portrait.png"}
+              alt={session?.user?.name || "Profile"}
             />
             <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
-              TP
+              {session?.user?.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
 
