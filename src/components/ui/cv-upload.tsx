@@ -29,22 +29,21 @@ export function CVUpload({
     resetState,
   } = useCVUpload({
     onSuccess: (result) => {
-      setValidationError(null); // Clear validation error on success
+      setValidationError(null);
       onSuccess?.(result);
     },
     onError,
   });
 
-  // Combine validation and upload errors
   const displayError = validationError || uploadError;
 
   const handleFileSelect = async (file: File) => {
-    setValidationError(null); // Clear previous validation errors
+    setValidationError(null);
     await uploadCV(file);
   };
 
   const handleFileRemove = async () => {
-    setValidationError(null); // Clear validation errors when removing file
+    setValidationError(null);
     if (uploadedFile) {
       await deleteFile(uploadedFile.fileName);
     }

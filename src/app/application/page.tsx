@@ -61,13 +61,11 @@ export default function Candidatura() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required files
     if (!uploadedFiles.profileImage) {
-      alert("Por favor, submete uma fotografia.");
+      alert("Por favor submete uma fotografia.");
       return;
     }
 
-    // Include uploaded file URLs in form data
     const submissionData = {
       ...formData,
       profile_picture: uploadedFiles.profileImage?.url || "",
@@ -145,7 +143,7 @@ export default function Candidatura() {
 
   const handleUploadError = (error: string) => {
     console.error("Upload error:", error);
-    // You could show a toast notification here
+    // TODO: toast notification
   };
 
   return (
