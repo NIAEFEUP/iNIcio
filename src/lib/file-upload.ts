@@ -8,18 +8,23 @@ import {
 import { Upload } from "@aws-sdk/lib-storage";
 import { v4 as uuidv4 } from "uuid";
 
+// Ensure required environment variables are set
+if (!process.env.S3_ACCESS_KEY || !process.env.S3_SECRET_KEY || !process.env.S3_BUCKET) {
+  throw new Error("Missing required S3 configuration: S3_ACCESS_KEY, S3_SECRET_KEY, and S3_BUCKET must be set in environment variables.");
+}
+
 const s3Config = {
   endpoint: process.env.S3_ENDPOINT || "http://localhost:9000",
   region: process.env.S3_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY || "inicio",
-    secretAccessKey: process.env.S3_SECRET_KEY || "inicio123",
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
   },
   forcePathStyle: true, // Required for MinIO
 };
 
 const s3Client = new S3Client(s3Config);
-const BUCKET_NAME = process.env.S3_BUCKET || "inicio";
+const BUCKET_NAME = process.env.S3_BUCKET;
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
