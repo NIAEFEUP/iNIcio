@@ -225,7 +225,11 @@ export function extractFileNameFromUrl(url: string): string {
 }
 
 export function getFileExtension(fileName: string): string {
-  return fileName.split(".").pop()?.toLowerCase() || "";
+  const lastDot = fileName.lastIndexOf(".");
+  if (lastDot > 0 && lastDot < fileName.length - 1) {
+    return fileName.substring(lastDot + 1).toLowerCase();
+  }
+  return "";
 }
 
 export async function uploadMultipleFiles(
