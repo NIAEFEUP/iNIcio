@@ -6,8 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { GraduationCap } from "lucide-react";
 import { Application } from "@/lib/db";
 import { authClient } from "@/lib/auth-client";
-import CandidateAnswer from "../candidate/page/candidate-answer";
-import { getFilenameUrl } from "@/lib/file-upload";
 import CandidateAnswers from "../candidate/page/candidate-answers";
 
 interface ProfileProps {

@@ -1,4 +1,5 @@
 import { admin } from "@/db/schema";
+import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -14,12 +15,8 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  const isAdmin = await db.query.admin.findFirst({
-    where: eq(admin.userId, session.user.id),
-  });
-
-  if (!isAdmin) {
-    return redirect("/");
+  if (!isAdmin(session?.user.id)) {
+    redirect("/");
   }
 
   return <>{children}</>;

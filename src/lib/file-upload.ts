@@ -11,6 +11,10 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 import { v4 as uuidv4 } from "uuid";
+import { db, Application } from "./db";
+import { application, user } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { isCandidate } from "./candidate";
 
 // Ensure required environment variables are set
 if (
@@ -98,7 +102,6 @@ export async function uploadProfileImage(
   file: File,
   userId: string,
 ): Promise<UploadResult> {
-  // Validate file
   const validation = validateFile(file, "image");
   if (!validation.isValid) {
     return {
@@ -109,6 +112,21 @@ export async function uploadProfileImage(
 
   const fileName = generateFileName(file.name, `profiles/${userId}`);
 
+  await db.transaction(async (tx) => {
+    const _user = await tx.query.user
+      .findFirst({
+        where: eq(user.id, userId),
+      })
+      .then((user) => user);
+
+    await tx
+      .update(user)
+      .set({
+        image: fileName,
+      })
+      .where(eq(user.id, _user.id));
+  });
+
   return uploadFile(file, fileName);
 }
 
@@ -116,7 +134,6 @@ export async function uploadCV(
   file: File,
   userId: string,
 ): Promise<UploadResult> {
-  // Validate file
   const validation = validateFile(file, "document");
   if (!validation.isValid) {
     return {

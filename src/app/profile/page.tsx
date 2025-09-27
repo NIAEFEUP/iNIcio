@@ -1,3 +1,4 @@
+import EditProfile from "@/components/profile/edit-profile";
 import Profile from "@/components/profile/profile";
 import { ResetPassword } from "@/components/profile/reset-password";
 
@@ -24,7 +25,7 @@ export default async function ProfilePage() {
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="info">Informações</TabsTrigger>
-          <TabsTrigger value="password">Password</TabsTrigger>
+          <TabsTrigger value="edit">Editar</TabsTrigger>
         </TabsList>
         <TabsContent value="info">
           <Profile
@@ -33,8 +34,8 @@ export default async function ProfilePage() {
             applicationInterests={applicationInterests}
           />
         </TabsContent>
-        <TabsContent value="password">
-          <ResetPassword />
+        <TabsContent value="edit">
+          <EditProfile pictureUrl={pictureUrl} />
         </TabsContent>
       </Tabs>
     </div>
