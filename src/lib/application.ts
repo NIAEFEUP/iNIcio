@@ -3,16 +3,19 @@ import { Application, db } from "./db";
 
 import { eq } from "drizzle-orm";
 import { addApplicationComment } from "./comment";
+import { getFilenameUrl } from "./file-upload";
 
 export async function getApplication(id: string): Promise<Application | null> {
-  const app = await db
-    .select()
-    .from(application)
-    .where(eq(application.candidateId, id));
+  const app = await db.query.application.findFirst({
+    where: eq(application.candidateId, id),
+  });
 
-  if (app.length === 0) return null;
+  if (!app) return null;
 
-  return app[0];
+  return {
+    ...app,
+    profilePicture: await getFilenameUrl(app?.profilePicture),
+  };
 }
 
 export async function getAllPossibleApplicationInterests(): Promise<string[]> {

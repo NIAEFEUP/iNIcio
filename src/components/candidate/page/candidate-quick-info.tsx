@@ -59,8 +59,6 @@ export default function CandidateQuickInfo({
     }
   };
 
-  console.log("INTERESTS: ", applicationInterests);
-
   return (
     <Card>
       {friendCheckboxActive && (
@@ -78,10 +76,10 @@ export default function CandidateQuickInfo({
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             <AvatarImage
-              src={candidate?.image || "/placeholder.svg"}
+              src={application.profilePicture || "/placeholder.svg"}
               alt={candidate?.name}
             />
-            <AvatarFallback>{candidate?.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{candidate?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
             <Link href={`/candidate/${candidate?.id}`}>

@@ -132,6 +132,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         }));
 
         options.onSuccess?.(result);
+
+        console.log("result: ", result); // tem o file name
+
+        // Change file name to signed url
+
         return { success: true, ...result };
       } catch (error) {
         const errorMessage =
