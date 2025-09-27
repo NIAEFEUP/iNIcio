@@ -1,8 +1,6 @@
 import {
   S3Client,
-  PutObjectCommand,
   DeleteObjectCommand,
-  GetObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -192,7 +190,7 @@ export async function fileExists(fileName: string): Promise<boolean> {
 
     await s3Client.send(command);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
