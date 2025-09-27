@@ -1,7 +1,12 @@
+import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
+import CommentFrame from "@/components/comments/comment-frame";
 import { Separator } from "@/components/ui/separator";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   getApplication,
   getApplicationInterests,
@@ -42,24 +47,45 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   };
 
   return (
-    <div className="flex flex-col gap-16 mx-32">
-      <section className="flex flex-row">
-        <CandidateQuickInfo
-          candidate={candidate}
-          application={application}
-          applicationInterests={applicationInterests}
-          dynamic={dynamic}
-        />
-        <CandidateAnswers key={crypto.randomUUID()} application={application} />
-      </section>
+    <div className="h-screen mx-4 md:mx-16">
+      <section className="flex flex-col md:flex-row gap-4 h-full">
+        <div>
+          <CandidateQuickInfo
+            candidate={candidate}
+            application={application}
+            applicationInterests={applicationInterests}
+            dynamic={dynamic}
+          />
+        </div>
 
-      <section className="flex flex-col gap-4">
-        <Separator />
-        <h2 className="text-2xl font-bold">Comentários</h2>
-        <CandidateComments
-          comments={comments}
-          saveToDatabase={saveToDatabase}
-        />
+        <Tabs defaultValue="answers" className="w-full h-3/4">
+          <TabsList className="w-full">
+            <TabsTrigger value="answers">Respostas</TabsTrigger>
+            {application.curriculum && (
+              <TabsTrigger value="curriculum">Currículo</TabsTrigger>
+            )}
+            <TabsTrigger value="comments">Comentários</TabsTrigger>
+          </TabsList>
+          <TabsContent value="answers" className="w-full">
+            <CandidateAnswers
+              key={crypto.randomUUID()}
+              application={application}
+            />
+          </TabsContent>
+          {application.curriculum && (
+            <TabsContent value="curriculum">
+              <CandidateCurriculum application={application} />
+            </TabsContent>
+          )}
+          <TabsContent value="comments">
+            <CommentFrame>
+              <CandidateComments
+                comments={comments}
+                saveToDatabase={saveToDatabase}
+              />
+            </CommentFrame>
+          </TabsContent>
+        </Tabs>
       </section>
     </div>
   );

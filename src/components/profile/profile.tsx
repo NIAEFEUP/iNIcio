@@ -8,6 +8,7 @@ import { Application } from "@/lib/db";
 import { authClient } from "@/lib/auth-client";
 import CandidateAnswer from "../candidate/page/candidate-answer";
 import { getFilenameUrl } from "@/lib/file-upload";
+import CandidateAnswers from "../candidate/page/candidate-answers";
 
 interface ProfileProps {
   application: Application | null | undefined;
@@ -85,30 +86,7 @@ export default function Profile({
         </div>
 
         <div className="space-y-1">
-          <CandidateAnswer
-            title="Interesse nas escolhas"
-            content={application ? application.interestJustification : ""}
-          />
-
-          <CandidateAnswer
-            title="Porquê o NI?"
-            content={application ? application.motivation : ""}
-          />
-
-          <CandidateAnswer
-            title="O que poderíamos ganhar contigo?"
-            content={application ? application.selfPromotion : ""}
-          />
-
-          <CandidateAnswer
-            title="Tens alguma sugestão?"
-            content={application ? application.suggestions : ""}
-          />
-
-          <CandidateAnswer
-            title="Com que tecnologias/ferramentas já trabalhaste?"
-            content={application ? application.experience : ""}
-          />
+          <CandidateAnswers application={application} />
         </div>
       </CardContent>
     </Card>

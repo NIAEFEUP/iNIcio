@@ -109,15 +109,26 @@ export default function CandidateComments({
             </TableRow>
           )}
 
-          {commentsState?.map((comment) => (
-            <TableRow key={crypto.randomUUID()}>
-              <TableCell className="font-medium w-1/6">
-                {comment.user?.name}
-              </TableCell>
-              <TableCell className="font-medium break-words whitespace-normal w-5/6">
-                {comment.application_comment?.content}
-              </TableCell>
-            </TableRow>
+          {commentsState?.map((comment, idx) => (
+            <div
+              key={`comment-${idx}`}
+              className="flex gap-3 p-4 rounded-lg bg-muted/50 w-full"
+            >
+              {/* <Avatar className="w-8 h-8"> */}
+              {/*   <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} /> */}
+              {/*   <AvatarFallback className="text-xs">{comment.author.charAt(0).toUpperCase()}</AvatarFallback> */}
+              {/* </Avatar> */}
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-foreground">
+                    {comment.user.name}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {comment.application_comment.content}
+                </p>
+              </div>
+            </div>
           ))}
         </TableBody>
       </Table>

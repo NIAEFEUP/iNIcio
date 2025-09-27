@@ -1,42 +1,52 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronDown } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { ChevronsUpDown } from "lucide-react";
-import { useState } from "react";
-
-export interface CandidateAnswerProps {
-  title: string;
-  content: string | null;
-}
 
 export default function CandidateAnswer({
+  id,
   title,
   content,
-}: CandidateAnswerProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
+  openItems,
+  toggleItem,
+}: {
+  id: number;
+  title: string;
+  content: string;
+  openItems: number[];
+  toggleItem: (id: number) => void;
+}) {
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="flex flex-col gap-2 ml-8 border w-full rounded-md shadow-sm"
-    >
-      <div className="flex gap-4 p-2">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
-            <ChevronsUpDown />
-            <span className="sr-only">Toggle</span>
-          </Button>
+    <Card key={title} className="w-full">
+      <Collapsible
+        open={openItems.includes(id)}
+        onOpenChange={() => toggleItem(id)}
+      >
+        <CollapsibleTrigger className="w-full">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between w-full">
+              <span className="text-left font-bold text-foreground">
+                {title}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-muted-foreground transition-transform ${
+                  openItems.includes(id) ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+          </CardContent>
         </CollapsibleTrigger>
-
-        <h4 className="text-lg">{title}</h4>
-      </div>
-      <CollapsibleContent className="flex flex-col gap-2 w-full ml-4">
-        <div className="px-4 py-2 font-mono text-sm">{content}</div>
-      </CollapsibleContent>
-    </Collapsible>
+        <CollapsibleContent>
+          <CardContent className="pt-0 px-4 pb-4">
+            <div className="border-t pt-4">
+              <p className="text-muted-foreground leading-relaxed">{content}</p>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }

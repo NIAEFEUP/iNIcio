@@ -3,7 +3,7 @@ import { MessageSquare } from "lucide-react";
 
 export default function CommentFrame({ children }) {
   return (
-    <Card>
+    <Card className="overflow-y-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />

@@ -15,6 +15,7 @@ export async function getApplication(id: string): Promise<Application | null> {
   return {
     ...app,
     profilePicture: await getFilenameUrl(app?.profilePicture),
+    curriculum: await getFilenameUrl(app?.curriculum),
   };
 }
 
