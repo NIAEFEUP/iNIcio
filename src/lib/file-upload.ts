@@ -1,16 +1,20 @@
 import {
   S3Client,
-  PutObjectCommand,
   DeleteObjectCommand,
-  GetObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { v4 as uuidv4 } from "uuid";
 
 // Ensure required environment variables are set
-if (!process.env.S3_ACCESS_KEY || !process.env.S3_SECRET_KEY || !process.env.S3_BUCKET) {
-  throw new Error("Missing required S3 configuration: S3_ACCESS_KEY, S3_SECRET_KEY, and S3_BUCKET must be set in environment variables.");
+if (
+  !process.env.S3_ACCESS_KEY ||
+  !process.env.S3_SECRET_KEY ||
+  !process.env.S3_BUCKET
+) {
+  throw new Error(
+    "Missing required S3 configuration: S3_ACCESS_KEY, S3_SECRET_KEY, and S3_BUCKET must be set in environment variables.",
+  );
 }
 
 const s3Config = {
@@ -186,7 +190,7 @@ export async function fileExists(fileName: string): Promise<boolean> {
 
     await s3Client.send(command);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
