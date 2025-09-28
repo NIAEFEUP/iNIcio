@@ -14,7 +14,10 @@ export async function PUT(req: Request) {
     headers: await headers(),
   });
 
-  if (!isRecruiter(session?.user.id) && !isAdmin(session?.user.id))
+  if (
+    !(await isRecruiter(session?.user.id)) &&
+    !(await isAdmin(session?.user.id))
+  )
     return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();

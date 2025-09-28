@@ -28,7 +28,7 @@ type CandidatePageProps = {
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!isRecruiter(session?.user.id)) redirect("/");
+  if (!(await isRecruiter(session?.user.id))) redirect("/");
 
   const { id } = await params;
 

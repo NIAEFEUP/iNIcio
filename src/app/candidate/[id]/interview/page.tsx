@@ -24,7 +24,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!isRecruiter(session?.user.id)) redirect("/");
+    if (!(await isRecruiter(session?.user.id))) redirect("/");
 
     await updateInterview(id, content);
 
