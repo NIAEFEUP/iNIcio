@@ -5,6 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { ArrowRight } from "lucide-react";
 
 import SubmittedApplicationMessage from "./submitted-application-message";
+import Link from "next/link";
 
 export default function RecruitmentActiveMessage() {
   const { data: session } = authClient.useSession();
@@ -28,11 +29,11 @@ export default function RecruitmentActiveMessage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Button size="default" variant="secondary">
-                    Regista-te agora
+                    <Link href="/signup">Regista-te agora</Link>
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   <Button variant="default" size="default">
-                    Visita o nosso site
+                    <Link href="https://niaefeup.pt">Visita o nosso site</Link>
                   </Button>
                 </div>
               </div>

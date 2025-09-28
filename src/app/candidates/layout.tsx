@@ -13,6 +13,10 @@ export default async function FriendsLayout({
     headers: await headers(),
   });
 
+  if (!session) {
+    return redirect("/");
+  }
+
   if (!isRecruiter(session?.user.id) && !isAdmin(session?.user.id)) {
     return redirect("/");
   }
