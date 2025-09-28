@@ -3,12 +3,14 @@ import { User } from "./db";
 export function getMentionMenuItems(users: Array<User>, editor: any) {
   return users.map((user) => ({
     title: user.name,
+    user: user,
     onItemClick: () => {
       editor.insertInlineContent([
         {
           type: "mention",
           props: {
-            user: user.name,
+            userName: user.name,
+            userId: user.id,
           },
         },
         " ", // add a space after the mention

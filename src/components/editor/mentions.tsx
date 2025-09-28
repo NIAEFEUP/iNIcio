@@ -4,8 +4,11 @@ export const Mention = createReactInlineContentSpec(
   {
     type: "mention",
     propSchema: {
-      user: {
-        default: "Unknown",
+      userName: {
+        default: "string",
+      },
+      userId: {
+        default: "string",
       },
     },
     content: "none",
@@ -13,7 +16,7 @@ export const Mention = createReactInlineContentSpec(
   {
     render: (props) => (
       <span style={{ backgroundColor: "#8400ff33" }}>
-        @{props.inlineContent.props.user}
+        @{props.inlineContent.props.userName}
       </span>
     ),
   },

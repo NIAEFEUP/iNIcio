@@ -4,6 +4,7 @@ import { Application, db } from "./db";
 import { eq } from "drizzle-orm";
 import { addApplicationComment } from "./comment";
 import { getFilenameUrl } from "./file-upload";
+import { notification } from "@/db/schema/notification";
 
 export async function getApplication(id: string): Promise<Application | null> {
   const app = await db.query.application.findFirst({
@@ -53,9 +54,34 @@ export async function submitApplicationComment(
   if (app.length === 0) return false;
 
   try {
-    await addApplicationComment(app[0].id, content, authorId);
+    return await db.transaction(async (tx) => {
+      const mentions = [];
+      for (const c of content) {
+        mentions.push(...c.content.filter((c) => c.type === "mention"));
+      }
 
-    return true;
+      const id = await addApplicationComment(app[0].id, content, authorId);
+
+      // filter repeated mentions (with props { userId: string, userName: string})
+      const uniqueMentions = Array.from(
+        new Map(mentions.map((m) => [m.userId, m])).values(),
+      );
+
+      for (const mention of uniqueMentions) {
+        console.log("MENTION: ", mention);
+        await tx.insert(notification).values({
+          userId: mention.props.userId,
+          type: "mention",
+          data: {
+            commentType: "application",
+            commentId: id,
+          },
+          isRead: false,
+        });
+      }
+
+      return true;
+    });
   } catch (e) {
     console.error(e);
     return false;

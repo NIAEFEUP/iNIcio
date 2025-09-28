@@ -7,11 +7,16 @@ export async function addApplicationComment(
   content: Array<any>,
   authorId: string,
 ) {
-  await db.insert(applicationComment).values({
-    applicationId,
-    content,
-    authorId,
-  });
+  const id = await db
+    .insert(applicationComment)
+    .values({
+      applicationId,
+      content,
+      authorId,
+    })
+    .returning({ id: applicationComment.id });
+
+  return id;
 }
 
 export async function getApplicationComments(candidateId: string) {
