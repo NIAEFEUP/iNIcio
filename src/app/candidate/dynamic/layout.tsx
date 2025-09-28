@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 

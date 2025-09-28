@@ -1,10 +1,9 @@
-import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CommentFrame from "@/components/comments/comment-frame";
 import EditorFrame from "@/components/editor/editor-frame";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { auth } from "@/lib/auth";
-import { createDynamicComment, getDynamic, updateDynamic } from "@/lib/dynamic";
+import { getDynamic, updateDynamic } from "@/lib/dynamic";
 import { getRecruiters } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -26,16 +25,16 @@ export default async function DynamicPage({ params }: any) {
     return true;
   }
 
-  async function handleCommentSave(content: string) {
-    "use server";
-
-    if (!session || session?.user.role !== "recruiter") redirect("/");
-
-    await createDynamicComment(id, content, session?.user.id);
-
-    return true;
-  }
-
+  // async function handleCommentSave(content: string) {
+  //   "use server";
+  //
+  //   if (!session || session?.user.role !== "recruiter") redirect("/");
+  //
+  //   await createDynamicComment(id, content, session?.user.id);
+  //
+  //   return true;
+  // }
+  //
   const dynamic = await getDynamic(id);
 
   const recruiters = await getRecruiters();
@@ -61,10 +60,12 @@ export default async function DynamicPage({ params }: any) {
       <div className="grid grid-cols-4 gap-4">
         <div className="col-span-1">
           <CommentFrame>
-            <CandidateComments
-              comments={[]}
-              saveToDatabase={handleCommentSave}
-            />
+            <>
+              {/* <CandidateComments */}
+              {/*   comments={[]} */}
+              {/*   saveToDatabase={handleCommentSave} */}
+              {/* /> */}
+            </>
           </CommentFrame>
         </div>
         <div className="col-span-3">

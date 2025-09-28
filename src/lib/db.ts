@@ -16,6 +16,8 @@ export type Recruiter = typeof schema.recruiter.$inferSelect;
 export type RecruiterToCandidate =
   typeof schema.recruiterToCandidate.$inferSelect;
 export type User = typeof schema.user.$inferSelect;
+export type NewApplicationComment =
+  typeof schema.applicationComment.$inferInsert;
 export type ApplicationComment = typeof schema.applicationComment.$inferSelect;
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });

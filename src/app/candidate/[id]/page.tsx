@@ -3,7 +3,6 @@ import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CommentFrame from "@/components/comments/comment-frame";
-import { Separator } from "@/components/ui/separator";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -40,10 +39,10 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const dynamic = await getCandidateDynamic(id);
 
-  const saveToDatabase = async (content: string) => {
+  const saveToDatabase = async (content: Array<any>) => {
     "use server";
 
-    return await submitApplicationComment(id, content);
+    return await submitApplicationComment(id, content, session?.user.id);
   };
 
   return (

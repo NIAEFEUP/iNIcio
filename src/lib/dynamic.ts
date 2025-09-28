@@ -1,10 +1,4 @@
-import {
-  candidate,
-  candidateToDynamic,
-  dynamic,
-  dynamicComment,
-  slot,
-} from "@/db/schema";
+import { candidateToDynamic, dynamic, dynamicComment, slot } from "@/db/schema";
 import { db, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";

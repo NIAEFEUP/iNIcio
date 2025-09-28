@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 export async function addApplicationComment(
   applicationId: number,
-  content: string,
+  content: Array<any>,
   authorId: string,
 ) {
   await db.insert(applicationComment).values({

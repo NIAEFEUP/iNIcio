@@ -1,12 +1,13 @@
 "use client";
 
+import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
+import RealTimeEditor from "@/components/editor/real-time-editor";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 
 import { authClient } from "@/lib/auth-client";
-import { ApplicationComment, User } from "@/lib/db";
+import { ApplicationComment, NewApplicationComment, User } from "@/lib/db";
 import { Send } from "lucide-react";
 import { useState } from "react";
 
@@ -15,7 +16,7 @@ interface CandidateCommentsProps {
     user: User | null;
     application_comment: ApplicationComment | null;
   }>;
-  saveToDatabase: (content: string) => Promise<boolean>;
+  saveToDatabase: (content: Array<any>) => Promise<boolean>;
 }
 
 export default function CandidateComments({
@@ -27,13 +28,15 @@ export default function CandidateComments({
   const [commentsState, setCommentsState] = useState<
     Array<{
       user: User | null;
-      application_comment: ApplicationComment | null;
+      application_comment: NewApplicationComment | null;
     }>
   >(comments);
 
-  const [commentValue, setCommentValue] = useState<string | undefined>(
+  const [commentValue, setCommentValue] = useState<Array<any> | undefined>(
     undefined,
   );
+
+  const [editor, setEditor] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,6 +46,7 @@ export default function CandidateComments({
     const prevComment = commentValue;
 
     setCommentsState([
+      ...commentsState,
       {
         user: session
           ? {
@@ -57,16 +61,16 @@ export default function CandidateComments({
             }
           : null,
         application_comment: {
-          id: 0,
           content: commentValue,
           authorId: session ? session.user.id : "",
           applicationId: 0,
         },
       },
-      ...commentsState,
     ]);
 
-    setCommentValue("");
+    setCommentValue([]);
+
+    editor.replaceBlocks(editor.topLevelBlocks, []);
 
     try {
       const res = await saveToDatabase(commentValue);
@@ -81,9 +85,9 @@ export default function CandidateComments({
   };
 
   return (
-    <ScrollArea className="h-64">
+    <ScrollArea className="h-128 flex flex-col gap-4">
       <Table>
-        <TableBody>
+        <TableBody className="w-full">
           {session && (
             <TableRow>
               <TableCell className="font-medium w-1/6">
@@ -94,12 +98,14 @@ export default function CandidateComments({
                   className="flex flex-row items-center gap-4"
                   onSubmit={handleSubmit}
                 >
-                  <Textarea
-                    placeholder="Adicionar comentário"
-                    className="w-5/6"
-                    required
-                    value={commentValue}
-                    onChange={(e) => setCommentValue(e.target.value)}
+                  <RealTimeEditor
+                    entity={{
+                      content: commentValue,
+                    }}
+                    onChange={(editor) => {
+                      setCommentValue(editor.document);
+                      setEditor(editor);
+                    }}
                   />
                   <Button variant="outline" type="submit">
                     <Send />
@@ -108,30 +114,28 @@ export default function CandidateComments({
               </TableCell>
             </TableRow>
           )}
-
-          {commentsState?.map((comment, idx) => (
-            <div
-              key={`comment-${idx}`}
-              className="flex gap-3 p-4 rounded-lg bg-muted/50 w-full"
-            >
-              {/* <Avatar className="w-8 h-8"> */}
-              {/*   <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} /> */}
-              {/*   <AvatarFallback className="text-xs">{comment.author.charAt(0).toUpperCase()}</AvatarFallback> */}
-              {/* </Avatar> */}
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-foreground">
-                    {comment.user.name}
-                  </span>
-                </div>
-                <p className="text-sm text-foreground leading-relaxed">
-                  {comment.application_comment.content}
-                </p>
-              </div>
-            </div>
-          ))}
         </TableBody>
       </Table>
+
+      <div>
+        {commentsState?.map((comment, idx) => (
+          <div
+            key={`comment-${idx}`}
+            className="flex p-4 rounded-lg bg-muted/50 w-full"
+          >
+            <div className="flex-1 space-y-1 w-full">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm text-foreground">
+                  {comment.user.name}
+                </span>
+              </div>
+              <ReadOnlyBlocks
+                blocks={comment.application_comment.content as Array<any>}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </ScrollArea>
   );
 }

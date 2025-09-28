@@ -4,14 +4,9 @@ import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-imp
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
-import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { getUser } from "@/lib/db";
 import { getApplication, getApplicationInterests } from "@/lib/application";
-import {
-  addInterviewComment,
-  getInterview,
-  updateInterview,
-} from "@/lib/interview";
+import { getInterview, updateInterview } from "@/lib/interview";
 
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
@@ -36,21 +31,21 @@ export default async function InterviewPage({ params }: any) {
     return true;
   }
 
-  async function handleCommentSave(content: string) {
-    "use server";
-
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!isRecruiter(session?.user.id)) redirect("/");
-
-    return await addInterviewComment(
-      session ? session.user.id : "",
-      content,
-      id,
-    );
-  }
+  // async function handleCommentSave(content: string) {
+  //   "use server";
+  //
+  //   const session = await auth.api.getSession({
+  //     headers: await headers(),
+  //   });
+  //
+  //   if (!isRecruiter(session?.user.id)) redirect("/");
+  //
+  //   return await addInterviewComment(
+  //     session ? session.user.id : "",
+  //     content,
+  //     id,
+  //   );
+  // }
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -59,7 +54,7 @@ export default async function InterviewPage({ params }: any) {
   const candidate = await getUser(id);
   const application = await getApplication(candidate?.id);
   const applicationInterests = await getApplicationInterests(application);
-  const comments = [];
+  // const comments = [];
 
   const interview = await getInterview(id);
   const dynamic = await getCandidateDynamic(id);
@@ -80,10 +75,11 @@ export default async function InterviewPage({ params }: any) {
               />
 
               <CommentFrame>
-                <CandidateComments
-                  comments={comments}
-                  saveToDatabase={handleCommentSave}
-                />
+                <></>
+                {/* <CandidateComments */}
+                {/*   comments={comments} */}
+                {/*   saveToDatabase={handleCommentSave} */}
+                {/* /> */}
               </CommentFrame>
             </div>
 

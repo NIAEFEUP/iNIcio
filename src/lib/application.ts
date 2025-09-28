@@ -42,7 +42,8 @@ export async function getApplicationInterests(
 
 export async function submitApplicationComment(
   candidateId: string,
-  content: string,
+  content: Array<any>,
+  authorId: string,
 ): Promise<boolean> {
   const app = await db
     .select()
@@ -52,7 +53,7 @@ export async function submitApplicationComment(
   if (app.length === 0) return false;
 
   try {
-    await addApplicationComment(app[0].id, content, candidateId);
+    await addApplicationComment(app[0].id, content, authorId);
 
     return true;
   } catch (e) {

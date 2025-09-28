@@ -1,4 +1,4 @@
-import { recruiter, user } from "@/db/schema";
+import { recruiter } from "@/db/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { isAdmin } from "./admin";

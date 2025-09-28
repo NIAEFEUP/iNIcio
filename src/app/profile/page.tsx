@@ -1,6 +1,5 @@
 import EditProfile from "@/components/profile/edit-profile";
 import Profile from "@/components/profile/profile";
-import { ResetPassword } from "@/components/profile/reset-password";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApplication, getApplicationInterests } from "@/lib/application";

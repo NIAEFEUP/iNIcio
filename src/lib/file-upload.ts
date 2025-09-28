@@ -11,10 +11,9 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 import { v4 as uuidv4 } from "uuid";
-import { db, Application } from "./db";
-import { application, user } from "@/db/schema";
+import { db } from "./db";
+import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { isCandidate } from "./candidate";
 
 // Ensure required environment variables are set
 if (

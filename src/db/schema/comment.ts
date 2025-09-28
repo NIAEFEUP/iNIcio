@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
 import { interview } from "./interview";
 import { recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
@@ -54,7 +54,7 @@ export const dynamicCommentRelations = relations(dynamicComment, ({ one }) => ({
 
 export const applicationComment = pgTable("application_comment", {
   id: serial("id").primaryKey(),
-  content: text("content").notNull(),
+  content: jsonb("content").notNull(),
   applicationId: integer("application_id")
     .notNull()
     .references(() => application.id, { onDelete: "cascade" }),

@@ -6,21 +6,19 @@ import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 import { ProfileImageUpload } from "../ui/profile-image-upload";
 
 interface ProfilePictureUploadProps {
   currentPicture?: string;
-  onPictureChange?: (file: File | null) => void;
   getSignedPictureUrl?: (pictureUrl: string) => Promise<string>;
   className?: string;
 }
 
 export function EditProfileImage({
   currentPicture = "/student-avatar.png",
-  onPictureChange,
   getSignedPictureUrl,
   className,
 }: ProfilePictureUploadProps) {

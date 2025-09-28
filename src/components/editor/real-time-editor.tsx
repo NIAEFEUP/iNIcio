@@ -18,20 +18,24 @@ import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 
 interface RealTimeEditorProps {
-  roomId: string;
-  websocketUrl: string;
-  userName: string;
-  entity: { content: any } & Record<string, any>;
-  saveHandler: (content: any) => void;
+  roomId?: string;
+  websocketUrl?: string;
+  userName?: string;
+  entity?: { content: any } & Record<string, any>;
+  saveHandler?: (content: any) => void;
+  saveHandlerTimeout?: number;
   mentionItems?: Array<User>;
+  onChange?: (e: any) => void;
 }
 
 export default function RealTimeEditor({
-  roomId,
-  websocketUrl,
-  userName,
-  entity,
-  saveHandler,
+  roomId = "",
+  websocketUrl = "",
+  userName = "",
+  entity = { content: "" },
+  saveHandler = () => {},
+  saveHandlerTimeout = 5000,
+  onChange = () => {},
   mentionItems = [],
 }: RealTimeEditorProps) {
   const doc = useMemo(() => new Y.Doc(), []);
@@ -85,7 +89,7 @@ export default function RealTimeEditor({
   useEffect(() => {
     const id = setInterval(() => {
       saveHandler(editor.document);
-    }, 5000);
+    }, saveHandlerTimeout);
 
     return () => clearInterval(id);
   });
@@ -95,6 +99,7 @@ export default function RealTimeEditor({
       className="bg-white w-full mx-4 p-4"
       editor={editor}
       data-color-scheme="light"
+      onChange={onChange}
     >
       <>
         <SuggestionMenuController
