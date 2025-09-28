@@ -16,10 +16,11 @@ import type {
 } from "@/lib/db";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Calendar, Heart, ExternalLink } from "lucide-react";
+import { Building2, Calendar, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { SocialLinks } from "@/components/profile/social-links";
 
 interface CandidateQuickInfoProps {
   candidate: User;
@@ -67,7 +68,7 @@ export default function CandidateQuickInfo({
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {friendCheckboxActive && (
-        <CardHeader className="relative z-10 pb-4">
+        <CardHeader className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="relative">
               <Checkbox
@@ -83,14 +84,11 @@ export default function CandidateQuickInfo({
             >
               Conheço
             </Label>
-            {checked && (
-              <Heart className="h-4 w-4 text-primary fill-primary animate-pulse" />
-            )}
           </div>
         </CardHeader>
       )}
 
-      <CardContent className="relative z-10 space-y-6 p-8">
+      <CardContent className="relative z-10">
         <div className="flex items-start gap-6">
           <div className="relative">
             <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
@@ -103,7 +101,6 @@ export default function CandidateQuickInfo({
                 {candidate?.name?.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-green-500 rounded-full border-3 border-background shadow-sm" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -176,6 +173,12 @@ export default function CandidateQuickInfo({
               ))}
             </div>
           </div>
+
+          <SocialLinks
+            githubUrl={application?.github || ""}
+            linkedinUrl={application?.linkedIn || ""}
+            websiteUrl={application?.personalWebsite || ""}
+          />
         </div>
       </CardContent>
 
