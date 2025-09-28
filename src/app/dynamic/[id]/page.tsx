@@ -5,6 +5,7 @@ import EditorFrame from "@/components/editor/editor-frame";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { auth } from "@/lib/auth";
 import { createDynamicComment, getDynamic, updateDynamic } from "@/lib/dynamic";
+import { getRecruiters } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -36,6 +37,8 @@ export default async function DynamicPage({ params }: any) {
   }
 
   const dynamic = await getDynamic(id);
+
+  const recruiters = await getRecruiters();
 
   return (
     <div className="mx-4">
@@ -72,6 +75,7 @@ export default async function DynamicPage({ params }: any) {
               userName={session?.user.name}
               saveHandler={handleContentSave}
               entity={dynamic}
+              mentionItems={recruiters}
             />
           </EditorFrame>
         </div>

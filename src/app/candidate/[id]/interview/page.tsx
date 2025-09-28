@@ -16,7 +16,7 @@ import {
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
 import { getCandidateDynamic } from "@/lib/dynamic";
-import { isRecruiter } from "@/lib/recruiter";
+import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
 
 export default async function InterviewPage({ params }: any) {
@@ -64,6 +64,8 @@ export default async function InterviewPage({ params }: any) {
   const interview = await getInterview(id);
   const dynamic = await getCandidateDynamic(id);
 
+  const recruiters = await getRecruiters();
+
   return (
     <>
       <div className="min-h-screen bg-background p-6">
@@ -93,6 +95,7 @@ export default async function InterviewPage({ params }: any) {
                   userName={session ? session.user.name : ""}
                   saveHandler={handleContentSave}
                   entity={interview}
+                  mentionItems={recruiters}
                 />
               </EditorFrame>
             </div>
