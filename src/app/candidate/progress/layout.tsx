@@ -1,5 +1,5 @@
-import { getApplication } from "@/lib/application";
 import { auth } from "@/lib/auth";
+import { isCandidate } from "@/lib/candidate";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -16,13 +16,7 @@ export default async function CandidateProgressLayout({
     return redirect("/login");
   }
 
-  const application = await getApplication(session?.user.id);
-
-  if (!application) {
-    return redirect("/application");
-  }
-
-  if (session?.user.role !== "candidate") {
+  if (!isCandidate(session.user.id)) {
     return redirect("/");
   }
 
