@@ -8,9 +8,9 @@ interface SocialLink {
 }
 
 interface SocialLinksProps {
-  githubUrl: string;
-  linkedinUrl: string;
-  websiteUrl: string;
+  githubUrl: string | null;
+  linkedinUrl: string | null;
+  websiteUrl: string | null;
 }
 
 export function SocialLinks({
@@ -30,18 +30,20 @@ export function SocialLinks({
 
   return (
     <div className="flex gap-2">
-      {socials.map((social) => (
-        <Button key={social.name} variant="outline" size="icon" asChild>
-          <a
-            href={social.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={social.name}
-          >
-            {social.icon}
-          </a>
-        </Button>
-      ))}
+      {socials
+        .filter((social) => social.url)
+        .map((social) => (
+          <Button key={social.name} variant="outline" size="icon" asChild>
+            <a
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.name}
+            >
+              {social.icon}
+            </a>
+          </Button>
+        ))}
     </div>
   );
 }
