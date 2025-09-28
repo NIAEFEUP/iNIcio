@@ -4,6 +4,7 @@ import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { authClient } from "@/lib/auth-client";
@@ -91,11 +92,9 @@ export default function CandidateComments({
       <Table>
         <TableBody className="w-full">
           {session && (
-            <TableRow>
-              <TableCell className="font-medium w-1/6">
-                {session.user.name}
-              </TableCell>
-              <TableCell className="w-5/6">
+            <TableRow className="flex flex-col md:flex-row">
+              <TableCell className="font-medium">{session.user.name}</TableCell>
+              <TableCell className="w-full">
                 <form
                   className="flex flex-row items-center gap-4"
                   onSubmit={handleSubmit}
@@ -121,12 +120,13 @@ export default function CandidateComments({
       </Table>
 
       <div>
+        <Separator className="mb-4" />
         {commentsState?.map((comment, idx) => (
           <div
             key={`comment-${idx}`}
             className="flex p-4 rounded-lg bg-muted/50 w-full"
           >
-            <div className="flex-1 space-y-1 w-full">
+            <div className="flex flex-row w-full gap-4">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm text-foreground">
                   {comment.user.name}
