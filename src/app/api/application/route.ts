@@ -32,6 +32,7 @@ export async function POST(req: Request) {
         linkedIn: json.linkedIn,
         github: json.github,
         personalWebsite: json.personal_website,
+        interestJustification: json.interest_justification,
         phone: json.phone,
         studentYear: json.student_year,
         degree: json.degree,
