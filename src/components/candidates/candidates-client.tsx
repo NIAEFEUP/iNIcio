@@ -118,14 +118,14 @@ export default function CandidatesClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-row justify-between mx-64">
+      <div className="flex flex-col md:flex-row gap-4 justify-between mx-auto w-full max-w-[80em]">
         <Input
           placeholder="Pesquisar"
-          className="w-128"
+          className="w-128 mx-4"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         ></Input>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-row flex-wrap items-center gap-4 mx-4">
           <Select
             value={filters.course}
             onValueChange={(value) =>
@@ -219,7 +219,7 @@ export default function CandidatesClient({
         </div>
       </div>
 
-      <div className="mx-64">
+      <div className="w-full mx-auto max-w-[80em]">
         {/* Active Filters Display */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2">
@@ -264,7 +264,7 @@ export default function CandidatesClient({
         )}
       </div>
 
-      <div className="mx-64 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+      <div className="mx-auto w-full max-w-[80em] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4">
         {filteredCandidates.map(
           (
             candidate: User & {
