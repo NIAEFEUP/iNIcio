@@ -43,7 +43,7 @@ export default function Navbar({
             href="/"
             className="flex items-center space-x-2 transition-opacity hover:opacity-80"
           >
-            <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+            <img src="/logo.svg" alt="Logo" className="h-4 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
