@@ -1,4 +1,5 @@
 import ProgressPhaseCardShowcase from "@/components/progress/progress-phase-card-showcase";
+import { hasApplication } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import {
@@ -10,9 +11,10 @@ import { headers } from "next/headers";
 const checkedVerifiers: {
   [key: string]: (
     userId: string | undefined,
-    phaseId: number,
+    phaseId?: number,
   ) => Promise<boolean>;
 } = {
+  candidatura: hasApplication,
   entrevista: isRecruitmentPhaseDone,
   dinâmica: isRecruitmentPhaseDone,
 };
@@ -24,8 +26,10 @@ export default async function CandidateProgress() {
 
   const progressPhases = await Promise.all(
     (await getRecruitmentPhases("candidate")).map(async (phase) => {
-      const isDone = checkedVerifiers[phase.title.trim().toLowerCase()]
-        ? await checkedVerifiers[phase.title.trim().toLowerCase()](
+      const isDone = checkedVerifiers[
+        phase.clientIdentifier.trim().toLowerCase()
+      ]
+        ? await checkedVerifiers[phase.clientIdentifier.trim().toLowerCase()](
             session?.user.id,
             phase.id,
           )

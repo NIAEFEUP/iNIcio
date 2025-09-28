@@ -6,6 +6,7 @@ import ProgressPhaseCard from "./progress-phase-card";
 const progressPhaseActions: { [key: string]: string } = {
   entrevista: "/candidate/interview/schedule",
   dinâmica: "/candidate/dynamic/schedule",
+  candidatura: "/application",
 };
 
 interface ProgressPhaseCardShowcaseProps {
@@ -41,7 +42,9 @@ export default function ProgressPhaseCardShowcase({
                 title={phase.title}
                 description={phase.description}
                 redirectUrl={
-                  progressPhaseActions[phase.title.trim().toLowerCase()]
+                  progressPhaseActions[
+                    phase.clientIdentifier.trim().toLowerCase()
+                  ]
                 }
                 checked={phase.checked}
                 phaseStart={phase.start}

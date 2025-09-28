@@ -1,0 +1,1 @@
+ALTER TABLE "recruitment_phase" ADD COLUMN "client_identifier" text DEFAULT '' NOT NULL;

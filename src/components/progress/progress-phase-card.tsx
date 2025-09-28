@@ -35,25 +35,25 @@ export default function ProgressPhaseCard({
   function getBackgroundColor() {
     if (checked && available) return "bg-green-50";
     if (!checked && available) return "bg-amber-50";
-    if (!checked && !available) return "bg-gray-50";
+    if (!available) return "bg-gray-50";
   }
 
   function getTextColor() {
     if (checked && available) return "text-green-700";
     if (!checked && available) return "text-amber-700";
-    if (!checked && !available) return "text-gray-700";
+    if (!available) return "text-gray-700";
   }
 
   function getBorderColor() {
     if (checked && available) return "border-green-200";
     if (!checked && available) return "border-amber-200";
-    if (!checked && !available) return "border-gray-200";
+    if (!available) return "border-gray-200";
   }
 
   function getIcon() {
     if (checked && available) return <CheckCircle className="h-6 w-6" />;
     if (!checked && available) return <Clock className="h-6 w-6" />;
-    if (!checked && !available) return <Lock className="h-6 w-6" />;
+    if (!available) return <Lock className="h-6 w-6" />;
   }
 
   function getSoonText() {
@@ -112,6 +112,7 @@ export default function ProgressPhaseCard({
                   variant="outline"
                   className="bg-transparent border-green-300 text-green-700 hover:bg-green-100"
                   onClick={() => {
+                    console.log("click: ", redirectUrl);
                     router.push(`${redirectUrl}`);
                   }}
                 >

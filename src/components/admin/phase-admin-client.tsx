@@ -64,6 +64,7 @@ export default function PhaseAdminClient({
     description: "",
     start: "",
     end: "",
+    clientIdentifier: "",
     role: "candidate",
     recruitmentYear: new Date().getFullYear().toString(),
   });
@@ -76,6 +77,7 @@ export default function PhaseAdminClient({
       start: "",
       end: "",
       role: "candidate",
+      clientIdentifier: "",
       recruitmentYear: new Date().getFullYear().toString(),
     });
 
@@ -87,6 +89,7 @@ export default function PhaseAdminClient({
       recruitmentYear: Number.parseInt(form.recruitmentYear),
       title: form.title,
       description: form.description,
+      clientIdentifier: form.clientIdentifier,
       start: form.start ? new Date(form.start) : null,
       end: form.end ? new Date(form.end) : null,
       role: form.role,
@@ -139,6 +142,7 @@ export default function PhaseAdminClient({
       start: p.start ? new Date(p.start).toISOString().slice(0, 16) : "",
       end: p.end ? new Date(p.end).toISOString().slice(0, 16) : "",
       role: (p.role as string) ?? "candidate",
+      clientIdentifier: p.clientIdentifier ?? "",
       recruitmentYear: (
         p.recruitmentYear ?? new Date().getFullYear()
       ).toString(),
@@ -196,6 +200,27 @@ export default function PhaseAdminClient({
                       value={form.title}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, title: e.target.value }))
+                      }
+                      className="col-span-3 bg-input border-border text-foreground"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="clientIdentifier"
+                      className="text-right text-card-foreground"
+                    >
+                      Identificador
+                    </Label>
+                    <Input
+                      id="clientIdentifier"
+                      value={form.clientIdentifier}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          clientIdentifier: e.target.value,
+                        }))
                       }
                       className="col-span-3 bg-input border-border text-foreground"
                       required
@@ -391,6 +416,27 @@ export default function PhaseAdminClient({
                     value={form.title}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, title: e.target.value }))
+                    }
+                    className="col-span-3 bg-input border-border text-foreground"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor="edit-clientIdentifier"
+                    className="text-right text-card-foreground"
+                  >
+                    Identificador
+                  </Label>
+                  <Input
+                    id="edit-clientIdentifier"
+                    value={form.clientIdentifier}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        clientIdentifier: e.target.value,
+                      }))
                     }
                     className="col-span-3 bg-input border-border text-foreground"
                     required

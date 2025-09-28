@@ -20,6 +20,17 @@ export async function getApplication(id: string): Promise<Application | null> {
   };
 }
 
+export async function hasApplication(userId: string | undefined) {
+  if (!userId) return false;
+
+  const app = await db
+    .select()
+    .from(application)
+    .where(eq(application.candidateId, userId));
+
+  return app.length > 0;
+}
+
 export async function getAllPossibleApplicationInterests(): Promise<string[]> {
   const interests = await db
     .selectDistinct({ interest: applicationInterests.interest })

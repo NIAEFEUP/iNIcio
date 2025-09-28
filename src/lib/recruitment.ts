@@ -79,7 +79,8 @@ export async function getRecruitmentPhases(role: "candidate" | "recruiter") {
         eq(recruitmentPhase.recruitmentYear, currentYear),
         eq(recruitmentPhase.role, role),
       ),
-    );
+    )
+    .orderBy(recruitmentPhase.start);
 
   return recruitmentPhases;
 }
@@ -89,6 +90,7 @@ export async function addRecruitmentPhase(r: RecruitmentPhase) {
     recruitmentYear: r.recruitmentYear,
     title: r.title,
     description: r.description,
+    clientIdentifier: r.clientIdentifier,
     start: r.start,
     end: r.end,
     role: r.role,
@@ -103,6 +105,7 @@ export async function editRecruitmentPhase(r: RecruitmentPhase) {
       title: r.title,
       description: r.description,
       start: r.start,
+      clientIdentifier: r.clientIdentifier,
       end: r.end,
       role: r.role,
     })

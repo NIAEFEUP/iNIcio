@@ -35,6 +35,7 @@ export const recruitmentPhase = pgTable(
     start: timestamp("start"),
     end: timestamp("end"),
     title: text("title").notNull(),
+    clientIdentifier: text("client_identifier").notNull().default(""),
     description: text("description").notNull(),
   },
   (table) => [check("start_before_end", sql`${table.start} < ${table.end}`)],
