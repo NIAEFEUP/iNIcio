@@ -17,7 +17,10 @@ export default async function FriendsLayout({
     return redirect("/");
   }
 
-  if (!isRecruiter(session?.user.id) && !isAdmin(session?.user.id)) {
+  if (
+    !(await isRecruiter(session?.user.id)) &&
+    !(await isAdmin(session?.user.id))
+  ) {
     return redirect("/");
   }
 

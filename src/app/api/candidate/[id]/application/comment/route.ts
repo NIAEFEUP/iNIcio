@@ -15,7 +15,7 @@ export async function POST(req: Request, context: any) {
 
   const { id: candidateId } = await context.params;
 
-  if (!session || !isRecruiter(session.user.id))
+  if (!session || !(await isRecruiter(session.user.id)))
     return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();
