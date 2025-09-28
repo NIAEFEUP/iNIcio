@@ -33,9 +33,9 @@ export default function ProgressPhaseCard({
   const available = phaseStart && phaseEnd && new Date() > phaseStart;
 
   function getBackgroundColor() {
-    if (checked && available) return "bg-green-200";
-    if (!checked && available) return "bg-amber-100";
-    if (!checked && !available) return "bg-gray-200";
+    if (checked && available) return "bg-green-50";
+    if (!checked && available) return "bg-amber-50";
+    if (!checked && !available) return "bg-gray-50";
   }
 
   function getTextColor() {

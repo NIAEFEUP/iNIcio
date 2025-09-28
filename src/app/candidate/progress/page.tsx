@@ -23,11 +23,14 @@ export default async function CandidateProgress() {
   });
 
   const progressPhases = await Promise.all(
-    (await getRecruitmentPhases()).map(async (phase) => {
-      const isDone = await checkedVerifiers[phase.title.trim().toLowerCase()](
-        session?.user.id,
-        phase.id,
-      );
+    (await getRecruitmentPhases("candidate")).map(async (phase) => {
+      const isDone = checkedVerifiers[phase.title.trim().toLowerCase()]
+        ? await checkedVerifiers[phase.title.trim().toLowerCase()](
+            session?.user.id,
+            phase.id,
+          )
+        : false;
+
       return {
         ...phase,
         checked: isDone,

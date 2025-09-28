@@ -57,13 +57,18 @@ export async function isRecruitmentActive() {
   return currentRecrutment.length > 0;
 }
 
-export async function getRecruitmentPhases() {
+export async function getRecruitmentPhases(role: "candidate" | "recruiter") {
   const currentYear = new Date().getFullYear();
 
   const recruitmentPhases = await db
     .select()
     .from(recruitmentPhase)
-    .where(eq(recruitmentPhase.recruitmentYear, currentYear));
+    .where(
+      and(
+        eq(recruitmentPhase.recruitmentYear, currentYear),
+        eq(recruitmentPhase.role, role),
+      ),
+    );
 
   return recruitmentPhases;
 }
