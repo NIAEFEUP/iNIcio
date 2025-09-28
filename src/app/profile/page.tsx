@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   const pictureUrl = await getFilenameUrl(session?.user?.image || "");
 
   return (
-    <div className="flex flex-col mx-64 gap-2 items-center justify-center">
+    <div className="flex flex-col mx-auto w-full max-w-[80em] gap-2 items-center justify-center">
       <h1 className="text-xl font-bold text-center">Perfil</h1>
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="w-full">
