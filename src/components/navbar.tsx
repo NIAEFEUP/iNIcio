@@ -32,7 +32,7 @@ export default function Navbar({
   return (
     <nav
       className={cn(
-        "mb-20 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "mb-10 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         className,
       )}
     >
@@ -48,6 +48,15 @@ export default function Navbar({
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
+            {session && !isRecruiter && !isAdmin && !isCandidate && (
+              <Link
+                href="/application"
+                className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                Candidatar
+              </Link>
+            )}
+
             {session && (isRecruiter || isAdmin) && (
               <>
                 <Link
