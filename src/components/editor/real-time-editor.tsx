@@ -96,7 +96,7 @@ export default function RealTimeEditor({
 
   return (
     <BlockNoteView
-      className="bg-white w-full mx-4 p-4"
+      className="bg-white w-full p-4 max-w-full"
       editor={editor}
       data-color-scheme="light"
       onChange={onChange}

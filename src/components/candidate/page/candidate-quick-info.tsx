@@ -175,9 +175,9 @@ export default function CandidateQuickInfo({
           </div>
 
           <SocialLinks
-            githubUrl={application?.github || ""}
-            linkedinUrl={application?.linkedIn || ""}
-            websiteUrl={application?.personalWebsite || ""}
+            githubUrl={application?.github || null}
+            linkedinUrl={application?.linkedIn || null}
+            websiteUrl={application?.personalWebsite || null}
           />
         </div>
       </CardContent>
