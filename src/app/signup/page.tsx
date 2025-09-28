@@ -270,8 +270,9 @@ export default function SignUp() {
 
               <Button
                 type="submit"
+                variant="secondary"
                 disabled={isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full"
               >
                 {isLoading ? "Registando..." : "Registar"}
               </Button>

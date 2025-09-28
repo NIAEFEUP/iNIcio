@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 type Props = {
   className?: string;
@@ -93,18 +94,12 @@ export default function Navbar({
 
             {!session ? (
               <div className="flex items-center space-x-4">
-                <Link
-                  href="/login"
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  Registo
-                </Link>
+                <Button variant="default">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button variant="secondary">
+                  <Link href="/signup">Registo</Link>
+                </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">

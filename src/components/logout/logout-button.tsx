@@ -11,7 +11,7 @@ export default function LogoutButton() {
 
   return (
     <Button
-      variant="outline"
+      variant="default"
       onClick={async () => {
         await authClient.signOut();
         router.push("/");

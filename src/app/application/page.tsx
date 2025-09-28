@@ -647,11 +647,7 @@ export default function Candidatura() {
           </Card>
 
           <div className="flex justify-center pt-8">
-            <Button
-              type="submit"
-              size="lg"
-              className="h-12 px-8 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
+            <Button type="submit" variant="secondary">
               <Send className="h-4 w-4 mr-2" />
               Submeter Candidatura
             </Button>
