@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 
 const formSchema = z
   .object({
@@ -256,6 +257,17 @@ export default function SignUp() {
                 </div>
               )}
 
+              <p className="text-center text-xs text-gray-500 mt-6">
+                Ao registares-te, concordas com a nossa{" "}
+                <Link
+                  className="font-bold hover:underline hover:cursor-pointer"
+                  href="/privacy-policy"
+                >
+                  política de privacidade
+                </Link>
+                .
+              </p>
+
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -266,11 +278,6 @@ export default function SignUp() {
             </form>
           </Form>
         </div>
-
-        <p className="text-center text-xs text-gray-500 mt-6">
-          Ao registares-te, concordas com os nossos termos de serviço e política
-          de privacidade.
-        </p>
       </div>
     </div>
   );
