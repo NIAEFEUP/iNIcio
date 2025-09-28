@@ -1,14 +1,14 @@
 import PhaseAdminClient from "@/components/admin/phase-admin-client";
 import { RecruitmentPhase } from "@/lib/db";
 import {
-  getRecruitmentPhases,
   addRecruitmentPhase,
   editRecruitmentPhase,
   deleteRecruitmentPhase,
+  getAllRecruitmentPhases,
 } from "@/lib/recruitment";
 
 export default async function RecruitmentAdmin() {
-  const recruitmentPhases = await getRecruitmentPhases();
+  const recruitmentPhases = await getAllRecruitmentPhases();
 
   const add = async (phase: RecruitmentPhase) => {
     "use server";
