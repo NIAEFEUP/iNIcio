@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function SignupLayout({
+export default async function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -11,8 +11,8 @@ export default async function SignupLayout({
     headers: await headers(),
   });
 
-  if (session?.user) {
-    redirect("/");
+  if (!session?.user) {
+    redirect("/login");
   }
 
   return <>{children}</>;

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { addApplicationComment } from "@/lib/comment";
 import { application } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { isRecruiter } from "@/lib/recruiter";
 
 export async function POST(req: Request, context: any) {
   const session = await auth.api.getSession({
@@ -14,8 +15,8 @@ export async function POST(req: Request, context: any) {
 
   const { id: candidateId } = await context.params;
 
-  // if (!session || session.user.role !== "recruiter")
-  //   return new Response("Unauthorized", { status: 401 });
+  if (!session || !isRecruiter(session.user.id))
+    return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();
 

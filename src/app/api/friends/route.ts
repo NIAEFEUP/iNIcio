@@ -6,16 +6,15 @@ import { db } from "@/lib/db";
 import { recruiterToCandidate } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { areFriends } from "@/lib/friend";
+import { isRecruiter } from "@/lib/recruiter";
+import { isAdmin } from "@/lib/admin";
 
 export async function PUT(req: Request) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (
-    !session ||
-    (session.user.role !== "recruiter" && session.user.role !== "admin")
-  )
+  if (!isRecruiter(session?.user.id) && !isAdmin(session?.user.id))
     return new Response("Unauthorized", { status: 401 });
 
   const json = await req.json();

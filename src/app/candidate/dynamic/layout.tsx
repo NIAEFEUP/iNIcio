@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
+import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function SignupLayout({
+export default async function DynamicLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -11,8 +12,8 @@ export default async function SignupLayout({
     headers: await headers(),
   });
 
-  if (session?.user) {
-    redirect("/");
+  if (!session?.user) {
+    redirect("/login");
   }
 
   return <>{children}</>;

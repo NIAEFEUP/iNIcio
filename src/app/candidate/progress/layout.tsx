@@ -12,6 +12,10 @@ export default async function CandidateProgressLayout({
     headers: await headers(),
   });
 
+  if (!session?.user) {
+    return redirect("/login");
+  }
+
   const application = await getApplication(session?.user.id);
 
   if (!application) {

@@ -15,7 +15,7 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  if (!isAdmin(session?.user.id)) {
+  if (!(await isAdmin(session?.user.id))) {
     redirect("/");
   }
 
