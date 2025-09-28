@@ -9,7 +9,7 @@ export async function isRecruiter(id: string) {
   return (
     (await db.query.recruiter.findFirst({
       where: eq(recruiter.userId, id),
-    })) || isAdmin(id)
+    })) || (await isAdmin(id))
   );
 }
 

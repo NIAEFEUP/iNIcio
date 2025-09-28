@@ -16,7 +16,7 @@ export default async function DynamicLayout({
     redirect("/login");
   }
 
-  if (!isRecruiter(session?.user.id)) {
+  if (!(await isRecruiter(session?.user.id))) {
     redirect("/");
   }
 
