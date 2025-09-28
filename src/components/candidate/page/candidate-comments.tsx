@@ -17,9 +17,11 @@ interface CandidateCommentsProps {
     application_comment: ApplicationComment | null;
   }>;
   saveToDatabase: (content: Array<any>) => Promise<boolean>;
+  recruiters?: Array<User>;
 }
 
 export default function CandidateComments({
+  recruiters = [],
   comments,
   saveToDatabase,
 }: CandidateCommentsProps) {
@@ -99,6 +101,7 @@ export default function CandidateComments({
                   onSubmit={handleSubmit}
                 >
                   <RealTimeEditor
+                    mentionItems={recruiters}
                     entity={{
                       content: commentValue,
                     }}

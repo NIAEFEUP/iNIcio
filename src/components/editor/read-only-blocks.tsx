@@ -3,9 +3,21 @@
 import { useCreateBlockNote } from "@blocknote/react";
 
 import { BlockNoteView } from "@blocknote/mantine";
+import { BlockNoteSchema, defaultInlineContentSpecs } from "@blocknote/core";
+import { Mention } from "./mentions";
 
 export function ReadOnlyBlocks({ blocks }: { blocks: any[] }) {
-  const editor = useCreateBlockNote({ initialContent: blocks });
+  const schema = BlockNoteSchema.create({
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs,
+      mention: Mention,
+    },
+  });
+
+  const editor = useCreateBlockNote({
+    schema,
+    initialContent: blocks,
+  });
 
   return (
     <BlockNoteView

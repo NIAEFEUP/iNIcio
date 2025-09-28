@@ -16,7 +16,7 @@ import { getApplicationComments } from "@/lib/comment";
 
 import { getUser } from "@/lib/db";
 import { getCandidateDynamic } from "@/lib/dynamic";
-import { isRecruiter } from "@/lib/recruiter";
+import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -38,6 +38,8 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const comments = await getApplicationComments(id);
 
   const dynamic = await getCandidateDynamic(id);
+
+  const recruiters = await getRecruiters();
 
   const saveToDatabase = async (content: Array<any>) => {
     "use server";
@@ -81,6 +83,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
               <CandidateComments
                 comments={comments}
                 saveToDatabase={saveToDatabase}
+                recruiters={recruiters}
               />
             </CommentFrame>
           </TabsContent>
