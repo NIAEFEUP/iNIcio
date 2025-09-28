@@ -62,7 +62,7 @@ export default function SignUp() {
       {
         email: values.email,
         password: values.password,
-        name: values.name,
+        name: `${values.name} ${values.surname}`,
       },
       {
         onRequest: () => {
