@@ -22,7 +22,7 @@ interface RealTimeEditorProps {
   websocketUrl?: string;
   userName?: string;
   entity?: { content: any } & Record<string, any>;
-  saveHandler?: (content: any) => void;
+  saveHandler?: ((content: any) => void) | null;
   saveHandlerTimeout?: number;
   mentionItems?: Array<User>;
   onChange?: (e: any) => void;
@@ -33,7 +33,7 @@ export default function RealTimeEditor({
   websocketUrl = "",
   userName = "",
   entity = { content: "" },
-  saveHandler = () => {},
+  saveHandler = null,
   saveHandlerTimeout = 5000,
   onChange = () => {},
   mentionItems = [],
@@ -87,6 +87,8 @@ export default function RealTimeEditor({
   }, [provider, editor, entity?.content]);
 
   useEffect(() => {
+    if (!saveHandler) return;
+
     const id = setInterval(() => {
       saveHandler(editor.document);
     }, saveHandlerTimeout);

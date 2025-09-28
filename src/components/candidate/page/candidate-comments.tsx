@@ -2,6 +2,7 @@
 
 import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
 import RealTimeEditor from "@/components/editor/real-time-editor";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -49,26 +50,24 @@ export default function CandidateComments({
     const prevComment = commentValue;
 
     setCommentsState([
-      ...commentsState,
       {
-        user: session
-          ? {
-              id: session.user.id,
-              name: session.user.name,
-              email: session.user.email,
-              emailVerified: session.user.emailVerified,
-              image: session.user.image ?? null,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              role: "recruiter" as const,
-            }
-          : null,
+        user: {
+          id: session?.user.id,
+          name: session?.user.name,
+          email: session?.user.email,
+          emailVerified: session?.user.emailVerified,
+          image: session?.user.image ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          role: "recruiter" as const,
+        },
         application_comment: {
           content: commentValue,
           authorId: session ? session.user.id : "",
           applicationId: 0,
         },
       },
+      ...commentsState,
     ]);
 
     setCommentValue([]);
@@ -121,23 +120,35 @@ export default function CandidateComments({
 
       <div>
         <Separator className="mb-4" />
-        {commentsState?.map((comment, idx) => (
-          <div
-            key={`comment-${idx}`}
-            className="flex p-4 rounded-lg bg-muted/50 w-full"
-          >
-            <div className="flex flex-row w-full gap-4">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm text-foreground">
-                  {comment.user.name}
-                </span>
+        {commentsState?.map((comment, idx) => {
+          return (
+            <div
+              key={`comment-${idx}`}
+              className="flex p-4 rounded-lg bg-muted/50 w-full"
+            >
+              <div className="flex flex-col md:flex-row w-full gap-4">
+                <div className="flex flex-row items-center gap-4">
+                  <Avatar className="h-8 w-8 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
+                    <AvatarImage
+                      src={comment.user.image || "/placeholder.svg"}
+                      alt={comment.user.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-semibold">
+                      {comment?.user?.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-sm text-foreground">
+                    {comment.user.name}
+                  </span>
+                </div>
+                <ReadOnlyBlocks
+                  blocks={comment.application_comment.content as Array<any>}
+                />
               </div>
-              <ReadOnlyBlocks
-                blocks={comment.application_comment.content as Array<any>}
-              />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </ScrollArea>
   );
