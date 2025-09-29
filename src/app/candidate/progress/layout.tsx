@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { isCandidate } from "@/lib/candidate";
+import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -16,8 +16,8 @@ export default async function CandidateProgressLayout({
     return redirect("/login");
   }
 
-  if (!(await isCandidate(session.user.id))) {
-    redirect("/");
+  if (await isRecruiter(session.user.id)) {
+    return redirect("/recruiter/progress");
   }
 
   return <>{children}</>;
