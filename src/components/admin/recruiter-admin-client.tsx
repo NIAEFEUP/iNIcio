@@ -39,15 +39,21 @@ export default function RecruiterAdminClient({
   const [list, setList] = useState<
     Array<{ userId: string; name?: string; email?: string }>
   >(recruiters || []);
+
   const [isOpen, setIsOpen] = useState(false);
+
   const [userId, setUserId] = useState("");
+
   const [query, setQuery] = useState("");
+
   const [results, setResults] = useState<
     Array<{ id: string; name: string; email: string }>
   >([]);
+
   const [allUsers, setAllUsers] = useState<
     Array<{ id: string; name: string; email: string }>
   >(users || []);
+
   const [selected, setSelected] = useState<{
     id: string;
     name: string;
@@ -69,7 +75,6 @@ export default function RecruiterAdminClient({
           { userId: idToAdd, name: selected.name, email: selected.email },
         ]);
       } else {
-        // Lookup the user from the server-provided users list (allUsers) instead of calling the API
         const u = allUsers.find(
           (x) =>
             x.id === idToAdd || x.id.toLowerCase() === idToAdd.toLowerCase(),
@@ -163,7 +168,7 @@ export default function RecruiterAdminClient({
                     >
                       <div className="text-sm font-medium">{u.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {u.email} — {u.id}
+                        {u.email}
                       </div>
                     </div>
                   ))}
@@ -182,7 +187,6 @@ export default function RecruiterAdminClient({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>user_id</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Ações</TableHead>
@@ -191,7 +195,6 @@ export default function RecruiterAdminClient({
           <TableBody>
             {list.map((r) => (
               <TableRow key={r.userId}>
-                <TableCell>{r.userId}</TableCell>
                 <TableCell>{r.name ?? "-"}</TableCell>
                 <TableCell>{r.email ?? "-"}</TableCell>
                 <TableCell>
