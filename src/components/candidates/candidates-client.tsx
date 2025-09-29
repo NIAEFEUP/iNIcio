@@ -120,6 +120,10 @@ export default function CandidatesClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <h2 className="text-center mb-4">
+        <span className="font-bold">{filteredCandidates.length}</span>{" "}
+        candidaturas
+      </h2>
       <div className="flex flex-col md:flex-row gap-4 justify-between mx-auto w-full max-w-[80em]">
         <Input
           placeholder="Pesquisar"
