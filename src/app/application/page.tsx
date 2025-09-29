@@ -361,7 +361,7 @@ export default function Candidatura() {
                 <input
                   type="url"
                   name="linkedin"
-                  placeholder="linkedin.com/company/niaefeup"
+                  placeholder="https://linkedin.com/company/niaefeup"
                   value={formData.linkedin}
                   onChange={handleInputChange}
                   className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
@@ -377,7 +377,7 @@ export default function Candidatura() {
                   <input
                     type="url"
                     name="github"
-                    placeholder="github.com/NIAEFEUP"
+                    placeholder="https://github.com/NIAEFEUP"
                     value={formData.github}
                     onChange={handleInputChange}
                     className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
@@ -392,7 +392,7 @@ export default function Candidatura() {
                   <input
                     type="url"
                     name="website"
-                    placeholder="niaefeup.pt"
+                    placeholder="https://niaefeup.pt"
                     value={formData.website}
                     onChange={handleInputChange}
                     className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
