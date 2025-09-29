@@ -29,6 +29,7 @@ import {
   Lightbulb,
   Send,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function Candidatura() {
   const [formData, setFormData] = useState({
@@ -154,11 +155,88 @@ export default function Candidatura() {
           <h1 className="text-4xl md:text-5xl font-bold text-balance mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Formulário de candidatura
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
-            Junta-te à nossa comunidade de estudantes apaixonados por tecnologia
-            e inovação. Preenche o formulário abaixo para começares a tua
-            jornada connosco.
-          </p>
+          <div className="space-y-6 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">
+              Utiliza o teu email pessoal. Convém estares atento ao teu email
+              nos próximos dias!
+            </p>
+            <p>
+              Apenas usaremos o teu número telefónico para contactos mais
+              urgentes.
+            </p>
+            <p>
+              A submissão de um CV pode contribuir significativamente para a
+              avaliação da tua candidatura.
+            </p>
+            <p>
+              Recomendamos que adiciones o teu <strong>GitHub</strong>,{" "}
+              <strong>LinkedIn</strong> ou
+              <strong> Site Pessoal</strong>, se tiveres, para podermos ver o
+              teu trabalho.
+            </p>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-foreground">
+                Projetos
+              </h2>
+              <p>
+                O departamento de Projetos foca-se em desenvolver soluções que
+                melhoram e facilitam o dia a dia de um estudante. Os vários
+                projetos utilizam um leque de tecnologias modernas e de
+                aprendizagem importantes para o futuro de um engenheiro
+                informático.
+              </p>
+              <p>
+                Os principais projetos do NIAEFEUP são a <strong>UNI</strong>, o{" "}
+                <strong>TTS</strong> e o <strong>NitSig</strong>. Neste
+                departamento, pode-se aprender de forma casual e hands-on.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-foreground">Eventos</h2>
+              <p>
+                No departamento de Eventos, focamo-nos na organização de eventos
+                para a comunidade académica, nomeadamente estudante de
+                informática. Procuramos estimular o interesse dos estudantes na
+                aprendizagem de tecnologias, com workshops ao longo do ano, bem
+                como criar oportunidades de socializar nos Jantares de Curso,
+                Rally tascas e outros convívios.
+              </p>
+              <p>
+                Temos ainda a <strong>Semana de Informática</strong>, um evento
+                ao longo de vários dias, repleto de workshops, palestras e muito
+                mais.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-foreground">
+                Imagem e Comunicação
+              </h2>
+              <p>
+                É o departamento de Comunicação que está encarregue da
+                divulgação junto dos estudantes dos eventos, projetos e todo o
+                conteúdo relacionado ao NI através das várias redes sociais,
+                cartazes, e-mail, entre outros. A equipa também organiza visitas
+                a escolas e bancas para dar a conhecer o NIAEFEUP, o curso e a
+                FEUP.
+              </p>
+              <p>
+                A equipa de Imagem está encarregue da produção de conteúdo
+                gráfico e da gestão da imagem do núcleo — desde garantir que a
+                UI/UX dos vários projetos estão de acordo com os padrões
+                estabelecidos, até à criação de material para as redes sociais e
+                ao procedimento por detrás da criação do merchandising do curso.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
