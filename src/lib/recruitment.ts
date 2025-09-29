@@ -5,6 +5,7 @@ import {
   slot,
   recruiter,
   user,
+  recruiterToCandidate,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
 import { and, eq, gt, or } from "drizzle-orm";
@@ -249,7 +250,13 @@ export async function addRecruiter(userId: string) {
 }
 
 export async function deleteRecruiter(userId: string) {
-  await db.delete(recruiter).where(eq(recruiter.userId, userId));
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(recruiterToCandidate)
+      .where(eq(recruiterToCandidate.recruiterId, userId));
+
+    await tx.delete(recruiter).where(eq(recruiter.userId, userId));
+  });
 }
 
 export async function getRecruiters() {

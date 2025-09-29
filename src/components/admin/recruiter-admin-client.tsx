@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -194,12 +195,23 @@ export default function RecruiterAdminClient({
                 <TableCell>{r.name ?? "-"}</TableCell>
                 <TableCell>{r.email ?? "-"}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleRemove(r.userId)}
-                  >
-                    Remover
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive">Remover</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          Tens a certeza que queres remover?
+                        </DialogTitle>
+                        <DialogDescription>
+                          <Button onClick={() => handleRemove(r.userId)}>
+                            Confirmar
+                          </Button>
+                        </DialogDescription>
+                      </DialogHeader>
+                    </DialogContent>
+                  </Dialog>
                 </TableCell>
               </TableRow>
             ))}
