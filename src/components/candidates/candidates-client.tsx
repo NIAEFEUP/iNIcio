@@ -24,6 +24,7 @@ import {
 import { availableCourses, availableCurricularYears } from "@/lib/constants";
 
 interface CandidatesClientProps {
+  authUser: User;
   candidates: Array<
     User & {
       knownRecruiters: RecruiterToCandidate[];
@@ -42,6 +43,7 @@ type CandidatesPageFilter = {
 };
 
 export default function CandidatesClient({
+  authUser,
   candidates,
   availableDepartments,
 }: CandidatesClientProps) {
@@ -282,6 +284,7 @@ export default function CandidatesClient({
               dynamic={null}
               friendCheckboxActive={true}
               friends={candidate.knownRecruiters}
+              authUser={authUser}
             />
           ),
         )}

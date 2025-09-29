@@ -29,9 +29,11 @@ interface CandidateQuickInfoProps {
   dynamic: Dynamic | null;
   friendCheckboxActive?: boolean;
   friends?: Array<RecruiterToCandidate>;
+  authUser?: User | null;
 }
 
 export default function CandidateQuickInfo({
+  authUser = null,
   candidate,
   application,
   applicationInterests,
@@ -39,11 +41,13 @@ export default function CandidateQuickInfo({
   friendCheckboxActive = false,
   friends = [],
 }: CandidateQuickInfoProps) {
-  const isFriend = friends.some(
-    (friend) => friend.candidateId === candidate.id,
+  const [checked, setChecked] = useState<boolean>(
+    friends.some(
+      (friend) =>
+        friend.candidateId === candidate.id &&
+        friend.recruiterId === authUser?.id,
+    ),
   );
-
-  const [checked, setChecked] = useState<boolean>(isFriend);
 
   const addFriend = async () => {
     setChecked(!checked);
