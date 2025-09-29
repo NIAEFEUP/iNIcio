@@ -3,6 +3,9 @@ import {
   recruitmentPhase,
   recruitmentPhaseStatus,
   slot,
+  recruiter,
+  user,
+  recruiterToCandidate,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
 import { and, eq, gt, or } from "drizzle-orm";
@@ -240,4 +243,36 @@ export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
     .update(recruitmentPhaseStatus)
     .set({ status: "done" })
     .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+}
+
+export async function addRecruiter(userId: string) {
+  await db.insert(recruiter).values({ userId });
+}
+
+export async function deleteRecruiter(userId: string) {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(recruiterToCandidate)
+      .where(eq(recruiterToCandidate.recruiterId, userId));
+
+    await tx.delete(recruiter).where(eq(recruiter.userId, userId));
+  });
+}
+
+export async function getRecruiters() {
+  const res = await db
+    .select({ userId: recruiter.userId, name: user.name, email: user.email })
+    .from(recruiter)
+    .leftJoin(user, eq(user.id, recruiter.userId));
+
+  return res;
+}
+
+export async function getUsers(limit = 500) {
+  const res = await db
+    .select({ id: user.id, name: user.name, email: user.email })
+    .from(user)
+    .limit(limit);
+
+  return res;
 }
