@@ -32,7 +32,7 @@ export default function AdminResources({
       <ResourceCard
         title="Recrutadores"
         quantityText={`${recruiters.length} recrutadores`}
-        onClick={() => redirect("/recruiters")}
+        onClick={() => redirect("/admin/recruiters")}
       />
 
       <ResourceCard
