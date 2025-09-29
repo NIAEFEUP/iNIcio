@@ -6,7 +6,6 @@ import "./globals.css";
 import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 
 import { Clock } from "lucide-react";
-import { isCandidate } from "@/lib/candidate";
 import { isRecruiter } from "@/lib/recruiter";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -24,7 +23,9 @@ export default async function Home() {
     <div className="h-full flex flex-col items-center">
       {recruitmentActive ? (
         <>
-          <RecruitmentActiveMessage isRecruiter={recruiter} />
+          <RecruitmentActiveMessage
+            isRecruiter={recruiter !== undefined || recruiter !== null}
+          />
         </>
       ) : (
         <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
