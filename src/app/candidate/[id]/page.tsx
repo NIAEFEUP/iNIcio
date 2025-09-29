@@ -65,7 +65,9 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
             {application.curriculum && (
               <TabsTrigger value="curriculum">Currículo</TabsTrigger>
             )}
-            <TabsTrigger value="comments">Comentários</TabsTrigger>
+            <TabsTrigger value="comments">
+              Comentários ({comments.length})
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="answers" className="w-full">
             <CandidateAnswers
