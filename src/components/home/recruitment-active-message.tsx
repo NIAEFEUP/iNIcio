@@ -6,8 +6,15 @@ import { ArrowRight } from "lucide-react";
 
 import SubmittedApplicationMessage from "./submitted-application-message";
 import Link from "next/link";
+import SignedRecruitmentActiveMessage from "./signed-recruitment-active-message";
 
-export default function RecruitmentActiveMessage() {
+interface RecruitmentActiveMessageProps {
+  isRecruiter: boolean;
+}
+
+export default function RecruitmentActiveMessage({
+  isRecruiter,
+}: RecruitmentActiveMessageProps) {
   const { data: session } = authClient.useSession();
 
   return (
@@ -44,7 +51,7 @@ export default function RecruitmentActiveMessage() {
           </section>
         </>
       ) : (
-        <SubmittedApplicationMessage />
+        <SignedRecruitmentActiveMessage isRecruiter={isRecruiter} />
       )}
     </>
   );

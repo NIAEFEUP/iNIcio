@@ -6,15 +6,25 @@ import "./globals.css";
 import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 
 import { Clock } from "lucide-react";
+import { isCandidate } from "@/lib/candidate";
+import { isRecruiter } from "@/lib/recruiter";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function Home() {
   const recruitmentActive = await isRecruitmentActive();
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const recruiter = await isRecruiter(session?.user.id);
 
   return (
     <div className="h-full flex flex-col items-center">
       {recruitmentActive ? (
         <>
-          <RecruitmentActiveMessage />
+          <RecruitmentActiveMessage isRecruiter={recruiter} />
         </>
       ) : (
         <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
