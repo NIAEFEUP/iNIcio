@@ -24,7 +24,7 @@ export default async function Home() {
       {recruitmentActive ? (
         <>
           <RecruitmentActiveMessage
-            isRecruiter={recruiter !== undefined || recruiter !== null}
+            isRecruiter={recruiter !== undefined && recruiter !== null}
           />
         </>
       ) : (
