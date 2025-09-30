@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   formatDateHeader,
   generateDates,
@@ -10,9 +11,9 @@ import {
 import ChooseCustomSlot from "../slot/choose-custom-slot";
 import { useRef, useState } from "react";
 import { NewRecruiterAvailability, RecruiterAvailability } from "@/lib/db";
-import SlotConfigPanel from "../slot/slot-config-panel";
 
 import { toast } from "sonner";
+import { Save } from "lucide-react";
 
 export type AvailabilityOperation = {
   type: "add" | "remove";
@@ -43,6 +44,7 @@ export default function RecruiterAvailabilityClient({
   const handleCellClick = (date: Date, time: string) => {
     const [hours, minutes] = time.split(":").map(Number);
     const start = new Date(date);
+
     start.setHours(hours, minutes, 0, 0);
 
     const end = new Date(start);
@@ -55,20 +57,21 @@ export default function RecruiterAvailabilityClient({
     );
 
     if (existingIndex !== -1) {
-      const avails = availabilities.filter((_, i) => i != existingIndex);
-
-      setAvailabilities(avails);
       setAvailabilityOperations((prev) => [
         ...prev.filter(
           (s) =>
             !(
               s.type === "remove" &&
-              s.slot.start.getTime() === start.getTime() &&
-              s.slot.start.getTime() + s.slot.duration * 60000 === end.getTime()
+              s.availability.start.getTime() === start.getTime() &&
+              s.availability.start.getTime() +
+                s.availability.duration * 60000 ===
+                end.getTime()
             ),
         ),
-        { type: "remove", slot: avails[existingIndex] },
+        { type: "remove", availability: availabilities[existingIndex] },
       ]);
+
+      setAvailabilities(availabilities.filter((_, i) => i != existingIndex));
     } else {
       const newAvailibity = {
         start: start,
@@ -88,34 +91,22 @@ export default function RecruiterAvailabilityClient({
     }
   };
 
+  console.log("OPERATIONS: ", availabilityOperations);
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="w-fit">
-        <SlotConfigPanel
-          showConfig={false}
-          slotConfig={{
-            interview: {
-              startHour: 9,
-              endHour: 19,
-              duration: 30,
-              quantity: 2,
-            },
-            dynamic: {
-              startHour: 9,
-              endHour: 19,
-              duration: 45,
-              quantity: 5,
-            },
-          }}
-          setSlotConfig={() => {}}
-          slotType={""}
-          handleSaveSlots={async () => {
+    <div className="flex flex-col gap-4 mx-4">
+      <div className="w-fit mx-auto mt-4">
+        <Button
+          className="mx-auto flex justify-center items-center"
+          onClick={async () => {
             const ok = await saveAvailabilities(availabilityOperations);
 
-            if (ok) toast("Slots guardados");
+            if (ok) toast("Guardado com sucesso");
           }}
-          setSlotType={() => {}}
-        />
+        >
+          <Save className="h-5 w-5" />
+          Guardar
+        </Button>
       </div>
 
       <ChooseCustomSlot

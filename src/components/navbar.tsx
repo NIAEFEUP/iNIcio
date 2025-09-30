@@ -61,6 +61,13 @@ export default function Navbar({
             {session && (isRecruiter || isAdmin) && (
               <>
                 <Link
+                  href="/recruiter/availability"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Disponibilidades
+                </Link>
+
+                <Link
                   href="/alocacoes"
                   className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
                 >

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export default function ChooseCustomSlot({
   slots,
@@ -15,6 +16,21 @@ export default function ChooseCustomSlot({
   getTypeColor,
   formatDateHeader,
 }) {
+  const [dragging, setDragging] = useState<boolean>(false);
+
+  const onMouseUp = () => {
+    setDragging(false);
+  };
+
+  const onMouseDown = (date, time) => {
+    handleCellClick(date, time);
+    setDragging(true);
+  };
+
+  const onMouseEnter = (date, time) => {
+    if (dragging) handleCellClick(date, time);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -79,6 +95,9 @@ export default function ChooseCustomSlot({
                             : crypto.randomUUID()
                         }
                         className="p-1"
+                        onMouseUp={() => onMouseUp()}
+                        onMouseDown={() => onMouseDown(date, time)}
+                        onMouseEnter={() => onMouseEnter(date, time)}
                       >
                         <div
                           className={cn(
