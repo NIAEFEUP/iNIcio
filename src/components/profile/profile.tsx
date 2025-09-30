@@ -25,7 +25,7 @@ export default function Profile({
     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-8">
         <div className="flex gap-8 mb-8 p-6 bg-muted/30 rounded-lg">
-          <Avatar className="w-28 h-28 ring-2 ring-primary/20">
+          <Avatar className="h-32 w-32 ring-4 ring-primary/10 ring-offset-4 ring-offset-background">
             <AvatarImage
               src={pictureUrl || "/professional-student-portrait.png"}
               alt={session?.user?.name || "Profile"}
