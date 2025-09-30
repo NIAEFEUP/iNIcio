@@ -1,8 +1,7 @@
 "use client";
 
-import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
+import { CommentDisplay } from "@/components/comments/comment-display";
 import RealTimeEditor from "@/components/editor/real-time-editor";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -64,6 +63,7 @@ export default function CandidateComments({
         application_comment: {
           content: commentValue,
           authorId: session ? session.user.id : "",
+          createdAt: new Date(),
           applicationId: 0,
         },
       },
@@ -95,7 +95,7 @@ export default function CandidateComments({
               <TableCell className="font-medium">{session.user.name}</TableCell>
               <TableCell className="w-full">
                 <form
-                  className="flex flex-row items-center gap-4"
+                  className="flex flex-row items-center justify-center gap-4"
                   onSubmit={handleSubmit}
                 >
                   <RealTimeEditor
@@ -119,36 +119,17 @@ export default function CandidateComments({
       </Table>
 
       <div>
-        <Separator className="mb-4" />
-        {commentsState?.map((comment, idx) => {
-          return (
-            <div
-              key={`comment-${idx}`}
-              className="flex p-4 rounded-lg bg-muted/50 w-full"
-            >
-              <div className="flex flex-col md:flex-row w-full gap-4">
-                <div className="flex flex-row items-center gap-4">
-                  <Avatar className="h-8 w-8 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
-                    <AvatarImage
-                      src={comment.user.image || "/placeholder.svg"}
-                      alt={comment.user.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-semibold">
-                      {comment?.user?.name?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-sm text-foreground">
-                    {comment.user.name}
-                  </span>
-                </div>
-                <ReadOnlyBlocks
-                  blocks={comment.application_comment.content as Array<any>}
-                />
-              </div>
-            </div>
-          );
-        })}
+        <div className="relative">
+          <Separator className="my-8" />
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs font-medium text-muted-foreground">
+            Comentários anteriores
+          </span>
+        </div>
+        <div className="flex flex-col gap-4">
+          {commentsState?.map((comment, idx) => (
+            <CommentDisplay key={`comment-${idx}`} comment={comment} />
+          ))}
+        </div>
       </div>
     </ScrollArea>
   );

@@ -1,6 +1,6 @@
 import { application, applicationComment, user } from "@/db/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 
 export async function addApplicationComment(
@@ -32,7 +32,8 @@ export async function getApplicationComments(candidateId: string) {
     .select()
     .from(applicationComment)
     .where(eq(applicationComment.applicationId, app[0].id))
-    .fullJoin(user, eq(applicationComment.authorId, user.id));
+    .fullJoin(user, eq(applicationComment.authorId, user.id))
+    .orderBy(desc(applicationComment.createdAt), desc(applicationComment.id));
 
   return await Promise.all(
     results.map(async (e) => ({

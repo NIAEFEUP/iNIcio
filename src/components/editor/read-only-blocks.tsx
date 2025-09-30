@@ -28,7 +28,7 @@ export function ReadOnlyBlocks({ blocks }: { blocks: any[] }) {
 
   return (
     <BlockNoteView
-      className="w-full [&_.bn-container]:w-full [&_.bn-container]:max-w-none"
+      className="w-full [&_.bn-container]:w-full [&_.bn-container]:max-w-none [&_.bn-container]:bg-transparent"
       editor={editor}
       editable={false}
       data-color-scheme="light"
