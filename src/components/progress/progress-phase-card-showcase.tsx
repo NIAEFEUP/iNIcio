@@ -7,14 +7,18 @@ const progressPhaseActions: { [key: string]: string } = {
   entrevista: "/candidate/interview/schedule",
   dinâmica: "/candidate/dynamic/schedule",
   candidatura: "/application",
+  recruiter_availability: "/recruiter/availability",
+  profile: "/profile",
+  who_knows: "/candidates",
 };
 
 interface ProgressPhaseCardShowcaseProps {
   progressPhases: Array<RecruitmentPhase & { checked: boolean }>;
-  candidate: any;
+  candidate?: any | null;
+  role: "candidate" | "recruiter";
 }
 
-const getEventDate = (phase: RecruitmentPhase, candidate: any) => {
+const getCandidateEventDate = (phase: RecruitmentPhase, candidate: any) => {
   if (phase.title.trim().toLowerCase() === "entrevista") {
     return candidate?.interview?.slot?.start?.toLocaleString("pt-PT");
   } else if (phase.title.trim().toLowerCase() === "dinâmica") {
@@ -26,13 +30,19 @@ const getEventDate = (phase: RecruitmentPhase, candidate: any) => {
 
 export default function ProgressPhaseCardShowcase({
   progressPhases,
-  candidate,
+  candidate = null,
+  role,
 }: ProgressPhaseCardShowcaseProps) {
+  const getEventDate = (phase: RecruitmentPhase) => {
+    if (role === "candidate") return getCandidateEventDate(phase, candidate);
+    else if (role === "recruiter") return "";
+  };
+
   return (
     <>
       <div className="flex flex-col gap-4 justify-center items-center">
         {progressPhases.map((phase, idx) => {
-          const date = getEventDate(phase, candidate);
+          const date = getEventDate(phase);
 
           return (
             <div key={`${phase.title}-${idx}`} className="w-full max-w-[50em]">
@@ -49,9 +59,7 @@ export default function ProgressPhaseCardShowcase({
                 checked={phase.checked}
                 phaseStart={phase.start}
                 phaseEnd={phase.end}
-                eventDateText={
-                  date && `${phase.title} em ${getEventDate(phase, candidate)}`
-                }
+                eventDateText={date && `${phase.title} em ${date}`}
               />
             </div>
           );

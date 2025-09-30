@@ -24,6 +24,32 @@ export const slot = pgTable("slot", {
     .references(() => recruitment.year),
 });
 
+export const recruiterAvailability = pgTable("recruiter_availability", {
+  id: serial("id").primaryKey(),
+  start: timestamp("start").notNull(),
+  duration: integer("duration").notNull(),
+  recruiterId: text("recruiter_id")
+    .notNull()
+    .references(() => user.id),
+  recruitmentYear: integer("recruitment_year")
+    .notNull()
+    .references(() => recruitment.year),
+});
+
+export const recruiterAvailabilityRelations = relations(
+  recruiterAvailability,
+  ({ one }) => ({
+    recruiter: one(user, {
+      fields: [recruiterAvailability.recruiterId],
+      references: [user.id],
+    }),
+    recruitment: one(recruitment, {
+      fields: [recruiterAvailability.recruitmentYear],
+      references: [recruitment.year],
+    }),
+  }),
+);
+
 export const recruitmentPhase = pgTable(
   "recruitment_phase",
   {

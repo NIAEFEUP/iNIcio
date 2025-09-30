@@ -18,7 +18,7 @@ interface SchedulingCalendarProps {
   multipleSlots?: boolean;
   confirmAction: (slot: Array<Slot>) => Promise<boolean>;
   confirmUrl: string;
-  chosenSlot: Slot | null;
+  chosenSlot?: Slot | null;
 }
 
 export default function SchedulingCalendar({
@@ -26,7 +26,7 @@ export default function SchedulingCalendar({
   multipleSlots = false,
   confirmAction,
   confirmUrl,
-  chosenSlot,
+  chosenSlot = null,
 }: SchedulingCalendarProps) {
   const router = useRouter();
 

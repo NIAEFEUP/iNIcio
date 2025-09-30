@@ -79,7 +79,6 @@ export async function submitApplicationComment(
       );
 
       for (const mention of uniqueMentions) {
-        console.log("MENTION: ", mention);
         await tx.insert(notification).values({
           userId: mention.props.userId,
           type: "mention",

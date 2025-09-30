@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { ArrowRight } from "lucide-react";
 
-import SubmittedApplicationMessage from "./submitted-application-message";
 import Link from "next/link";
 import SignedRecruitmentActiveMessage from "./signed-recruitment-active-message";
 

@@ -1,6 +1,6 @@
-import { recruiter } from "@/db/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { recruiter, recruiterAvailability } from "@/db/schema";
+import { db, RecruiterAvailability } from "./db";
+import { and, eq } from "drizzle-orm";
 import { isAdmin } from "./admin";
 
 export async function isRecruiter(id: string) {
@@ -17,5 +17,30 @@ export async function getRecruiters() {
   return await db.query.user.findMany({
     where: (user, { exists }) =>
       exists(db.select().from(recruiter).where(eq(recruiter.userId, user.id))),
+  });
+}
+
+export async function addAvailability(availablity: RecruiterAvailability) {
+  return await db.insert(recruiterAvailability).values({
+    ...availablity,
+  });
+}
+
+export async function removeAvailability(availablity: RecruiterAvailability) {
+  return await db
+    .delete(recruiterAvailability)
+    .where(
+      and(
+        eq(recruiterAvailability.start, availablity.start),
+        eq(recruiterAvailability.duration, availablity.duration),
+        eq(recruiterAvailability.recruiterId, availablity.recruiterId),
+        eq(recruiterAvailability.recruitmentYear, availablity.recruitmentYear),
+      ),
+    );
+}
+
+export async function getAvailabilities(recruiterId: string) {
+  return await db.query.recruiterAvailability.findMany({
+    where: eq(recruiterAvailability.recruiterId, recruiterId),
   });
 }

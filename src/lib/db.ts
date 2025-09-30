@@ -5,6 +5,10 @@ import { eq } from "drizzle-orm";
 
 export type Recruitment = typeof schema.recruitment.$inferSelect;
 export type Interview = typeof schema.interview.$inferSelect;
+export type RecruiterAvailability =
+  typeof schema.recruiterAvailability.$inferSelect;
+export type NewRecruiterAvailability =
+  typeof schema.recruiterAvailability.$inferInsert;
 export type Application = typeof schema.application.$inferSelect;
 export type CandidateToDynamic = typeof schema.candidateToDynamic.$inferSelect;
 export type Dynamic = typeof schema.dynamic.$inferSelect;

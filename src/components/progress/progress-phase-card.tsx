@@ -112,7 +112,6 @@ export default function ProgressPhaseCard({
                   variant="outline"
                   className="bg-transparent border-green-300 text-green-700 hover:bg-green-100"
                   onClick={() => {
-                    console.log("click: ", redirectUrl);
                     router.push(`${redirectUrl}`);
                   }}
                 >
