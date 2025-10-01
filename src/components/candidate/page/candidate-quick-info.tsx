@@ -118,7 +118,7 @@ export default function CandidateQuickInfo({
               <div className="h-0.5 w-0 bg-primary group-hover/link:w-full transition-all duration-300 mt-1" />
             </Link>
             <p className="text-sm text-muted-foreground mt-1 font-medium">
-              Candidato
+              {application?.studentNumber}
             </p>
           </div>
         </div>
