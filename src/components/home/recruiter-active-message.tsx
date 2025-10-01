@@ -21,7 +21,7 @@ export default function RecruiterActiveMessage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button
-              onClick={() => router.push("/recruiter/candidates")}
+              onClick={() => router.push("/candidates")}
               variant="secondary"
               size="default"
             >
@@ -29,7 +29,7 @@ export default function RecruiterActiveMessage() {
               Ver Candidatos
             </Button>
             <Button
-              onClick={() => router.push("/recruiter/candidates")}
+              onClick={() => router.push("/recruiter/availability")}
               variant="secondary"
               size="default"
             >
