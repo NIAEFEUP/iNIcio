@@ -25,9 +25,9 @@ export default async function Home() {
         <>
           <RecruitmentActiveMessage
             user={{
-              ...session.user,
-              image: session.user.image ?? "/default-avatar.png",
-              role: session.user.role as "recruiter" | "candidate" | "admin",
+              ...session?.user,
+              image: session?.user.image ?? "/default-avatar.png",
+              role: session?.user.role as "recruiter" | "candidate" | "admin",
             }}
             isRecruiter={recruiter !== undefined && recruiter !== null}
           />
