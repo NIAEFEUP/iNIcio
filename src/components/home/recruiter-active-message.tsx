@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, User } from "lucide-react";
+import { Calendar, FileText, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -21,13 +21,20 @@ export default function RecruiterActiveMessage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button
-              onClick={() => router.push("/recruiter/progress")}
-              size="default"
+              onClick={() => router.push("/recruiter/candidates")}
               variant="secondary"
+              size="default"
             >
               <FileText className="mr-2 h-5 w-5" />
-              Ver progresso
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Ver Candidatos
+            </Button>
+            <Button
+              onClick={() => router.push("/recruiter/candidates")}
+              variant="secondary"
+              size="default"
+            >
+              <Calendar className="ml-2 h-5 w-5" />
+              Marcar disponibilidades
             </Button>
             <Button
               onClick={() => router.push("/profile")}
