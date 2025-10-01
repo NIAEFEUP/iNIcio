@@ -123,7 +123,7 @@ export default function CandidateQuickInfo({
           </div>
         </div>
 
-        <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
+        <Separator className="bg-gradient-to-r from-transparent via-border to-transparent my-4" />
 
         {/* Academic Information */}
         <div className="space-y-4">
