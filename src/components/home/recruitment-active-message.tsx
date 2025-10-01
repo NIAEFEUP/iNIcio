@@ -1,24 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { ArrowRight } from "lucide-react";
 
 import Link from "next/link";
 import SignedRecruitmentActiveMessage from "./signed-recruitment-active-message";
+import { User } from "@/lib/db";
 
 interface RecruitmentActiveMessageProps {
   isRecruiter: boolean;
+  user: Partial<User>;
 }
 
 export default function RecruitmentActiveMessage({
   isRecruiter,
+  user,
 }: RecruitmentActiveMessageProps) {
-  const { data: session } = authClient.useSession();
-
   return (
     <>
-      {!session ? (
+      {!user ? (
         <>
           <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
             <div className="container mx-auto px-4 text-center">
