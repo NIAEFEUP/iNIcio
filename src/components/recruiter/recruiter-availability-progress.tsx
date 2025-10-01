@@ -91,8 +91,6 @@ export default function RecruiterAvailabilityClient({
     }
   };
 
-  console.log("OPERATIONS: ", availabilityOperations);
-
   return (
     <div className="flex flex-col gap-4 mx-4">
       <div className="w-fit mx-auto mt-4">

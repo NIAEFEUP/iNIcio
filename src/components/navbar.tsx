@@ -9,11 +9,15 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
+import NotificationPopup from "./notifications/notification-popup";
+import { Notification } from "@/lib/db";
+
 type Props = {
   className?: string;
   isAdmin: boolean;
   isRecruiter: boolean;
   isCandidate: boolean;
+  notifications: Notification[];
 };
 
 export default function Navbar({
@@ -21,6 +25,7 @@ export default function Navbar({
   isAdmin,
   isRecruiter,
   isCandidate,
+  notifications,
 }: Props) {
   const { data: session } = authClient.useSession();
 
@@ -124,6 +129,9 @@ export default function Navbar({
                 >
                   Perfil
                 </Link>
+
+                <NotificationPopup notifications={notifications} />
+
                 <LogoutButton />
               </div>
             )}
@@ -151,6 +159,8 @@ export default function Navbar({
           )}
         >
           <div className="space-y-1 pt-2">
+            <NotificationPopup notifications={notifications} />
+
             {session && (isRecruiter || isAdmin) && (
               <>
                 <Link
