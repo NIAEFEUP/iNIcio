@@ -9,7 +9,7 @@ import { User } from "@/lib/db";
 
 interface RecruitmentActiveMessageProps {
   isRecruiter: boolean;
-  user: Partial<User>;
+  user: User;
 }
 
 export default function RecruitmentActiveMessage({
