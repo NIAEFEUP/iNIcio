@@ -1,11 +1,16 @@
-import { Calendar, FileText, User } from "lucide-react";
+import { Calendar } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users } from "lucide-react";
 
 export default function RecruiterActiveMessage() {
-  const router = useRouter();
-
   return (
     <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 h-full w-full">
       <div className="container mx-auto px-4 text-center">
@@ -19,32 +24,59 @@ export default function RecruiterActiveMessage() {
             Podes ver os candidatos e comentar nas suas candidaturas.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button
-              onClick={() => router.push("/candidates")}
-              variant="secondary"
-              size="default"
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Ver Candidatos
-            </Button>
-            <Button
-              onClick={() => router.push("/recruiter/availability")}
-              variant="secondary"
-              size="default"
-            >
-              <Calendar className="ml-2 h-5 w-5" />
-              Marcar disponibilidades
-            </Button>
-            <Button
-              onClick={() => router.push("/profile")}
-              variant="default"
-              size="default"
-            >
-              <User className="mr-2 h-5 w-5" />
-              Ver Perfil
-            </Button>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
+            <Link href="/candidates" className="group">
+              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
+                    <Users className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
+                  </div>
+                  <CardTitle className="text-2xl text-left">
+                    Ver Candidatos
+                  </CardTitle>
+                  <CardDescription className="text-base text-left">
+                    Acede à lista completa de candidatos e revê as suas
+                    candidaturas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
+                    Explorar candidatos
+                    <span className="inline-block transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/recruiter/availability" className="group">
+              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
+                    <Calendar className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
+                  </div>
+                  <CardTitle className="text-2xl text-left">
+                    Marcar disponibilidades
+                  </CardTitle>
+                  <CardDescription className="text-base text-left">
+                    Define os teus horários disponíveis para entrevistas e
+                    reuniões
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
+                    Gerir calendário
+                    <span className="inline-block transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"></div>
         </div>
       </div>
 
