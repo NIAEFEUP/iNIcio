@@ -46,6 +46,11 @@ export default function NotificationPopup({
     setUnreadCount(0);
   };
 
+  const markAsRead = (id: number) => {
+    markNotificationAsRead(id);
+    setUnreadCount((prev) => prev - 1);
+  };
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -92,7 +97,7 @@ export default function NotificationPopup({
                   )}
                   onClick={() => {
                     if (!notification.isRead) {
-                      // markAsRead(notification.id)
+                      markAsRead(notification.id);
                     }
                   }}
                 >

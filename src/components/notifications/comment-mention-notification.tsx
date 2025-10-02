@@ -37,7 +37,6 @@ export default function CommentMentionNotification({
   return (
     <div
       onClick={() => {
-        markNotificationAsRead(notification.id);
         router.push(
           `/candidate/${(notification as CommentMentionNotification).comment.application.candidate.userId}`,
         );
