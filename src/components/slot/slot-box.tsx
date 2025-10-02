@@ -19,7 +19,6 @@ export default function SlotBox({
         isSlotSelected &&
           `${getTypeColor(existingSlot.type)} border-solid border-yellow-400 border-4 text-white shadow-lg ring-2 ring-yellow-200`,
       )}
-      onClick={() => handleCellClick(date, time)}
     >
       {existingSlot && (
         <div className="h-full flex flex-col items-center justify-center text-xs relative">

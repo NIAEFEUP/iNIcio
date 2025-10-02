@@ -81,7 +81,10 @@ export default function ChooseCustomSlot({
                   </td>
                   {dates.map((date: Date) => {
                     const cellKey = getCellKey(date, time);
+                    console.log("cellKey: ", cellKey);
                     const existingSlot = getSlotForCell(date, time, slots);
+                    if (existingSlot)
+                      console.log("existingSlot: ", existingSlot);
                     const isSlotSelected =
                       selectedSlot &&
                       existingSlot &&
@@ -89,14 +92,13 @@ export default function ChooseCustomSlot({
 
                     return (
                       <td
-                        key={
-                          cellKey
-                            ? cellKey.toLocaleString()
-                            : crypto.randomUUID()
-                        }
+                        key={cellKey.toLocaleString()}
                         className="p-1"
                         onMouseUp={() => onMouseUp()}
-                        onMouseDown={() => onMouseDown(date, time)}
+                        onMouseDown={() => {
+                          handleCellClick(date, time);
+                          onMouseDown(date, time);
+                        }}
                         onMouseEnter={() => onMouseEnter(date, time)}
                       >
                         <SlotBox
