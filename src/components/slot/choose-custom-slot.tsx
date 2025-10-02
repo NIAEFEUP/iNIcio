@@ -72,7 +72,7 @@ export default function ChooseCustomSlot({
             </thead>
             <tbody>
               {timeSlots.map((time: string) => (
-                <tr key={crypto.randomUUID()} className="border-b">
+                <tr key={time} className="border-b">
                   <td className="p-3 font-medium text-sm">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
@@ -92,10 +92,7 @@ export default function ChooseCustomSlot({
                         key={cellKey.toLocaleString()}
                         className="p-1"
                         onMouseUp={() => onMouseUp()}
-                        onMouseDown={() => {
-                          handleCellClick(date, time);
-                          onMouseDown(date, time);
-                        }}
+                        onMouseDown={() => onMouseDown(date, time)}
                         onMouseEnter={() => onMouseEnter(date, time)}
                       >
                         <SlotBox
