@@ -1,36 +1,21 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Calendar, Clock } from "lucide-react";
+import { BookingSlotBox } from "./booking-slot-box";
 
-import { useState } from "react";
-import SlotBox from "./slot-box";
-
-export default function ChooseCustomSlot({
-  slots,
+export default function ChooseBookingSlot({
   dates,
   tableRef,
   timeSlots,
   getSlotForCell,
   getCellKey,
   selectedSlot,
-  handleCellClick,
   getTypeColor,
   formatDateHeader,
+  bookings,
 }) {
-  const [dragging, setDragging] = useState<boolean>(false);
-
-  const onMouseUp = () => {
-    setDragging(false);
-  };
-
-  const onMouseDown = (date, time) => {
-    handleCellClick(date, time);
-    setDragging(true);
-  };
-
-  const onMouseEnter = (date, time) => {
-    if (dragging) handleCellClick(date, time);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -81,7 +66,7 @@ export default function ChooseCustomSlot({
                   </td>
                   {dates.map((date: Date) => {
                     const cellKey = getCellKey(date, time);
-                    const existingSlot = getSlotForCell(date, time, slots);
+                    const existingSlot = getSlotForCell(date, time, bookings);
                     const isSlotSelected =
                       selectedSlot &&
                       existingSlot &&
@@ -95,17 +80,12 @@ export default function ChooseCustomSlot({
                             : crypto.randomUUID()
                         }
                         className="p-1"
-                        onMouseUp={() => onMouseUp()}
-                        onMouseDown={() => onMouseDown(date, time)}
-                        onMouseEnter={() => onMouseEnter(date, time)}
                       >
-                        <SlotBox
+                        <BookingSlotBox
+                          bookings={bookings}
                           existingSlot={existingSlot}
                           isSlotSelected={isSlotSelected}
                           getTypeColor={getTypeColor}
-                          handleCellClick={handleCellClick}
-                          date={date}
-                          time={time}
                         />
                       </td>
                     );

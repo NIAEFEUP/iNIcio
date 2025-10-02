@@ -7,7 +7,7 @@ import { slot } from "./recruitment_phase";
 export const dynamic = pgTable("dynamic", {
   id: serial("id").primaryKey(),
   content: jsonb("content"),
-  slotId: integer("slot_id")
+  slot: integer("slot_id")
     .notNull()
     .references(() => slot.id),
 });
@@ -35,7 +35,7 @@ export const dynamicRelations = relations(dynamic, ({ many, one }) => ({
   recruiters: many(recruiterToDynamic),
   comments: many(dynamicComment),
   slot: one(slot, {
-    fields: [dynamic.slotId],
+    fields: [dynamic.slot],
     references: [slot.id],
   }),
 }));

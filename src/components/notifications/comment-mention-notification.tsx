@@ -1,6 +1,5 @@
 "use client";
 
-import { markNotificationAsRead } from "@/app/actions";
 import { Card } from "@/components/ui/card";
 
 import {

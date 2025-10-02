@@ -56,14 +56,14 @@ export async function tryToAddCandidateToDynamic(
         const possibleDynamic = await trx
           .select()
           .from(dynamic)
-          .where(eq(dynamic.slotId, slotParam.id))
+          .where(eq(dynamic.slot, slotParam.id))
           .for("update");
 
         if (possibleDynamic.length === 0) {
           const [insertedDynamic] = await trx
             .insert(dynamic)
             .values({
-              slotId: slotParam.id,
+              slot: slotParam.id,
               content: "",
             })
             .returning({ id: dynamic.id });

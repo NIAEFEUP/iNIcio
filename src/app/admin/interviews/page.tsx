@@ -8,6 +8,7 @@ import { db, NewSlot, Slot } from "@/lib/db";
 import { slot } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import getExistingSlots from "@/lib/slot";
+import { getBookings } from "@/lib/booking";
 
 export type SlotOperation = {
   type: "add" | "remove";
@@ -72,6 +73,8 @@ export default async function SlotsPage() {
 
   const existingSlots = await getExistingSlots(latestRecruitment?.year);
 
+  const bookings = await getBookings();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
@@ -87,6 +90,7 @@ export default async function SlotsPage() {
 
         {latestRecruitment && (
           <SlotAdminCalendar
+            bookings={bookings}
             recruitmentYear={latestRecruitment.year}
             existingSlots={existingSlots}
             saveSlots={saveSlots}

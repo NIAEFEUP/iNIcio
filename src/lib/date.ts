@@ -1,5 +1,16 @@
 import { Slot } from "./db";
 
+export const dateOptions = {
+  timeZone: "Europe/Lisbon",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+};
+
 export function getDateString(date: Date) {
   if (!date) return "";
 
@@ -60,6 +71,22 @@ export function getSlotForCell(date: Date, time: string, slots: Slot[]) {
 
   return slots?.find(
     (slot) => slot?.start.getTime() === slotDateTime.getTime(),
+  );
+}
+
+export function getBookingForCell(
+  date: Date,
+  time: string,
+  bookings: Array<{
+    slot: Slot;
+  }>,
+) {
+  const [hours, minutes] = time.split(":").map(Number);
+  const slotDateTime = new Date(date);
+  slotDateTime.setHours(hours, minutes, 0, 0);
+
+  return bookings?.find(
+    (b) => b?.slot.start.getTime() === slotDateTime.getTime(),
   );
 }
 

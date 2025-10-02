@@ -255,26 +255,26 @@ async function main() {
     slot: 1,
   });
 
-  await db.insert(dynamic).values({
-    id: 1,
-    content: [
-      {
-        type: "paragraph",
-        content: "Olá, tudo bem?",
-      },
-    ],
-    slotId: 1,
-  });
-
-  await db.insert(candidateToDynamic).values({
-    candidateId: "1",
-    dynamicId: 1,
-  });
-
-  await db.insert(candidateToDynamic).values({
-    candidateId: "2",
-    dynamicId: 1,
-  });
+  // await db.insert(dynamic).values({
+  //   id: 1,
+  //   content: [
+  //     {
+  //       type: "paragraph",
+  //       content: "Olá, tudo bem?",
+  //     },
+  //   ],
+  //   slotId: 1,
+  // });
+  //
+  // await db.insert(candidateToDynamic).values({
+  //   candidateId: "1",
+  //   dynamicId: 1,
+  // });
+  //
+  // await db.insert(candidateToDynamic).values({
+  //   candidateId: "2",
+  //   dynamicId: 1,
+  // });
 }
 
 main();

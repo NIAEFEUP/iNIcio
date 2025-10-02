@@ -3,23 +3,31 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
-import { NewSlot, Slot } from "@/lib/db";
+import { Dynamic, Interview, NewSlot, Slot } from "@/lib/db";
 import { SlotOperation } from "@/app/admin/interviews/page";
 import ChooseCustomSlot from "../slot/choose-custom-slot";
 import {
   formatDateHeader,
   generateDates,
   generateTimeSlots,
+  getBookingForCell,
   getCellKey,
   getSlotForCell,
 } from "@/lib/date";
 import SlotConfigPanel from "../slot/slot-config-panel";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ChooseBookingSlot from "../slot/choose-booking-slot";
 
 interface SlotAdminCalendarProps {
   recruitmentYear: number;
   existingSlots?: {
     interview: Slot[];
     dynamic: Slot[];
+  };
+  bookings: {
+    interview: Interview[];
+    dynamic: Dynamic[];
   };
   saveSlots: (slots: SlotOperation[]) => Promise<void>;
 }
@@ -35,6 +43,7 @@ export default function SlotAdminCalendar({
     interview: [],
     dynamic: [],
   },
+  bookings,
   saveSlots,
 }: SlotAdminCalendarProps) {
   const [slots, setSlots] = useState<{
@@ -150,6 +159,8 @@ export default function SlotAdminCalendar({
     }
   };
 
+  console.log("BOOKINGS: ", bookings[slotType]);
+
   return (
     <div className="space-y-6">
       <SlotConfigPanel
@@ -159,19 +170,39 @@ export default function SlotAdminCalendar({
         setSlotType={setSlotType}
         handleSaveSlots={handleSaveSlots}
       />
-
-      <ChooseCustomSlot
-        slots={slots[slotType]}
-        dates={dates}
-        tableRef={tableRef}
-        timeSlots={timeSlots}
-        getSlotForCell={getSlotForCell}
-        getCellKey={getCellKey}
-        selectedSlot={selectedSlot}
-        handleCellClick={handleCellClick}
-        getTypeColor={getTypeColor}
-        formatDateHeader={formatDateHeader}
-      />
+      <Tabs defaultValue="create-slot" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="create-slot">Criação</TabsTrigger>
+          <TabsTrigger value="booking-slot">Bookings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="create-slot">
+          <ChooseCustomSlot
+            slots={slots[slotType]}
+            dates={dates}
+            tableRef={tableRef}
+            timeSlots={timeSlots}
+            getSlotForCell={getSlotForCell}
+            getCellKey={getCellKey}
+            selectedSlot={selectedSlot}
+            handleCellClick={handleCellClick}
+            getTypeColor={getTypeColor}
+            formatDateHeader={formatDateHeader}
+          />
+        </TabsContent>
+        <TabsContent value="booking-slot">
+          <ChooseBookingSlot
+            dates={dates}
+            tableRef={tableRef}
+            timeSlots={timeSlots}
+            getSlotForCell={getBookingForCell}
+            getCellKey={getCellKey}
+            selectedSlot={selectedSlot}
+            getTypeColor={getTypeColor}
+            formatDateHeader={formatDateHeader}
+            bookings={bookings[slotType]}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
