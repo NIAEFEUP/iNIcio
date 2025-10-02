@@ -81,10 +81,7 @@ export default function ChooseCustomSlot({
                   </td>
                   {dates.map((date: Date) => {
                     const cellKey = getCellKey(date, time);
-                    console.log("cellKey: ", cellKey);
                     const existingSlot = getSlotForCell(date, time, slots);
-                    if (existingSlot)
-                      console.log("existingSlot: ", existingSlot);
                     const isSlotSelected =
                       selectedSlot &&
                       existingSlot &&
