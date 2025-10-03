@@ -17,6 +17,7 @@ jobs:
         with:
           docker_dockerfile: inicio-ws/Dockerfile
           docker_context: .
+          repository_name: inicio-ws
           NIPLOYMENTS_REGISTRY_URL: ${{ vars.NIPLOYMENTS_REGISTRY_URL }}
           NIPLOYMENTS_REGISTRY_USERNAME: ${{ vars.NIPLOYMENTS_REGISTRY_USERNAME }}
           NIPLOYMENTS_REGISTRY_PASSWORD: ${{ secrets.NIPLOYMENTS_REGISTRY_PASSWORD }}
