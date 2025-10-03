@@ -23,9 +23,9 @@ server.on("upgrade", (request, socket, head) => {
   wss.handleUpgrade(request, socket, head, (ws) => {
     const params = new URLSearchParams(request.url?.replace(/^.*\?/, ""));
 
-    const token = Buffer.from(params.get("token") ?? "", "base64").toString(
-      "utf8",
-    );
+    const token = params.get("token") ? (params.get("token")?.split("/")[0]) : "";
+
+    console.log("token:", token);
 
     if (!token) {
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");

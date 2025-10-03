@@ -47,7 +47,7 @@ export default function RealTimeEditor({
   const provider = useMemo(
     () =>
       new WebsocketProvider(
-        `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${btoa(token)}`,
+        `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${encodeURIComponent(token)}`,
         roomId,
         doc,
       ),
