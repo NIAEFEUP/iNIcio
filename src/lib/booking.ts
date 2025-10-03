@@ -10,6 +10,16 @@ export async function getBookings() {
             user: true,
           },
         },
+        recruiters: {
+          with: {
+            recruiter: {
+              with: {
+                user: true,
+                knownCandidates: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -17,6 +27,16 @@ export async function getBookings() {
       with: {
         slot: true,
         candidates: true,
+        recruiters: {
+          with: {
+            recruiter: {
+              with: {
+                user: true,
+                knownCandidates: true,
+              },
+            },
+          },
+        },
       },
     });
 

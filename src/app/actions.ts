@@ -42,7 +42,8 @@ export async function getAvailableRecruiters(
     },
   });
 
-  return results.map((r) => r.recruiter);
+  const r = results.map((r) => r.recruiter);
+  return [...new Map(r.map((r) => [r.id, r])).values()];
 }
 
 export async function assignRecruiter(interviewId: number, userId: string) {

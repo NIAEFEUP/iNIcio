@@ -66,7 +66,8 @@ export const recruiterToCandidateRelations = relations(
   }),
 );
 
-export const recruiterRelations = relations(recruiter, ({ many }) => ({
+export const recruiterRelations = relations(recruiter, ({ one, many }) => ({
+  user: one(user),
   knownCandidates: many(recruiterToCandidate),
   appreciations: many(appreciation),
   interviews: many(recruiterToInterview),

@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/select";
 import { Clock, Users, UserPlus, X, Check } from "lucide-react";
 import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
-import { Dynamic, Interview, User } from "@/lib/db";
+import { Dynamic, Interview, RecruiterToCandidate, User } from "@/lib/db";
 import { getDateStringPT, getTimeString } from "@/lib/date";
 import { assignRecruiter, unassignRecruiter } from "@/app/actions";
 
-interface InterviewSlotCardProps {
+interface BookingPickerProps {
   start: Date;
   duration: number;
-  booking: Interview | Dynamic;
+  booking: (Interview | Dynamic) & { recruiters: RecruiterToCandidate[] };
   candidates: User[];
 }
 
@@ -37,14 +37,18 @@ export function BookingPicker({
   duration,
   booking,
   candidates,
-}: InterviewSlotCardProps) {
+}: BookingPickerProps) {
   const { recruiters } = useAvailableRecruiters(
     start,
     new Date(start.getTime() + duration * 60 * 1000),
   );
 
   const [selectedRecruiter] = useState("");
-  const [selectedRecruiters, setSelectedRecruiters] = useState<User[]>([]);
+  const [selectedRecruiters, setSelectedRecruiters] = useState<User[]>(
+    booking.recruiters.map(
+      (r) => (r as unknown as { recruiter: { user: User } }).recruiter.user,
+    ),
+  );
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
 
   const addInterviewer = async (interviewerId: string) => {
@@ -55,7 +59,9 @@ export function BookingPicker({
   };
 
   const removeInterviewer = async (interviewerId: string) => {
-    setSelectedRecruiters(recruiters.filter((i) => i.id !== interviewerId));
+    setSelectedRecruiters(
+      selectedRecruiters.filter((i) => i.id !== interviewerId),
+    );
 
     await unassignRecruiter(booking.id, interviewerId);
   };

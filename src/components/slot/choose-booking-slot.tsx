@@ -16,6 +16,7 @@ export default function ChooseBookingSlot({
   formatDateHeader,
   bookings,
 }) {
+  console.log("BOOKINGS: ", bookings);
   return (
     <Card>
       <CardHeader>
