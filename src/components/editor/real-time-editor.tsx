@@ -1,11 +1,12 @@
 "use client";
 
+import * as Y from "yjs";
+
 import React, { useEffect, useMemo } from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 import "@blocknote/core/fonts/inter.css";
-import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { getRandomColor } from "@/lib/color";
 import {
@@ -17,13 +18,15 @@ import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 
+import { jsonbToYjsUpdate } from "@/lib/text-editor";
+
 interface RealTimeEditorProps {
   token?: string;
   docId?: string;
   roomId?: string;
   userName?: string;
   entity?: { content: any } & Record<string, any>;
-  saveHandler?: ((content: any) => void) | null;
+  saveHandler?: ((update: Uint8Array) => void) | null;
   saveHandlerTimeout?: number;
   mentionItems?: Array<User>;
   onChange?: (e: any) => void;
@@ -74,34 +77,64 @@ export default function RealTimeEditor({
   });
 
   useEffect(() => {
-    function setDefault() {
-      if (!editor) {
-        return;
+    if (!provider) return;
+
+    const ydoc = provider.doc as Y.Doc;
+    const yArray = ydoc.getArray("document-store");
+
+    function mergeDefaultContent() {
+      if (!entity?.content?.length) return;
+
+      const incomingUpdate = jsonbToYjsUpdate(entity.content);
+      Y.applyUpdate(
+        ydoc,
+        incomingUpdate instanceof Uint8Array
+          ? incomingUpdate
+          : new Uint8Array(incomingUpdate),
+      );
+
+      if (yArray.length === 0) {
+        yArray.delete(0, yArray.length);
       }
 
-      if (editor.document.length === 1) {
-        editor.insertBlocks(entity?.content, editor.document[0]);
-      }
+      return ydoc.getArray("document-store").toJSON();
+
+      // ydoc.transact(() => {
+      //   const currentContent = yArray.toJSON();
+      //
+      //   if (currentContent.length === 0) {
+      //     yArray.push(entity.content);
+      //     return;
+      //   }
+      //
+      //   entity.content.forEach((block: any) => {
+      //     const exists = currentContent.some((b: any) => JSON.stringify(b) === JSON.stringify(block));
+      //     if (!exists) {
+      //       yArray.push(block);
+      //     }
+      //   });
+      // });
     }
 
     if ("isReady" in provider && provider.isReady) {
-      setDefault();
+      mergeDefaultContent();
     }
 
-    provider.on("sync", setDefault);
-
-    return () => provider.off("sync", setDefault);
-  }, [provider, editor, entity?.content]);
+    provider.on("sync", mergeDefaultContent);
+    return () => provider.off("sync", mergeDefaultContent);
+  }, [provider, entity?.content]);
 
   useEffect(() => {
-    if (!saveHandler) return;
+    if (!saveHandler || !provider) return;
+
+    const yArray = (provider.doc as Y.Doc).getArray("document-store");
 
     const id = setInterval(() => {
-      saveHandler(editor.document);
+      saveHandler(jsonbToYjsUpdate(yArray.toJSON()));
     }, saveHandlerTimeout);
 
     return () => clearInterval(id);
-  });
+  }, [saveHandler, provider, saveHandlerTimeout]);
 
   return (
     <BlockNoteView

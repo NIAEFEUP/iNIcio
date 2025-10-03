@@ -1,4 +1,4 @@
-import RealTimeEditor from "@/components/editor/real-time-editor";
+import { mergeBlockNoteServerAction } from "@/app/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { auth } from "@/lib/auth";
 import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
@@ -7,23 +7,36 @@ import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
 
+import { jsonbToYjsUpdate } from "@/lib/text-editor";
+import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
+
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const addInterviewTemplateAction = async (content: any) => {
+  const interviewTemplate = await getInterviewTemplate();
+  const dynamicTemplate = await getDynamicTemplate();
+
+  const addInterviewTemplateAction = async (update: Uint8Array) => {
     "use server";
+
+    const content = await mergeBlockNoteServerAction(
+      jsonbToYjsUpdate(interviewTemplate.content as any[]),
+      update,
+    );
 
     await addInterviewTemplate(content);
   };
 
-  const addDynamicTemplateAction = async (content: any) => {
+  const addDynamicTemplateAction = async (update: Uint8Array) => {
     "use server";
+
+    const content = await mergeBlockNoteServerAction(
+      jsonbToYjsUpdate(interviewTemplate.content as any[]),
+      update,
+    );
 
     await addDynamicTemplate(content);
   };
-
-  const interviewTemplate = await getInterviewTemplate();
-  const dynamicTemplate = await getDynamicTemplate();
 
   const jwt = await generateJWT(
     session?.user.id,
