@@ -28,7 +28,7 @@ export default async function InterviewPage({ params }: any) {
 
     await updateInterview(id, content);
 
-    return true;
+    //return true;
   }
 
   // async function handleCommentSave(content: string) {

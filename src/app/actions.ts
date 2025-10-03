@@ -93,28 +93,3 @@ export async function unassignRecruiter(
       );
   }
 }
-
-export const mergeBlockNoteServerAction = async (
-  existingUpdate: Uint8Array | null,
-  incomingUpdate: ArrayBuffer | Uint8Array,
-) => {
-  const ydoc = new Y.Doc();
-
-  // if (existingUpdate) {
-  //   Y.applyUpdate(ydoc, existingUpdate);
-  // }
-
-  Y.applyUpdate(
-    ydoc,
-    incomingUpdate instanceof Uint8Array
-      ? incomingUpdate
-      : new Uint8Array(incomingUpdate),
-  );
-
-  const docArray = ydoc.getArray("document-store");
-  if (docArray.length === 0) {
-    docArray.delete(0, docArray.length);
-  }
-
-  return ydoc.getArray("document-store").toJSON();
-};

@@ -200,7 +200,9 @@ export async function getAllCandidatesWithDynamic() {
   );
 }
 
-export async function addDynamicTemplate(content: any) {
+export async function addDynamicTemplate(content: Array<any>) {
+  if (content.length === 0) return;
+
   await db.transaction(async (trx) => {
     const template = await trx.query.dynamicTemplate.findFirst();
 

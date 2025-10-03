@@ -22,7 +22,7 @@ export default async function DynamicPage({ params }: any) {
 
     await updateDynamic(id, content);
 
-    return true;
+    // return true;
   }
 
   // async function handleCommentSave(content: string) {

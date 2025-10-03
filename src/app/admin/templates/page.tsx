@@ -1,4 +1,3 @@
-import { mergeBlockNoteServerAction } from "@/app/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { auth } from "@/lib/auth";
 import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
@@ -6,8 +5,6 @@ import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
-
-import { jsonbToYjsUpdate } from "@/lib/text-editor";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 
 export default async function AdminTemplates() {
@@ -16,26 +13,26 @@ export default async function AdminTemplates() {
   const interviewTemplate = await getInterviewTemplate();
   const dynamicTemplate = await getDynamicTemplate();
 
-  const addInterviewTemplateAction = async (update: Uint8Array) => {
+  const addInterviewTemplateAction = async (update: any) => {
     "use server";
 
-    const content = await mergeBlockNoteServerAction(
-      jsonbToYjsUpdate(interviewTemplate.content as any[]),
-      update,
-    );
-
-    await addInterviewTemplate(content);
+    try {
+      await addInterviewTemplate(update);
+    } catch (error) {
+      console.error("Error saving interview template:", error);
+      throw error;
+    }
   };
 
-  const addDynamicTemplateAction = async (update: Uint8Array) => {
+  const addDynamicTemplateAction = async (update: any) => {
     "use server";
 
-    const content = await mergeBlockNoteServerAction(
-      jsonbToYjsUpdate(interviewTemplate.content as any[]),
-      update,
-    );
-
-    await addDynamicTemplate(content);
+    try {
+      await addDynamicTemplate(update);
+    } catch (error) {
+      console.error("Error saving dynamic template:", error);
+      throw error;
+    }
   };
 
   const jwt = await generateJWT(
@@ -44,8 +41,8 @@ export default async function AdminTemplates() {
   );
 
   return (
-    <Tabs defaultValue="interview" className="w-full max-w[40em]">
-      <TabsList className="w-full max-w[40em]">
+    <Tabs defaultValue="interview" className="w-full max-w-[40em]">
+      <TabsList className="w-full max-w-[40em]">
         <TabsTrigger value="interview">Entrevistas</TabsTrigger>
         <TabsTrigger value="dynamic">Dinâmicas</TabsTrigger>
       </TabsList>
@@ -54,7 +51,10 @@ export default async function AdminTemplates() {
           token={jwt}
           key="interview-editor"
           docId="interview-template-editor"
+          roomId="interview-template-room"
+          userName={session?.user.name || "Anonymous"}
           saveHandler={addInterviewTemplateAction}
+          saveHandlerTimeout={3000}
           entity={interviewTemplate}
         />
       </TabsContent>
@@ -63,7 +63,10 @@ export default async function AdminTemplates() {
           token={jwt}
           key="dynamic-editor"
           docId="dynamic-template-editor"
+          roomId="dynamic-template-room"
+          userName={session?.user.name || "Anonymous"}
           saveHandler={addDynamicTemplateAction}
+          saveHandlerTimeout={3000}
           entity={dynamicTemplate}
         />
       </TabsContent>

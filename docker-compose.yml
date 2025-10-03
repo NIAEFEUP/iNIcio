@@ -5,6 +5,7 @@ services:
     ports:
       - "1234:1234"
     environment:
+      JWT_SECRET: inicio
       HOST: 0.0.0.0
       PORT: 1234
   db:

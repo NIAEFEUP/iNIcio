@@ -97,7 +97,9 @@ export async function addInterviewComment(
   });
 }
 
-export async function addInterviewTemplate(content: any) {
+export async function addInterviewTemplate(content: Array<any>) {
+  if (content.length === 0) return;
+
   await db.transaction(async (trx) => {
     const template = await trx.query.interviewTemplate.findFirst();
 
