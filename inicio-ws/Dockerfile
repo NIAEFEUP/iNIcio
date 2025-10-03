@@ -16,4 +16,4 @@ COPY --chown=node:node . .
 
 EXPOSE 1234
 
-CMD [ "npm", "start" ]
+CMD ["node", "./src/server.js"]
