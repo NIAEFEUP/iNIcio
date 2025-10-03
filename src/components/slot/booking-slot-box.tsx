@@ -13,6 +13,7 @@ import { BookingPicker } from "./booking-picker";
 import { Candidate, Dynamic, Interview, User } from "@/lib/db";
 
 export function BookingSlotBox({
+  slotType,
   existingSlot,
   isSlotSelected,
   getTypeColor,
@@ -29,10 +30,29 @@ export function BookingSlotBox({
       booking as Dynamic & {
         candidates: Array<{
           userId: string;
-          user: User;
+          candidate: { user: User };
         }>;
       }
-    ).candidates.map((c) => c.user);
+    ).candidates.map((c) => c.candidate.user);
+  };
+
+  const getCardTitle = (
+    booking: Interview | (Dynamic & { candidates: Candidate[] }),
+  ): string => {
+    if ("candidate" in booking) {
+      return (booking.candidate as { user: User }).user.name;
+    }
+
+    return `Dinâmica #${
+      (
+        booking as Dynamic & {
+          candidates: Array<{
+            userId: string;
+            user: User;
+          }>;
+        }
+      ).id
+    }`;
   };
 
   return (
@@ -70,7 +90,7 @@ export function BookingSlotBox({
                 >
                   <Dialog>
                     <DialogTrigger className="flex items-center justify-between gap-1">
-                      {booking.candidate.user.name}
+                      {getCardTitle(booking)}
                       <Badge
                         variant="secondary"
                         className="text-[10px] px-1 py-0 h-4 bg-white/20 shrink-0"
@@ -81,6 +101,7 @@ export function BookingSlotBox({
                     <DialogContent>
                       <DialogTitle>Atribuição de recrutadores</DialogTitle>
                       <BookingPicker
+                        type={slotType}
                         booking={booking}
                         candidates={getCandidates(booking)}
                         start={existingSlot.slot.start}

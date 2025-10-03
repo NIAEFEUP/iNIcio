@@ -26,7 +26,15 @@ export async function getBookings() {
     const dynamics = await tx.query.dynamic.findMany({
       with: {
         slot: true,
-        candidates: true,
+        candidates: {
+          with: {
+            candidate: {
+              with: {
+                user: true,
+              },
+            },
+          },
+        },
         recruiters: {
           with: {
             recruiter: {

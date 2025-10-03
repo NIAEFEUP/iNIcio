@@ -15,8 +15,8 @@ export default function ChooseBookingSlot({
   getTypeColor,
   formatDateHeader,
   bookings,
+  slotType,
 }) {
-  console.log("BOOKINGS: ", bookings);
   return (
     <Card>
       <CardHeader>
@@ -83,6 +83,7 @@ export default function ChooseBookingSlot({
                         className="p-1"
                       >
                         <BookingSlotBox
+                          slotType={slotType}
                           bookings={bookings}
                           existingSlot={existingSlot}
                           isSlotSelected={isSlotSelected}

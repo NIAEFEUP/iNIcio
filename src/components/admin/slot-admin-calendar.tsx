@@ -159,6 +159,9 @@ export default function SlotAdminCalendar({
     }
   };
 
+  console.log("BOOKINGS: ", bookings);
+  console.log("SLOT TYPE: ", slotType);
+
   return (
     <div className="space-y-6">
       <SlotConfigPanel
@@ -197,6 +200,7 @@ export default function SlotAdminCalendar({
             selectedSlot={selectedSlot}
             getTypeColor={getTypeColor}
             formatDateHeader={formatDateHeader}
+            slotType={slotType}
             bookings={bookings[slotType]}
           />
         </TabsContent>

@@ -1,8 +1,10 @@
 "use server";
 
+import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
   notification,
   recruiterAvailability,
+  recruiterToDynamic,
   recruiterToInterview,
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
@@ -46,20 +48,46 @@ export async function getAvailableRecruiters(
   return [...new Map(r.map((r) => [r.id, r])).values()];
 }
 
-export async function assignRecruiter(interviewId: number, userId: string) {
-  await db.insert(recruiterToInterview).values({
-    recruiterId: userId,
-    interviewId,
-  });
+export async function assignRecruiter(
+  interviewId: number,
+  userId: string,
+  slotType: SlotType,
+) {
+  if (slotType === "interview") {
+    await db.insert(recruiterToInterview).values({
+      recruiterId: userId,
+      interviewId,
+    });
+  } else {
+    await db.insert(recruiterToDynamic).values({
+      recruiterId: userId,
+      dynamicId: interviewId,
+    });
+  }
 }
 
-export async function unassignRecruiter(interviewId: number, userId: string) {
-  await db
-    .delete(recruiterToInterview)
-    .where(
-      and(
-        eq(recruiterToInterview.recruiterId, userId),
-        eq(recruiterToInterview.interviewId, interviewId),
-      ),
-    );
+export async function unassignRecruiter(
+  interviewId: number,
+  userId: string,
+  slotType: SlotType,
+) {
+  if (slotType === "interview") {
+    await db
+      .delete(recruiterToInterview)
+      .where(
+        and(
+          eq(recruiterToInterview.recruiterId, userId),
+          eq(recruiterToInterview.interviewId, interviewId),
+        ),
+      );
+  } else {
+    await db
+      .delete(recruiterToDynamic)
+      .where(
+        and(
+          eq(recruiterToDynamic.recruiterId, userId),
+          eq(recruiterToDynamic.dynamicId, interviewId),
+        ),
+      );
+  }
 }

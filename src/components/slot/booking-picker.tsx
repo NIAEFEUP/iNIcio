@@ -16,12 +16,14 @@ import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
 import { Dynamic, Interview, RecruiterToCandidate, User } from "@/lib/db";
 import { getDateStringPT, getTimeString } from "@/lib/date";
 import { assignRecruiter, unassignRecruiter } from "@/app/actions";
+import { SlotType } from "../admin/slot-admin-calendar";
 
 interface BookingPickerProps {
   start: Date;
   duration: number;
   booking: (Interview | Dynamic) & { recruiters: RecruiterToCandidate[] };
   candidates: User[];
+  type: SlotType;
 }
 
 interface RecruiterData {
@@ -37,6 +39,7 @@ export function BookingPicker({
   duration,
   booking,
   candidates,
+  type,
 }: BookingPickerProps) {
   const { recruiters } = useAvailableRecruiters(
     start,
@@ -55,7 +58,7 @@ export function BookingPicker({
     const interviewer = recruiters.find((i) => i.id === interviewerId);
     setSelectedRecruiters([...selectedRecruiters, interviewer]);
 
-    await assignRecruiter(booking.id, interviewerId);
+    await assignRecruiter(booking.id, interviewerId, type);
   };
 
   const removeInterviewer = async (interviewerId: string) => {
@@ -63,7 +66,7 @@ export function BookingPicker({
       selectedRecruiters.filter((i) => i.id !== interviewerId),
     );
 
-    await unassignRecruiter(booking.id, interviewerId);
+    await unassignRecruiter(booking.id, interviewerId, type);
   };
 
   return (
