@@ -164,7 +164,7 @@ export default function Navbar({
             {session && (isRecruiter || isAdmin) && (
               <>
                 <Link
-                  href="/alocacoes"
+                  href={`/calendar/${session?.user.id}/day-view`}
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
