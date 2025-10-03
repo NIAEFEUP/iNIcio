@@ -1,4 +1,10 @@
-import { candidateToDynamic, dynamic, dynamicComment, slot } from "@/db/schema";
+import {
+  candidateToDynamic,
+  dynamic,
+  dynamicComment,
+  dynamicTemplate,
+  slot,
+} from "@/db/schema";
 import { db, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
@@ -190,4 +196,21 @@ export async function getAllCandidatesWithDynamic() {
       knownRecruiters: c.knownRecruiters,
     })),
   );
+}
+
+export async function addDynamicTemplate(content: any) {
+  await db.transaction(async (trx) => {
+    const template = await trx.query.dynamicTemplate.findFirst();
+
+    if (template) {
+      await trx.update(dynamicTemplate).set({ content: content });
+      return;
+    }
+
+    await trx.insert(dynamicTemplate).values({ content: content });
+  });
+}
+
+export async function getDynamicTemplate() {
+  return await db.query.dynamicTemplate.findFirst();
 }

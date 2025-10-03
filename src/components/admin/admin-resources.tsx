@@ -47,6 +47,12 @@ export default function AdminResources({
       />
 
       <ResourceCard
+        title="Templates"
+        quantityText="Adicionar templates de entrevistas e dinâmicas"
+        onClick={() => redirect("/admin/templates")}
+      />
+
+      <ResourceCard
         title="Calendário"
         quantityText="Visualizar tarefas"
         onClick={() => redirect("/calendar")}

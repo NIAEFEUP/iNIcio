@@ -64,6 +64,13 @@
       "when": 1759404632756,
       "tag": "0008_lonely_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1759488478370,
+      "tag": "0009_condemned_captain_cross",
+      "breakpoints": true
     }
   ]
 }

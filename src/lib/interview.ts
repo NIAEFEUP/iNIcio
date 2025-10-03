@@ -1,4 +1,9 @@
-import { interview, interviewComment, slot } from "@/db/schema";
+import {
+  interview,
+  interviewComment,
+  interviewTemplate,
+  slot,
+} from "@/db/schema";
 import { db, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 
@@ -88,4 +93,20 @@ export async function addInterviewComment(
       return false;
     }
   });
+}
+
+export async function addInterviewTemplate(content: any) {
+  await db.transaction(async (trx) => {
+    const template = await trx.query.interviewTemplate.findFirst();
+
+    if (template) {
+      await trx.update(interviewTemplate).set({ content: content });
+    } else {
+      await trx.insert(interviewTemplate).values({ content: content });
+    }
+  });
+}
+
+export async function getInterviewTemplate() {
+  return await db.query.interviewTemplate.findFirst();
 }

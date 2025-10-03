@@ -18,8 +18,8 @@ import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 
 interface RealTimeEditorProps {
+  docId?: string;
   roomId?: string;
-  websocketUrl?: string;
   userName?: string;
   entity?: { content: any } & Record<string, any>;
   saveHandler?: ((content: any) => void) | null;
@@ -29,8 +29,8 @@ interface RealTimeEditorProps {
 }
 
 export default function RealTimeEditor({
+  docId = "default",
   roomId = "",
-  websocketUrl = "",
   userName = "",
   entity = { content: "" },
   saveHandler = null,
@@ -42,8 +42,9 @@ export default function RealTimeEditor({
   const provider:
     | WebsocketProvider
     | (WebsocketProvider & { isReady: boolean }) = useMemo(
-    () => new WebsocketProvider(websocketUrl, roomId, doc),
-    [doc, websocketUrl, roomId],
+    () =>
+      new WebsocketProvider(process.env.NEXT_PUBLIC_WEBSOCKET_URL, roomId, doc),
+    [doc, roomId],
   );
 
   const schema = BlockNoteSchema.create({
@@ -57,7 +58,7 @@ export default function RealTimeEditor({
     schema,
     collaboration: {
       provider,
-      fragment: doc.getXmlFragment("document-store"),
+      fragment: doc.getXmlFragment(`document-store-${docId}`),
       user: {
         name: userName,
         color: getRandomColor(),

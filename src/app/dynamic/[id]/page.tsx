@@ -72,7 +72,6 @@ export default async function DynamicPage({ params }: any) {
           <EditorFrame>
             <RealTimeEditor
               roomId={`dynamic-${id}`}
-              websocketUrl={process.env.WEBSOCKET_URL!}
               userName={session?.user.name}
               saveHandler={handleContentSave}
               entity={dynamic}

@@ -87,7 +87,6 @@ export default async function InterviewPage({ params }: any) {
               <EditorFrame>
                 <RealTimeEditor
                   roomId={`interview-${id}`}
-                  websocketUrl={process.env.WEBSOCKET_URL}
                   userName={session ? session.user.name : ""}
                   saveHandler={handleContentSave}
                   entity={interview}

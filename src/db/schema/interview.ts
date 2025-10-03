@@ -50,3 +50,8 @@ export const recruiterToInterviewRelations = relations(
     }),
   }),
 );
+
+export const interviewTemplate = pgTable("interview_template", {
+  id: serial("id").primaryKey(),
+  content: jsonb("content").notNull().default([]),
+});

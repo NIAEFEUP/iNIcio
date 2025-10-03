@@ -67,3 +67,8 @@ export const recruiterToDynamicRelations = relations(
     }),
   }),
 );
+
+export const dynamicTemplate = pgTable("dynamic_template", {
+  id: serial("id").primaryKey(),
+  content: jsonb("content").notNull().default([]),
+});

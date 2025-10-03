@@ -4,11 +4,7 @@ import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-imp
 export default function Collab() {
   return (
     <EditorFrame>
-      <RealTimeEditor
-        roomId={`collab-test`}
-        websocketUrl={process.env.WEBSOCKET_URL}
-        userName={""}
-      />
+      <RealTimeEditor roomId={`collab-test`} userName={""} />
     </EditorFrame>
   );
 }
