@@ -18,6 +18,7 @@ import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 
 interface RealTimeEditorProps {
+  token?: string;
   docId?: string;
   roomId?: string;
   userName?: string;
@@ -29,6 +30,7 @@ interface RealTimeEditorProps {
 }
 
 export default function RealTimeEditor({
+  token = "",
   docId = "default",
   roomId = "",
   userName = "",
@@ -43,8 +45,12 @@ export default function RealTimeEditor({
     | WebsocketProvider
     | (WebsocketProvider & { isReady: boolean }) = useMemo(
     () =>
-      new WebsocketProvider(process.env.NEXT_PUBLIC_WEBSOCKET_URL, roomId, doc),
-    [doc, roomId],
+      new WebsocketProvider(
+        `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${btoa(token)}`,
+        roomId,
+        doc,
+      ),
+    [doc, roomId, token],
   );
 
   const schema = BlockNoteSchema.create({

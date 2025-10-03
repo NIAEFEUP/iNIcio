@@ -1,6 +1,7 @@
 services:
   websocket:
-    image: lakhoune/yjs-websocket
+    build:
+      context: ./inicio-ws/
     ports:
       - "1234:1234"
     environment:

@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref_name }}
+
+    steps:
+      - name: Upload to NIployments register
+        uses: NIAEFEUP/push-to-niployments@v2.2
+        with:
+          docker_dockerfile: inicio-ws/Dockerfile
+          docker_context: .
+          NIPLOYMENTS_REGISTRY_URL: ${{ vars.NIPLOYMENTS_REGISTRY_URL }}
+          NIPLOYMENTS_REGISTRY_USERNAME: ${{ vars.NIPLOYMENTS_REGISTRY_USERNAME }}
+          NIPLOYMENTS_REGISTRY_PASSWORD: ${{ secrets.NIPLOYMENTS_REGISTRY_PASSWORD }}

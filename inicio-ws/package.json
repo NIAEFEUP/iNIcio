@@ -1,0 +1,81 @@
+{
+  "name": "@y/websocket-server",
+  "version": "0.1.1",
+  "description": "Backend for y-websocket",
+  "type": "module",
+  "sideEffects": false,
+  "funding": {
+    "type": "GitHub Sponsors ❤",
+    "url": "https://github.com/sponsors/dmonad"
+  },
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dist": "rm -rf dist && rollup -c && tsc",
+    "lint": "standard && tsc",
+    "test": "npm run lint",
+    "preversion": "npm run lint && npm run dist && test -e dist/src/server.d.ts && test -e dist/server.cjs"
+  },
+  "bin": {
+    "y-websocket-server": "src/server.js",
+    "y-websocket": "src/server.js"
+  },
+  "files": [
+    "dist/*",
+    "src/*"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./utils": {
+      "import": "./src/utils.js",
+      "require": "./dist/utils.cjs",
+      "types": "./dist/src/utils.d.ts",
+      "default": "./src/utils.js"
+    },
+    "./callback": {
+      "import": "./src/callback.js",
+      "require": "./dist/callback.cjs",
+      "types": "./dist/src/callback.d.ts",
+      "default": "./src/callback.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yjs/y-websocket-server.git"
+  },
+  "keywords": [
+    "Yjs"
+  ],
+  "author": "Kevin Jahns <kevin.jahns@protonmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yjs/y-websocket-server/issues"
+  },
+  "homepage": "https://github.com/yjs/y-websocket-server#readme",
+  "standard": {
+    "ignore": [
+      "/dist",
+      "/node_modules"
+    ]
+  },
+  "dependencies": {
+    "@y/protocols": "^1.0.6-1",
+    "jsonwebtoken": "^9.0.2",
+    "lib0": "^0.2.102"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.1",
+    "@types/ws": "^8.5.10",
+    "rollup": "^4.39.0",
+    "standard": "^17.1.2",
+    "typescript": "^5.8.3",
+    "ws": "^6.2.1",
+    "yjs": "^14.0.0-7"
+  },
+  "peerDependencies": {
+    "yjs": "^14.0.0-7"
+  },
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=16.0.0"
+  }
+}
