@@ -5,7 +5,7 @@ import {
   dynamicTemplate,
   slot,
 } from "@/db/schema";
-import { db, Slot } from "./db";
+import { db, DynamicTemplate, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/drizzle/schema";
@@ -66,11 +66,13 @@ export async function tryToAddCandidateToDynamic(
           .for("update");
 
         if (possibleDynamic.length === 0) {
+          const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
+
           const [insertedDynamic] = await trx
             .insert(dynamic)
             .values({
               slot: slotParam.id,
-              content: "",
+              content: dynamicTemplate ? dynamicTemplate.content : [],
             })
             .returning({ id: dynamic.id });
 
@@ -211,6 +213,16 @@ export async function addDynamicTemplate(content: any) {
   });
 }
 
-export async function getDynamicTemplate() {
-  return await db.query.dynamicTemplate.findFirst();
+export async function getDynamicTemplate(): Promise<DynamicTemplate> {
+  const template =
+    (await db.query.dynamicTemplate.findFirst()) as DynamicTemplate;
+
+  if (!template) {
+    return {
+      id: 0,
+      content: [],
+    };
+  }
+
+  return template;
 }

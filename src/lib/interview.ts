@@ -4,7 +4,7 @@ import {
   interviewTemplate,
   slot,
 } from "@/db/schema";
-import { db, Slot } from "./db";
+import { db, InterviewTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 
 export default async function addInterviewWithSlot(
@@ -39,10 +39,12 @@ export default async function addInterviewWithSlot(
 
         await trx.update(slot).set({ quantity: s[0].quantity + 1 });
       } else {
+        const interviewTemplate = await trx.query.interviewTemplate.findFirst();
+
         await trx.insert(interview).values({
           slot: slotParam.id,
           candidateId: candidateId,
-          content: "",
+          content: interviewTemplate ? interviewTemplate.content : [],
         });
       }
     }
@@ -107,6 +109,16 @@ export async function addInterviewTemplate(content: any) {
   });
 }
 
-export async function getInterviewTemplate() {
-  return await db.query.interviewTemplate.findFirst();
+export async function getInterviewTemplate(): Promise<InterviewTemplate> {
+  const template =
+    (await db.query.interviewTemplate.findFirst()) as InterviewTemplate;
+
+  if (!template) {
+    return {
+      id: 0,
+      content: [],
+    };
+  }
+
+  return template;
 }
