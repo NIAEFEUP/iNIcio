@@ -3,9 +3,11 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export async function isCandidate(candidateId: string) {
-  return await db.query.candidate.findFirst({
+  const query = await db.query.candidate.findFirst({
     where: eq(candidate.userId, candidateId),
   });
+
+  return query !== null && query !== undefined;
 }
 
 export default async function getCandidateWithInterviewAndDynamic(
