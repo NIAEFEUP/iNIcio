@@ -100,9 +100,6 @@ export default function CandidateComments({
                 >
                   <RealTimeEditor
                     mentionItems={recruiters}
-                    entity={{
-                      content: commentValue,
-                    }}
                     onChange={(editor) => {
                       setCommentValue(editor.document);
                       setEditor(editor);

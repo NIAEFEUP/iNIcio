@@ -25,8 +25,6 @@ server.on("upgrade", (request, socket, head) => {
 
     const token = params.get("token") ? (params.get("token")?.split("/")[0]) : "";
 
-    console.log("token:", token);
-
     if (!token) {
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
       socket.destroy();
