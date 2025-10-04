@@ -94,7 +94,7 @@ export default function CandidateComments({
             <TableRow className="flex flex-col md:flex-row items-center mx-4">
               <TableCell className="w-full">
                 <form
-                  className="flex flex-row items-center justify-center gap-4 max-w-128"
+                  className="flex flex-row items-center justify-center gap-4"
                   onSubmit={handleSubmit}
                 >
                   <RealTimeEditor
