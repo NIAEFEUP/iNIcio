@@ -13,6 +13,7 @@ import CommentFrame from "@/components/comments/comment-frame";
 import { getCandidateDynamic } from "@/lib/dynamic";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
+import { getCandidateWithMetadata } from "@/lib/candidate";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -51,10 +52,7 @@ export default async function InterviewPage({ params }: any) {
     headers: await headers(),
   });
 
-  const candidate = await getUser(id);
-  const application = await getApplication(candidate?.id);
-  const applicationInterests = await getApplicationInterests(application);
-  // const comments = [];
+  const candidate = await getCandidateWithMetadata(id);
 
   const interview = await getInterview(id);
   const dynamic = await getCandidateDynamic(id);
@@ -67,12 +65,7 @@ export default async function InterviewPage({ params }: any) {
         <div className="mx-16 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
             <div className="space-y-6 lg:col-span-2">
-              <CandidateQuickInfo
-                candidate={candidate}
-                application={application}
-                applicationInterests={applicationInterests}
-                dynamic={dynamic}
-              />
+              <CandidateQuickInfo candidate={candidate} />
 
               <CommentFrame>
                 <></>

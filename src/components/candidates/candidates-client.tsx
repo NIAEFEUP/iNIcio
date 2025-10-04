@@ -22,17 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { availableCourses, availableCurricularYears } from "@/lib/constants";
+import { CandidateWithMetadata } from "@/lib/candidate";
 
 interface CandidatesClientProps {
   authUser: User;
-  candidates: Array<
-    User & {
-      knownRecruiters: RecruiterToCandidate[];
-    } & {
-      dynamic: { candidateId: string; dynamicId: number };
-      application: (Application & { interests: string[] }) | null;
-    }
-  >;
+  candidates: Array<CandidateWithMetadata>;
   availableDepartments: Array<string>;
 }
 
@@ -271,27 +265,15 @@ export default function CandidatesClient({
       </div>
 
       <div className="mx-auto w-full max-w-[80em] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
-        {filteredCandidates.map(
-          (
-            candidate: User & {
-              knownRecruiters: RecruiterToCandidate[];
-            } & {
-              dynamic: { candidateId: string; dynamicId: number };
-              application: (Application & { interests: string[] }) | null;
-            },
-          ) => (
-            <CandidateQuickInfo
-              key={candidate.id || crypto.randomUUID()}
-              candidate={candidate}
-              application={candidate.application}
-              applicationInterests={candidate.application?.interests}
-              dynamic={null}
-              friendCheckboxActive={true}
-              friends={candidate.knownRecruiters}
-              authUser={authUser}
-            />
-          ),
-        )}
+        {filteredCandidates.map((candidate: CandidateWithMetadata) => (
+          <CandidateQuickInfo
+            key={candidate.id || crypto.randomUUID()}
+            candidate={candidate}
+            friendCheckboxActive={true}
+            friends={candidate.knownRecruiters}
+            authUser={authUser}
+          />
+        ))}
 
         {filteredCandidates.length === 0 && (
           <p className="col-span-full text-center text-muted-foreground">

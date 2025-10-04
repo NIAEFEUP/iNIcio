@@ -3,10 +3,7 @@ import { auth } from "@/lib/auth";
 import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import { Slot } from "@/lib/db";
 import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
-import {
-  getDynamicSlots,
-  markDynamicRecruitmentPhaseAsDone,
-} from "@/lib/recruitment";
+import { getDynamicSlots } from "@/lib/recruitment";
 import { headers } from "next/headers";
 
 export default async function CandidateDynamicSchedule() {
@@ -21,7 +18,6 @@ export default async function CandidateDynamicSchedule() {
 
     for (const slot of slots) {
       await tryToAddCandidateToDynamic(session.user.id, slot);
-      await markDynamicRecruitmentPhaseAsDone(session.user.id);
     }
 
     return true;

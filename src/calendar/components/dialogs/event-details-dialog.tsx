@@ -29,8 +29,6 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const startDate = parseISO(event.startDate);
   const endDate = parseISO(event.endDate);
 
-  console.log("event: ", event.link);
-
   return (
     <>
       <Dialog>

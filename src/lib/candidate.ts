@@ -1,6 +1,21 @@
 import { candidate } from "@/db/schema";
-import { db } from "./db";
+import {
+  Application,
+  db,
+  Dynamic,
+  Interview,
+  RecruiterToCandidate,
+  User,
+} from "./db";
 import { eq } from "drizzle-orm";
+import { getFilenameUrl } from "./file-upload";
+
+export type CandidateWithMetadata = User & {
+  knownRecruiters: RecruiterToCandidate[];
+  dynamic: { candidateId: string; dynamicId: number; dynamic: Dynamic };
+  interview: Interview;
+  application: (Application & { interests: string[] }) | null;
+};
 
 export async function isCandidate(candidateId: string) {
   const query = await db.query.candidate.findFirst({
@@ -8,6 +23,45 @@ export async function isCandidate(candidateId: string) {
   });
 
   return query !== null && query !== undefined;
+}
+
+export async function getCandidateWithMetadata(
+  candidateId: string,
+): Promise<CandidateWithMetadata> {
+  const res = await db.query.candidate.findFirst({
+    where: eq(candidate.userId, candidateId),
+    with: {
+      user: true,
+      dynamic: {
+        with: {
+          dynamic: {
+            with: {
+              slot: true,
+            },
+          },
+        },
+      },
+      interview: true,
+      application: {
+        with: {
+          interests: true,
+        },
+      },
+      knownRecruiters: true,
+    },
+  });
+
+  return {
+    ...res.user,
+    dynamic: res.dynamic,
+    interview: res.interview,
+    knownRecruiters: res.knownRecruiters,
+    application: {
+      ...res.application,
+      profilePicture: await getFilenameUrl(res.application?.profilePicture),
+      interests: res.application?.interests.map((i) => i.interest),
+    },
+  };
 }
 
 export default async function getCandidateWithInterviewAndDynamic(

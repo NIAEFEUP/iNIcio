@@ -34,8 +34,6 @@ export default async function Layout({
 
   const [events, users] = await Promise.all([getEvents(id), getUsers()]);
 
-  console.log("EVENTS: ", events);
-
   const role = await getRole(session?.user.id);
 
   return (
