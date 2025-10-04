@@ -91,11 +91,10 @@ export default function CandidateComments({
       <Table>
         <TableBody className="w-full">
           {session && (
-            <TableRow className="flex flex-col md:flex-row">
-              <TableCell className="font-medium">{session.user.name}</TableCell>
+            <TableRow className="flex flex-col md:flex-row items-center mx-4">
               <TableCell className="w-full">
                 <form
-                  className="flex flex-row items-center justify-center gap-4"
+                  className="flex flex-row items-center justify-center gap-4 max-w-128"
                   onSubmit={handleSubmit}
                 >
                   <RealTimeEditor
@@ -105,7 +104,7 @@ export default function CandidateComments({
                       setEditor(editor);
                     }}
                   />
-                  <Button variant="outline" type="submit">
+                  <Button variant="default" type="submit" className="h-32">
                     <Send />
                   </Button>
                 </form>
