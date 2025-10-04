@@ -9,6 +9,7 @@ import type {
   TVisibleHours,
   TWorkingHours,
 } from "@/calendar/types";
+import { Role } from "@/lib/role";
 
 interface ICalendarContext {
   selectedDate: Date;
@@ -25,6 +26,7 @@ interface ICalendarContext {
   events: IEvent[];
   setLocalEvents: Dispatch<SetStateAction<IEvent[]>>;
   urlId: string;
+  authUserRole: Role;
 }
 
 const CalendarContext = createContext({} as ICalendarContext);
@@ -46,11 +48,13 @@ export function CalendarProvider({
   users,
   events,
   urlId,
+  authUserRole,
 }: {
   children: React.ReactNode;
   users: IUser[];
   events: IEvent[];
   urlId: string;
+  authUserRole: Role;
 }) {
   const [badgeVariant, setBadgeVariant] = useState<TBadgeVariant>("colored");
   const [visibleHours, setVisibleHours] =
@@ -87,6 +91,7 @@ export function CalendarProvider({
         events: localEvents,
         setLocalEvents,
         urlId,
+        authUserRole,
       }}
     >
       {children}

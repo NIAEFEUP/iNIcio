@@ -136,6 +136,7 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       color: "red",
       description: "Can't wait to see the most beautiful woman in that dress!",
       user: USERS_MOCK[0],
+      link: "",
     },
   ];
 
@@ -160,6 +161,7 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     user: randomUser,
+    link: "",
   };
 
   // Only add the current event if it's not on September 20th
@@ -242,6 +244,7 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
       user: USERS_MOCK[Math.floor(Math.random() * USERS_MOCK.length)],
+      link: "",
     });
 
     i++;

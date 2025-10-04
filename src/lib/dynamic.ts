@@ -228,3 +228,7 @@ export async function getDynamicTemplate(): Promise<DynamicTemplate> {
 
   return template;
 }
+
+export function getDynamicLink(dynamicId: number) {
+  return `/dynamic/${dynamicId}`;
+}

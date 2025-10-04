@@ -124,3 +124,7 @@ export async function getInterviewTemplate(): Promise<InterviewTemplate> {
 
   return template;
 }
+
+export function getCandidateInterviewLink(candidateId: string) {
+  return `/candidate/${candidateId}/interview`;
+}

@@ -17,6 +17,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
+import { getRole } from "@/lib/role";
 
 export default async function Layout({
   params,
@@ -33,8 +34,17 @@ export default async function Layout({
 
   const [events, users] = await Promise.all([getEvents(id), getUsers()]);
 
+  console.log("EVENTS: ", events);
+
+  const role = await getRole(session?.user.id);
+
   return (
-    <CalendarProvider users={users} events={events} urlId={id}>
+    <CalendarProvider
+      users={users}
+      events={events}
+      urlId={id}
+      authUserRole={role}
+    >
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 px-8 py-4">
         {children}
 
@@ -43,7 +53,7 @@ export default async function Layout({
             <AccordionTrigger className="flex-none gap-2 py-0 hover:no-underline">
               <div className="flex items-center gap-2">
                 <Settings className="size-4" />
-                <p className="text-base font-semibold">Calendar settings</p>
+                <p className="text-base font-semibold">Definições</p>
               </div>
             </AccordionTrigger>
 

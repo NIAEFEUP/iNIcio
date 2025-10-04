@@ -3,6 +3,8 @@ import { IEvent } from "./interfaces";
 import { db } from "@/lib/db";
 import { recruiterToDynamic, recruiterToInterview } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { getCandidateInterviewLink } from "@/lib/interview";
+import { getDynamicLink } from "@/lib/dynamic";
 
 export const getEvents = async (userId: string) => {
   const calendarEvents: IEvent[] = [];
@@ -72,12 +74,11 @@ export const getEvents = async (userId: string) => {
   });
 
   interviews.forEach((interviewItem, index) => {
-    const slotStart = interviewItem.slot.start; // assume slot has start Date
+    const slotStart = interviewItem.slot.start;
     const slotEnd = new Date(
       slotStart.getTime() + interviewItem.slot.duration * 60000,
     );
 
-    // Assign a random recruiter from the assigned recruiters
     const assignedRecruiter =
       interviewItem.recruiters.length > 0
         ? interviewItem.recruiters[
@@ -93,6 +94,7 @@ export const getEvents = async (userId: string) => {
       description: "Entrevista",
       color: COLORS[index % COLORS.length],
       user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
+      link: getCandidateInterviewLink(interviewItem.candidateId),
     });
   });
 
@@ -117,6 +119,7 @@ export const getEvents = async (userId: string) => {
       description: "Dinâmica",
       color: COLORS[calendarEvents.length % COLORS.length],
       user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
+      link: getDynamicLink(dynamicItem.id),
     });
   });
 
