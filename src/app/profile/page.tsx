@@ -4,6 +4,7 @@ import Profile from "@/components/profile/profile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApplication, getApplicationInterests } from "@/lib/application";
 import { auth } from "@/lib/auth";
+import { isCandidate } from "@/lib/candidate";
 import { getFilenameUrl } from "@/lib/file-upload";
 
 import { headers } from "next/headers";
@@ -18,6 +19,8 @@ export default async function ProfilePage() {
 
   const pictureUrl = await getFilenameUrl(session?.user?.image || "");
 
+  const candidate = await isCandidate(session?.user.id);
+
   return (
     <div className="flex flex-col mx-auto w-full max-w-[80em] gap-2 items-center justify-center">
       <h1 className="text-xl font-bold text-center">Perfil</h1>
@@ -28,6 +31,7 @@ export default async function ProfilePage() {
         </TabsList>
         <TabsContent value="info">
           <Profile
+            isCandidate={candidate}
             pictureUrl={pictureUrl}
             application={application}
             applicationInterests={applicationInterests}

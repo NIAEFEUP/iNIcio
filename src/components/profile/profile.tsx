@@ -9,12 +9,14 @@ import { authClient } from "@/lib/auth-client";
 import CandidateAnswers from "../candidate/page/candidate-answers";
 
 interface ProfileProps {
+  isCandidate: boolean;
   application: Application | null | undefined;
   applicationInterests: string[];
   pictureUrl: string | null;
 }
 
 export default function Profile({
+  isCandidate,
   application,
   applicationInterests,
   pictureUrl,
@@ -83,9 +85,11 @@ export default function Profile({
           </div>
         </div>
 
-        <div className="space-y-1">
-          <CandidateAnswers application={application} />
-        </div>
+        {isCandidate && (
+          <div className="space-y-1">
+            <CandidateAnswers application={application} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

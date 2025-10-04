@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
 import { and, eq, gte, lte } from "drizzle-orm";
+import { isRecruiter } from "@/lib/recruiter";
 
 export async function markNotificationAsRead(id: number) {
   return await db.transaction(async (tx) => {
