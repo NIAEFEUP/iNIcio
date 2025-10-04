@@ -159,9 +159,6 @@ export default function SlotAdminCalendar({
     }
   };
 
-  console.log("BOOKINGS: ", bookings);
-  console.log("SLOT TYPE: ", slotType);
-
   return (
     <div className="space-y-6">
       <SlotConfigPanel

@@ -96,11 +96,22 @@ export async function getDynamic(dynamicId: number) {
           candidate: {
             with: {
               user: true,
+              dynamic: {
+                with: {
+                  dynamic: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
+              interview: true,
               application: {
                 with: {
                   interests: true,
                 },
               },
+              knownRecruiters: true,
             },
           },
         },
@@ -176,7 +187,16 @@ export async function getAllCandidatesWithDynamic() {
       ),
     with: {
       user: true,
-      dynamic: true,
+      interview: true,
+      dynamic: {
+        with: {
+          dynamic: {
+            with: {
+              slot: true,
+            },
+          },
+        },
+      },
       application: {
         with: {
           interests: true,
@@ -190,6 +210,7 @@ export async function getAllCandidatesWithDynamic() {
     candidates.map(async (c) => ({
       ...c.user,
       dynamic: c.dynamic,
+      interview: c.interview,
       application: {
         ...c.application,
         profilePicture: await getFilenameUrl(c.application?.profilePicture),

@@ -42,19 +42,19 @@ export default async function DynamicPage({ params }: any) {
   return (
     <div className="mx-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 mx-16">
-        {dynamic.candidates.map((candidate) => (
-          <CandidateQuickInfo
-            key={candidate.candidateId}
-            candidate={candidate.candidate.user}
-            application={candidate.candidate.application}
-            applicationInterests={
-              candidate.candidate.application?.interests.map(
-                (i) => i.interest,
-              ) ?? []
-            }
-            dynamic={dynamic}
-          />
-        ))}
+        {/* {dynamic.candidates.map((candidate) => ( */}
+        {/*   <CandidateQuickInfo */}
+        {/*     key={candidate.candidateId} */}
+        {/*     candidate={candidate..user} */}
+        {/*     application={candidate.candidate.application} */}
+        {/*     applicationInterests={ */}
+        {/*       candidate.candidate.application?.interests.map( */}
+        {/*         (i) => i.interest, */}
+        {/*       ) ?? [] */}
+        {/*     } */}
+        {/*     dynamic={dynamic} */}
+        {/*   /> */}
+        {/* ))} */}
       </div>
 
       <div className="grid grid-cols-4 gap-4">

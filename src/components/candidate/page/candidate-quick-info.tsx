@@ -21,12 +21,10 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SocialLinks } from "@/components/profile/social-links";
+import { CandidateWithMetadata } from "@/lib/candidate";
 
 interface CandidateQuickInfoProps {
-  candidate: User;
-  application: Application | null;
-  applicationInterests: string[];
-  dynamic: Dynamic | null;
+  candidate: CandidateWithMetadata;
   friendCheckboxActive?: boolean;
   friends?: Array<RecruiterToCandidate>;
   authUser?: User | null;
@@ -35,9 +33,6 @@ interface CandidateQuickInfoProps {
 export default function CandidateQuickInfo({
   authUser = null,
   candidate,
-  application,
-  applicationInterests,
-  dynamic,
   friendCheckboxActive = false,
   friends = [],
 }: CandidateQuickInfoProps) {
@@ -97,7 +92,9 @@ export default function CandidateQuickInfo({
           <div className="relative">
             <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
               <AvatarImage
-                src={application?.profilePicture || "/placeholder.svg"}
+                src={
+                  candidate.application?.profilePicture || "/placeholder.svg"
+                }
                 alt={candidate?.name}
                 className="object-cover"
               />
@@ -118,7 +115,7 @@ export default function CandidateQuickInfo({
               <div className="h-0.5 w-0 bg-primary group-hover/link:w-full transition-all duration-300 mt-1" />
             </Link>
             <p className="text-sm text-muted-foreground mt-1 font-medium">
-              {application?.studentNumber}
+              {candidate.application?.studentNumber}
             </p>
           </div>
         </div>
@@ -137,7 +134,7 @@ export default function CandidateQuickInfo({
                   Curso
                 </p>
                 <p className="text-sm font-bold text-foreground truncate">
-                  {application?.degree || "mesw"}
+                  {candidate.application?.degree || "mesw"}
                 </p>
               </div>
             </div>
@@ -151,7 +148,7 @@ export default function CandidateQuickInfo({
                   Ano
                 </p>
                 <p className="text-sm font-bold text-foreground truncate">
-                  {application?.curricularYear || "3bsc"}
+                  {candidate.application?.curricularYear || "3bsc"}
                 </p>
               </div>
             </div>
@@ -163,9 +160,9 @@ export default function CandidateQuickInfo({
               Departamentos
             </p>
             <div className="flex flex-wrap gap-2">
-              {(applicationInterests?.length > 0
-                ? applicationInterests
-                : ["projetos", "sinf"]
+              {(candidate.application.interests?.length > 0
+                ? candidate.application.interests
+                : []
               ).map((interest, index) => (
                 <Badge
                   key={index}
@@ -179,18 +176,18 @@ export default function CandidateQuickInfo({
           </div>
 
           <SocialLinks
-            githubUrl={application?.github || null}
-            linkedinUrl={application?.linkedIn || null}
-            websiteUrl={application?.personalWebsite || null}
+            githubUrl={candidate.application?.github || null}
+            linkedinUrl={candidate.application?.linkedIn || null}
+            websiteUrl={candidate.application?.personalWebsite || null}
           />
         </div>
       </CardContent>
 
       <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
         <div className="flex items-center justify-center gap-6 w-full">
-          {dynamic && (
+          {candidate.dynamic && (
             <Link
-              href={`/dynamic/${dynamic?.id}`}
+              href={`/dynamic/${candidate.dynamic?.dynamicId}`}
               className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
             >
               <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
@@ -202,15 +199,17 @@ export default function CandidateQuickInfo({
 
           <div className="h-4 w-px bg-border" />
 
-          <Link
-            href={`/candidate/${candidate?.id}/interview`}
-            className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
-          >
-            <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
-              Entrevista
-            </span>
-            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-          </Link>
+          {candidate.interview && (
+            <Link
+              href={`/candidate/${candidate?.id}/interview`}
+              className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
+            >
+              <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
+                Entrevista
+              </span>
+              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
+            </Link>
+          )}
         </div>
       </CardFooter>
     </Card>
