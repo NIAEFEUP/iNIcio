@@ -88,7 +88,7 @@ export async function tryToAddCandidateToDynamic(
 }
 
 export async function getDynamic(dynamicId: number) {
-  return await db.query.dynamic.findFirst({
+  const res = await db.query.dynamic.findFirst({
     where: eq(dynamic.id, dynamicId),
     with: {
       candidates: {
@@ -96,6 +96,7 @@ export async function getDynamic(dynamicId: number) {
           candidate: {
             with: {
               user: true,
+              knownRecruiters: true,
               dynamic: {
                 with: {
                   dynamic: {
@@ -105,23 +106,45 @@ export async function getDynamic(dynamicId: number) {
                   },
                 },
               },
-              interview: true,
+              interview: {
+                with: {
+                  slot: true,
+                },
+              },
               application: {
                 with: {
                   interests: true,
                 },
               },
-              knownRecruiters: true,
             },
           },
         },
       },
     },
   });
+
+  return {
+    ...res,
+    candidates: await Promise.all(
+      res.candidates.map(async (c) => ({
+        ...c.candidate.user,
+        application: {
+          ...c.candidate.application,
+          profilePicture: await getFilenameUrl(
+            c.candidate.application?.profilePicture,
+          ),
+          interests: c.candidate.application?.interests.map((i) => i.interest),
+        },
+        dynamic: c.candidate.dynamic,
+        interview: c.candidate.interview,
+        knownRecruiters: c.candidate.knownRecruiters,
+      })),
+    ),
+  };
 }
 
 export async function getCandidateDynamic(candidateId: string) {
-  return await db.query.dynamic.findFirst({
+  const res = await db.query.dynamic.findFirst({
     with: {
       candidates: {
         where: eq(candidateToDynamic.candidateId, candidateId),
@@ -157,7 +180,7 @@ export async function updateDynamic(dynamicId: number, content: any) {
 
 export async function createDynamicComment(
   dynamicId: number,
-  content: string,
+  content: Array<any>,
   authorId: string,
 ) {
   await db.transaction(async (trx) => {

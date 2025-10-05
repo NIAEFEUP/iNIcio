@@ -1,12 +1,16 @@
+import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CommentFrame from "@/components/comments/comment-frame";
 import EditorFrame from "@/components/editor/editor-frame";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { auth } from "@/lib/auth";
-import { getDynamic, updateDynamic } from "@/lib/dynamic";
-import { getRecruiters } from "@/lib/recruiter";
+import { CandidateWithMetadata } from "@/lib/candidate";
+import { createDynamicComment, getDynamic, updateDynamic } from "@/lib/dynamic";
+import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { getDynamicComments } from "@/lib/comment";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -18,53 +22,44 @@ export default async function DynamicPage({ params }: any) {
   async function handleContentSave(content: any) {
     "use server";
 
-    if (!session || session?.user.role !== "recruiter") redirect("/");
+    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
 
     await updateDynamic(id, content);
-
-    // return true;
   }
 
-  // async function handleCommentSave(content: string) {
-  //   "use server";
-  //
-  //   if (!session || session?.user.role !== "recruiter") redirect("/");
-  //
-  //   await createDynamicComment(id, content, session?.user.id);
-  //
-  //   return true;
-  // }
-  //
+  async function handleCommentSave(content: Array<any>) {
+    "use server";
+
+    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+
+    await createDynamicComment(id, content, session?.user.id);
+
+    return true;
+  }
+
   const dynamic = await getDynamic(id);
 
   const recruiters = await getRecruiters();
 
+  const comments = await getDynamicComments(dynamic.id);
+
   return (
     <div className="mx-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 mx-16">
-        {/* {dynamic.candidates.map((candidate) => ( */}
-        {/*   <CandidateQuickInfo */}
-        {/*     key={candidate.candidateId} */}
-        {/*     candidate={candidate..user} */}
-        {/*     application={candidate.candidate.application} */}
-        {/*     applicationInterests={ */}
-        {/*       candidate.candidate.application?.interests.map( */}
-        {/*         (i) => i.interest, */}
-        {/*       ) ?? [] */}
-        {/*     } */}
-        {/*     dynamic={dynamic} */}
-        {/*   /> */}
-        {/* ))} */}
+        {dynamic.candidates.map((candidate: CandidateWithMetadata) => (
+          <CandidateQuickInfo key={candidate.id} candidate={candidate} />
+        ))}
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="col-span-1">
           <CommentFrame>
             <>
-              {/* <CandidateComments */}
-              {/*   comments={[]} */}
-              {/*   saveToDatabase={handleCommentSave} */}
-              {/* /> */}
+              <CandidateComments
+                comments={comments}
+                saveToDatabase={handleCommentSave}
+                type="dynamic"
+              />
             </>
           </CommentFrame>
         </div>
