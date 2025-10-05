@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import { Slot } from "@/lib/db";
 import addInterviewWithSlot from "@/lib/interview";
-import { getInterviewSlots } from "@/lib/recruitment";
+import {
+  getInterviewSlots,
+  markInterviewRecruitmentPhaseAsDone,
+} from "@/lib/recruitment";
 import { headers } from "next/headers";
 
 export default async function CandidateInterviewSchedule() {
@@ -18,6 +21,7 @@ export default async function CandidateInterviewSchedule() {
 
     for (const slot of slots) {
       await addInterviewWithSlot(session.user.id, slot);
+      await markInterviewRecruitmentPhaseAsDone(session.user.id);
     }
 
     return true;
