@@ -53,12 +53,14 @@ export async function getCandidateWithMetadata(
 
   return {
     ...res.user,
+    image: await getFilenameUrl(res.user?.image),
     dynamic: res.dynamic,
     interview: res.interview,
     knownRecruiters: res.knownRecruiters,
     application: {
       ...res.application,
       profilePicture: await getFilenameUrl(res.application?.profilePicture),
+      curriculum: await getFilenameUrl(res.application?.curriculum),
       interests: res.application?.interests.map((i) => i.interest),
     },
   };
