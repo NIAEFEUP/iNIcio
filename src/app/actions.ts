@@ -1,7 +1,5 @@
 "use server";
 
-import * as Y from "yjs";
-
 import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
   notification,
@@ -11,7 +9,6 @@ import {
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
 import { and, eq, gte, lte } from "drizzle-orm";
-import { isRecruiter } from "@/lib/recruiter";
 
 export async function markNotificationAsRead(id: number) {
   return await db.transaction(async (tx) => {
@@ -39,6 +36,8 @@ export async function getAvailableRecruiters(
           recruiter: {
             with: {
               knownCandidates: true,
+              interviews: true,
+              dynamics: true,
             },
           },
         },

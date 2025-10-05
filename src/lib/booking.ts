@@ -16,6 +16,8 @@ export async function getBookings() {
               with: {
                 user: true,
                 knownCandidates: true,
+                interviews: true,
+                dynamics: true,
               },
             },
           },
@@ -41,6 +43,8 @@ export async function getBookings() {
               with: {
                 user: true,
                 knownCandidates: true,
+                dynamics: true,
+                interviews: true,
               },
             },
           },

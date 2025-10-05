@@ -41,16 +41,19 @@ export function BookingPicker({
   candidates,
   type,
 }: BookingPickerProps) {
+  console.log("BOOKING2: ", booking);
+  console.log("BOOKING RECRUITERS: ", booking.recruiters);
+
   const { recruiters } = useAvailableRecruiters(
     start,
     new Date(start.getTime() + duration * 60 * 1000),
   );
 
+  console.log("RECRUITERS: ", recruiters);
+
   const [selectedRecruiter] = useState("");
-  const [selectedRecruiters, setSelectedRecruiters] = useState<User[]>(
-    booking.recruiters.map(
-      (r) => (r as unknown as { recruiter: { user: User } }).recruiter.user,
-    ),
+  const [selectedRecruiters, setSelectedRecruiters] = useState<any[]>(
+    booking.recruiters.map((r) => r.recruiter),
   );
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
 
@@ -122,9 +125,11 @@ export function BookingPicker({
           {selectedRecruiters.length > 0 && (
             <div className="space-y-2">
               {selectedRecruiters.map((interviewer) => {
+                const quantity =
+                  interviewer.interviews.length + interviewer.dynamics.length;
                 return (
                   <div
-                    key={interviewer.id}
+                    key={interviewer.user.id}
                     className="flex items-center gap-2 rounded-lg border bg-card p-2"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -132,7 +137,7 @@ export function BookingPicker({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium leading-none">
-                        {interviewer.name}
+                        {interviewer.user.name} ({quantity})
                       </p>
                     </div>
                     <Button
@@ -163,27 +168,37 @@ export function BookingPicker({
                     (interviewer) =>
                       !selectedRecruiters.some((r) => r.id === interviewer.id),
                   )
-                  .map((interviewer) => (
-                    <SelectItem key={interviewer.id} value={interviewer.id}>
-                      <div className="flex flex-row gap-1">
-                        <span className="font-medium">{interviewer.name}</span>
+                  .map((interviewer) => {
+                    const quantity =
+                      interviewer.recruiter.interviews?.length +
+                      interviewer.recruiter.dynamics?.length;
+                    console.log("INTERVIEWER ADDING: ", interviewer);
+                    return (
+                      <SelectItem key={interviewer.id} value={interviewer.id}>
+                        <div className="flex flex-row gap-1">
+                          <span className="font-medium">
+                            {interviewer.name}
+                          </span>
 
-                        <span className="text-sm">
-                          (
-                          {(
-                            interviewer as UserWithRecruiter
-                          ).recruiter?.knownCandidates.filter((c) =>
-                            candidates.find(
-                              (candidate) => candidate.id === c.candidateId,
-                            ),
-                          ).length > 0
-                            ? "Conheçe"
-                            : "Não conheço"}
-                          )
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                          <span className="text-sm">{quantity}</span>
+
+                          <span className="text-sm">
+                            (
+                            {(
+                              interviewer as UserWithRecruiter
+                            ).recruiter?.knownCandidates.filter((c) =>
+                              candidates.find(
+                                (candidate) => candidate.id === c.candidateId,
+                              ),
+                            ).length > 0
+                              ? "Conheçe"
+                              : "Não conheço"}
+                            )
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           ) : (
