@@ -35,11 +35,14 @@ export default async function addInterviewWithSlot(
 
       if (i) {
         await trx
+          .update(slot)
+          .set({ quantity: i.slot.quantity + 1 })
+          .where(eq(slot.id, i.slot.id));
+
+        await trx
           .update(interview)
           .set({ slot: slotParam.id })
           .where(eq(interview.id, i.id));
-
-        await trx.update(slot).set({ quantity: s[0].quantity + 1 });
       } else {
         const interviewTemplate = await trx.query.interviewTemplate.findFirst();
 
@@ -48,6 +51,9 @@ export default async function addInterviewWithSlot(
           candidateId: candidateId,
           content: interviewTemplate ? interviewTemplate.content : [],
         });
+
+        // We do not need to decrease quantity of the new slot of the interview because it was already done so in
+        // the beggining of the if
       }
     }
   });

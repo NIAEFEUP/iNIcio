@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, User } from "lucide-react";
+import { FileText } from "lucide-react";
 
 import {
   Card,
@@ -7,13 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SubmittedApplicationMessage() {
-  const router = useRouter();
-
   return (
     <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 h-full w-full">
       <div className="container mx-auto px-4 text-center">
@@ -48,28 +44,30 @@ export default function SubmittedApplicationMessage() {
           </p>
 
           <div className="flex flex-row sm:flex-row gap-4 mb-12 w-full">
-            <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer w-full">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
-                  <FileText className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
-                </div>
-                <CardTitle className="text-2xl text-left">
-                  Ver Progresso
-                </CardTitle>
-                <CardDescription className="text-base text-left">
-                  Vê as etapas que ainda te faltam para continuares o teu
-                  processo de recrutamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
-                  Ver progresso
-                  <span className="inline-block transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <Link href="/candidate/progress" className="w-full">
+              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer w-full">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
+                    <FileText className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
+                  </div>
+                  <CardTitle className="text-2xl text-left">
+                    Ver Progresso
+                  </CardTitle>
+                  <CardDescription className="text-base text-left">
+                    Vê as etapas que ainda te faltam para continuares o teu
+                    processo de recrutamento
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
+                    Ver progresso
+                    <span className="inline-block transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </div>
       </div>

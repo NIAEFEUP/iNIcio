@@ -196,53 +196,57 @@ export async function isRecruitmentPhaseDone(
 }
 
 export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
-  const phaseStatus = await db
-    .select({
-      phaseId: recruitmentPhaseStatus.phaseId,
-      status: recruitmentPhaseStatus.status,
-      title: recruitmentPhase.title,
-    })
-    .from(recruitmentPhaseStatus)
-    .innerJoin(
-      recruitmentPhase,
-      eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
-    )
-    .where(
-      and(
-        eq(recruitmentPhaseStatus.userId, userId),
-        eq(recruitmentPhase.title, "Entrevista"),
-      ),
-    );
+  await db.transaction(async (tx) => {
+    const phaseStatus = await tx
+      .select({
+        phaseId: recruitmentPhaseStatus.phaseId,
+        status: recruitmentPhaseStatus.status,
+        title: recruitmentPhase.title,
+      })
+      .from(recruitmentPhaseStatus)
+      .innerJoin(
+        recruitmentPhase,
+        eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
+      )
+      .where(
+        and(
+          eq(recruitmentPhaseStatus.userId, userId),
+          eq(recruitmentPhase.clientIdentifier, "entrevista"),
+        ),
+      );
 
-  await db
-    .update(recruitmentPhaseStatus)
-    .set({ status: "done" })
-    .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+    await tx
+      .update(recruitmentPhaseStatus)
+      .set({ status: "done" })
+      .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+  });
 }
 
 export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
-  const phaseStatus = await db
-    .select({
-      phaseId: recruitmentPhaseStatus.phaseId,
-      status: recruitmentPhaseStatus.status,
-      title: recruitmentPhase.title,
-    })
-    .from(recruitmentPhaseStatus)
-    .innerJoin(
-      recruitmentPhase,
-      eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
-    )
-    .where(
-      and(
-        eq(recruitmentPhaseStatus.userId, userId),
-        eq(recruitmentPhase.title, "Dinâmica"),
-      ),
-    );
+  await db.transaction(async (tx) => {
+    const phaseStatus = await tx
+      .select({
+        phaseId: recruitmentPhaseStatus.phaseId,
+        status: recruitmentPhaseStatus.status,
+        title: recruitmentPhase.title,
+      })
+      .from(recruitmentPhaseStatus)
+      .innerJoin(
+        recruitmentPhase,
+        eq(recruitmentPhaseStatus.phaseId, recruitmentPhase.id),
+      )
+      .where(
+        and(
+          eq(recruitmentPhaseStatus.userId, userId),
+          eq(recruitmentPhase.clientIdentifier, "dinâmica"),
+        ),
+      );
 
-  await db
-    .update(recruitmentPhaseStatus)
-    .set({ status: "done" })
-    .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+    await tx
+      .update(recruitmentPhaseStatus)
+      .set({ status: "done" })
+      .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+  });
 }
 
 export async function addRecruiter(userId: string) {

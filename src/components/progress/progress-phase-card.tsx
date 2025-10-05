@@ -115,7 +115,7 @@ export default function ProgressPhaseCard({
                     router.push(`${redirectUrl}`);
                   }}
                 >
-                  Reagendar {title}
+                  Reagendar
                 </Button>
               </div>
             </>

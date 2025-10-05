@@ -40,8 +40,9 @@ export async function tryToAddCandidateToDynamic(
       if (candidateDynamic) {
         await trx
           .update(slot)
-          .set({ quantity: candidateDynamic.dynamic.slot.quantity - 1 })
-          .where(eq(slot.id, slotParam.id));
+          .set({ quantity: candidateDynamic.dynamic.slot.quantity + 1 })
+          .where(eq(slot.id, candidateDynamic.dynamic.slot));
+
         await trx
           .delete(candidateToDynamic)
           .where(eq(candidateToDynamic.candidateId, candidateId));
