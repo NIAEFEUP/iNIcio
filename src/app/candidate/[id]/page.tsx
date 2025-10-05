@@ -69,6 +69,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
           <TabsContent value="comments">
             <CommentFrame>
               <CandidateComments
+                candidate={candidate}
                 type="application"
                 comments={comments}
                 saveToDatabase={saveToDatabase}

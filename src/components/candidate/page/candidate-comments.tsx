@@ -19,6 +19,7 @@ import { Send } from "lucide-react";
 import { useState } from "react";
 
 import { commentCreationMap } from "@/lib/comment-format";
+import { CandidateWithMetadata } from "@/lib/candidate";
 
 type CommentType = "application" | "interview" | "dynamic";
 
@@ -29,6 +30,7 @@ export type Comment = {
 };
 
 interface CandidateCommentsProps {
+  candidate: CandidateWithMetadata | Array<CandidateWithMetadata>;
   type: CommentType;
   comments: Array<Comment>;
   saveToDatabase: (content: Array<any>) => Promise<boolean>;
@@ -36,6 +38,7 @@ interface CandidateCommentsProps {
 }
 
 export default function CandidateComments({
+  candidate,
   type,
   recruiters = [],
   comments,
@@ -132,7 +135,11 @@ export default function CandidateComments({
         </div>
         <div className="flex flex-col gap-4">
           {commentsState?.map((comment, idx) => (
-            <CommentDisplay key={`comment-${idx}`} comment={comment} />
+            <CommentDisplay
+              key={`comment-${idx}`}
+              comment={comment}
+              candidate={candidate}
+            />
           ))}
         </div>
       </div>

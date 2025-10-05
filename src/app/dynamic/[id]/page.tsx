@@ -56,6 +56,7 @@ export default async function DynamicPage({ params }: any) {
           <CommentFrame>
             <>
               <CandidateComments
+                candidate={dynamic.candidates}
                 comments={comments}
                 saveToDatabase={handleCommentSave}
                 type="dynamic"

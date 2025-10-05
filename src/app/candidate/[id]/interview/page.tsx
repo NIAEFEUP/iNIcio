@@ -71,6 +71,7 @@ export default async function InterviewPage({ params }: any) {
 
               <CommentFrame>
                 <CandidateComments
+                  candidate={candidate}
                   type="interview"
                   comments={comments}
                   saveToDatabase={handleCommentSave}
