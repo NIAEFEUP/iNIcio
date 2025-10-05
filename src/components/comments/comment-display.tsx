@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
-import { getDateStringPT, getTimeString } from "@/lib/date";
+import { Comment } from "../candidate/page/candidate-comments";
 
 interface CommentDisplayProps {
-  comment: any;
+  comment: Comment;
 }
 
 export function CommentDisplay({ comment }: CommentDisplayProps) {
@@ -26,28 +26,25 @@ export function CommentDisplay({ comment }: CommentDisplayProps) {
             {comment.user?.name}
           </p>
           <p className="text-sm flex flex-row gap-1">
-            <span>{getTimeString(comment.application_comment.createdAt)}</span>
-            <span>
-              {getDateStringPT(new Date(comment.application_comment.createdAt))}
-            </span>
+            {comment.comment.createdAt && (
+              <span className="text-xs text-muted-foreground">
+                {new Date(comment.comment.createdAt).toLocaleDateString(
+                  "pt-BR",
+                  {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  },
+                )}
+              </span>
+            )}
           </p>
         </div>
 
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2">
-            {comment.createdAt && (
-              <span className="text-xs text-muted-foreground">
-                {new Date(comment.createdAt).toLocaleDateString("pt-BR", {
-                  day: "numeric",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-            <ReadOnlyBlocks
-              blocks={comment.application_comment.content as Array<any>}
-            />
+            <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
           </div>
         </div>
       </div>

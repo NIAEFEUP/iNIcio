@@ -8,32 +8,42 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { authClient } from "@/lib/auth-client";
-import { ApplicationComment, NewApplicationComment, User } from "@/lib/db";
+import {
+  ApplicationComment,
+  DynamicComment,
+  InterviewComment,
+  NewApplicationComment,
+  User,
+} from "@/lib/db";
 import { Send } from "lucide-react";
 import { useState } from "react";
 
+import { commentCreationMap } from "@/lib/comment-format";
+
+type CommentType = "application" | "interview" | "dynamic";
+
+export type Comment = {
+  user: User | null;
+  comment: ApplicationComment | InterviewComment | DynamicComment | null;
+  type: CommentType;
+};
+
 interface CandidateCommentsProps {
-  comments: Array<{
-    user: User | null;
-    application_comment: ApplicationComment | null;
-  }>;
+  type: CommentType;
+  comments: Array<Comment>;
   saveToDatabase: (content: Array<any>) => Promise<boolean>;
   recruiters?: Array<User>;
 }
 
 export default function CandidateComments({
+  type,
   recruiters = [],
   comments,
   saveToDatabase,
 }: CandidateCommentsProps) {
   const { data: session } = authClient.useSession();
 
-  const [commentsState, setCommentsState] = useState<
-    Array<{
-      user: User | null;
-      application_comment: NewApplicationComment | null;
-    }>
-  >(comments);
+  const [commentsState, setCommentsState] = useState<Array<Comment>>(comments);
 
   const [commentValue, setCommentValue] = useState<Array<any> | undefined>(
     undefined,
@@ -60,12 +70,11 @@ export default function CandidateComments({
           updatedAt: new Date(),
           role: "recruiter" as const,
         },
-        application_comment: {
-          content: commentValue,
-          authorId: session ? session.user.id : "",
-          createdAt: new Date(),
-          applicationId: 0,
-        },
+        comment: commentCreationMap[type](
+          commentValue,
+          session ? session.user.id : "",
+        ) as ApplicationComment | InterviewComment | DynamicComment,
+        type: type,
       },
       ...commentsState,
     ]);

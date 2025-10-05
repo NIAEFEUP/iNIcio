@@ -73,7 +73,6 @@ export async function submitApplicationComment(
 
       const id = await addApplicationComment(app[0].id, content, authorId);
 
-      // filter repeated mentions (with props { userId: string, userName: string})
       const uniqueMentions = Array.from(
         new Map(mentions.map((m) => [m.userId, m])).values(),
       );

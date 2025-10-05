@@ -27,6 +27,10 @@ export type ApplicationComment = typeof schema.applicationComment.$inferSelect;
 export type Notification = typeof schema.notification.$inferSelect;
 export type InterviewTemplate = typeof schema.interviewTemplate.$inferSelect;
 export type DynamicTemplate = typeof schema.dynamicTemplate.$inferSelect;
+export type InterviewComment = typeof schema.interviewComment.$inferSelect;
+export type DynamicComment = typeof schema.dynamicComment.$inferSelect;
+export type NewInterviewComment = typeof schema.interviewComment.$inferInsert;
+export type NewDynamicComment = typeof schema.dynamicComment.$inferInsert;
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });
 

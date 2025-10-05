@@ -14,7 +14,7 @@ import { application } from "./application";
 
 export const interviewComment = pgTable("interview_comment", {
   id: serial("id").primaryKey(),
-  content: text("content").notNull(),
+  content: jsonb("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   interviewId: integer("interview_id")
     .notNull()
@@ -40,7 +40,7 @@ export const interviewCommentRelations = relations(
 
 export const dynamicComment = pgTable("dynamic_comment", {
   id: serial("id").primaryKey(),
-  content: text("content").notNull(),
+  content: jsonb("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   dynamicId: integer("dynamic_id")
     .notNull()

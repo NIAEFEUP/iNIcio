@@ -6,6 +6,8 @@ import {
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
+import { getFilenameUrl } from "./file-upload";
+import { Comment } from "@/components/candidate/page/candidate-comments";
 
 export default async function addInterviewWithSlot(
   candidateId: string,
@@ -70,7 +72,7 @@ export async function updateInterview(candidateId: string, content: any) {
 
 export async function addInterviewComment(
   authorId: string,
-  content: string,
+  content: Array<any>,
   candidateId: string,
 ): Promise<boolean> {
   return await db.transaction(async (trx) => {
@@ -84,8 +86,8 @@ export async function addInterviewComment(
 
     try {
       await trx.insert(interviewComment).values({
-        content: content,
-        authorId: authorId,
+        content,
+        authorId,
         interviewId: i[0].id,
       });
 
@@ -127,4 +129,38 @@ export async function getInterviewTemplate(): Promise<InterviewTemplate> {
 
 export function getCandidateInterviewLink(candidateId: string) {
   return `/candidate/${candidateId}/interview`;
+}
+
+export async function getInterviewComments(
+  interviewId: number,
+): Promise<Array<Comment>> {
+  const comments = await db.query.interviewComment.findMany({
+    where: eq(interviewComment.interviewId, interviewId),
+    with: {
+      author: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  return await Promise.all(
+    comments.map(
+      async (c): Promise<Comment> => ({
+        user: {
+          ...c.author.user,
+          image: await getFilenameUrl(c.author.user.image),
+        },
+        comment: {
+          id: c.id,
+          content: c.content,
+          createdAt: c.createdAt,
+          interviewId: c.interviewId,
+          authorId: c.authorId,
+        },
+        type: "interview",
+      }),
+    ),
+  );
 }

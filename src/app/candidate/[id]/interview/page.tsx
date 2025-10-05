@@ -4,16 +4,19 @@ import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-imp
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
-import { getUser } from "@/lib/db";
-import { getApplication, getApplicationInterests } from "@/lib/application";
-import { getInterview, updateInterview } from "@/lib/interview";
+import {
+  addInterviewComment,
+  getInterview,
+  getInterviewComments,
+  updateInterview,
+} from "@/lib/interview";
 
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
-import { getCandidateDynamic } from "@/lib/dynamic";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
+import CandidateComments from "@/components/candidate/page/candidate-comments";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -28,25 +31,23 @@ export default async function InterviewPage({ params }: any) {
     if (!(await isRecruiter(session?.user.id))) redirect("/");
 
     await updateInterview(id, content);
-
-    //return true;
   }
 
-  // async function handleCommentSave(content: string) {
-  //   "use server";
-  //
-  //   const session = await auth.api.getSession({
-  //     headers: await headers(),
-  //   });
-  //
-  //   if (!isRecruiter(session?.user.id)) redirect("/");
-  //
-  //   return await addInterviewComment(
-  //     session ? session.user.id : "",
-  //     content,
-  //     id,
-  //   );
-  // }
+  async function handleCommentSave(content: Array<any>) {
+    "use server";
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!isRecruiter(session?.user.id)) redirect("/");
+
+    return await addInterviewComment(
+      session ? session.user.id : "",
+      content,
+      id,
+    );
+  }
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -55,9 +56,10 @@ export default async function InterviewPage({ params }: any) {
   const candidate = await getCandidateWithMetadata(id);
 
   const interview = await getInterview(id);
-  const dynamic = await getCandidateDynamic(id);
 
   const recruiters = await getRecruiters();
+
+  const comments = await getInterviewComments(interview.id);
 
   return (
     <>
@@ -68,11 +70,11 @@ export default async function InterviewPage({ params }: any) {
               <CandidateQuickInfo candidate={candidate} />
 
               <CommentFrame>
-                <></>
-                {/* <CandidateComments */}
-                {/*   comments={comments} */}
-                {/*   saveToDatabase={handleCommentSave} */}
-                {/* /> */}
+                <CandidateComments
+                  type="interview"
+                  comments={comments}
+                  saveToDatabase={handleCommentSave}
+                />
               </CommentFrame>
             </div>
 

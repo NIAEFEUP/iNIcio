@@ -71,6 +71,13 @@
       "when": 1759488478370,
       "tag": "0009_condemned_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1759658858723,
+      "tag": "0010_absent_pyro",
+      "breakpoints": true
     }
   ]
 }

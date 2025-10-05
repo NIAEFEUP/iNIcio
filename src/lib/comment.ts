@@ -2,6 +2,7 @@ import { application, applicationComment, user } from "@/db/schema";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
+import { Comment } from "@/components/candidate/page/candidate-comments";
 
 export async function addApplicationComment(
   applicationId: number,
@@ -20,7 +21,9 @@ export async function addApplicationComment(
   return id;
 }
 
-export async function getApplicationComments(candidateId: string) {
+export async function getApplicationComments(
+  candidateId: string,
+): Promise<Array<Comment>> {
   const app = await db
     .select()
     .from(application)
@@ -36,14 +39,17 @@ export async function getApplicationComments(candidateId: string) {
     .orderBy(desc(applicationComment.createdAt), desc(applicationComment.id));
 
   return await Promise.all(
-    results.map(async (e) => ({
-      user: {
-        ...e.user,
-        image: await getFilenameUrl(e.user.image),
-      },
-      application_comment: {
-        ...e.application_comment,
-      },
-    })),
+    results.map(
+      async (e): Promise<Comment> => ({
+        user: {
+          ...e.user,
+          image: await getFilenameUrl(e.user.image),
+        },
+        comment: {
+          ...e.application_comment,
+        },
+        type: "application",
+      }),
+    ),
   );
 }
