@@ -1,6 +1,14 @@
 import { ArrowRight, FileText, User } from "lucide-react";
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
 import { useRouter } from "next/navigation";
 
 export default function SubmittedApplicationMessage() {
@@ -11,9 +19,25 @@ export default function SubmittedApplicationMessage() {
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
-            Completa o teu <span className="text-primary">processo</span> de
-            <br />
-            <span className="text-foreground">recrutamento</span>
+            Completa o teu
+            <span className="text-red-600 relative inline-block">
+              processo de recrutamento
+              <svg
+                className="absolute -bottom-2 left-0 w-full"
+                height="8"
+                viewBox="0 0 200 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 5.5C50 1.5 150 1.5 199 5.5"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="text-red-600"
+                />
+              </svg>
+            </span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
@@ -23,24 +47,29 @@ export default function SubmittedApplicationMessage() {
             juntares-te à nossa comunidade.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button
-              onClick={() => router.push("/candidate/progress")}
-              size="default"
-              variant="secondary"
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Ver progresso
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button
-              onClick={() => router.push("/profile")}
-              variant="default"
-              size="default"
-            >
-              <User className="mr-2 h-5 w-5" />
-              Ver Perfil
-            </Button>
+          <div className="flex flex-row sm:flex-row gap-4 mb-12 w-full">
+            <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer w-full">
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
+                  <FileText className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
+                </div>
+                <CardTitle className="text-2xl text-left">
+                  Ver Progresso
+                </CardTitle>
+                <CardDescription className="text-base text-left">
+                  Vê as etapas que ainda te faltam para continuares o teu
+                  processo de recrutamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
+                  Ver progresso
+                  <span className="inline-block transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

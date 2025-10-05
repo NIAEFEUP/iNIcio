@@ -17,7 +17,24 @@ export default function RecruiterActiveMessage() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
             Fazes parte da equipa de{" "}
-            <span className="text-primary">Recrutamento</span>
+            <span className="text-red-600 relative inline-block">
+              Recrutamento
+              <svg
+                className="absolute -bottom-2 left-0 w-full"
+                height="8"
+                viewBox="0 0 200 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 5.5C50 1.5 150 1.5 199 5.5"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  className="text-red-600"
+                />
+              </svg>
+            </span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
