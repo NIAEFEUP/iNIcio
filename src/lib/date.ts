@@ -74,7 +74,7 @@ export function getSlotForCell(date: Date, time: string, slots: Slot[]) {
   );
 }
 
-export function getBookingForCell(
+export function getBookingsForCell(
   date: Date,
   time: string,
   bookings: Array<{
@@ -82,11 +82,13 @@ export function getBookingForCell(
   }>,
 ) {
   const [hours, minutes] = time.split(":").map(Number);
-  const slotDateTime = new Date(date);
-  slotDateTime.setHours(hours, minutes, 0, 0);
+  const dateWithTime = new Date(date);
+  dateWithTime.setHours(hours, minutes, 0, 0); // set H:M:00.000
 
-  return bookings?.find(
-    (b) => b?.slot.start.getTime() === slotDateTime.getTime(),
+  return bookings?.filter(
+    (b) =>
+      b?.slot.start.getTime() === dateWithTime.getTime() &&
+      b?.slot.start.getDay() === dateWithTime.getDay(),
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,8 @@ interface BookingPickerProps {
   booking: (Interview | Dynamic) & { recruiters: RecruiterToCandidate[] };
   candidates: User[];
   type: SlotType;
+  selectedRecruiters: User[];
+  setSelectedRecruiters: Dispatch<SetStateAction<User[]>>;
 }
 
 interface RecruiterData {
@@ -40,6 +42,8 @@ export function BookingPicker({
   booking,
   candidates,
   type,
+  selectedRecruiters,
+  setSelectedRecruiters,
 }: BookingPickerProps) {
   const { recruiters } = useAvailableRecruiters(
     start,
@@ -47,11 +51,6 @@ export function BookingPicker({
   );
 
   const [selectedRecruiter] = useState("");
-  const [selectedRecruiters, setSelectedRecruiters] = useState<User[]>(
-    booking.recruiters.map(
-      (r) => (r as unknown as { recruiter: { user: User } }).recruiter.user,
-    ),
-  );
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
 
   const addInterviewer = async (interviewerId: string) => {
@@ -115,16 +114,16 @@ export function BookingPicker({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
               <UserPlus className="h-4 w-4 text-muted-foreground" />
-              <span>Recrutadores ({selectedRecruiters.length})</span>
+              <span>Recrutadores ({selectedRecruiters?.length})</span>
             </div>
           </div>
 
-          {selectedRecruiters.length > 0 && (
+          {selectedRecruiters?.length > 0 && (
             <div className="space-y-2">
-              {selectedRecruiters.map((interviewer) => {
+              {selectedRecruiters?.map((interviewer, idx) => {
                 return (
                   <div
-                    key={interviewer.id}
+                    key={crypto.randomUUID()}
                     className="flex items-center gap-2 rounded-lg border bg-card p-2"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">

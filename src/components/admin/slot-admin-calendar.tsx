@@ -10,7 +10,7 @@ import {
   formatDateHeader,
   generateDates,
   generateTimeSlots,
-  getBookingForCell,
+  getBookingsForCell,
   getCellKey,
   getSlotForCell,
 } from "@/lib/date";
@@ -192,7 +192,7 @@ export default function SlotAdminCalendar({
             dates={dates}
             tableRef={tableRef}
             timeSlots={timeSlots}
-            getSlotForCell={getBookingForCell}
+            getSlotForCell={getBookingsForCell}
             getCellKey={getCellKey}
             selectedSlot={selectedSlot}
             getTypeColor={getTypeColor}
