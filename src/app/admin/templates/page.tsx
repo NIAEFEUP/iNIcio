@@ -1,11 +1,11 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { auth } from "@/lib/auth";
 import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
 import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
-import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
+
+import AdminTemplateClient from "@/components/admin/admin-template-client";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -41,35 +41,13 @@ export default async function AdminTemplates() {
   );
 
   return (
-    <Tabs defaultValue="interview" className="w-full">
-      <TabsList className="w-full">
-        <TabsTrigger value="interview">Entrevistas</TabsTrigger>
-        <TabsTrigger value="dynamic">Dinâmicas</TabsTrigger>
-      </TabsList>
-      <TabsContent value="interview">
-        <RealTimeEditor
-          token={jwt}
-          key="interview-editor"
-          docId="interview-template-editor"
-          roomId="interview-template-room"
-          userName={session?.user.name || "Anonymous"}
-          saveHandler={addInterviewTemplateAction}
-          saveHandlerTimeout={3000}
-          entity={interviewTemplate}
-        />
-      </TabsContent>
-      <TabsContent value="dynamic">
-        <RealTimeEditor
-          token={jwt}
-          key="dynamic-editor"
-          docId="dynamic-template-editor"
-          roomId="dynamic-template-room"
-          userName={session?.user.name || "Anonymous"}
-          saveHandler={addDynamicTemplateAction}
-          saveHandlerTimeout={3000}
-          entity={dynamicTemplate}
-        />
-      </TabsContent>
-    </Tabs>
+    <AdminTemplateClient
+      addInterviewTemplateAction={addInterviewTemplateAction}
+      addDynamicTemplateAction={addDynamicTemplateAction}
+      session={session}
+      jwt={jwt}
+      interviewTemplate={interviewTemplate}
+      dynamicTemplate={dynamicTemplate}
+    />
   );
 }
