@@ -41,8 +41,8 @@ export default async function AdminTemplates() {
   );
 
   return (
-    <Tabs defaultValue="interview" className="w-full max-w-[40em]">
-      <TabsList className="w-full max-w-[40em]">
+    <Tabs defaultValue="interview" className="w-full">
+      <TabsList className="w-full">
         <TabsTrigger value="interview">Entrevistas</TabsTrigger>
         <TabsTrigger value="dynamic">Dinâmicas</TabsTrigger>
       </TabsList>
