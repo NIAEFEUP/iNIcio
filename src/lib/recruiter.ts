@@ -44,3 +44,27 @@ export async function getAvailabilities(recruiterId: string) {
     where: eq(recruiterAvailability.recruiterId, recruiterId),
   });
 }
+
+export async function getAllRecruiterAvailabilities() {
+  return await db.query.recruiterAvailability.findMany({
+    with: {
+      recruiter: {
+        with: {
+          recruiter: {
+            with: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function getAllRecruiters() {
+  return await db.query.recruiter.findMany({
+    with: {
+      user: true,
+    },
+  });
+}

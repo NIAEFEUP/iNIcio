@@ -24,7 +24,7 @@ export function ClientContainer({ view }: IProps) {
   const { selectedDate, selectedUserId, events, urlId } = useCalendar();
 
   const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+    return events?.filter((event) => {
       const eventStartDate = parseISO(event.startDate);
       const eventEndDate = parseISO(event.endDate);
 
@@ -112,13 +112,13 @@ export function ClientContainer({ view }: IProps) {
     });
   }, [selectedDate, selectedUserId, events, view]);
 
-  const singleDayEvents = filteredEvents.filter((event) => {
+  const singleDayEvents = filteredEvents?.filter((event) => {
     const startDate = parseISO(event.startDate);
     const endDate = parseISO(event.endDate);
     return isSameDay(startDate, endDate);
   });
 
-  const multiDayEvents = filteredEvents.filter((event) => {
+  const multiDayEvents = filteredEvents?.filter((event) => {
     const startDate = parseISO(event.startDate);
     const endDate = parseISO(event.endDate);
     return !isSameDay(startDate, endDate);
@@ -128,7 +128,7 @@ export function ClientContainer({ view }: IProps) {
   // by using the same date for both start and end,
   // we ensure only the start day will show a dot
   const eventStartDates = useMemo(() => {
-    return filteredEvents.map((event) => ({
+    return filteredEvents?.map((event) => ({
       ...event,
       endDate: event.startDate,
     }));

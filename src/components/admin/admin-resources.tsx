@@ -18,6 +18,12 @@ export default function AdminResources({
     <div>
       <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <ResourceCard
+          title="Disponibilidades"
+          quantityText="Ver disponibilidades"
+          onClick={() => redirect("/admin/availabilities")}
+        />
+
+        <ResourceCard
           title="Recrutamentos"
           quantityText="Gerir recrutamentos"
           onClick={() => redirect("/admin/recruitments")}

@@ -5,6 +5,45 @@ import { recruiterToDynamic, recruiterToInterview } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { getCandidateInterviewLink } from "@/lib/interview";
 import { getDynamicLink } from "@/lib/dynamic";
+import {
+  getAllRecruiterAvailabilities,
+  getAllRecruiters,
+} from "@/lib/recruiter";
+import { getFilenameUrl } from "@/lib/file-upload";
+
+export const getEventAvailabilities = async () => {
+  const calendarEvents: IEvent[] = [];
+
+  const availabilities = await getAllRecruiterAvailabilities();
+
+  console.log("AVAILS: ", availabilities);
+
+  await Promise.all(
+    availabilities.map(async (availability) => {
+      const slotStart = availability.start;
+      const slotEnd = new Date(
+        slotStart.getTime() + availability.duration * 60000,
+      );
+
+      calendarEvents.push({
+        id: availability.id,
+        startDate: slotStart.toISOString(),
+        endDate: slotEnd.toISOString(),
+        title: availability.recruiter.name,
+        description: availability.recruiter.name,
+        color: COLORS[availabilities.indexOf(availability) % COLORS.length],
+        user: {
+          name: availability.recruiter.name,
+          picturePath: await getFilenameUrl(availability.recruiter.image),
+          id: availability.recruiter.id,
+        },
+        link: "",
+      });
+    }),
+  );
+
+  return calendarEvents;
+};
 
 export const getEvents = async (userId: string) => {
   const calendarEvents: IEvent[] = [];
@@ -131,4 +170,14 @@ export const getUsers = async () => {
   // Increase the delay to better see the loading state
   // await new Promise(resolve => setTimeout(resolve, 800));
   return USERS_MOCK;
+};
+
+export const getUsersRecruiters = async () => {
+  const recruiters = await getAllRecruiters();
+
+  return recruiters.map((recruiter) => ({
+    id: recruiter.user.id,
+    name: recruiter.user.name,
+    picturePath: recruiter.user.image,
+  }));
 };
