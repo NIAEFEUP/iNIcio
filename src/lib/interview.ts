@@ -3,6 +3,7 @@ import {
   interviewComment,
   interviewTemplate,
   slot,
+  recruiterToInterview,
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
@@ -65,6 +66,20 @@ export async function getInterview(candidateId: string) {
     .from(interview)
     .where(eq(interview.candidateId, candidateId));
   return interviews[0];
+}
+
+export async function getInterviewers(interviewId: number) {
+  const interviewers = await db.query.recruiterToInterview.findMany({
+    where: eq(recruiterToInterview.interviewId, interviewId),
+    with: {
+      recruiter: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+  return interviewers.map((interviewer) => interviewer.recruiter.user);
 }
 
 export async function updateInterview(candidateId: string, content: any) {
