@@ -35,8 +35,6 @@ export default async function AdminAllocations() {
 
   const role = await getRole(session?.user.id);
 
-  console.log("events: ", events);
-
   return (
     <CalendarProvider
       users={users}
