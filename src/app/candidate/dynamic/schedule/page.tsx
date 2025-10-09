@@ -19,12 +19,17 @@ export default async function CandidateDynamicSchedule() {
 
     if (!session?.user.id) return false;
 
-    for (const slot of slots) {
-      await tryToAddCandidateToDynamic(session.user.id, slot);
-      await markDynamicRecruitmentPhaseAsDone(session.user.id);
-    }
+    try {
+      for (const slot of slots) {
+        await tryToAddCandidateToDynamic(session.user.id, slot);
+        await markDynamicRecruitmentPhaseAsDone(session.user.id);
+      }
 
-    return true;
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   }
 
   const candidate = await getCandidateWithInterviewAndDynamic(session?.user.id);

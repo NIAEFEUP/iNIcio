@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { getDateString, getDateStringPT, getTimeString } from "@/lib/date";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface SchedulingCalendarProps {
   slots: Array<Slot>;
@@ -90,6 +91,8 @@ export default function SchedulingCalendar({
   const handleConfirm = async () => {
     if (await confirmAction(selectedSlots)) {
       router.push(confirmUrl);
+    } else {
+      toast("Ocorreu um erro ao tentar confirmar a tua escolha");
     }
   };
 

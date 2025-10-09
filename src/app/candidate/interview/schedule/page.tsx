@@ -19,12 +19,20 @@ export default async function CandidateInterviewSchedule() {
 
     if (!session?.user.id) return false;
 
-    for (const slot of slots) {
-      await addInterviewWithSlot(session.user.id, slot);
-      await markInterviewRecruitmentPhaseAsDone(session.user.id);
-    }
+    try {
+      for (const slot of slots) {
+        await addInterviewWithSlot(session.user.id, slot);
+        await markInterviewRecruitmentPhaseAsDone(session.user.id);
+      }
 
-    return true;
+      console.log("FODA-SE: ");
+
+      return true;
+    } catch (e) {
+      console.log("EU FIZ ISSO");
+      console.error(e);
+      return false;
+    }
   }
 
   const candidate = await getCandidateWithInterviewAndDynamic(session?.user.id);
