@@ -10,4 +10,3 @@ export * from "./recruitment_phase";
 export * from "./tag";
 export * from "./user_roles";
 export * from "./notification";
-export * from "./classification";
