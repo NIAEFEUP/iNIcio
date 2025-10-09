@@ -17,6 +17,7 @@ import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
+import { CandidateClassification } from "@/components/candidate/classification";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -79,7 +80,11 @@ export default async function InterviewPage({ params }: any) {
               </CommentFrame>
             </div>
 
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-4 flex flex-col gap-4 w-full">
+              <div className="w-full">
+                <CandidateClassification />
+              </div>
+
               <EditorFrame>
                 <RealTimeEditor
                   roomId={`interview-${id}`}
