@@ -78,20 +78,6 @@
       "when": 1759658858723,
       "tag": "0010_absent_pyro",
       "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1760004876118,
-      "tag": "0011_free_silver_samurai",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1760005894557,
-      "tag": "0012_flimsy_mattie_franklin",
-      "breakpoints": true
     }
   ]
 }

@@ -19,8 +19,6 @@ import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
-import { CandidateClassificationComponent } from "@/components/candidate/classification";
-import { getCandidateClassifications } from "@/lib/classification";
 
 
 export default async function InterviewPage({ params }: any) {
@@ -68,8 +66,6 @@ export default async function InterviewPage({ params }: any) {
 
   const comments = await getInterviewComments(interview.id);
 
-  const classifications = await getCandidateClassifications(id);
-
   return (
     <>
       <div className="min-h-screen bg-background p-6">
@@ -92,13 +88,7 @@ export default async function InterviewPage({ params }: any) {
               </CommentFrame>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col gap-4 w-full">
-              <div className="w-full">
-                <CandidateClassificationComponent
-                  classifications={classifications}
-                />
-              </div>
-
+            <div className="lg:col-span-4">
               <EditorFrame>
                 <RealTimeEditor
                   roomId={`interview-${id}`}
