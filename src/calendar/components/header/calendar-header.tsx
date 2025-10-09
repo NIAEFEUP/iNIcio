@@ -65,30 +65,6 @@ export function CalendarHeader({ view, events, urlId }: IProps) {
 
             <Button
               asChild
-              aria-label="View by month"
-              size="icon"
-              variant={view === "month" ? "default" : "outline"}
-              className="-ml-px rounded-none [&_svg]:size-5"
-            >
-              <Link href={`/calendar/${id}/month-view`}>
-                <Grid2x2 strokeWidth={1.8} />
-              </Link>
-            </Button>
-
-            <Button
-              asChild
-              aria-label="View by year"
-              size="icon"
-              variant={view === "year" ? "default" : "outline"}
-              className="-ml-px rounded-none [&_svg]:size-5"
-            >
-              <Link href={`/calendar/${id}/year-view`}>
-                <Grid3x3 strokeWidth={1.8} />
-              </Link>
-            </Button>
-
-            <Button
-              asChild
               aria-label="View by agenda"
               size="icon"
               variant={view === "agenda" ? "default" : "outline"}

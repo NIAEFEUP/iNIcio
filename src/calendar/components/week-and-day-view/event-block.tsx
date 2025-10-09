@@ -105,7 +105,7 @@ export function EventBlock({ event, className }: IProps) {
               </svg>
             )}
 
-            <p className="truncate font-semibold">{event.title}SUCK</p>
+            <p className="truncate font-semibold">{event.title}</p>
           </div>
 
           {durationInMinutes > 25 && (
