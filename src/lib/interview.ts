@@ -55,6 +55,8 @@ export default async function addInterviewWithSlot(
         // We do not need to decrease quantity of the new slot of the interview because it was already done so in
         // the beggining of the if
       }
+    } else {
+      throw new Error("Slot not found");
     }
   });
 }
