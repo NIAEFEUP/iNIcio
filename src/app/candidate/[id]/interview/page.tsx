@@ -20,7 +20,6 @@ import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 
-
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
 
