@@ -20,9 +20,10 @@ import { useState } from "react";
 import { Lock, User, Mail, Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import Link from "next/link";
+
 export default function SignIn() {
   const router = useRouter();
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -197,6 +198,13 @@ export default function SignIn() {
               >
                 {isLoading ? "A entrar..." : "Entrar"}
               </Button>
+
+              <Link
+                href="/request-reset-password"
+                className="text-sm text-center"
+              >
+                Esqueci-me da palavra-passe
+              </Link>
             </form>
           </Form>
         </div>
