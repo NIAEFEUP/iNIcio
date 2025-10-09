@@ -5,12 +5,17 @@ import EditorFrame from "@/components/editor/editor-frame";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { auth } from "@/lib/auth";
 import { CandidateWithMetadata } from "@/lib/candidate";
-import { createDynamicComment, getDynamic, updateDynamic } from "@/lib/dynamic";
+import {
+  createDynamicComment,
+  getDynamic,
+  updateDynamic,
+  getDynamicInterviewers,
+} from "@/lib/dynamic";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
 import { getDynamicComments } from "@/lib/comment";
+import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -41,28 +46,37 @@ export default async function DynamicPage({ params }: any) {
 
   const recruiters = await getRecruiters();
 
+  const interviewers = await getDynamicInterviewers(dynamic.id);
+
   const comments = await getDynamicComments(dynamic.id);
 
   return (
     <div className="mx-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 mx-16">
         {dynamic.candidates.map((candidate: CandidateWithMetadata) => (
-          <CandidateQuickInfo key={candidate.id} candidate={candidate} />
+          <CandidateQuickInfo
+            key={candidate.id}
+            candidate={candidate}
+            hideDynamicButton={true}
+          />
         ))}
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="col-span-1">
-          <CommentFrame>
-            <>
-              <CandidateComments
-                candidate={dynamic.candidates}
-                comments={comments}
-                saveToDatabase={handleCommentSave}
-                type="dynamic"
-              />
-            </>
-          </CommentFrame>
+          <div className="flex flex-col gap-4">
+            <RecruiterAssignedInfo interviewers={interviewers} />
+            <CommentFrame>
+              <>
+                <CandidateComments
+                  candidate={dynamic.candidates}
+                  comments={comments}
+                  saveToDatabase={handleCommentSave}
+                  type="dynamic"
+                />
+              </>
+            </CommentFrame>
+          </div>
         </div>
         <div className="col-span-3">
           <EditorFrame>

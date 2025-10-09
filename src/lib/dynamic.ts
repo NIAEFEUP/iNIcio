@@ -4,6 +4,7 @@ import {
   dynamicComment,
   dynamicTemplate,
   slot,
+  recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
 import { eq } from "drizzle-orm";
@@ -140,6 +141,20 @@ export async function getDynamic(dynamicId: number) {
       })),
     ),
   };
+}
+
+export async function getDynamicInterviewers(dynamicId: number) {
+  const interviewers = await db.query.recruiterToDynamic.findMany({
+    where: eq(recruiterToDynamic.dynamicId, dynamicId),
+    with: {
+      recruiter: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+  return interviewers.map((interviewer) => interviewer.recruiter.user);
 }
 
 export async function getCandidateDynamic(candidateId: string) {

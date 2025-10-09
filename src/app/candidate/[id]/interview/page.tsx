@@ -9,6 +9,7 @@ import {
   getInterview,
   getInterviewComments,
   updateInterview,
+  getInterviewers,
 } from "@/lib/interview";
 
 import EditorFrame from "@/components/editor/editor-frame";
@@ -17,6 +18,7 @@ import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
+import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -59,6 +61,8 @@ export default async function InterviewPage({ params }: any) {
 
   const recruiters = await getRecruiters();
 
+  const interviewers = await getInterviewers(interview.id);
+
   const comments = await getInterviewComments(interview.id);
 
   return (
@@ -67,7 +71,11 @@ export default async function InterviewPage({ params }: any) {
         <div className="mx-16 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
             <div className="space-y-6 lg:col-span-2">
-              <CandidateQuickInfo candidate={candidate} />
+              <CandidateQuickInfo
+                candidate={candidate}
+                hideInterviewButton={true}
+              />
+              <RecruiterAssignedInfo interviewers={interviewers} />
 
               <CommentFrame>
                 <CandidateComments

@@ -28,6 +28,8 @@ interface CandidateQuickInfoProps {
   friendCheckboxActive?: boolean;
   friends?: Array<RecruiterToCandidate>;
   authUser?: User | null;
+  hideInterviewButton?: boolean;
+  hideDynamicButton?: boolean;
 }
 
 export default function CandidateQuickInfo({
@@ -35,6 +37,8 @@ export default function CandidateQuickInfo({
   candidate,
   friendCheckboxActive = false,
   friends = [],
+  hideInterviewButton = false,
+  hideDynamicButton = false,
 }: CandidateQuickInfoProps) {
   const [checked, setChecked] = useState<boolean>(
     friends.some(
@@ -61,6 +65,10 @@ export default function CandidateQuickInfo({
       setChecked(!checked);
     }
   };
+
+  const displayInterviewButton = candidate.interview && !hideInterviewButton;
+  const displayDynamicButton = candidate.dynamic && !hideDynamicButton;
+  const displayAnyButton = displayInterviewButton || displayDynamicButton;
 
   return (
     <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
@@ -182,36 +190,37 @@ export default function CandidateQuickInfo({
           />
         </div>
       </CardContent>
+      {displayAnyButton && (
+        <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
+          <div className="flex items-center justify-center gap-6 w-full">
+            {displayDynamicButton && (
+              <Link
+                href={`/dynamic/${candidate.dynamic?.dynamicId}`}
+                className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
+                  Dinâmica
+                </span>
+                <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
+              </Link>
+            )}
 
-      <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
-        <div className="flex items-center justify-center gap-6 w-full">
-          {candidate.dynamic && (
-            <Link
-              href={`/dynamic/${candidate.dynamic?.dynamicId}`}
-              className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
-            >
-              <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
-                Dinâmica
-              </span>
-              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-            </Link>
-          )}
+            <div className="h-4 w-px bg-border" />
 
-          <div className="h-4 w-px bg-border" />
-
-          {candidate.interview && (
-            <Link
-              href={`/candidate/${candidate?.id}/interview`}
-              className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
-            >
-              <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
-                Entrevista
-              </span>
-              <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-            </Link>
-          )}
-        </div>
-      </CardFooter>
+            {displayInterviewButton && (
+              <Link
+                href={`/candidate/${candidate?.id}/interview`}
+                className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
+                  Entrevista
+                </span>
+                <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
+              </Link>
+            )}
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
