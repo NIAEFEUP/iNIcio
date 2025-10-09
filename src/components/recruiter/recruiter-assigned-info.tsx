@@ -10,9 +10,6 @@ interface RecruierAssignedProps {
 export default function CandidateQuickInfo({
   interviewers,
 }: RecruierAssignedProps) {
-  console.log(interviewers);
-  interviewers = [...interviewers, ...interviewers, ...interviewers];
-
   return (
     <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
