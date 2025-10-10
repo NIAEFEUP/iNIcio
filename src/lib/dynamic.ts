@@ -239,6 +239,8 @@ export async function getAllCandidatesWithDynamic() {
     },
   });
 
+  candidates.sort((a, b) => a.application.id - b.application.id);
+
   return await Promise.all(
     candidates.map(async (c) => ({
       ...c.user,
