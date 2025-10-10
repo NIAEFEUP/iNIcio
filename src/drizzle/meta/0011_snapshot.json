@@ -1,6 +1,6 @@
 {
-  "id": "683b8fee-a99f-4a14-880c-39691ee9b5d4",
-  "prevId": "a131aa22-6c69-4c9c-8c7b-cd2a2fa5a27e",
+  "id": "a131aa22-6c69-4c9c-8c7b-cd2a2fa5a27e",
+  "prevId": "0484e312-7190-4e5e-a528-fedf50e40ff0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -560,8 +560,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.candidate_classification_value": {
-      "name": "candidate_classification_value",
+    "public.classification_value": {
+      "name": "classification_value",
       "schema": "",
       "columns": {
         "id": {
@@ -570,8 +570,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "candidate_classification_id": {
-          "name": "candidate_classification_id",
+        "classification_id": {
+          "name": "classification_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -585,11 +585,11 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "candidate_classification_value_candidate_classification_id_candidate_classification_id_fk": {
-          "name": "candidate_classification_value_candidate_classification_id_candidate_classification_id_fk",
-          "tableFrom": "candidate_classification_value",
+        "classification_value_classification_id_candidate_classification_id_fk": {
+          "name": "classification_value_classification_id_candidate_classification_id_fk",
+          "tableFrom": "classification_value",
           "tableTo": "candidate_classification",
-          "columnsFrom": ["candidate_classification_id"],
+          "columnsFrom": ["classification_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -619,7 +619,7 @@
         },
         "classification_id": {
           "name": "classification_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }

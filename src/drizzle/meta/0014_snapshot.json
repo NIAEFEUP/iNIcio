@@ -1,6 +1,6 @@
 {
-  "id": "683b8fee-a99f-4a14-880c-39691ee9b5d4",
-  "prevId": "a131aa22-6c69-4c9c-8c7b-cd2a2fa5a27e",
+  "id": "f70ec5dd-f145-494d-ab98-cf18a36a33b8",
+  "prevId": "e33f6737-6756-4aba-8855-70d7d770cb9a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -581,6 +581,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "severity_level": {
+          "name": "severity_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {},
@@ -622,6 +629,12 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "classification_value_id": {
+          "name": "classification_value_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -640,6 +653,15 @@
           "tableFrom": "candidate_to_classification",
           "tableTo": "candidate_classification",
           "columnsFrom": ["classification_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "candidate_to_classification_classification_value_id_candidate_classification_value_id_fk": {
+          "name": "candidate_to_classification_classification_value_id_candidate_classification_value_id_fk",
+          "tableFrom": "candidate_to_classification",
+          "tableTo": "candidate_classification_value",
+          "columnsFrom": ["classification_value_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"

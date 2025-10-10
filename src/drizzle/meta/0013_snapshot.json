@@ -1,6 +1,6 @@
 {
-  "id": "683b8fee-a99f-4a14-880c-39691ee9b5d4",
-  "prevId": "a131aa22-6c69-4c9c-8c7b-cd2a2fa5a27e",
+  "id": "e33f6737-6756-4aba-8855-70d7d770cb9a",
+  "prevId": "683b8fee-a99f-4a14-880c-39691ee9b5d4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -581,6 +581,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "severity_level": {
+          "name": "severity_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {},

@@ -1,0 +1,2 @@
+ALTER TABLE "candidate_to_classification" ADD COLUMN "classification_value_id" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "candidate_to_classification" ADD CONSTRAINT "candidate_to_classification_classification_value_id_candidate_classification_value_id_fk" FOREIGN KEY ("classification_value_id") REFERENCES "public"."candidate_classification_value"("id") ON DELETE no action ON UPDATE no action;

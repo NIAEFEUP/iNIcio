@@ -17,11 +17,23 @@ import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import { CandidateClassificationComponent } from "@/components/candidate/classification";
-import { getClassifications } from "@/lib/classification";
+import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+import CandidateClassificationComponent from "@/components/candidate/candidate-classification-component";
+import {
+  getClassifications,
+  updateClassificationSave,
+} from "@/lib/classification";
+import {
+  CandidateClassification,
+  CandidateClassificationValue,
+} from "@/lib/db";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   async function handleContentSave(content: any) {
     "use server";
@@ -51,9 +63,19 @@ export default async function InterviewPage({ params }: any) {
     );
   }
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  async function handleClassificationSave(
+    candidateId: string,
+    classification: CandidateClassification,
+    classificationValue: CandidateClassificationValue,
+  ) {
+    "use server";
+
+    await updateClassificationSave(
+      candidateId,
+      classification,
+      classificationValue,
+    );
+  }
 
   const candidate = await getCandidateWithMetadata(id);
 
@@ -64,6 +86,8 @@ export default async function InterviewPage({ params }: any) {
   const comments = await getInterviewComments(interview.id);
 
   const classifications = await getClassifications();
+
+  console.log("CLASSIFICATIONS: ", classifications);
 
   return (
     <>
@@ -83,12 +107,12 @@ export default async function InterviewPage({ params }: any) {
               </CommentFrame>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col gap-4 w-full">
-              <div className="w-full">
-                <CandidateClassificationComponent
-                  classifications={classifications}
-                />
-              </div>
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              <CandidateClassificationComponent
+                candidateId={id}
+                handleClassificationSave={handleClassificationSave}
+                classifications={classifications}
+              />
 
               <EditorFrame>
                 <RealTimeEditor

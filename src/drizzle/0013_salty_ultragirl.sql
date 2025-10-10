@@ -1,0 +1,1 @@
+ALTER TABLE "candidate_classification_value" ADD COLUMN "severity_level" integer DEFAULT 1 NOT NULL;
