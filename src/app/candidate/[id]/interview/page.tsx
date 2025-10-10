@@ -18,7 +18,7 @@ import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { CandidateClassificationComponent } from "@/components/candidate/classification";
-import { getCandidateClassifications } from "@/lib/classification";
+import { getClassifications } from "@/lib/classification";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -63,7 +63,7 @@ export default async function InterviewPage({ params }: any) {
 
   const comments = await getInterviewComments(interview.id);
 
-  const classifications = await getCandidateClassifications(id);
+  const classifications = await getClassifications();
 
   return (
     <>
