@@ -125,6 +125,9 @@ export default function CandidateQuickInfo({
             <p className="text-sm text-muted-foreground mt-1 font-medium">
               {candidate.application?.studentNumber}
             </p>
+            <p className="text-sm text-muted-foreground mt-1 font-medium">
+              {candidate.application?.phone}
+            </p>
           </div>
         </div>
 
