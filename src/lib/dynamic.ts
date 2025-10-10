@@ -11,16 +11,6 @@ import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/drizzle/schema";
 
-export async function addCandidateToDynamic(
-  candidateId: string,
-  dynamicId: number,
-) {
-  await db.insert(candidateToDynamic).values({
-    candidateId: candidateId,
-    dynamicId: dynamicId,
-  });
-}
-
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
   slotParam: Slot,
@@ -41,7 +31,7 @@ export async function tryToAddCandidateToDynamic(
       await trx
         .update(slot)
         .set({ quantity: candidateDynamic.dynamic.slot.quantity + 1 })
-        .where(eq(slot.id, candidateDynamic.dynamic.slot));
+        .where(eq(slot.id, candidateDynamic.dynamic.slot.id));
 
       await trx
         .delete(candidateToDynamic)
@@ -77,9 +67,15 @@ export async function tryToAddCandidateToDynamic(
           })
           .returning({ id: dynamic.id });
 
-        addCandidateToDynamic(candidateId, insertedDynamic.id);
+        await trx.insert(candidateToDynamic).values({
+          candidateId: candidateId,
+          dynamicId: insertedDynamic.id,
+        });
       } else {
-        addCandidateToDynamic(candidateId, possibleDynamic[0].id);
+        await trx.insert(candidateToDynamic).values({
+          candidateId: candidateId,
+          dynamicId: possibleDynamic[0].id,
+        });
       }
     } else {
       throw new Error("Slot not found");
