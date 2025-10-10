@@ -192,7 +192,7 @@ export default function CandidateQuickInfo({
       </CardContent>
       {displayAnyButton && (
         <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
-          <div className="flex items-center justify-center gap-6 w-full">
+          <div className="flex flex-col items-center justify-center gap-1 w-full">
             {displayDynamicButton && (
               <Link
                 href={`/dynamic/${candidate.dynamic?.dynamicId}`}
