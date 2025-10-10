@@ -218,7 +218,12 @@ export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
     await tx
       .update(recruitmentPhaseStatus)
       .set({ status: "done" })
-      .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+      .where(
+        and(
+          eq(recruitmentPhaseStatus.userId, userId),
+          eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
+        ),
+      );
   });
 }
 
@@ -245,7 +250,12 @@ export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
     await tx
       .update(recruitmentPhaseStatus)
       .set({ status: "done" })
-      .where(eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId));
+      .where(
+        and(
+          eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
+          eq(recruitmentPhaseStatus.userId, userId),
+        ),
+      );
   });
 }
 

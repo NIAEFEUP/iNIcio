@@ -25,11 +25,8 @@ export default async function CandidateInterviewSchedule() {
         await markInterviewRecruitmentPhaseAsDone(session.user.id);
       }
 
-      console.log("FODA-SE: ");
-
       return true;
     } catch (e) {
-      console.log("EU FIZ ISSO");
       console.error(e);
       return false;
     }
