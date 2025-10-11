@@ -12,11 +12,14 @@ import {
 import { candidate } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
+import { redirect } from "next/navigation";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  redirect("/");
 
   if (!session) return new Response("Unauthorized", { status: 401 });
 
