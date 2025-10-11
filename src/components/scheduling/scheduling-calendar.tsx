@@ -149,7 +149,7 @@ export default function SchedulingCalendar({
                 </CardTitle>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Setembro</span>
+                <span className="text-sm font-medium">Outubro</span>
               </div>
             </div>
           </CardHeader>
