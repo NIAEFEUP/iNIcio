@@ -8,6 +8,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  redirect("/");
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
