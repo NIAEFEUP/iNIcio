@@ -16,6 +16,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDynamicComments } from "@/lib/comment";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+import { generateJWT } from "@/lib/jwt";
+import { getRole } from "@/lib/role";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -50,6 +52,11 @@ export default async function DynamicPage({ params }: any) {
 
   const comments = await getDynamicComments(dynamic.id);
 
+  const jwt = await generateJWT(
+    session?.user.id,
+    await getRole(session?.user.id),
+  );
+
   return (
     <div className="mx-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 mx-16">
@@ -81,7 +88,9 @@ export default async function DynamicPage({ params }: any) {
         <div className="col-span-3">
           <EditorFrame>
             <RealTimeEditor
+              token={jwt}
               roomId={`dynamic-${id}`}
+              docId={`dynamic-${id}`}
               userName={session?.user.name}
               saveHandler={handleContentSave}
               entity={dynamic}

@@ -19,6 +19,8 @@ import { redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+import { generateJWT } from "@/lib/jwt";
+import { getRole } from "@/lib/role";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -65,6 +67,11 @@ export default async function InterviewPage({ params }: any) {
 
   const comments = await getInterviewComments(interview.id);
 
+  const jwt = await generateJWT(
+    session?.user.id,
+    await getRole(session?.user.id),
+  );
+
   return (
     <>
       <div className="min-h-screen bg-background p-6">
@@ -90,8 +97,11 @@ export default async function InterviewPage({ params }: any) {
             <div className="lg:col-span-4">
               <EditorFrame>
                 <RealTimeEditor
+                  token={jwt}
+                  key={`interview-editor-${id}`}
                   roomId={`interview-${id}`}
-                  userName={session ? session.user.name : ""}
+                  docId={`interview-${id}`}
+                  userName={session ? session.user.name : "Anonymous"}
                   saveHandler={handleContentSave}
                   entity={interview}
                   mentionItems={recruiters}

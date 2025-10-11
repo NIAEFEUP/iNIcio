@@ -27,6 +27,7 @@ interface RealTimeEditorProps {
   saveHandlerTimeout?: number;
   mentionItems?: Array<User>;
   onChange?: (e: any) => void;
+  collab?: boolean;
 }
 
 export default function RealTimeEditor({
@@ -39,6 +40,7 @@ export default function RealTimeEditor({
   saveHandlerTimeout = 5000,
   onChange = () => {},
   mentionItems = [],
+  collab = true,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => new Y.Doc(), []);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,15 +65,17 @@ export default function RealTimeEditor({
 
   const editor = useCreateBlockNote({
     schema,
-    collaboration: {
-      provider,
-      fragment: doc.getXmlFragment(`document-store-${docId}`),
-      user: {
-        name: userName,
-        color: getRandomColor(),
-      },
-      showCursorLabels: "activity",
-    },
+    collaboration: collab
+      ? {
+          provider,
+          fragment: doc.getXmlFragment(`document-store-${docId}`),
+          user: {
+            name: userName,
+            color: getRandomColor(),
+          },
+          showCursorLabels: "activity",
+        }
+      : undefined,
   });
 
   useEffect(() => {
