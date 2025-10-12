@@ -31,11 +31,8 @@ export async function GET(request: NextRequest) {
     const start = new Date(startParam);
     const end = new Date(endParam);
 
-    const startGMT1 = new Date(start.getTime() + 1 * 60 * 60 * 1000);
-    const endGMT1 = new Date(end.getTime() + 1 * 60 * 60 * 1000);
-
     return NextResponse.json({
-      recruiters: await getAvailableRecruiters(startGMT1, endGMT1),
+      recruiters: await getAvailableRecruiters(start, end),
     });
   } catch (error) {
     console.error("Upload API error:", error);

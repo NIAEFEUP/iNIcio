@@ -185,19 +185,17 @@ export function BookingPicker({
                         <span className="font-medium">{interviewer.name}</span>
 
                         <span className="text-sm font-bold text-orange-400">
-                          (
                           {(
                             interviewer as UserWithRecruiter
                           ).recruiter?.knownCandidates.filter((c) =>
                             candidates.find(
                               (candidate) => candidate.id === c.candidateId,
                             ),
-                          ).length > 0 && "Conheçe"}
-                          )
+                          ).length > 0 && "(Conheçe)"}
                         </span>
 
                         <span className="text-sm font-bold text-orange-400">
-                          ({hasOtherAppointments(interviewer) && "Já alocado"})
+                          {hasOtherAppointments(interviewer) && "(Já alocado)"}
                         </span>
                       </div>
                     </SelectItem>

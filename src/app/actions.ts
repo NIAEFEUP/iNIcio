@@ -10,7 +10,7 @@ import {
   recruiterToInterview,
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte, lt } from "drizzle-orm";
 import { isRecruiter } from "@/lib/recruiter";
 
 export async function markNotificationAsRead(id: number) {
@@ -28,10 +28,13 @@ export async function getAvailableRecruiters(
   start: Date,
   end: Date,
 ): Promise<User[]> {
+  const startUtc = new Date(start.toISOString());
+  const endUtc = new Date(end.toISOString());
+
   const results = await db.query.recruiterAvailability.findMany({
     where: and(
-      gte(recruiterAvailability.start, start),
-      lte(recruiterAvailability.start, end),
+      gte(recruiterAvailability.start, startUtc),
+      lt(recruiterAvailability.start, endUtc),
     ),
     with: {
       recruiter: {
