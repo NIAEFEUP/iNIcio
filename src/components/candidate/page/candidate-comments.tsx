@@ -115,6 +115,7 @@ export default function CandidateComments({
                       setCommentValue(editor.document);
                       setEditor(editor);
                     }}
+                    collab={false}
                   />
                   <Button variant="default" type="submit" className="h-32">
                     <Send />

@@ -42,18 +42,20 @@ export default function RealTimeEditor({
   mentionItems = [],
   collab = true,
 }: RealTimeEditorProps) {
-  const doc = useMemo(() => new Y.Doc(), []);
+  const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef(false);
 
   const provider = useMemo(
     () =>
-      new WebsocketProvider(
-        `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${encodeURIComponent(token)}`,
-        roomId,
-        doc,
-      ),
-    [doc, roomId, token],
+      collab
+        ? new WebsocketProvider(
+            `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${encodeURIComponent(token)}`,
+            roomId,
+            doc,
+          )
+        : null,
+    [doc, roomId, token, collab],
   );
 
   const schema = BlockNoteSchema.create({
@@ -125,7 +127,7 @@ export default function RealTimeEditor({
 
   useEffect(() => {
     return () => {
-      provider.destroy();
+      if (provider) provider.destroy();
     };
   }, [provider]);
 

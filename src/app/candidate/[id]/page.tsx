@@ -42,7 +42,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
     <div className="h-screen mx-4 md:mx-16">
       <section className="flex flex-col md:flex-row gap-4 h-full">
         <div>
-          <CandidateQuickInfo candidate={candidate} />
+          <CandidateQuickInfo candidate={candidate} fullDetails={true} />
         </div>
 
         <Tabs defaultValue="answers" className="w-full h-3/4">

@@ -30,6 +30,7 @@ interface CandidateQuickInfoProps {
   authUser?: User | null;
   hideInterviewButton?: boolean;
   hideDynamicButton?: boolean;
+  fullDetails?: boolean;
 }
 
 export default function CandidateQuickInfo({
@@ -39,6 +40,7 @@ export default function CandidateQuickInfo({
   friends = [],
   hideInterviewButton = false,
   hideDynamicButton = false,
+  fullDetails = false,
 }: CandidateQuickInfoProps) {
   const [checked, setChecked] = useState<boolean>(
     friends.some(
@@ -125,9 +127,16 @@ export default function CandidateQuickInfo({
             <p className="text-sm text-muted-foreground mt-1 font-medium">
               {candidate.application?.studentNumber}
             </p>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">
-              {candidate.application?.phone}
-            </p>
+            {fullDetails && (
+              <>
+                <p className="text-sm text-muted-foreground mt-1 font-medium">
+                  {candidate.application?.phone}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1 font-medium">
+                  {candidate.email}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
