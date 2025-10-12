@@ -18,8 +18,11 @@ import SlotConfigPanel from "../slot/slot-config-panel";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChooseBookingSlot from "../slot/choose-booking-slot";
+import { SlotAdminStats } from "./slot-admin-stats";
+import { CandidateWithMetadata } from "@/lib/candidate";
 
 interface SlotAdminCalendarProps {
+  candidates: Array<CandidateWithMetadata>;
   recruitmentYear: number;
   existingSlots?: {
     interview: Slot[];
@@ -38,6 +41,7 @@ export enum SlotType {
 }
 
 export default function SlotAdminCalendar({
+  candidates,
   recruitmentYear,
   existingSlots = {
     interview: [],
@@ -87,13 +91,11 @@ export default function SlotAdminCalendar({
     const start = new Date(date);
     start.setHours(hours, minutes, 0, 0);
 
-    // 2️⃣ Compute end datetime based on duration
     const end = new Date(start);
     end.setMinutes(start.getMinutes() + slotConfig[slotType].duration);
 
     const currentSlots = slots[slotType];
 
-    // 3️⃣ Check if a slot already exists with same start & end
     const existingIndex = currentSlots.findIndex(
       (slot) =>
         slot.start.getTime() === start.getTime() &&
@@ -167,6 +169,11 @@ export default function SlotAdminCalendar({
         slotType={slotType}
         setSlotType={setSlotType}
         handleSaveSlots={handleSaveSlots}
+      />
+      <SlotAdminStats
+        slots={slots}
+        slotType={slotType}
+        candidates={candidates}
       />
       <Tabs defaultValue="create-slot" className="w-full">
         <TabsList className="w-full">

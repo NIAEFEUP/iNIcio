@@ -16,8 +16,6 @@ export const getEventAvailabilities = async () => {
 
   const availabilities = await getAllRecruiterAvailabilities();
 
-  console.log("AVAILS: ", availabilities);
-
   await Promise.all(
     availabilities.map(async (availability) => {
       const slotStart = availability.start;
