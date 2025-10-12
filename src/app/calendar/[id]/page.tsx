@@ -1,5 +1,5 @@
 import { ClientContainer } from "@/calendar/components/client-container";
 
 export default function Page() {
-  return <ClientContainer view="week" />;
+  return <ClientContainer view="agenda" />;
 }
