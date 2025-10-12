@@ -184,7 +184,7 @@ export function BookingPicker({
                       <div className="flex flex-row gap-1">
                         <span className="font-medium">{interviewer.name}</span>
 
-                        <span className="text-sm font-bold">
+                        <span className="text-sm font-bold text-orange-400">
                           (
                           {(
                             interviewer as UserWithRecruiter
@@ -192,13 +192,11 @@ export function BookingPicker({
                             candidates.find(
                               (candidate) => candidate.id === c.candidateId,
                             ),
-                          ).length > 0
-                            ? "Conheçe"
-                            : "Não conheço"}
+                          ).length > 0 && "Conheçe"}
                           )
                         </span>
 
-                        <span className="text-sm font-bold">
+                        <span className="text-sm font-bold text-orange-400">
                           ({hasOtherAppointments(interviewer) && "Já alocado"})
                         </span>
                       </div>

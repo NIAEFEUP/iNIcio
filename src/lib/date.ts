@@ -98,6 +98,8 @@ export function getCellKey(date: Date, time: string) {
 }
 
 export function overlap(slot: Slot, start: Date, duration: number): boolean {
+  if (!slot || !start || !duration) return false;
+
   const slotStart = slot.start.getTime();
   const slotEnd = slotStart + slot.duration * 60_000; // assuming duration is in minutes
 
