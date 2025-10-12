@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Clock, Users, UserPlus, X, Check } from "lucide-react";
 import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
-import { Dynamic, Interview, RecruiterToCandidate, User } from "@/lib/db";
-import { getDateStringPT, getTimeString } from "@/lib/date";
+import { Dynamic, Interview, RecruiterToCandidate, Slot, User } from "@/lib/db";
+import { getDateStringPT, getTimeString, overlap } from "@/lib/date";
 import { assignRecruiter, unassignRecruiter } from "@/app/actions";
 import { SlotType } from "../admin/slot-admin-calendar";
 
@@ -30,6 +30,8 @@ interface BookingPickerProps {
 
 interface RecruiterData {
   knownCandidates: { candidateId: string }[];
+  interviews: Array<Interview & { slot: Slot }>;
+  dynamics: Array<Dynamic & { slot: Slot }>;
 }
 
 interface UserWithRecruiter extends User {
@@ -66,6 +68,17 @@ export function BookingPicker({
     );
 
     await unassignRecruiter(booking.id, interviewerId, type);
+  };
+
+  const hasOtherAppointments = (recruiter: UserWithRecruiter) => {
+    return (
+      recruiter.recruiter.interviews.filter((i) =>
+        overlap(i.slot, start, duration),
+      ).length > 0 ||
+      recruiter.recruiter.dynamics.filter((d) =>
+        overlap(d.slot, start, duration),
+      ).length > 0
+    );
   };
 
   return (
@@ -163,11 +176,15 @@ export function BookingPicker({
                       !selectedRecruiters.some((r) => r.id === interviewer.id),
                   )
                   .map((interviewer) => (
-                    <SelectItem key={interviewer.id} value={interviewer.id}>
+                    <SelectItem
+                      key={interviewer.id}
+                      value={interviewer.id}
+                      disabled={hasOtherAppointments(interviewer)}
+                    >
                       <div className="flex flex-row gap-1">
                         <span className="font-medium">{interviewer.name}</span>
 
-                        <span className="text-sm">
+                        <span className="text-sm font-bold">
                           (
                           {(
                             interviewer as UserWithRecruiter
@@ -179,6 +196,10 @@ export function BookingPicker({
                             ? "Conheçe"
                             : "Não conheço"}
                           )
+                        </span>
+
+                        <span className="text-sm font-bold">
+                          ({hasOtherAppointments(interviewer) && "Já alocado"})
                         </span>
                       </div>
                     </SelectItem>

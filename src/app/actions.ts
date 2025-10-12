@@ -39,6 +39,24 @@ export async function getAvailableRecruiters(
           recruiter: {
             with: {
               knownCandidates: true,
+              interviews: {
+                with: {
+                  interview: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
+              dynamics: {
+                with: {
+                  dynamic: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },

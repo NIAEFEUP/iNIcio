@@ -16,6 +16,24 @@ export async function getBookings() {
               with: {
                 user: true,
                 knownCandidates: true,
+                interviews: {
+                  with: {
+                    interview: {
+                      with: {
+                        slot: true,
+                      },
+                    },
+                  },
+                },
+                dynamics: {
+                  with: {
+                    dynamic: {
+                      with: {
+                        slot: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -41,6 +59,24 @@ export async function getBookings() {
               with: {
                 user: true,
                 knownCandidates: true,
+                interviews: {
+                  with: {
+                    interview: {
+                      with: {
+                        slot: true,
+                      },
+                    },
+                  },
+                },
+                dynamics: {
+                  with: {
+                    dynamic: {
+                      with: {
+                        slot: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
