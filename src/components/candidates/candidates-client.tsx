@@ -60,8 +60,14 @@ export default function CandidatesClient({
     if (!query.trim()) setFilteredCandidates(candidates);
 
     setFilteredCandidates(
-      candidates.filter((c) =>
-        c.name?.toLowerCase().trim().includes(query.toLowerCase().trim()),
+      candidates.filter(
+        (c) =>
+          c.name?.toLowerCase().trim().includes(query.toLowerCase().trim()) ||
+          c.email?.toLowerCase().trim().includes(query.toLowerCase().trim()) ||
+          `${c.application.studentNumber}`
+            .toLowerCase()
+            .trim()
+            .includes(query.toLowerCase().trim()),
       ),
     );
   }, [query, candidates]);
