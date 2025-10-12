@@ -75,7 +75,7 @@ export default async function InterviewPage({ params }: any) {
   return (
     <>
       <div className="min-h-screen bg-background p-6">
-        <div className="mx-16 space-y-6">
+        <div className="space-y-6 w-full max-w-[100em] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
             <div className="space-y-6 lg:col-span-2">
               <CandidateQuickInfo
@@ -105,6 +105,7 @@ export default async function InterviewPage({ params }: any) {
                   saveHandler={handleContentSave}
                   entity={interview}
                   mentionItems={recruiters}
+                  saveHandlerTimeout={1000}
                 />
               </EditorFrame>
             </div>

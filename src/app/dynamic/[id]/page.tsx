@@ -69,8 +69,8 @@ export default async function DynamicPage({ params }: any) {
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="col-span-1">
+      <div className="flex flex-col md:flex-row w-full gap-4">
+        <div className="w-full md:w-1/3">
           <div className="flex flex-col gap-4">
             <RecruiterAssignedInfo interviewers={interviewers} />
             <CommentFrame>
@@ -85,7 +85,7 @@ export default async function DynamicPage({ params }: any) {
             </CommentFrame>
           </div>
         </div>
-        <div className="col-span-3">
+        <div className="w-full md:w-2/3">
           <EditorFrame>
             <RealTimeEditor
               token={jwt}
@@ -95,6 +95,7 @@ export default async function DynamicPage({ params }: any) {
               saveHandler={handleContentSave}
               entity={dynamic}
               mentionItems={recruiters}
+              saveHandlerTimeout={1000}
             />
           </EditorFrame>
         </div>
