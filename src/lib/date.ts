@@ -100,10 +100,10 @@ export function getCellKey(date: Date, time: string) {
 export function overlap(slot: Slot, start: Date, duration: number): boolean {
   if (!slot || !start || !duration) return false;
 
-  const slotStart = slot.start.toISOString();
-  const slotEnd = slotStart + slot.duration * 60_000; // assuming duration is in minutes
+  const slotStart = new Date(slot.start).getTime();
+  const slotEnd = slotStart + slot.duration * 60_000;
 
-  const newStart = start.toISOString();
+  const newStart = start.getTime();
   const newEnd = newStart + duration * 60_000;
 
   return slotStart < newEnd && slotEnd > newStart;

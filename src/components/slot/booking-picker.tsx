@@ -30,8 +30,8 @@ interface BookingPickerProps {
 
 interface RecruiterData {
   knownCandidates: { candidateId: string }[];
-  interviews: Array<Interview & { slot: Slot }>;
-  dynamics: Array<Dynamic & { slot: Slot }>;
+  interviews: Array<Interview & { interview: Interview & { slot: Slot } }>;
+  dynamics: Array<Dynamic & { dynamic: Dynamic & { slot: Slot } }>;
 }
 
 interface UserWithRecruiter extends User {
@@ -73,10 +73,10 @@ export function BookingPicker({
   const hasOtherAppointments = (recruiter: UserWithRecruiter) => {
     return (
       recruiter.recruiter.interviews.filter((i) =>
-        overlap(i.slot, start, duration),
+        overlap(i.interview.slot, start, duration),
       ).length > 0 ||
       recruiter.recruiter.dynamics.filter((d) =>
-        overlap(d.slot, start, duration),
+        overlap(d.dynamic.slot, start, duration),
       ).length > 0
     );
   };
