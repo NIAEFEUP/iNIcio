@@ -6,6 +6,8 @@ import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
+import { db } from "@/lib/db";
+import { dynamic, interview } from "@/db/schema";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -35,6 +37,28 @@ export default async function AdminTemplates() {
     }
   };
 
+  const interviewOverrideAction = async (update: any) => {
+    "use server";
+
+    try {
+      await db.update(interview).set({ content: update });
+    } catch (error) {
+      console.error("Error saving interview template:", error);
+      throw error;
+    }
+  };
+
+  const dynamicOverrideAction = async (update: any) => {
+    "use server";
+
+    try {
+      await db.update(dynamic).set({ content: update });
+    } catch (error) {
+      console.error("Error saving dynamic template:", error);
+      throw error;
+    }
+  };
+
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
@@ -42,6 +66,8 @@ export default async function AdminTemplates() {
 
   return (
     <AdminTemplateClient
+      interviewOverrideAction={interviewOverrideAction}
+      dynamicOverrideAction={dynamicOverrideAction}
       addInterviewTemplateAction={addInterviewTemplateAction}
       addDynamicTemplateAction={addDynamicTemplateAction}
       session={session}
