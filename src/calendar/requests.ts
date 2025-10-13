@@ -132,6 +132,7 @@ export const getEvents = async (userId: string) => {
       color: COLORS[index % COLORS.length],
       user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
       link: getCandidateInterviewLink(interviewItem.candidateId),
+      assigned: interviewItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
   });
 
@@ -157,6 +158,7 @@ export const getEvents = async (userId: string) => {
       color: COLORS[calendarEvents.length % COLORS.length],
       user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
       link: getDynamicLink(dynamicItem.id),
+      assigned: dynamicItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
   });
 

@@ -15,6 +15,7 @@ export interface IEvent {
   description: string;
   user: IUser;
   link: string;
+  assigned?: Array<string> | null;
 }
 
 export interface ICalendarCell {

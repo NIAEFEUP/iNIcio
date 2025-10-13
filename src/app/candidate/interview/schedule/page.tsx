@@ -21,8 +21,8 @@ export default async function CandidateInterviewSchedule() {
 
     try {
       for (const slot of slots) {
-        await addInterviewWithSlot(session.user.id, slot);
-        await markInterviewRecruitmentPhaseAsDone(session.user.id);
+        await addInterviewWithSlot(session?.user.id, slot);
+        await markInterviewRecruitmentPhaseAsDone(session?.user.id);
       }
 
       return true;

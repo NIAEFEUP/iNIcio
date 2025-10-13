@@ -44,9 +44,16 @@ export function EventDetailsDialog({ event, children }: IProps) {
               <User className="mt-1 size-4 shrink-0" />
               <div>
                 <p className="text-sm font-medium">Responsáveis</p>
-                <p className="text-sm text-muted-foreground">
-                  {event.user.name}
-                </p>
+                {event.assigned &&
+                  event.assigned.length > 0 &&
+                  event.assigned.map((assigneeId) => (
+                    <p
+                      key={assigneeId}
+                      className="text-sm text-muted-foreground"
+                    >
+                      {assigneeId}
+                    </p>
+                  ))}
               </div>
             </div>
 

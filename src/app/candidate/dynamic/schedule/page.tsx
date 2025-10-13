@@ -21,8 +21,8 @@ export default async function CandidateDynamicSchedule() {
 
     try {
       for (const slot of slots) {
-        await tryToAddCandidateToDynamic(session.user.id, slot);
-        await markDynamicRecruitmentPhaseAsDone(session.user.id);
+        await tryToAddCandidateToDynamic(session?.user.id, slot);
+        await markDynamicRecruitmentPhaseAsDone(session?.user.id);
       }
 
       return true;
