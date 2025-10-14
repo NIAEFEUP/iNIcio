@@ -28,7 +28,7 @@ export default function ProgressPhaseCard({
   phaseStart,
   eventDateText = null,
 }: ProgressPhaseCardProps) {
-  const router = useRouter();
+  // const router = useRouter();
 
   const available = phaseStart && phaseEnd && new Date() > phaseStart;
 
@@ -103,23 +103,6 @@ export default function ProgressPhaseCard({
             </div>
             <div className="flex items-center gap-3">{getIcon()}</div>
           </div>
-          {eventDateText && (
-            <>
-              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
-                <p>{eventDateText}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="bg-transparent border-green-300 text-green-700 hover:bg-green-100"
-                  onClick={() => {
-                    router.push(`${redirectUrl}`);
-                  }}
-                >
-                  Reagendar
-                </Button>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
     </div>
