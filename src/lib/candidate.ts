@@ -15,6 +15,8 @@ export type CandidateWithMetadata = User & {
   dynamic: { candidateId: string; dynamicId: number; dynamic: Dynamic };
   interview: Interview;
   application: (Application & { interests: string[] }) | null;
+  dynamicClassification: string;
+  interviewClassification: string;
 };
 
 export async function isCandidate(candidateId: string) {
@@ -56,6 +58,8 @@ export async function getCandidateWithMetadata(
     image: await getFilenameUrl(res.user?.image),
     dynamic: res.dynamic,
     interview: res.interview,
+    dynamicClassification: res.dynamicClassification,
+    interviewClassification: res.interviewClassification,
     knownRecruiters: res.knownRecruiters,
     application: {
       ...res.application,

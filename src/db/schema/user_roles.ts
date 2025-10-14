@@ -24,6 +24,8 @@ export const candidate = pgTable("candidate", {
   userId: text("user_id")
     .primaryKey()
     .references(() => user.id),
+  interviewClassification: text("interview_classification").default("none"),
+  dynamicClassification: text("dynamic_classification").default("none"),
 });
 
 export const userRelations = relations(user, ({ one, many }) => ({

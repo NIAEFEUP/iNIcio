@@ -47,10 +47,14 @@ export default function BookingSlotDialog({
     }
 
     return (
-      booking as Dynamic & {
+      booking as unknown as Dynamic & {
         candidates: Array<{
           userId: string;
-          candidate: { user: User };
+          candidate: {
+            user: User;
+            interviewClassification?: string;
+            dynamicClassification?: string;
+          };
         }>;
       }
     ).candidates.map((c) => c.candidate.user);
@@ -65,10 +69,14 @@ export default function BookingSlotDialog({
 
     return `Dinâmica #${
       (
-        booking as Dynamic & {
+        booking as unknown as Dynamic & {
           candidates: Array<{
             userId: string;
-            user: User;
+            candidate: {
+              user: User;
+              interviewClassification?: string;
+              dynamicClassification?: string;
+            };
           }>;
         }
       ).id

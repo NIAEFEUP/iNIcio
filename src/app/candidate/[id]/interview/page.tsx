@@ -21,9 +21,16 @@ import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { candidate } from "@/db/schema";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   async function handleContentSave(content: any) {
     "use server";
@@ -53,11 +60,21 @@ export default async function InterviewPage({ params }: any) {
     );
   }
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  async function addInterviewClassification(
+    candidateId: string,
+    classification: string,
+  ) {
+    "use server";
 
-  const candidate = await getCandidateWithMetadata(id);
+    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+
+    await db
+      .update(candidate)
+      .set({ interviewClassification: classification })
+      .where(eq(candidate.userId, candidateId));
+  }
+
+  const candidateWithMetadata = await getCandidateWithMetadata(id);
 
   const interview = await getInterview(id);
 
@@ -79,14 +96,16 @@ export default async function InterviewPage({ params }: any) {
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
             <div className="space-y-6 lg:col-span-2">
               <CandidateQuickInfo
-                candidate={candidate}
+                candidate={candidateWithMetadata}
                 hideInterviewButton={true}
+                showClassifyInterview={true}
+                addInterviewClassification={addInterviewClassification}
               />
               <RecruiterAssignedInfo interviewers={interviewers} />
 
               <CommentFrame>
                 <CandidateComments
-                  candidate={candidate}
+                  candidate={candidateWithMetadata}
                   type="interview"
                   comments={comments}
                   saveToDatabase={handleCommentSave}

@@ -8,6 +8,13 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   Application,
   Dynamic,
@@ -31,6 +38,16 @@ interface CandidateQuickInfoProps {
   hideInterviewButton?: boolean;
   hideDynamicButton?: boolean;
   fullDetails?: boolean;
+  showClassifyInterview?: boolean;
+  showClassifyDynamic?: boolean;
+  addDynamicClassification?: (
+    candidateId: string,
+    classification: string,
+  ) => void;
+  addInterviewClassification?: (
+    candidateId: string,
+    classification: string,
+  ) => void;
 }
 
 export default function CandidateQuickInfo({
@@ -41,6 +58,10 @@ export default function CandidateQuickInfo({
   hideInterviewButton = false,
   hideDynamicButton = false,
   fullDetails = false,
+  showClassifyInterview = false,
+  showClassifyDynamic = false,
+  addDynamicClassification = () => {},
+  addInterviewClassification = () => {},
 }: CandidateQuickInfoProps) {
   const [checked, setChecked] = useState<boolean>(
     friends.some(
@@ -66,6 +87,17 @@ export default function CandidateQuickInfo({
     if (!result.ok) {
       setChecked(!checked);
     }
+  };
+
+  const getClassificationPlaceholder = () => {
+    if (showClassifyInterview && candidate.interviewClassification) {
+      return candidate.interviewClassification;
+    }
+    if (showClassifyDynamic && candidate.dynamicClassification) {
+      return candidate.dynamicClassification;
+    }
+
+    return "Classificação";
   };
 
   const displayInterviewButton = candidate.interview && !hideInterviewButton;
@@ -200,6 +232,33 @@ export default function CandidateQuickInfo({
             linkedinUrl={candidate.application?.linkedIn || null}
             websiteUrl={candidate.application?.personalWebsite || null}
           />
+
+          {(showClassifyInterview || showClassifyDynamic) && (
+            <div className="flex flex-col gap-1">
+              <h3 className="font-bold">Classificação</h3>
+              <Select
+                onValueChange={(value) => {
+                  if (showClassifyInterview) {
+                    addInterviewClassification(candidate.id, value);
+                  }
+                  if (showClassifyDynamic) {
+                    addDynamicClassification(candidate.id, value);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={`${getClassificationPlaceholder()}`}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fraco">Muito fraco</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="forte">Muito forte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </CardContent>
       {displayAnyButton && (

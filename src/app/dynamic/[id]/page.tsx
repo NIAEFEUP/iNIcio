@@ -18,6 +18,9 @@ import { getDynamicComments } from "@/lib/comment";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
+import { db } from "@/lib/db";
+import { candidate } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -44,6 +47,20 @@ export default async function DynamicPage({ params }: any) {
     return true;
   }
 
+  async function addDynamicClassification(
+    candidateId: string,
+    classification: string,
+  ) {
+    "use server";
+
+    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+
+    await db
+      .update(candidate)
+      .set({ dynamicClassification: classification })
+      .where(eq(candidate.userId, candidateId));
+  }
+
   const dynamic = await getDynamic(id);
 
   const recruiters = await getRecruiters();
@@ -65,6 +82,8 @@ export default async function DynamicPage({ params }: any) {
             key={candidate.id}
             candidate={candidate}
             hideDynamicButton={true}
+            showClassifyDynamic={true}
+            addDynamicClassification={addDynamicClassification}
           />
         ))}
       </div>

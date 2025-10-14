@@ -131,6 +131,8 @@ export async function getDynamic(dynamicId: number) {
           ),
           interests: c.candidate.application?.interests.map((i) => i.interest),
         },
+        interviewClassification: c.candidate.interviewClassification,
+        dynamicClassification: c.candidate.dynamicClassification,
         dynamic: c.candidate.dynamic,
         interview: c.candidate.interview,
         knownRecruiters: c.candidate.knownRecruiters,
@@ -246,6 +248,8 @@ export async function getAllCandidatesWithDynamic() {
       ...c.user,
       dynamic: c.dynamic,
       interview: c.interview,
+      interviewClassification: c.interviewClassification,
+      dynamicClassification: c.dynamicClassification,
       application: {
         ...c.application,
         profilePicture: await getFilenameUrl(c.application?.profilePicture),
