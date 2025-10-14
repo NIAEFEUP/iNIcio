@@ -67,6 +67,7 @@ export async function getInterview(candidateId: string) {
     .select()
     .from(interview)
     .where(eq(interview.candidateId, candidateId));
+
   return interviews[0];
 }
 

@@ -89,39 +89,12 @@ export default function RealTimeEditor({
   useEffect(() => {
     if (!saveHandler || !editor) return;
 
-    const handleSave = async () => {
-      if (isSavingRef.current) return;
-
-      try {
-        isSavingRef.current = true;
-        const content = editor.document;
-        await saveHandler(content);
-      } catch (error) {
-        console.error("Error saving document:", error);
-      } finally {
-        isSavingRef.current = false;
-      }
-    };
-
-    const debouncedSave = () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      saveTimeoutRef.current = setTimeout(() => {
-        handleSave();
-      }, saveHandlerTimeout);
-    };
-
-    const unsubscribe = editor.onChange(() => {
-      debouncedSave();
-    });
+    const timeout = setInterval(async () => {
+      await saveHandler(editor.document);
+    }, saveHandlerTimeout);
 
     return () => {
-      unsubscribe();
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
+      clearInterval(timeout);
     };
   }, [editor, saveHandler, saveHandlerTimeout]);
 

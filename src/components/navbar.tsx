@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import a from "next/a";
 import { useState } from "react";
 
 import { Menu, X } from "lucide-react";
@@ -45,84 +45,84 @@ export default function Navbar({
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link
+          <a
             href="/"
             className="flex items-center space-x-2 transition-opacity hover:opacity-80"
           >
             <img src="/logo.svg" alt="Logo" className="h-4 w-auto" />
-          </Link>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             {session && !isRecruiter && !isAdmin && !isCandidate && (
-              <Link
+              <a
                 href="/application"
                 className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
               >
                 Candidatar
-              </Link>
+              </a>
             )}
 
             {session && (isRecruiter || isAdmin) && (
               <>
-                <Link
+                <a
                   href="/recruiter/availability"
                   className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
                 >
                   Disponibilidades
-                </Link>
+                </a>
 
-                <Link
+                <a
                   href={`/calendar/${session?.user.id}`}
                   className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
                 >
                   Alocações
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/candidates"
                   className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
                 >
                   Candidatos
-                </Link>
+                </a>
               </>
             )}
 
             {session && isCandidate && (
               <>
-                <Link
+                <a
                   href="/candidate/progress"
                   className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
                 >
                   Progresso
-                </Link>
+                </a>
               </>
             )}
 
             {!session ? (
               <div className="flex items-center space-x-4">
                 <Button variant="default">
-                  <Link href="/login">Login</Link>
+                  <a href="/login">Login</a>
                 </Button>
                 <Button variant="secondary">
-                  <Link href="/signup">Registo</Link>
+                  <a href="/signup">Registo</a>
                 </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
                 {session && isAdmin && (
-                  <Link
+                  <a
                     href="/admin"
                     className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
                   >
                     AdminUI
-                  </Link>
+                  </a>
                 )}
-                <Link
+                <a
                   href="/profile"
                   className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
                   Perfil
-                </Link>
+                </a>
 
                 <NotificationPopup notifications={notifications} />
 
@@ -157,77 +157,77 @@ export default function Navbar({
 
             {session && (isRecruiter || isAdmin) && (
               <>
-                <Link
+                <a
                   href={`/calendar/${session?.user.id}/day-view`}
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Alocações
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/candidates"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Candidatos
-                </Link>
+                </a>
               </>
             )}
 
             {session && isCandidate && (
               <>
-                <Link
+                <a
                   href="/candidate/progress"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Progresso
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/agendamento"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Agendamento
-                </Link>
+                </a>
               </>
             )}
 
             {!session ? (
               <div className="space-y-1 pt-2">
-                <Link
+                <a
                   href="/login"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/signup"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Registo
-                </Link>
+                </a>
               </div>
             ) : (
               <div className="space-y-1 pt-2">
                 {session && isAdmin && (
-                  <Link
+                  <a
                     href="/admin"
                     className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     AdminUI
-                  </Link>
+                  </a>
                 )}
-                <Link
+                <a
                   href="/profile"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Perfil
-                </Link>
+                </a>
                 <div className="px-3 py-2">
                   <LogoutButton />
                 </div>

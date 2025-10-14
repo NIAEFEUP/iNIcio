@@ -124,7 +124,7 @@ export default async function InterviewPage({ params }: any) {
                   saveHandler={handleContentSave}
                   entity={interview}
                   mentionItems={recruiters}
-                  saveHandlerTimeout={1000}
+                  saveHandlerTimeout={5000}
                 />
               </EditorFrame>
             </div>

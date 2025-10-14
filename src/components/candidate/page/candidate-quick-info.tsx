@@ -265,7 +265,7 @@ export default function CandidateQuickInfo({
         <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
           <div className="flex flex-col items-center justify-center gap-1 w-full">
             {displayDynamicButton && (
-              <Link
+              <a
                 href={`/dynamic/${candidate.dynamic?.dynamicId}`}
                 className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
               >
@@ -273,13 +273,13 @@ export default function CandidateQuickInfo({
                   Dinâmica
                 </span>
                 <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </Link>
+              </a>
             )}
 
             <div className="h-4 w-px bg-border" />
 
             {displayInterviewButton && (
-              <Link
+              <a
                 href={`/candidate/${candidate?.id}/interview`}
                 className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
               >
@@ -287,7 +287,7 @@ export default function CandidateQuickInfo({
                   Entrevista
                 </span>
                 <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </Link>
+              </a>
             )}
           </div>
         </CardFooter>
