@@ -9,6 +9,8 @@ import { Clock } from "lucide-react";
 import { isRecruiter } from "@/lib/recruiter";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { isCandidate } from "@/lib/candidate";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const recruitmentActive = await isRecruitmentActive();
@@ -16,6 +18,10 @@ export default async function Home() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  if (await isCandidate(session?.user.id)) {
+    redirect("/candidate/progress");
+  }
 
   const recruiter = await isRecruiter(session?.user.id);
 
