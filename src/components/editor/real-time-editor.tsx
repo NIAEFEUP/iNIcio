@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -43,8 +43,7 @@ export default function RealTimeEditor({
   collab = true,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isSavingRef = useRef(false);
+  const [currentContent, setCurrentContent] = useState<string>("");
 
   const provider = useMemo(
     () =>
@@ -90,7 +89,11 @@ export default function RealTimeEditor({
     if (!saveHandler || !editor) return;
 
     const timeout = setInterval(async () => {
+      const stringEditorDocument = JSON.stringify(editor.document);
+      if (currentContent === stringEditorDocument) return;
+
       await saveHandler(editor.document);
+      setCurrentContent(JSON.stringify(stringEditorDocument));
     }, saveHandlerTimeout);
 
     return () => {
