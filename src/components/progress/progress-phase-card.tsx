@@ -103,6 +103,13 @@ export default function ProgressPhaseCard({
             </div>
             <div className="flex items-center gap-3">{getIcon()}</div>
           </div>
+          {eventDateText && (
+            <>
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-green-200">
+                <p>{eventDateText}</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
