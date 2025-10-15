@@ -114,7 +114,7 @@ export default async function DynamicPage({ params }: any) {
               saveHandler={handleContentSave}
               entity={dynamic}
               mentionItems={recruiters}
-              saveHandlerTimeout={1000}
+              saveHandlerTimeout={250}
             />
           </EditorFrame>
         </div>
