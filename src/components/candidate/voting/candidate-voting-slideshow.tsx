@@ -12,6 +12,7 @@ import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import { createVotingPhase } from "@/lib/voting";
 import CandidateVotingStats from "./candidate-voting-stats";
+import { cn } from "@/lib/utils";
 
 type Vote = {
   candidateId: string;
@@ -95,6 +96,29 @@ export function CandidateVotingSlideshow({
           </header>
 
           <CandidateVotingOptions />
+
+          <div className="mt-8">
+            <div className="flex items-center justify-center gap-2">
+              {candidates.map((candidate, idx) => {
+                return (
+                  <button
+                    key={candidate.id}
+                    onClick={() => {
+                      setDirection(idx > currentIndex ? "next" : "prev");
+                      setCurrentIndex(idx);
+                    }}
+                    className={cn(
+                      "h-2 rounded-full transition-all",
+                      idx === currentIndex ? "w-8 bg-primary" : "w-2 bg-muted",
+                    )}
+                  />
+                );
+              })}
+            </div>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {currentIndex + 1} / {candidates.length}
+            </p>
+          </div>
 
           <div className="flex flex-1 items-center justify-center px-4 py-12">
             <div className="w-full max-w-5xl">
