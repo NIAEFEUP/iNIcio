@@ -13,6 +13,7 @@ import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import { createVotingPhase } from "@/lib/voting";
 import CandidateVotingStats from "./candidate-voting-stats";
 import { cn } from "@/lib/utils";
+import { votingPhaseStatus } from "@/db/schema";
 
 type Vote = {
   candidateId: string;
@@ -46,7 +47,9 @@ export function CandidateVotingSlideshow({
   changeCurrentVotingPhaseStatusCandidateAction,
 }: CandidateVotingSlideshowProps) {
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(
+    candidates.findIndex((c) => c.id === currentVotingPhase.status.candidateId),
+  );
   const [direction, setDirection] = useState<"next" | "prev">("next");
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
