@@ -7,7 +7,7 @@ interface RecruierAssignedProps {
   interviewers: Array<User>;
 }
 
-export default function CandidateQuickInfo({
+export default function RecruiterAssignedInfo({
   interviewers,
 }: RecruierAssignedProps) {
   return (
@@ -16,12 +16,12 @@ export default function CandidateQuickInfo({
 
       <CardHeader className="font-bold ">Entrevistadores</CardHeader>
       <CardContent className="grid grid-cols-2">
-        {interviewers.length === 0 && (
+        {interviewers?.length === 0 && (
           <p className="text-sm text-muted-foreground">
             Nenhum entrevistador atribuído.
           </p>
         )}
-        {interviewers.map((interviewer) => (
+        {interviewers?.map((interviewer) => (
           <div
             key={interviewer.id}
             className="flex flex-row items-center space-x-4 mb-4"

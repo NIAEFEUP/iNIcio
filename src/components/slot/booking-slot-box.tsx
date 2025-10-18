@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Clock, Users } from "lucide-react";
 
-import { Candidate, Dynamic, Interview, User } from "@/lib/db";
 import BookingSlotDialog from "./booking-slot-dialog";
 
 export function BookingSlotBox({

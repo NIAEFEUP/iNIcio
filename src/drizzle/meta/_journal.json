@@ -85,6 +85,55 @@
       "when": 1760423912427,
       "tag": "0011_cold_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1760618363054,
+      "tag": "0012_workable_menace",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1760618397473,
+      "tag": "0013_rare_fixer",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1760621098951,
+      "tag": "0014_left_red_ghost",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1760785845534,
+      "tag": "0015_dark_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1760789085617,
+      "tag": "0016_outgoing_guardsmen",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1760791502123,
+      "tag": "0017_melted_puck",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1760791788742,
+      "tag": "0018_slim_leo",
+      "breakpoints": true
     }
   ]
 }

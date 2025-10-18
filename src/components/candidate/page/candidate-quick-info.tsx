@@ -15,12 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  Application,
-  Dynamic,
-  RecruiterToCandidate,
-  User,
-} from "@/lib/db";
+import type { RecruiterToCandidate, User } from "@/lib/db";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Building2, Calendar, ExternalLink } from "lucide-react";

@@ -1,0 +1,56 @@
+import { Check, X } from "lucide-react";
+
+interface CandidateVotingStatsProps {
+  votedCount: number;
+  totalToVote: number;
+  approvedCount: number;
+  rejectedCount: number;
+}
+
+export default function CandidateVotingStats({
+  votedCount,
+  totalToVote,
+  approvedCount,
+  rejectedCount,
+}: CandidateVotingStatsProps) {
+  return (
+    <div className="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Votação
+          </h1>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Progresso</p>
+            <p className="text-lg font-medium text-foreground">
+              {votedCount} / {totalToVote}
+            </p>
+          </div>
+          <div className="h-12 w-px bg-border" />
+          <div className="flex gap-4">
+            <div className="text-center">
+              <div className="flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-secondary" />
+                <span className="text-lg font-medium text-foreground">
+                  {approvedCount}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">Aceites</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center gap-1.5">
+                <X className="h-4 w-4 text-destructive" />
+                <span className="text-lg font-medium text-foreground">
+                  {rejectedCount}
+                </span>
+              </div>
+              <p className="text-xs text-destructive/80">Rejeitados</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

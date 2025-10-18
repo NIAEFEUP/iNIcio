@@ -83,6 +83,12 @@ export default function Navbar({
                 >
                   Candidatos
                 </a>
+                <a
+                  href="/candidates/voting"
+                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                >
+                  Votações
+                </a>
               </>
             )}
 
@@ -169,6 +175,13 @@ export default function Navbar({
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Candidatos
+                </a>
+                <a
+                  href="/candidates/voting"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Votações
                 </a>
               </>
             )}

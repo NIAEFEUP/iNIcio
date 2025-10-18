@@ -31,6 +31,10 @@ export type InterviewComment = typeof schema.interviewComment.$inferSelect;
 export type DynamicComment = typeof schema.dynamicComment.$inferSelect;
 export type NewInterviewComment = typeof schema.interviewComment.$inferInsert;
 export type NewDynamicComment = typeof schema.dynamicComment.$inferInsert;
+export type VotingPhaseStatus = typeof schema.votingPhaseStatus.$inferSelect;
+export type VotingPhase = typeof schema.votingPhase.$inferSelect & {
+  status: VotingPhaseStatus;
+};
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });
 
