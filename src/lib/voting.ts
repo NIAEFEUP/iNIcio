@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "./db";
 import {
   candidate,
@@ -112,4 +112,14 @@ export async function changeCurrentVotingPhaseStatusCandidate(
     console.log(e);
     return false;
   }
+}
+
+export async function getRecruiterVotes(
+  votingPhaseId: number,
+  recruiterId: string,
+) {
+  return await db.query.recruiterVote.findMany({
+    where: (rv) =>
+      and(eq(rv.votingPhaseId, votingPhaseId), eq(rv.recruiterId, recruiterId)),
+  });
 }

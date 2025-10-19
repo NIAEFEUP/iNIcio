@@ -6,7 +6,8 @@ import React, {
   ReactNode,
   SetStateAction,
 } from "react";
-import { VotingPhase } from "../db";
+import { RecruiterVote, VotingPhase } from "../db";
+import { CandidateWithMetadata } from "../candidate";
 
 interface CandidateVotingContextType {
   candidates: any[];
@@ -25,6 +26,9 @@ interface CandidateVotingContextType {
     votingPhaseId: number,
     candidateId: string,
   ) => Promise<boolean>;
+  recruiterVotes: RecruiterVote[];
+  currentCandidate: CandidateWithMetadata;
+  setCurrentCandidate: Dispatch<SetStateAction<CandidateWithMetadata>>;
 }
 
 interface CandidateVotingProviderProps {
@@ -45,6 +49,9 @@ interface CandidateVotingProviderProps {
     votingPhaseId: number,
     candidateId: string,
   ) => Promise<boolean>;
+  recruiterVotes: RecruiterVote[];
+  currentCandidate: CandidateWithMetadata;
+  setCurrentCandidate: Dispatch<SetStateAction<CandidateWithMetadata>>;
 }
 
 export const CandidateVotingContext =
@@ -60,6 +67,9 @@ export function CandidateVotingProvider({
   alreadyVotedForCurrentCandidate,
   setAlreadyVotedForCurrentCandidate,
   changeCurrentVotingPhaseStatusCandidateAction,
+  recruiterVotes,
+  currentCandidate,
+  setCurrentCandidate,
 }: CandidateVotingProviderProps) {
   return (
     <CandidateVotingContext.Provider
@@ -72,6 +82,9 @@ export function CandidateVotingProvider({
         alreadyVotedForCurrentCandidate,
         setAlreadyVotedForCurrentCandidate,
         changeCurrentVotingPhaseStatusCandidateAction,
+        recruiterVotes,
+        currentCandidate,
+        setCurrentCandidate,
       }}
     >
       {children}

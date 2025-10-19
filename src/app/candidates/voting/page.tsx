@@ -6,6 +6,7 @@ import {
   changeCurrentVotingPhaseStatusCandidate,
   createVotingPhase,
   getCurrentVotingPhase,
+  getRecruiterVotes,
   voteForCandidate,
 } from "@/lib/voting";
 import { headers } from "next/headers";
@@ -27,12 +28,18 @@ export default async function CandidateVotingPage() {
   ) {
     "use server";
 
-    return await voteForCandidate(
-      votingPhaseId,
-      recruiterId,
-      candidateId,
-      decision,
-    );
+    const recruiterVotes = await getRecruiterVotes(votingPhaseId, recruiterId);
+
+    if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
+      return await voteForCandidate(
+        votingPhaseId,
+        recruiterId,
+        candidateId,
+        decision,
+      );
+    }
+
+    return false;
   }
 
   async function changeCurrentVotingPhaseStatusCandidateAction(
@@ -54,6 +61,11 @@ export default async function CandidateVotingPage() {
     new Date().getFullYear(),
   );
 
+  const recruiterVotes = await getRecruiterVotes(
+    currentVotingPhase.id,
+    session?.user.id,
+  );
+
   return (
     <CandidateVotingSlideshow
       candidates={candidates}
@@ -64,6 +76,7 @@ export default async function CandidateVotingPage() {
       changeCurrentVotingPhaseStatusCandidateAction={
         changeCurrentVotingPhaseStatusCandidateAction
       }
+      recruiterVotes={recruiterVotes}
     />
   );
 }

@@ -7,7 +7,7 @@ import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
 import CandidateVotingOptions from "./candidate-voting-options";
-import { VotingPhase } from "@/lib/db";
+import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import { createVotingPhase } from "@/lib/voting";
@@ -36,6 +36,7 @@ interface CandidateVotingSlideshowProps {
     votingPhaseId: number,
     candidateId: string,
   ) => Promise<boolean>;
+  recruiterVotes: RecruiterVote[];
 }
 
 export function CandidateVotingSlideshow({
@@ -45,6 +46,7 @@ export function CandidateVotingSlideshow({
   createVotingPhaseAction,
   submitVoteAction,
   changeCurrentVotingPhaseStatusCandidateAction,
+  recruiterVotes,
 }: CandidateVotingSlideshowProps) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [currentIndex, setCurrentIndex] = useState(
@@ -55,12 +57,14 @@ export function CandidateVotingSlideshow({
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);
 
-  const currentCandidate: CandidateWithMetadata = candidates[currentIndex];
+  const [currentCandidate, setCurrentCandidate] =
+    useState<CandidateWithMetadata>(candidates[currentIndex]);
 
   const handleNext = () => {
     if (currentIndex < candidates.length - 1) {
       setDirection("next");
       setCurrentIndex(currentIndex + 1);
+      setCurrentCandidate(candidates[currentIndex + 1]);
     }
   };
 
@@ -68,6 +72,7 @@ export function CandidateVotingSlideshow({
     if (currentIndex > 0) {
       setDirection("prev");
       setCurrentIndex(currentIndex - 1);
+      setCurrentCandidate(candidates[currentIndex - 1]);
     }
   };
   const votedCount = votes.length;
@@ -86,6 +91,9 @@ export function CandidateVotingSlideshow({
       changeCurrentVotingPhaseStatusCandidateAction={
         changeCurrentVotingPhaseStatusCandidateAction
       }
+      recruiterVotes={recruiterVotes}
+      currentCandidate={currentCandidate}
+      setCurrentCandidate={setCurrentCandidate}
     >
       {currentVotingPhase ? (
         <div className="flex flex-col bg-background">

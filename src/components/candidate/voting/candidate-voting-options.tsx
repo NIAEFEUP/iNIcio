@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { CandidateVotingContext } from "@/lib/contexts/CandidateVotingContext";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -15,24 +15,27 @@ export default function CandidateVotingOptions() {
     candidates,
     currentVotingPhase,
     submitVoteAction,
+    recruiterVotes,
+    currentCandidate,
   } = useContext(CandidateVotingContext);
 
   const { data: session } = authClient.useSession();
 
+  useEffect(() => {
+    setAlreadyVotedForCurrentCandidate(
+      recruiterVotes.some((vote) => vote.candidateId === currentCandidate?.id),
+    );
+  }, [currentCandidate, setAlreadyVotedForCurrentCandidate, recruiterVotes]);
+
   async function handleVote(decision: "approve" | "reject") {
     if (!currentVotingPhase) return;
 
-    const candidate = candidates.find(
-      (c) => c.id === currentVotingPhase.status.candidateId,
-    );
-
-    if (!candidate) return;
-
+    if (!currentCandidate) return;
     if (
       await submitVoteAction(
         currentVotingPhase.id,
         session?.user.id,
-        candidate.id,
+        currentCandidate.id,
         decision,
       )
     ) {
