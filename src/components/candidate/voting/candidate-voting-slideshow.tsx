@@ -14,6 +14,7 @@ import { createVotingPhase } from "@/lib/voting";
 import CandidateVotingStats from "./candidate-voting-stats";
 import { cn } from "@/lib/utils";
 import { votingPhaseStatus } from "@/db/schema";
+import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 
 type Vote = {
   candidateId: string;
@@ -60,6 +61,10 @@ export function CandidateVotingSlideshow({
   const [currentCandidate, setCurrentCandidate] =
     useState<CandidateWithMetadata>(candidates[currentIndex]);
 
+  const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
+    currentVotingPhase?.id,
+  );
+
   const handleNext = () => {
     if (currentIndex < candidates.length - 1) {
       setDirection("next");
@@ -78,6 +83,16 @@ export function CandidateVotingSlideshow({
   const votedCount = votes.length;
   const approvedCount = votes.filter((v) => v.decision === "approve").length;
   const rejectedCount = votes.filter((v) => v.decision === "reject").length;
+
+  useEffect(() => {
+    const newIndex = candidates.findIndex(
+      (c) => c.id === votingPhaseStatus?.candidateId,
+    );
+    if (newIndex !== -1) {
+      setCurrentIndex(newIndex);
+      setCurrentCandidate(candidates[newIndex]);
+    }
+  }, [votingPhaseStatus, candidates]);
 
   return (
     <CandidateVotingProvider

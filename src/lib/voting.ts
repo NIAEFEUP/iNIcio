@@ -23,6 +23,12 @@ export async function getCurrentVotingPhase(recruitmentYear: number) {
   });
 }
 
+export async function getVotingPhaseStatus(votingPhaseId: number) {
+  return await db.query.votingPhaseStatus.findFirst({
+    where: (vps) => eq(vps.votingPhaseId, votingPhaseId),
+  });
+}
+
 export async function createVotingPhase(recruitmentYear: number) {
   try {
     await db.transaction(async (tx) => {
