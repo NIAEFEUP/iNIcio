@@ -35,6 +35,7 @@ export type VotingPhaseStatus = typeof schema.votingPhaseStatus.$inferSelect;
 export type VotingPhase = typeof schema.votingPhase.$inferSelect & {
   status: VotingPhaseStatus;
 };
+export type CandidateVote = typeof schema.candidateVote.$inferSelect;
 export type RecruiterVote = typeof schema.recruiterVote.$inferSelect;
 
 export const db = drizzle(process.env.DATABASE_URL!, { schema });

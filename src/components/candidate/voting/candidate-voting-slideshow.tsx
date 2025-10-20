@@ -15,6 +15,7 @@ import CandidateVotingStats from "./candidate-voting-stats";
 import { cn } from "@/lib/utils";
 import { votingPhaseStatus } from "@/db/schema";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
+import CandidateVotingShowResults from "./candidate-voting-show-results";
 
 type Vote = {
   candidateId: string;
@@ -145,6 +146,10 @@ export function CandidateVotingSlideshow({
               {currentIndex + 1} / {candidates.length}
             </p>
           </div>
+
+          <section className="mt-4 flex items-center justify-center">
+            <CandidateVotingShowResults />
+          </section>
 
           <div className="flex flex-1 items-center justify-center px-4 py-12">
             <div className="w-full max-w-5xl">

@@ -129,3 +129,13 @@ export async function getRecruiterVotes(
       and(eq(rv.votingPhaseId, votingPhaseId), eq(rv.recruiterId, recruiterId)),
   });
 }
+
+export async function getCandidateVotes(
+  votingPhaseId: number,
+  candidateId: string,
+) {
+  return await db.query.candidateVote.findMany({
+    where: (cv) =>
+      and(eq(cv.votingPhaseId, votingPhaseId), eq(cv.candidateId, candidateId)),
+  });
+}
