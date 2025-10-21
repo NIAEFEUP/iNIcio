@@ -14,10 +14,7 @@ export async function GET(request: NextRequest, context: any) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (
-      !(await isAdmin(session.user.id)) &&
-      !(await isRecruiter(session.user.id))
-    ) {
+    if (!(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
