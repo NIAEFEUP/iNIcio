@@ -62,7 +62,7 @@ export default async function CandidateVotingPage() {
   );
 
   const recruiterVotes = await getRecruiterVotes(
-    currentVotingPhase.id,
+    currentVotingPhase?.id,
     session?.user.id,
   );
 

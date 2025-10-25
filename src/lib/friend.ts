@@ -25,3 +25,17 @@ export async function getFriendsOf(recruiterId: string) {
     .from(recruiterToCandidate)
     .where(eq(recruiterToCandidate.recruiterId, recruiterId));
 }
+
+export async function addFriend(candidateId: string) {
+  const result = await fetch("/api/friends", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      candidateId: candidateId,
+    }),
+  });
+
+  return result.ok;
+}

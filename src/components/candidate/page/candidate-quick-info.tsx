@@ -1,7 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -16,18 +14,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { RecruiterToCandidate, User } from "@/lib/db";
-import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Calendar, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SocialLinks } from "@/components/profile/social-links";
 import { CandidateWithMetadata } from "@/lib/candidate";
+import CandidateAcademicInfo from "../card/candidate-academic-info";
+import CandidateDepartmentInterestInfo from "../card/candidate-department-interest-info";
+import CandidateIdentityInfo from "../card/candidate-identity-info";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateWithMetadata;
   friendCheckboxActive?: boolean;
+  selectActionActive?: boolean;
+  selectActionHandler?: (checked: boolean) => void;
   friends?: Array<RecruiterToCandidate>;
   authUser?: User | null;
   hideInterviewButton?: boolean;
@@ -49,6 +51,8 @@ export default function CandidateQuickInfo({
   authUser = null,
   candidate,
   friendCheckboxActive = false,
+  selectActionActive = false,
+  selectActionHandler = () => {},
   friends = [],
   hideInterviewButton = false,
   hideDynamicButton = false,
@@ -103,8 +107,8 @@ export default function CandidateQuickInfo({
     <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      {friendCheckboxActive && (
-        <CardHeader className="relative z-10">
+      <CardHeader className="relative z-10">
+        {friendCheckboxActive && (
           <div className="flex items-center gap-3">
             <div className="relative">
               <Checkbox
@@ -121,106 +125,40 @@ export default function CandidateQuickInfo({
               Conheço
             </Label>
           </div>
-        </CardHeader>
-      )}
+        )}
+
+        {selectActionActive && (
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Checkbox
+                id={`select-candidate-${candidate.id}`}
+                className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
+                checked={checked}
+                onCheckedChange={selectActionHandler}
+              />
+            </div>
+            <Label
+              htmlFor={`select-candidate-${candidate.id}`}
+              className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
+            >
+              Selecionar
+            </Label>
+          </div>
+        )}
+      </CardHeader>
 
       <CardContent className="relative z-10">
-        <div className="flex items-start gap-6">
-          <div className="relative">
-            <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
-              <AvatarImage
-                src={
-                  candidate.application?.profilePicture || "/placeholder.svg"
-                }
-                alt={candidate?.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-semibold">
-                {candidate?.name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/candidate/${candidate?.id}`}
-              className="group/link inline-block"
-            >
-              <h3 className="text-lg font-bold tracking-tight text-foreground group-hover/link:text-primary transition-colors duration-200 text-balance">
-                {candidate?.name}
-              </h3>
-              <div className="h-0.5 w-0 bg-primary group-hover/link:w-full transition-all duration-300 mt-1" />
-            </Link>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">
-              {candidate.application?.studentNumber}
-            </p>
-            {fullDetails && (
-              <>
-                <p className="text-sm text-muted-foreground mt-1 font-medium">
-                  {candidate.application?.phone}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1 font-medium">
-                  {candidate.email}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
+        <CandidateIdentityInfo
+          candidate={candidate}
+          fullDetails={fullDetails}
+        />
 
         <Separator className="bg-gradient-to-r from-transparent via-border to-transparent my-4" />
 
-        {/* Academic Information */}
         <div className="space-y-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors duration-200">
-              <div className="flex-shrink-0 p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Curso
-                </p>
-                <p className="text-sm font-bold text-foreground truncate">
-                  {candidate.application?.degree || "mesw"}
-                </p>
-              </div>
-            </div>
+          <CandidateAcademicInfo candidate={candidate} />
 
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors duration-200">
-              <div className="flex-shrink-0 p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Ano
-                </p>
-                <p className="text-sm font-bold text-foreground truncate">
-                  {candidate.application?.curricularYear || "3bsc"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Departments */}
-          <div className="space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Departamentos
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(candidate.application.interests?.length > 0
-                ? candidate.application.interests
-                : []
-              ).map((interest, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="px-3 py-1.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-medium text-xs tracking-wide hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-default"
-                >
-                  {interest}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <CandidateDepartmentInterestInfo candidate={candidate} />
 
           <SocialLinks
             githubUrl={candidate.application?.github || null}

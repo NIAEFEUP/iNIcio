@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { votingPhaseStatus } from "@/db/schema";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
+import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
 
 type Vote = {
   candidateId: string;
@@ -52,7 +53,9 @@ export function CandidateVotingSlideshow({
 }: CandidateVotingSlideshowProps) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [currentIndex, setCurrentIndex] = useState(
-    candidates.findIndex((c) => c.id === currentVotingPhase.status.candidateId),
+    candidates.findIndex(
+      (c) => c.id === currentVotingPhase?.status.candidateId,
+    ),
   );
   const [direction, setDirection] = useState<"next" | "prev">("next");
 
@@ -172,9 +175,9 @@ export function CandidateVotingSlideshow({
         </div>
       ) : (
         <section className="flex flex-col gap-4 mx-auto items-center justify-center">
-          <p>Não há nenhuma votação ativa</p>
-
           {admin && <CandidateVotingStartButton />}
+
+          <CandidateVotingPhaseStatusList />
         </section>
       )}
     </CandidateVotingProvider>
