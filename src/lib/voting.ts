@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { CandidateVote, db } from "./db";
 import {
+  candidate,
   candidateVote,
   recruiterVote,
   votingPhase,
@@ -55,6 +56,7 @@ export async function getCurrentVotingPhase(id: number) {
           image: await getFilenameUrl(c.candidate.user?.image),
           dynamic: c.candidate.dynamic,
           interview: c.candidate.interview,
+          isFinished: await getIsVoteFinished(id, c.candidateId),
           dynamicClassification: c.candidate.dynamicClassification,
           interviewClassification: c.candidate.interviewClassification,
           knownRecruiters: c.candidate.knownRecruiters,
@@ -74,6 +76,18 @@ export async function getCurrentVotingPhase(id: number) {
       })),
     ),
   };
+}
+
+function getIsVoteFinished(votingPhaseId: number, candidateId: string) {
+  return db.query.votingPhaseCandidate
+    .findFirst({
+      where: (vpc) =>
+        and(
+          eq(vpc.votingPhaseId, votingPhaseId),
+          eq(vpc.candidateId, candidateId),
+        ),
+    })
+    .then((res) => res?.voteFinished || false);
 }
 
 export async function getVotingPhaseStatus(votingPhaseId: number) {
@@ -204,6 +218,14 @@ export async function makeCandidateVoteDefinitive(
 ) {
   try {
     await db.transaction(async (tx) => {
+      const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
+        where: eq(votingPhaseCandidate.candidateId, candidateId),
+      });
+
+      if (vPhaseCandidate.voteFinished) {
+        return false;
+      }
+
       const vPhaseStatus = await tx.query.votingPhaseStatus.findFirst({
         where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
       });

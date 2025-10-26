@@ -25,8 +25,10 @@ interface CandidateVotingContextType {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
-  currentCandidate: CandidateWithMetadata;
-  setCurrentCandidate: Dispatch<SetStateAction<CandidateWithMetadata>>;
+  currentCandidate: CandidateWithMetadata & { isFinished: boolean };
+  setCurrentCandidate: Dispatch<
+    SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
+  >;
 }
 
 interface CandidateVotingProviderProps {
@@ -46,8 +48,10 @@ interface CandidateVotingProviderProps {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
-  currentCandidate: CandidateWithMetadata;
-  setCurrentCandidate: Dispatch<SetStateAction<CandidateWithMetadata>>;
+  currentCandidate: CandidateWithMetadata & { isFinished: boolean };
+  setCurrentCandidate: Dispatch<
+    SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
+  >;
 }
 
 export const CandidateVotingContext =

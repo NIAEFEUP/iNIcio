@@ -5,7 +5,7 @@ import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
 import CandidateVotingOptions from "./candidate-voting-options";
-import { CandidateVote, RecruiterVote, VotingPhase } from "@/lib/db";
+import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import CandidateVotingStats from "./candidate-voting-stats";
@@ -14,10 +14,9 @@ import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voti
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
 import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
-import { OK } from "zod/v3";
 
 interface CandidateVotingSlideshowProps {
-  candidates: CandidateWithMetadata[];
+  candidates: Array<CandidateWithMetadata & { isFinished: boolean }>;
   admin: boolean;
   currentVotingPhase?: VotingPhase | null;
   submitVoteAction: (
@@ -52,8 +51,12 @@ export function CandidateVotingSlideshow({
     ),
   );
 
-  const [approvedCount, setApprovedCount] = useState<number>(0);
-  const [rejectedCount, setRejectedCount] = useState<number>(0);
+  const [approvedCount, setApprovedCount] = useState<number>(
+    currentVotingPhase?.status.accepted_candidates || 0,
+  );
+  const [rejectedCount, setRejectedCount] = useState<number>(
+    currentVotingPhase?.status.rejected_candidates || 0,
+  );
   const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
 
   const [direction, setDirection] = useState<"next" | "prev">("next");
@@ -61,8 +64,9 @@ export function CandidateVotingSlideshow({
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);
 
-  const [currentCandidate, setCurrentCandidate] =
-    useState<CandidateWithMetadata>(candidates[currentIndex]);
+  const [currentCandidate, setCurrentCandidate] = useState<
+    CandidateWithMetadata & { isFinished: boolean }
+  >(candidates[currentIndex]);
 
   const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
     currentVotingPhase?.id,
@@ -142,6 +146,7 @@ export function CandidateVotingSlideshow({
             <header className="border-b border-border bg-card">
               <CandidateVotingStats
                 currentCandidateVotes={votes?.length}
+                currentCandidateFinished={currentCandidate?.isFinished}
                 votedCount={votedCount}
                 totalToVote={candidates.length}
                 approvedCount={approvedCount}
