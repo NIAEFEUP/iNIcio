@@ -50,7 +50,9 @@ export default function CandidateVotingChoiceClient({
                 await handleCandidateSelection(selectedCandidates);
 
               if (votingPhaseId) {
-                router.push(`/candidates/voting/${votingPhaseId}`);
+                router.push(
+                  `/candidates/voting/${votingPhaseId[0].votingPhaseId}`,
+                );
               }
             }}
           >
