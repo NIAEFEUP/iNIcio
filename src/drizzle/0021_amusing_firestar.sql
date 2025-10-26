@@ -1,0 +1,1 @@
+ALTER TABLE "voting_phase" ADD COLUMN "created_at" timestamp DEFAULT now();

@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
+import { timestamp, integer, pgTable, serial, text } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { candidate, user } from "@/drizzle/schema";
 import { relations } from "drizzle-orm";
@@ -8,6 +8,7 @@ export const votingPhase = pgTable("voting_phase", {
   recruitmentYear: integer("recruitment_year")
     .notNull()
     .references(() => recruitment.year),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const votingPhaseCandidate = pgTable("voting_phase_candidate", {

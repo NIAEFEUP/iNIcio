@@ -16,12 +16,7 @@ export default function CandidateVotingStats({
   return (
     <div className="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Votação
-          </h1>
-        </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center justify-center gap-6">
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Progresso</p>
             <p className="text-lg font-medium text-foreground">

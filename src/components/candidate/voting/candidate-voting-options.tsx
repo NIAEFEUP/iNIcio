@@ -32,12 +32,7 @@ export default function CandidateVotingOptions() {
 
     if (!currentCandidate) return;
     if (
-      await submitVoteAction(
-        currentVotingPhase.id,
-        session?.user.id,
-        currentCandidate.id,
-        decision,
-      )
+      await submitVoteAction(session?.user.id, currentCandidate.id, decision)
     ) {
       router.refresh();
       setAlreadyVotedForCurrentCandidate(true);
