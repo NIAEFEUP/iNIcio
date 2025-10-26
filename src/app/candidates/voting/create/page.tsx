@@ -1,11 +1,12 @@
 "use server";
 
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
-import CandidatesClient from "@/components/candidates/candidates-client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import CandidateVotingChoiceClient from "@/components/candidate/voting/candidates-voting-client";
+import { createVotingPhase } from "@/lib/voting";
+import { CandidateWithMetadata } from "@/lib/candidate";
 
 export default async function CandidateVotingCreatePage() {
   const candidates = await getAllCandidatesWithDynamic();
@@ -13,6 +14,14 @@ export default async function CandidateVotingCreatePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  async function handleCandidateSelection(
+    candidates: Array<CandidateWithMetadata>,
+  ) {
+    "use server";
+
+    return await createVotingPhase(candidates, new Date().getFullYear());
+  }
 
   return (
     <CandidateVotingChoiceClient
@@ -27,6 +36,7 @@ export default async function CandidateVotingCreatePage() {
           : undefined
       }
       availableDepartments={await getAllPossibleApplicationInterests()}
+      handleCandidateSelection={handleCandidateSelection}
     />
   );
 }

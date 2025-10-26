@@ -1,6 +1,6 @@
 import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
-import { user } from "@/drizzle/schema";
+import { candidate, user } from "@/drizzle/schema";
 import { relations } from "drizzle-orm";
 
 export const votingPhase = pgTable("voting_phase", {
@@ -14,9 +14,9 @@ export const votingPhaseCandidate = pgTable("voting_phase_candidate", {
   votingPhaseId: integer("voting_phase_id")
     .notNull()
     .references(() => votingPhase.id),
-  candidateId: text("user_id")
+  candidateId: text("candidate_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => candidate.userId),
 });
 
 export const votingPhaseStatus = pgTable("voting_phase_status", {
@@ -39,6 +39,20 @@ export const votingPhaseRelations = relations(votingPhase, ({ one, many }) => ({
     references: [votingPhaseStatus.votingPhaseId],
   }),
 }));
+
+export const votingPhaseCandidateRelations = relations(
+  votingPhaseCandidate,
+  ({ one }) => ({
+    candidate: one(candidate, {
+      fields: [votingPhaseCandidate.candidateId],
+      references: [candidate.userId],
+    }),
+    votingPhase: one(votingPhase, {
+      fields: [votingPhaseCandidate.votingPhaseId],
+      references: [votingPhase.id],
+    }),
+  }),
+);
 
 export const candidateVote = pgTable("candidate_vote", {
   votingPhaseId: integer("voting_phase_id")

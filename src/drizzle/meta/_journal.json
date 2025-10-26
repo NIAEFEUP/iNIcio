@@ -134,6 +134,20 @@
       "when": 1760791788742,
       "tag": "0018_slim_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1761479516342,
+      "tag": "0019_light_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1761479587846,
+      "tag": "0020_cheerful_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

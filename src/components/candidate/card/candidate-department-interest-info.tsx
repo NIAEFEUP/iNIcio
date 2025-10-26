@@ -14,8 +14,8 @@ export default function CandidateDepartmentInterestInfo({
         Departamentos
       </p>
       <div className="flex flex-wrap gap-2">
-        {(candidate.application.interests?.length > 0
-          ? candidate.application.interests
+        {(candidate?.application?.interests?.length > 0
+          ? candidate?.application?.interests
           : []
         ).map((interest, index) => (
           <Badge

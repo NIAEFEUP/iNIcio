@@ -13,9 +13,7 @@ interface CandidateVotingContextType {
   candidates: any[];
   admin: boolean;
   currentVotingPhase: VotingPhase | null;
-  createVotingPhaseAction: () => Promise<boolean>;
   submitVoteAction: (
-    votingPhaseId: number,
     recruiterId: string,
     candidateId: string,
     decision: "approve" | "reject",
@@ -36,9 +34,7 @@ interface CandidateVotingProviderProps {
   candidates: any[];
   admin: boolean;
   currentVotingPhase: VotingPhase | null;
-  createVotingPhaseAction: () => Promise<boolean>;
   submitVoteAction: (
-    votingPhaseId: number,
     recruiterId: string,
     candidateId: string,
     decision: "approve" | "reject",
@@ -62,7 +58,6 @@ export function CandidateVotingProvider({
   candidates,
   admin,
   currentVotingPhase,
-  createVotingPhaseAction,
   submitVoteAction,
   alreadyVotedForCurrentCandidate,
   setAlreadyVotedForCurrentCandidate,
@@ -77,7 +72,6 @@ export function CandidateVotingProvider({
         candidates,
         admin,
         currentVotingPhase,
-        createVotingPhaseAction,
         submitVoteAction,
         alreadyVotedForCurrentCandidate,
         setAlreadyVotedForCurrentCandidate,

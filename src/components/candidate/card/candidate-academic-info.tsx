@@ -20,7 +20,7 @@ export default function CandidateAcademicInfo({
               Curso
             </p>
             <p className="text-sm font-bold text-foreground truncate">
-              {candidate.application?.degree || "mesw"}
+              {candidate?.application?.degree || "mesw"}
             </p>
           </div>
         </div>
@@ -34,7 +34,7 @@ export default function CandidateAcademicInfo({
               Ano
             </p>
             <p className="text-sm font-bold text-foreground truncate">
-              {candidate.application?.curricularYear || "3bsc"}
+              {candidate?.application?.curricularYear || "3bsc"}
             </p>
           </div>
         </div>

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
@@ -10,10 +8,8 @@ import CandidateVotingOptions from "./candidate-voting-options";
 import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
-import { createVotingPhase } from "@/lib/voting";
 import CandidateVotingStats from "./candidate-voting-stats";
 import { cn } from "@/lib/utils";
-import { votingPhaseStatus } from "@/db/schema";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
@@ -28,9 +24,7 @@ interface CandidateVotingSlideshowProps {
   candidates: CandidateWithMetadata[];
   admin: boolean;
   currentVotingPhase?: VotingPhase | null;
-  createVotingPhaseAction: () => Promise<boolean>;
   submitVoteAction: (
-    votingPhaseId: number,
     recruiterId: string,
     candidateId: string,
     decision: "approve" | "reject",
@@ -46,7 +40,6 @@ export function CandidateVotingSlideshow({
   candidates,
   admin,
   currentVotingPhase = null,
-  createVotingPhaseAction,
   submitVoteAction,
   changeCurrentVotingPhaseStatusCandidateAction,
   recruiterVotes,
@@ -103,7 +96,6 @@ export function CandidateVotingSlideshow({
       candidates={candidates}
       admin={admin ? true : false}
       currentVotingPhase={currentVotingPhase}
-      createVotingPhaseAction={createVotingPhaseAction}
       submitVoteAction={submitVoteAction}
       alreadyVotedForCurrentCandidate={alreadyVotedForCurrentCandidate}
       setAlreadyVotedForCurrentCandidate={setAlreadyVotedForCurrentCandidate}

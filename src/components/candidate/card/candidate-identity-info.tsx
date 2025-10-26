@@ -16,7 +16,7 @@ export default function CandidateIdentityInfo({
       <div className="relative">
         <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
           <AvatarImage
-            src={candidate.application?.profilePicture || "/placeholder.svg"}
+            src={candidate?.application?.profilePicture || "/placeholder.svg"}
             alt={candidate?.name}
             className="object-cover"
           />
@@ -37,7 +37,7 @@ export default function CandidateIdentityInfo({
           <div className="h-0.5 w-0 bg-primary group-hover/link:w-full transition-all duration-300 mt-1" />
         </Link>
         <p className="text-sm text-muted-foreground mt-1 font-medium">
-          {candidate.application?.studentNumber}
+          {candidate?.application?.studentNumber}
         </p>
         {fullDetails && (
           <>

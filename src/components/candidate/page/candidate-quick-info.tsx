@@ -24,12 +24,18 @@ import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateAcademicInfo from "../card/candidate-academic-info";
 import CandidateDepartmentInterestInfo from "../card/candidate-department-interest-info";
 import CandidateIdentityInfo from "../card/candidate-identity-info";
+import Link from "next/link";
+import CandidateQuickInfoSelect from "./candidate-quick-info-select";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateWithMetadata;
   friendCheckboxActive?: boolean;
   selectActionActive?: boolean;
-  selectActionHandler?: (checked: boolean) => void;
+  selectActionHandler?: (
+    checked: boolean,
+    candidate: CandidateWithMetadata,
+  ) => void;
+  candidateSelected?: boolean;
   friends?: Array<RecruiterToCandidate>;
   authUser?: User | null;
   hideInterviewButton?: boolean;
@@ -53,6 +59,7 @@ export default function CandidateQuickInfo({
   friendCheckboxActive = false,
   selectActionActive = false,
   selectActionHandler = () => {},
+  candidateSelected = false,
   friends = [],
   hideInterviewButton = false,
   hideDynamicButton = false,
@@ -99,8 +106,8 @@ export default function CandidateQuickInfo({
     return "Classificação";
   };
 
-  const displayInterviewButton = candidate.interview && !hideInterviewButton;
-  const displayDynamicButton = candidate.dynamic && !hideDynamicButton;
+  const displayInterviewButton = candidate?.interview && !hideInterviewButton;
+  const displayDynamicButton = candidate?.dynamic && !hideDynamicButton;
   const displayAnyButton = displayInterviewButton || displayDynamicButton;
 
   return (
@@ -128,22 +135,11 @@ export default function CandidateQuickInfo({
         )}
 
         {selectActionActive && (
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Checkbox
-                id={`select-candidate-${candidate.id}`}
-                className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
-                checked={checked}
-                onCheckedChange={selectActionHandler}
-              />
-            </div>
-            <Label
-              htmlFor={`select-candidate-${candidate.id}`}
-              className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
-            >
-              Selecionar
-            </Label>
-          </div>
+          <CandidateQuickInfoSelect
+            candidate={candidate}
+            selectActionHandler={selectActionHandler}
+            candidateSelected={candidateSelected}
+          />
         )}
       </CardHeader>
 
@@ -161,9 +157,9 @@ export default function CandidateQuickInfo({
           <CandidateDepartmentInterestInfo candidate={candidate} />
 
           <SocialLinks
-            githubUrl={candidate.application?.github || null}
-            linkedinUrl={candidate.application?.linkedIn || null}
-            websiteUrl={candidate.application?.personalWebsite || null}
+            githubUrl={candidate?.application?.github || null}
+            linkedinUrl={candidate?.application?.linkedIn || null}
+            websiteUrl={candidate?.application?.personalWebsite || null}
           />
 
           {(showClassifyInterview || showClassifyDynamic) && (
@@ -198,15 +194,16 @@ export default function CandidateQuickInfo({
         <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
           <div className="flex flex-col items-center justify-center gap-1 w-full">
             {displayDynamicButton && (
-              <a
+              <Link
                 href={`/dynamic/${candidate.dynamic?.dynamicId}`}
+                target="_blank"
                 className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
               >
                 <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
                   Dinâmica
                 </span>
                 <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </a>
+              </Link>
             )}
 
             <div className="h-4 w-px bg-border" />

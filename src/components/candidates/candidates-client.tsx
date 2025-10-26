@@ -1,27 +1,9 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
 import { User } from "@/lib/db";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CandidateQuickInfo from "../candidate/page/candidate-quick-info";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Filter } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { availableCourses, availableCurricularYears } from "@/lib/constants";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateFiltering from "../candidate/filter/candidate-filtering";
 

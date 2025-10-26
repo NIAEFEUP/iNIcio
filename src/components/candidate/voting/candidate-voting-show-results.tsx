@@ -13,7 +13,7 @@ export default function CandidateVotingShowResults() {
 
   const { votes } = useCurrentCandidateVotes(
     currentVotingPhase.id,
-    currentCandidate.id,
+    currentCandidate?.id,
   );
 
   const [approvedCount, setApprovedCount] = useState<number>(

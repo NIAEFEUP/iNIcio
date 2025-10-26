@@ -3,24 +3,76 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "./db";
 import {
-  candidate,
-  candidateToDynamic,
   candidateVote,
-  interview,
   recruiterVote,
   votingPhase,
   votingPhaseCandidate,
   votingPhaseStatus,
 } from "@/db/schema";
-import { application } from "@/drizzle/schema";
+import { CandidateWithMetadata } from "./candidate";
+import { getFilenameUrl } from "./file-upload";
 
-export async function getCurrentVotingPhase(recruitmentYear: number) {
-  return await db.query.votingPhase.findFirst({
-    where: (vp) => eq(vp.recruitmentYear, recruitmentYear),
+export async function getCurrentVotingPhase(id: number) {
+  const vPhase = await db.query.votingPhase.findFirst({
+    where: (vp) => eq(vp.id, id),
     with: {
       status: true,
+      candidates: {
+        with: {
+          candidate: {
+            with: {
+              user: true,
+              dynamic: {
+                with: {
+                  dynamic: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
+              interview: true,
+              application: {
+                with: {
+                  interests: true,
+                },
+              },
+              knownRecruiters: true,
+            },
+          },
+        },
+      },
     },
   });
+
+  return {
+    ...vPhase,
+    candidates: await Promise.all(
+      vPhase.candidates.map(async (c) => ({
+        ...{
+          ...c.candidate.user,
+          image: await getFilenameUrl(c.candidate.user?.image),
+          dynamic: c.candidate.dynamic,
+          interview: c.candidate.interview,
+          dynamicClassification: c.candidate.dynamicClassification,
+          interviewClassification: c.candidate.interviewClassification,
+          knownRecruiters: c.candidate.knownRecruiters,
+          application: {
+            ...c.candidate.application,
+            profilePicture: await getFilenameUrl(
+              c.candidate.application?.profilePicture,
+            ),
+            curriculum: await getFilenameUrl(
+              c.candidate.application?.curriculum,
+            ),
+            interests: c.candidate.application?.interests.map(
+              (i) => i.interest,
+            ),
+          },
+        },
+      })),
+    ),
+  };
 }
 
 export async function getVotingPhaseStatus(votingPhaseId: number) {
@@ -29,7 +81,12 @@ export async function getVotingPhaseStatus(votingPhaseId: number) {
   });
 }
 
-export async function createVotingPhase(recruitmentYear: number) {
+export async function createVotingPhase(
+  candidates: Array<CandidateWithMetadata>,
+  recruitmentYear: number,
+) {
+  let votingPhaseId = null;
+
   try {
     await db.transaction(async (tx) => {
       const vPhase = await tx
@@ -37,38 +94,31 @@ export async function createVotingPhase(recruitmentYear: number) {
         .values({ recruitmentYear })
         .returning({ id: votingPhase.id });
 
-      const candidates = await tx
-        .select()
-        .from(candidate)
-        .innerJoin(application, eq(candidate.userId, application.candidateId))
-        .innerJoin(interview, eq(candidate.userId, interview.candidateId))
-        .innerJoin(
-          candidateToDynamic,
-          eq(candidate.userId, candidateToDynamic.candidateId),
-        );
-
       for (const candidate of candidates) {
         await tx
           .insert(votingPhaseCandidate)
           .values({
             votingPhaseId: vPhase[0].id,
-            candidateId: candidate.candidate.userId,
+            candidateId: candidate.id,
           })
           .returning({ id: votingPhaseCandidate.candidateId });
       }
 
-      await tx.insert(votingPhaseStatus).values({
-        votingPhaseId: vPhase[0].id,
-        candidateId: candidates[0].candidate.userId,
-        accepted_candidates: 0,
-        rejected_candidates: 0,
-      });
+      votingPhaseId = await tx
+        .insert(votingPhaseStatus)
+        .values({
+          votingPhaseId: vPhase[0].id,
+          candidateId: candidates[0].id,
+          accepted_candidates: 0,
+          rejected_candidates: 0,
+        })
+        .returning({ votingPhaseId: votingPhaseStatus.votingPhaseId });
     });
 
-    return true;
+    return votingPhaseId;
   } catch (e) {
     console.log(e);
-    return false;
+    return null;
   }
 }
 
