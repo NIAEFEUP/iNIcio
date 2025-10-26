@@ -66,6 +66,8 @@ export default async function InterviewPage({ params }: any) {
   ) {
     "use server";
 
+    console.log("CLASSIFICATION: ", classification);
+
     if (!session || !(await isRecruiter(session.user.id))) redirect("/");
 
     await db

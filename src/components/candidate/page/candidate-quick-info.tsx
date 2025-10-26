@@ -26,6 +26,7 @@ import CandidateDepartmentInterestInfo from "../card/candidate-department-intere
 import CandidateIdentityInfo from "../card/candidate-identity-info";
 import Link from "next/link";
 import CandidateQuickInfoSelect from "./candidate-quick-info-select";
+import { ClassificationBadge } from "../candidate-classification-badge";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateWithMetadata;
@@ -40,6 +41,7 @@ interface CandidateQuickInfoProps {
   authUser?: User | null;
   hideInterviewButton?: boolean;
   hideDynamicButton?: boolean;
+  showClassificationBadges?: boolean;
   fullDetails?: boolean;
   showClassifyInterview?: boolean;
   showClassifyDynamic?: boolean;
@@ -57,6 +59,7 @@ export default function CandidateQuickInfo({
   authUser = null,
   candidate,
   friendCheckboxActive = false,
+  showClassificationBadges = false,
   selectActionActive = false,
   selectActionHandler = () => {},
   candidateSelected = false,
@@ -76,8 +79,6 @@ export default function CandidateQuickInfo({
         friend.recruiterId === authUser?.id,
     ),
   );
-
-  console.log("candidateSelected: ", candidateSelected);
 
   const addFriend = async () => {
     setChecked(!checked);
@@ -146,10 +147,25 @@ export default function CandidateQuickInfo({
       </CardHeader>
 
       <CardContent className="relative z-10">
-        <CandidateIdentityInfo
-          candidate={candidate}
-          fullDetails={fullDetails}
-        />
+        <div className="flex flex-row justify-between">
+          <CandidateIdentityInfo
+            candidate={candidate}
+            fullDetails={fullDetails}
+          />
+
+          {showClassificationBadges && (
+            <div className="flex flex-col gap-2">
+              <ClassificationBadge
+                label="Entrevista"
+                level={candidate.interviewClassification}
+              />
+              <ClassificationBadge
+                label="Dinâmica"
+                level={candidate.dynamicClassification}
+              />
+            </div>
+          )}
+        </div>
 
         <Separator className="bg-gradient-to-r from-transparent via-border to-transparent my-4" />
 
@@ -183,9 +199,9 @@ export default function CandidateQuickInfo({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fraco">Muito fraco</SelectItem>
+                  <SelectItem value="muito fraco">Muito fraco</SelectItem>
                   <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="forte">Muito forte</SelectItem>
+                  <SelectItem value="muito forte">Muito forte</SelectItem>
                 </SelectContent>
               </Select>
             </div>
