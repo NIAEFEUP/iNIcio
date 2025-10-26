@@ -10,6 +10,7 @@ import {
 } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
+import { FilterRestriction } from "./restriction";
 
 export type CandidateWithMetadata = User & {
   knownRecruiters: RecruiterToCandidate[];
@@ -18,6 +19,20 @@ export type CandidateWithMetadata = User & {
   application: (Application & { interests: string[] }) | null;
   dynamicClassification: string;
   interviewClassification: string;
+};
+
+export enum CandidateFilterRestriction {
+  ONLY_WITH_INTERVIEW_AND_DYNAMIC = "ONLY_WITH_INTERVIEW_AND_DYNAMIC",
+}
+
+function restrictInterviewAndDynamic(candidates: Array<CandidateWithMetadata>) {
+  return candidates.filter((c) => c.dynamic && c.interview);
+}
+
+export const candidateFilterRestrictions: FilterRestriction<
+  Array<CandidateWithMetadata>
+> = {
+  ONLY_WITH_INTERVIEW_AND_DYNAMIC: restrictInterviewAndDynamic,
 };
 
 export async function isCandidate(candidateId: string) {

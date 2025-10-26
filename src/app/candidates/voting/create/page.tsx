@@ -6,10 +6,15 @@ import { headers } from "next/headers";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import CandidateVotingChoiceClient from "@/components/candidate/voting/candidates-voting-client";
 import { createVotingPhase } from "@/lib/voting";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import {
+  CandidateFilterRestriction,
+  CandidateWithMetadata,
+} from "@/lib/candidate";
 
 export default async function CandidateVotingCreatePage() {
-  const candidates = await getAllCandidatesWithDynamic();
+  const candidates = await getAllCandidatesWithDynamic([
+    CandidateFilterRestriction.ONLY_WITH_INTERVIEW_AND_DYNAMIC,
+  ]);
 
   const session = await auth.api.getSession({
     headers: await headers(),

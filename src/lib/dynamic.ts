@@ -10,6 +10,11 @@ import { db, DynamicTemplate, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/drizzle/schema";
+import { FilterRestriction } from "./restriction";
+import {
+  CandidateFilterRestriction,
+  candidateFilterRestrictions,
+} from "./candidate";
 
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
@@ -211,7 +216,9 @@ export async function createDynamicComment(
   });
 }
 
-export async function getAllCandidatesWithDynamic() {
+export async function getAllCandidatesWithDynamic(
+  restrictions: Array<CandidateFilterRestriction> = [],
+) {
   const candidates = await db.query.candidate.findMany({
     where: (candidate, { exists }) =>
       exists(
@@ -243,7 +250,7 @@ export async function getAllCandidatesWithDynamic() {
 
   candidates.sort((a, b) => a.application.id - b.application.id);
 
-  return await Promise.all(
+  const res = await Promise.all(
     candidates.map(async (c) => ({
       ...c.user,
       dynamic: c.dynamic,
@@ -258,6 +265,15 @@ export async function getAllCandidatesWithDynamic() {
       knownRecruiters: c.knownRecruiters,
     })),
   );
+
+  if (restrictions.length > 0) {
+    return restrictions.reduce(
+      (result, filter) => candidateFilterRestrictions[filter](result),
+      res,
+    );
+  }
+
+  return res;
 }
 
 export async function addDynamicTemplate(content: Array<any>) {
