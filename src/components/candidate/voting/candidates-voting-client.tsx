@@ -7,9 +7,8 @@ import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info
 import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateFiltering from "../filter/candidate-filtering";
 import { Button } from "@/components/ui/button";
-import { createVotingPhase } from "@/lib/voting";
 
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 

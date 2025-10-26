@@ -1,6 +1,7 @@
-import { Check, X } from "lucide-react";
+import { Check, Users, X } from "lucide-react";
 
 interface CandidateVotingStatsProps {
+  currentCandidateVotes: number;
   votedCount: number;
   totalToVote: number;
   approvedCount: number;
@@ -8,6 +9,7 @@ interface CandidateVotingStatsProps {
 }
 
 export default function CandidateVotingStats({
+  currentCandidateVotes,
   votedCount,
   totalToVote,
   approvedCount,
@@ -45,6 +47,13 @@ export default function CandidateVotingStats({
             </div>
           </div>
         </div>
+
+        <section>
+          <div className="flex flex-row gap-1">
+            <Users className="h-6 w-6 text-muted-foreground" />
+            {currentCandidateVotes}
+          </div>
+        </section>
       </div>
     </div>
   );

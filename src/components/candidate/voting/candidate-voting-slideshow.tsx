@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
+import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
 
 type Vote = {
   candidateId: string;
@@ -44,12 +45,16 @@ export function CandidateVotingSlideshow({
   changeCurrentVotingPhaseStatusCandidateAction,
   recruiterVotes,
 }: CandidateVotingSlideshowProps) {
-  const [votes, setVotes] = useState<Vote[]>([]);
   const [currentIndex, setCurrentIndex] = useState(
     candidates.findIndex(
       (c) => c.id === currentVotingPhase?.status.candidateId,
     ),
   );
+
+  const [approvedCount, setApprovedCount] = useState<number>(0);
+  const [rejectedCount, setRejectedCount] = useState<number>(0);
+  const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
+
   const [direction, setDirection] = useState<"next" | "prev">("next");
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
@@ -60,6 +65,11 @@ export function CandidateVotingSlideshow({
 
   const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
     currentVotingPhase?.id,
+  );
+
+  const { votes } = useCurrentCandidateVotes(
+    currentVotingPhase.id,
+    currentCandidate?.id,
   );
 
   const handleNext = () => {
@@ -77,9 +87,8 @@ export function CandidateVotingSlideshow({
       setCurrentCandidate(candidates[currentIndex - 1]);
     }
   };
-  const votedCount = votes.length;
-  const approvedCount = votes.filter((v) => v.decision === "approve").length;
-  const rejectedCount = votes.filter((v) => v.decision === "reject").length;
+
+  const votedCount = finishedCandidates;
 
   useEffect(() => {
     const newIndex = candidates.findIndex(
@@ -110,6 +119,7 @@ export function CandidateVotingSlideshow({
         <div className="flex flex-col bg-background">
           <header className="border-b border-border bg-card">
             <CandidateVotingStats
+              currentCandidateVotes={votes?.length}
               votedCount={votedCount}
               totalToVote={candidates.length}
               approvedCount={approvedCount}
