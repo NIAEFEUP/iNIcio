@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, eq } from "drizzle-orm";
-import { db } from "./db";
+import { CandidateVote, db } from "./db";
 import {
   candidateVote,
   recruiterVote,
@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { CandidateWithMetadata } from "./candidate";
 import { getFilenameUrl } from "./file-upload";
+import { application } from "@/drizzle/schema";
 
 export async function getCurrentVotingPhase(id: number) {
   const vPhase = await db.query.votingPhase.findFirst({
@@ -194,4 +195,48 @@ export async function getVotingPhases(recruitmentId: number) {
   return await db.query.votingPhase.findMany({
     where: (vp) => eq(vp.recruitmentYear, recruitmentId),
   });
+}
+
+export async function makeCandidateVoteDefinitive(
+  decision: "accept" | "reject",
+  votingPhaseId: number,
+  candidateId: string,
+) {
+  try {
+    await db.transaction(async (tx) => {
+      const vPhaseStatus = await tx.query.votingPhaseStatus.findFirst({
+        where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
+      });
+
+      const newAcceptedCount =
+        decision === "accept"
+          ? vPhaseStatus.accepted_candidates + 1
+          : vPhaseStatus.accepted_candidates;
+      const newRejectedCount =
+        decision === "reject"
+          ? vPhaseStatus.rejected_candidates + 1
+          : vPhaseStatus.rejected_candidates;
+
+      await tx
+        .update(votingPhaseStatus)
+        .set({
+          accepted_candidates: newAcceptedCount,
+          rejected_candidates: newRejectedCount,
+        })
+        .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+
+      await tx
+        .update(votingPhaseCandidate)
+        .set({ voteFinished: true })
+        .where(eq(votingPhaseCandidate.candidateId, candidateId));
+      await tx
+        .update(application)
+        .set({ accepted: decision === "accept" })
+        .where(eq(application.candidateId, candidateId));
+    });
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 }

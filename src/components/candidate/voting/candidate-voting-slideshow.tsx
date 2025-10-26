@@ -5,7 +5,7 @@ import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
 import CandidateVotingOptions from "./candidate-voting-options";
-import { RecruiterVote, VotingPhase } from "@/lib/db";
+import { CandidateVote, RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import CandidateVotingStats from "./candidate-voting-stats";
@@ -14,12 +14,7 @@ import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voti
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
 import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
-
-type Vote = {
-  candidateId: string;
-  decision: "approve" | "reject";
-  timestamp: Date;
-};
+import { OK } from "zod/v3";
 
 interface CandidateVotingSlideshowProps {
   candidates: CandidateWithMetadata[];
@@ -35,6 +30,11 @@ interface CandidateVotingSlideshowProps {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
+  makeVoteDefinitiveAction: (
+    decision: "accept" | "reject",
+    votingPhaseId: number,
+    candidateId: string,
+  ) => Promise<boolean>;
 }
 
 export function CandidateVotingSlideshow({
@@ -44,6 +44,7 @@ export function CandidateVotingSlideshow({
   submitVoteAction,
   changeCurrentVotingPhaseStatusCandidateAction,
   recruiterVotes,
+  makeVoteDefinitiveAction,
 }: CandidateVotingSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(
     candidates.findIndex(
@@ -100,6 +101,26 @@ export function CandidateVotingSlideshow({
     }
   }, [votingPhaseStatus, candidates]);
 
+  async function makeVoteDefinitive(decision: "accept" | "reject") {
+    const ok = await makeVoteDefinitiveAction(
+      decision,
+      currentVotingPhase?.id,
+      currentCandidate?.id,
+    );
+
+    if (ok) {
+      if (decision === "accept") {
+        setApprovedCount(approvedCount + 1);
+      } else {
+        setRejectedCount(rejectedCount + 1);
+      }
+
+      setFinishedCandidates((prev) => prev + 1);
+    }
+
+    return ok;
+  }
+
   return (
     <CandidateVotingProvider
       candidates={candidates}
@@ -125,11 +146,12 @@ export function CandidateVotingSlideshow({
                 totalToVote={candidates.length}
                 approvedCount={approvedCount}
                 rejectedCount={rejectedCount}
+                makeVoteDefinitive={makeVoteDefinitive}
               />
             </header>
           )}
 
-          <CandidateVotingOptions />
+          {!admin && <CandidateVotingOptions />}
 
           <div className="mt-8">
             <div className="flex items-center justify-center gap-2">

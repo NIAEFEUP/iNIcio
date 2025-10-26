@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Check, Users, X } from "lucide-react";
 
 interface CandidateVotingStatsProps {
@@ -6,6 +7,7 @@ interface CandidateVotingStatsProps {
   totalToVote: number;
   approvedCount: number;
   rejectedCount: number;
+  makeVoteDefinitive?: (decision: "accept" | "reject") => Promise<boolean>;
 }
 
 export default function CandidateVotingStats({
@@ -14,6 +16,7 @@ export default function CandidateVotingStats({
   totalToVote,
   approvedCount,
   rejectedCount,
+  makeVoteDefinitive = async () => false,
 }: CandidateVotingStatsProps) {
   return (
     <div className="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8">
@@ -48,7 +51,20 @@ export default function CandidateVotingStats({
           </div>
         </div>
 
-        <section>
+        <section className="flex flex-row gap-2 items-center">
+          {currentCandidateVotes > 0 && (
+            <>
+              <Button onClick={async () => await makeVoteDefinitive("accept")}>
+                Aceitar definitivo
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => await makeVoteDefinitive("reject")}
+              >
+                Rejeitar definitivo
+              </Button>
+            </>
+          )}
           <div className="flex flex-row gap-1">
             <Users className="h-6 w-6 text-muted-foreground" />
             {currentCandidateVotes}
