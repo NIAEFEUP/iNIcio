@@ -33,8 +33,6 @@ export default function CandidateVotingChoiceClient({
     Array<CandidateWithMetadata>
   >([]);
 
-  console.log("wtf: ", selectedCandidates);
-
   const [filteredCandidates, setFilteredCandidates] =
     useState<Array<User>>(candidates);
 

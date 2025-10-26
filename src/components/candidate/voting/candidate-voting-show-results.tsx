@@ -44,7 +44,12 @@ export default function CandidateVotingShowResults() {
                   {approvedCount}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">Aceites</p>
+              <div>
+                <p className="text-xs text-muted-foreground">A favor</p>
+                <p className="text-xs">
+                  {(approvedCount / (approvedCount + rejectedCount)) * 100}%
+                </p>
+              </div>
             </div>
             <div className="text-center">
               <div className="flex items-center gap-1.5">
@@ -53,7 +58,12 @@ export default function CandidateVotingShowResults() {
                   {rejectedCount}
                 </span>
               </div>
-              <p className="text-xs text-destructive/80">Rejeitados</p>
+              <div>
+                <p className="text-xs text-destructive/80">Contra</p>
+                <p className="text-xs">
+                  {(rejectedCount / (approvedCount + rejectedCount)) * 100}%
+                </p>
+              </div>
             </div>
           </div>
         </>
