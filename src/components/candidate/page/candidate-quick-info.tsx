@@ -77,6 +77,8 @@ export default function CandidateQuickInfo({
     ),
   );
 
+  console.log("candidateSelected: ", candidateSelected);
+
   const addFriend = async () => {
     setChecked(!checked);
 

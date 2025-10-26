@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { createVotingPhase } from "@/lib/voting";
 
 import { redirect, useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface CandidatesClientProps {
   authUser: User;
@@ -31,6 +33,8 @@ export default function CandidateVotingChoiceClient({
   const [selectedCandidates, setSelectedCandidates] = useState<
     Array<CandidateWithMetadata>
   >([]);
+
+  console.log("wtf: ", selectedCandidates);
 
   const [filteredCandidates, setFilteredCandidates] =
     useState<Array<User>>(candidates);
@@ -67,6 +71,26 @@ export default function CandidateVotingChoiceClient({
         availableDepartments={availableDepartments}
       />
 
+      <section className="mx-auto w-full max-w-[80em]">
+        <div className="flex flex-row gap-2">
+          <Checkbox
+            id="select-all-candidates"
+            className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
+            checked={selectedCandidates.length === candidates.length}
+            onCheckedChange={(checked) => {
+              if (checked) setSelectedCandidates(candidates);
+              else setSelectedCandidates([]);
+            }}
+          />
+          <Label
+            htmlFor="select-all-candidates"
+            className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
+          >
+            Selecionar todos
+          </Label>
+        </div>
+      </section>
+
       <div className="mx-auto w-full max-w-[80em] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
         {filteredCandidates.map((candidate: CandidateWithMetadata) => (
           <CandidateQuickInfo
@@ -86,7 +110,9 @@ export default function CandidateVotingChoiceClient({
                 );
               }
             }}
-            candidateSelected={selectedCandidates.includes(candidate)}
+            candidateSelected={
+              selectedCandidates.filter((c) => c.id === candidate.id).length > 0
+            }
           />
         ))}
 

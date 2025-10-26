@@ -1,7 +1,6 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
-import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   getCurrentVotingPhase,
