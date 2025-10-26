@@ -1,4 +1,11 @@
-import { timestamp, integer, pgTable, serial, text } from "drizzle-orm/pg-core";
+import {
+  timestamp,
+  integer,
+  pgTable,
+  serial,
+  text,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { candidate, user } from "@/drizzle/schema";
 import { relations } from "drizzle-orm";
@@ -18,6 +25,7 @@ export const votingPhaseCandidate = pgTable("voting_phase_candidate", {
   candidateId: text("candidate_id")
     .notNull()
     .references(() => candidate.userId),
+  voteFinished: boolean("vote_finished").notNull().default(false),
 });
 
 export const votingPhaseStatus = pgTable("voting_phase_status", {

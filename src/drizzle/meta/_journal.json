@@ -155,6 +155,13 @@
       "when": 1761480931912,
       "tag": "0021_amusing_firestar",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1761498482880,
+      "tag": "0022_sweet_black_bird",
+      "breakpoints": true
     }
   ]
 }

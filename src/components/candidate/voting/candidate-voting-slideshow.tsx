@@ -117,15 +117,17 @@ export function CandidateVotingSlideshow({
     >
       {currentVotingPhase ? (
         <div className="flex flex-col bg-background">
-          <header className="border-b border-border bg-card">
-            <CandidateVotingStats
-              currentCandidateVotes={votes?.length}
-              votedCount={votedCount}
-              totalToVote={candidates.length}
-              approvedCount={approvedCount}
-              rejectedCount={rejectedCount}
-            />
-          </header>
+          {admin && (
+            <header className="border-b border-border bg-card">
+              <CandidateVotingStats
+                currentCandidateVotes={votes?.length}
+                votedCount={votedCount}
+                totalToVote={candidates.length}
+                approvedCount={approvedCount}
+                rejectedCount={rejectedCount}
+              />
+            </header>
+          )}
 
           <CandidateVotingOptions />
 
