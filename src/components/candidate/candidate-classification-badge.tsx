@@ -46,6 +46,7 @@ export function ClassificationBadge({
     color:
       "bg-primary text-primary-foreground border-primary-200 dark:bg-primary dark:text-primary-400 dark:border-primary-900",
     icon: <Minus className="h-3 w-3" />,
+    label: "Não classificado",
   };
 
   return (
