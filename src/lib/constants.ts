@@ -15,3 +15,9 @@ export const availableCourses = [
   "liacd",
   "mecd",
 ];
+
+export const availableClassifications = [
+  "muito fraco",
+  "normal",
+  "muito forte",
+];

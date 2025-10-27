@@ -19,12 +19,17 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { User } from "@/lib/db";
 
-import { availableCourses, availableCurricularYears } from "@/lib/constants";
+import {
+  availableClassifications,
+  availableCourses,
+  availableCurricularYears,
+} from "@/lib/constants";
 
 type CandidatesPageFilter = {
   course: string;
   year: string;
   departments: string[];
+  classifications: string[];
 };
 
 interface CandidateFilteringProps {
@@ -44,12 +49,14 @@ export default function CandidateFiltering({
     course: "all",
     year: "all",
     departments: [] as string[],
+    classifications: [] as string[],
   });
 
   const hasActiveFilters =
     filters.course !== "all" ||
     filters.year !== "all" ||
-    filters.departments.length > 0;
+    filters.departments.length > 0 ||
+    filters.classifications.length > 0;
 
   useEffect(() => {
     if (!query.trim()) setFilteredCandidates(candidates);
@@ -94,6 +101,16 @@ export default function CandidateFiltering({
         candidates.filter((c) => c.application.curricularYear === filters.year),
       );
     }
+
+    if (filters.classifications.length > 0) {
+      setFilteredCandidates(
+        candidates.filter(
+          (c) =>
+            filters.classifications.includes(c.interviewClassification) ||
+            filters.classifications.includes(c.dynamicClassification),
+        ),
+      );
+    }
   }, [filters, candidates, hasActiveFilters, setFilteredCandidates]);
 
   const handleDepartmentFilter = (department: string, checked: boolean) => {
@@ -105,17 +122,30 @@ export default function CandidateFiltering({
     }));
   };
 
+  const handleClassificationFilter = (
+    classification: string,
+    checked: boolean,
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      classifications: checked
+        ? [...prev.classifications, classification]
+        : prev.classifications.filter((c) => c !== classification),
+    }));
+  };
+
   const clearFilters = () => {
     setFilters({
       course: "all",
       year: "all",
       departments: [],
+      classifications: [],
     });
   };
 
   return (
     <>
-      <div className="flex flex-col md:flex-row gap-4 justify-between mx-auto w-full max-w-[80em]">
+      <div className="flex flex-col md:flex-row gap-4 justify-between mx-auto w-full max-w-[90em]">
         <Input
           placeholder="Pesquisar"
           className="w-128 mx-4"
@@ -204,6 +234,54 @@ export default function CandidateFiltering({
             </PopoverContent>
           </Popover>
 
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2 bg-transparent">
+                <Filter className="h-4 w-4" />
+                Classificações
+                {filters.classifications.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {filters.classifications.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="start">
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">
+                  Filtrar por classificação
+                </h4>
+                <div className="space-y-2">
+                  {availableClassifications.map((classification) => (
+                    <div
+                      key={classification}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        id={classification}
+                        checked={filters.classifications.includes(
+                          classification,
+                        )}
+                        onCheckedChange={(checked) =>
+                          handleClassificationFilter(
+                            classification,
+                            checked as boolean,
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor={classification}
+                        className="text-sm font-normal"
+                      >
+                        {classification}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -246,6 +324,24 @@ export default function CandidateFiltering({
                 </button>
               </Badge>
             )}
+            {filters.classifications.map((classification) => (
+              <Badge key={classification} variant="secondary" className="gap-1">
+                {classification}
+                <button
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      classifications: prev.classifications.filter(
+                        (c) => c !== classification,
+                      ),
+                    }))
+                  }
+                  className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                >
+                  ×
+                </button>
+              </Badge>
+            ))}
             {filters.departments.map((dept) => (
               <Badge key={dept} variant="secondary" className="gap-1">
                 {dept}
