@@ -97,7 +97,7 @@ export async function getVotingPhaseStatus(votingPhaseId: number) {
 }
 
 export async function createVotingPhase(
-  candidates: Array<CandidateWithMetadata>,
+  candidates: Array<string>,
   recruitmentYear: number,
 ) {
   let votingPhaseId = null;
@@ -114,7 +114,7 @@ export async function createVotingPhase(
           .insert(votingPhaseCandidate)
           .values({
             votingPhaseId: vPhase[0].id,
-            candidateId: candidate.id,
+            candidateId: candidate,
           })
           .returning({ id: votingPhaseCandidate.candidateId });
       }
@@ -123,7 +123,7 @@ export async function createVotingPhase(
         .insert(votingPhaseStatus)
         .values({
           votingPhaseId: vPhase[0].id,
-          candidateId: candidates[0].id,
+          candidateId: candidates[0],
           accepted_candidates: 0,
           rejected_candidates: 0,
         })

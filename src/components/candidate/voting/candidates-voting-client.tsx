@@ -17,7 +17,7 @@ interface CandidatesClientProps {
   candidates: Array<CandidateWithMetadata>;
   availableDepartments: Array<string>;
   handleCandidateSelection: (
-    candidates: Array<CandidateWithMetadata>,
+    candidates: Array<string>,
   ) => Promise<number | null>;
 }
 
@@ -47,8 +47,9 @@ export default function CandidateVotingChoiceClient({
         <div className="flex flex-col items-center justify-center gap-2">
           <Button
             onClick={async () => {
-              const votingPhaseId =
-                await handleCandidateSelection(selectedCandidates);
+              const votingPhaseId = await handleCandidateSelection(
+                selectedCandidates.map((c) => c.id),
+              );
 
               if (votingPhaseId) {
                 router.push(

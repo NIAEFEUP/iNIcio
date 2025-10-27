@@ -20,9 +20,7 @@ export default async function CandidateVotingCreatePage() {
     headers: await headers(),
   });
 
-  async function handleCandidateSelection(
-    candidates: Array<CandidateWithMetadata>,
-  ) {
+  async function handleCandidateSelection(candidates: Array<string>) {
     "use server";
 
     return await createVotingPhase(candidates, new Date().getFullYear());

@@ -71,11 +71,8 @@ export default async function SlotsPage() {
   };
 
   const latestRecruitment = await getLatestRecruitment();
-
   const existingSlots = await getExistingSlots(latestRecruitment?.year);
-
   const bookings = await getBookings();
-
   const candidates = await getAllCandidatesWithDynamic();
 
   return (
