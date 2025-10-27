@@ -34,7 +34,7 @@ export default function CandidateVotingChoiceClient({
   >([]);
 
   const [filteredCandidates, setFilteredCandidates] =
-    useState<Array<User>>(candidates);
+    useState<Array<CandidateWithMetadata>>(candidates);
 
   return (
     <div className="flex flex-col gap-4">
@@ -73,9 +73,9 @@ export default function CandidateVotingChoiceClient({
           <Checkbox
             id="select-all-candidates"
             className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
-            checked={selectedCandidates.length === candidates.length}
+            checked={selectedCandidates.length === filteredCandidates.length}
             onCheckedChange={(checked) => {
-              if (checked) setSelectedCandidates(candidates);
+              if (checked) setSelectedCandidates(filteredCandidates);
               else setSelectedCandidates([]);
             }}
           />
