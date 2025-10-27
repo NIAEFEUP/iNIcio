@@ -68,6 +68,10 @@ export function CandidateVotingSlideshow({
     CandidateWithMetadata & { isFinished: boolean }
   >(candidates[currentIndex]);
 
+  const [candidateFinished, setCandidateFinished] = useState<boolean>(
+    currentCandidate?.isFinished || false,
+  );
+
   const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
     currentVotingPhase?.id,
   );
@@ -120,6 +124,7 @@ export function CandidateVotingSlideshow({
       }
 
       setFinishedCandidates((prev) => prev + 1);
+      setCandidateFinished(true);
     }
 
     return ok;
@@ -146,7 +151,7 @@ export function CandidateVotingSlideshow({
             <header className="border-b border-border bg-card">
               <CandidateVotingStats
                 currentCandidateVotes={votes?.length}
-                currentCandidateFinished={currentCandidate?.isFinished}
+                currentCandidateFinished={candidateFinished}
                 votedCount={votedCount}
                 totalToVote={candidates.length}
                 approvedCount={approvedCount}
@@ -159,23 +164,6 @@ export function CandidateVotingSlideshow({
           {!admin && <CandidateVotingOptions />}
 
           <div className="mt-8">
-            <div className="flex items-center justify-center gap-2">
-              {candidates.map((candidate, idx) => {
-                return (
-                  <button
-                    key={candidate.id}
-                    onClick={() => {
-                      setDirection(idx > currentIndex ? "next" : "prev");
-                      setCurrentIndex(idx);
-                    }}
-                    className={cn(
-                      "h-2 rounded-full transition-all",
-                      idx === currentIndex ? "w-8 bg-primary" : "w-2 bg-muted",
-                    )}
-                  />
-                );
-              })}
-            </div>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               {currentIndex + 1} / {candidates.length}
             </p>
