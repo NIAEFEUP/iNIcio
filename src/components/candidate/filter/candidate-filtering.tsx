@@ -104,10 +104,8 @@ export default function CandidateFiltering({
 
     if (filters.classifications.length > 0) {
       setFilteredCandidates(
-        candidates.filter(
-          (c) =>
-            filters.classifications.includes(c.interviewClassification) ||
-            filters.classifications.includes(c.dynamicClassification),
+        candidates.filter((c) =>
+          filters.classifications.includes(c.interviewClassification),
         ),
       );
     }
