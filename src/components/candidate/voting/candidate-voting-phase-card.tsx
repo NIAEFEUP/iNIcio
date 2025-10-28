@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getDateStringPT } from "@/lib/date";
+import { getDateStringPT, getTimeString } from "@/lib/date";
 import Link from "next/link";
 
 export default function CandidateVotingPhaseCard({ votingPhase }) {
@@ -9,7 +9,8 @@ export default function CandidateVotingPhaseCard({ votingPhase }) {
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <CardHeader className="relative z-10">
-        Votação de dia {getDateStringPT(votingPhase.created_at)}
+        Votação de dia {getDateStringPT(votingPhase.created_at)},{" "}
+        {getTimeString(votingPhase.created_at)}
       </CardHeader>
 
       <CardContent className="relative z-10">

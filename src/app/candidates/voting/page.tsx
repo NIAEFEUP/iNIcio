@@ -15,7 +15,7 @@ export default async function CandidatesVotingPage() {
   const votingPhases = await getVotingPhases(new Date().getFullYear());
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 mx-auto max-w-[60em] w-full">
       {admin && <CandidateVotingStartButton />}
 
       {votingPhases?.map((vp) => (

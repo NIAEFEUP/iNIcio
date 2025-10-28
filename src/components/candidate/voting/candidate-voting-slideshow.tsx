@@ -209,7 +209,7 @@ export function CandidateVotingSlideshow({
           </div>
         </div>
       ) : (
-        <section className="flex flex-col gap-4 mx-auto items-center justify-center">
+        <section className="flex flex-col gap-4 mx-auto items-center justify-center max-w-[40em] w-full">
           {admin && <CandidateVotingStartButton />}
 
           <CandidateVotingPhaseStatusList />
