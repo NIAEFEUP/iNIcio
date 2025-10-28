@@ -29,6 +29,10 @@ interface CandidateVotingSlideshowProps {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
+  resetCandidateVotes?: (
+    votingPhaseId: number,
+    candidateId: string,
+  ) => Promise<void>;
   makeVoteDefinitiveAction: (
     decision: "accept" | "reject",
     votingPhaseId: number,
@@ -41,6 +45,7 @@ export function CandidateVotingSlideshow({
   admin,
   currentVotingPhase = null,
   submitVoteAction,
+  resetCandidateVotes,
   changeCurrentVotingPhaseStatusCandidateAction,
   recruiterVotes,
   makeVoteDefinitiveAction,
@@ -130,6 +135,12 @@ export function CandidateVotingSlideshow({
     return ok;
   }
 
+  useEffect(() => {
+    if (votes?.length === 0) {
+      setAlreadyVotedForCurrentCandidate(false);
+    }
+  }, [votes]);
+
   return (
     <CandidateVotingProvider
       candidates={candidates}
@@ -152,8 +163,10 @@ export function CandidateVotingSlideshow({
               <CandidateVotingStats
                 currentCandidateVotes={votes?.length}
                 currentCandidateFinished={candidateFinished}
+                setCurrentCandidateFinished={setCandidateFinished}
                 votedCount={votedCount}
                 totalToVote={candidates.length}
+                resetCandidateVotes={resetCandidateVotes}
                 approvedCount={approvedCount}
                 rejectedCount={rejectedCount}
                 makeVoteDefinitive={makeVoteDefinitive}

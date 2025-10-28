@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import CandidateVotingChoiceClient from "@/components/candidate/voting/candidates-voting-client";
-import { createVotingPhase } from "@/lib/voting";
+import { createVotingPhase, deleteCandidateVotes } from "@/lib/voting";
 import {
   CandidateFilterRestriction,
   CandidateWithMetadata,

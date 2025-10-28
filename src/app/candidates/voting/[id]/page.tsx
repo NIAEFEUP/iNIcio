@@ -1,7 +1,6 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
-import { CandidateVote } from "@/lib/db";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   getCurrentVotingPhase,
@@ -10,6 +9,7 @@ import {
 } from "@/lib/voting";
 import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
+import { deleteCandidateVotes } from "@/lib/voting";
 
 interface CandidateVotingPageProps {
   params: any;
@@ -64,6 +64,15 @@ export default async function CandidateVotingPage({
     );
   }
 
+  async function resetCandidateVotes(
+    votingPhaseId: number,
+    candidateId: string,
+  ) {
+    "use server";
+
+    await deleteCandidateVotes(votingPhaseId, candidateId);
+  }
+
   const admin = await isAdmin(session?.user.id);
 
   const currentVotingPhase = await getCurrentVotingPhase(id);
@@ -79,6 +88,7 @@ export default async function CandidateVotingPage({
       admin={admin ? true : false}
       currentVotingPhase={currentVotingPhase}
       submitVoteAction={submitVoteAction}
+      resetCandidateVotes={resetCandidateVotes}
       changeCurrentVotingPhaseStatusCandidateAction={
         changeCurrentVotingPhaseStatusCandidateAction
       }

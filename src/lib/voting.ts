@@ -211,6 +211,41 @@ export async function getVotingPhases(recruitmentId: number) {
   });
 }
 
+export async function deleteCandidateVotes(
+  votingPhaseId: number,
+  candidateId: string,
+) {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(candidateVote)
+      .where(
+        and(
+          eq(candidateVote.votingPhaseId, votingPhaseId),
+          eq(candidateVote.candidateId, candidateId),
+        ),
+      );
+
+    await tx
+      .delete(recruiterVote)
+      .where(
+        and(
+          eq(recruiterVote.votingPhaseId, votingPhaseId),
+          eq(recruiterVote.candidateId, candidateId),
+        ),
+      );
+
+    await tx
+      .update(votingPhaseCandidate)
+      .set({ voteFinished: false })
+      .where(
+        and(
+          eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+          eq(votingPhaseCandidate.candidateId, candidateId),
+        ),
+      );
+  });
+}
+
 export async function makeCandidateVoteDefinitive(
   decision: "accept" | "reject",
   votingPhaseId: number,

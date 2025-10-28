@@ -1,25 +1,38 @@
 import { Button } from "@/components/ui/button";
-import { Check, Users, X } from "lucide-react";
+import { CandidateVotingContext } from "@/lib/contexts/CandidateVotingContext";
+import { Check, RefreshCcw, Users, X } from "lucide-react";
+import { Dispatch, SetStateAction, useContext } from "react";
 
 interface CandidateVotingStatsProps {
   currentCandidateFinished: boolean;
+  setCurrentCandidateFinished: Dispatch<SetStateAction<boolean>>;
   currentCandidateVotes: number;
   votedCount: number;
   totalToVote: number;
   approvedCount: number;
   rejectedCount: number;
+  resetCandidateVotes?: (
+    votingPhaseId: number,
+    candidateId: string,
+  ) => Promise<void>;
   makeVoteDefinitive?: (decision: "accept" | "reject") => Promise<boolean>;
 }
 
 export default function CandidateVotingStats({
   currentCandidateFinished,
+  setCurrentCandidateFinished,
   currentCandidateVotes,
+  resetCandidateVotes,
   votedCount,
   totalToVote,
   approvedCount,
   rejectedCount,
   makeVoteDefinitive = async () => false,
 }: CandidateVotingStatsProps) {
+  const { currentVotingPhase, currentCandidate } = useContext(
+    CandidateVotingContext,
+  );
+
   return (
     <div className="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
@@ -74,6 +87,18 @@ export default function CandidateVotingStats({
             <Users className="h-6 w-6 text-muted-foreground" />
             {currentCandidateVotes}
           </div>
+
+          <Button
+            onClick={async () => {
+              await resetCandidateVotes(
+                currentVotingPhase?.id,
+                currentCandidate?.id,
+              );
+              setCurrentCandidateFinished(false);
+            }}
+          >
+            <RefreshCcw className="h-5 w-5" />
+          </Button>
         </section>
       </div>
     </div>
