@@ -145,6 +145,8 @@ export function CandidateVotingSlideshow({
     <CandidateVotingProvider
       candidates={candidates}
       admin={admin ? true : false}
+      currentCandidateFinished={candidateFinished}
+      setCurrentCandidateFinished={setCandidateFinished}
       currentVotingPhase={currentVotingPhase}
       submitVoteAction={submitVoteAction}
       alreadyVotedForCurrentCandidate={alreadyVotedForCurrentCandidate}

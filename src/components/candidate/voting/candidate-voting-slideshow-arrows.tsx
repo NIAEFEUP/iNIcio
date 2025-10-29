@@ -16,6 +16,8 @@ export default function CandidateVotingSlideshowArrows({
   handleNext,
   finalIndex,
 }: CandidateVotingSlideshowArrowsProps) {
+  const { setCurrentCandidateFinished } = useContext(CandidateVotingContext);
+
   const {
     candidates,
     changeCurrentVotingPhaseStatusCandidateAction,
@@ -37,6 +39,10 @@ export default function CandidateVotingSlideshowArrows({
           size="icon"
           onClick={async () => {
             if (await handleCandidateChange(candidates[currentIndex - 1].id)) {
+              setCurrentCandidateFinished(
+                candidates[currentIndex - 1].isFinished,
+              );
+
               handlePrevious();
             }
           }}
@@ -52,6 +58,10 @@ export default function CandidateVotingSlideshowArrows({
           size="icon"
           onClick={async () => {
             if (await handleCandidateChange(candidates[currentIndex + 1].id)) {
+              setCurrentCandidateFinished(
+                candidates[currentIndex + 1].isFinished,
+              );
+
               handleNext();
             }
           }}

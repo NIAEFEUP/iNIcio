@@ -12,6 +12,8 @@ import { CandidateWithMetadata } from "../candidate";
 interface CandidateVotingContextType {
   candidates: any[];
   admin: boolean;
+  currentCandidateFinished: boolean;
+  setCurrentCandidateFinished: Dispatch<SetStateAction<boolean>>;
   currentVotingPhase: VotingPhase | null;
   submitVoteAction: (
     recruiterId: string,
@@ -35,6 +37,8 @@ interface CandidateVotingProviderProps {
   children: ReactNode;
   candidates: any[];
   admin: boolean;
+  currentCandidateFinished: boolean;
+  setCurrentCandidateFinished: Dispatch<SetStateAction<boolean>>;
   currentVotingPhase: VotingPhase | null;
   submitVoteAction: (
     recruiterId: string,
@@ -61,6 +65,8 @@ export function CandidateVotingProvider({
   children,
   candidates,
   admin,
+  currentCandidateFinished,
+  setCurrentCandidateFinished,
   currentVotingPhase,
   submitVoteAction,
   alreadyVotedForCurrentCandidate,
@@ -75,6 +81,8 @@ export function CandidateVotingProvider({
       value={{
         candidates,
         admin,
+        currentCandidateFinished,
+        setCurrentCandidateFinished,
         currentVotingPhase,
         submitVoteAction,
         alreadyVotedForCurrentCandidate,

@@ -254,7 +254,10 @@ export async function makeCandidateVoteDefinitive(
   try {
     await db.transaction(async (tx) => {
       const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
-        where: eq(votingPhaseCandidate.candidateId, candidateId),
+        where: and(
+          eq(votingPhaseCandidate.candidateId, candidateId),
+          eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+        ),
       });
 
       if (vPhaseCandidate.voteFinished) {
@@ -286,6 +289,7 @@ export async function makeCandidateVoteDefinitive(
         .update(votingPhaseCandidate)
         .set({ voteFinished: true })
         .where(eq(votingPhaseCandidate.candidateId, candidateId));
+
       await tx
         .update(application)
         .set({ accepted: decision === "accept" })

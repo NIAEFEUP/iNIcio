@@ -69,12 +69,20 @@ export default function CandidateVotingStats({
         <section className="flex flex-row gap-2 items-center">
           {!currentCandidateFinished && currentCandidateVotes > 0 && (
             <>
-              <Button onClick={async () => await makeVoteDefinitive("accept")}>
+              <Button
+                onClick={async () => {
+                  await makeVoteDefinitive("accept");
+                  currentCandidate.isFinished = true;
+                }}
+              >
                 Aceitar definitivo
               </Button>
               <Button
                 variant="secondary"
-                onClick={async () => await makeVoteDefinitive("reject")}
+                onClick={async () => {
+                  await makeVoteDefinitive("reject");
+                  currentCandidate.isFinished = true;
+                }}
               >
                 Rejeitar definitivo
               </Button>
