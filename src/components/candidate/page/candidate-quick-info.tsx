@@ -27,6 +27,7 @@ import CandidateIdentityInfo from "../card/candidate-identity-info";
 import Link from "next/link";
 import CandidateQuickInfoSelect from "./candidate-quick-info-select";
 import { ClassificationBadge } from "../candidate-classification-badge";
+import { Badge } from "@/components/ui/badge";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateWithMetadata;
@@ -113,9 +114,35 @@ export default function CandidateQuickInfo({
   const displayDynamicButton = candidate?.dynamic && !hideDynamicButton;
   const displayAnyButton = displayInterviewButton || displayDynamicButton;
 
+  const getBorderClass = () => {
+    if (!candidate.votingDecision) return "";
+    return candidate.votingDecision.decision === "approve"
+      ? "border-2 border-green-500/50 shadow-green-500/20"
+      : "border-2 border-red-500/50 shadow-red-500/20";
+  };
+
   return (
-    <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+    <Card
+      className={`group relative overflow-hidden bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 ${getBorderClass()}`}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      {candidate.votingDecision && (
+        <div className="absolute top-2 right-2 z-20">
+          <Badge
+            variant={
+              candidate.votingDecision.decision === "approve"
+                ? "default"
+                : "destructive"
+            }
+            className="text-xs font-semibold"
+          >
+            {candidate.votingDecision.decision === "approve"
+              ? "✓ Aprovado"
+              : "✗ Rejeitado"}
+          </Badge>
+        </div>
+      )}
 
       <CardHeader className="relative z-10">
         {friendCheckboxActive && (

@@ -15,6 +15,7 @@ import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
 } from "./candidate";
+import { getLatestVotingDecisionForCandidate } from "./voting";
 
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
@@ -251,19 +252,25 @@ export async function getAllCandidatesWithDynamic(
   candidates.sort((a, b) => a.application.id - b.application.id);
 
   const res = await Promise.all(
-    candidates.map(async (c) => ({
-      ...c.user,
-      dynamic: c.dynamic,
-      interview: c.interview,
-      interviewClassification: c.interviewClassification,
-      dynamicClassification: c.dynamicClassification,
-      application: {
-        ...c.application,
-        profilePicture: await getFilenameUrl(c.application?.profilePicture),
-        interests: c.application?.interests.map((i) => i.interest),
-      },
-      knownRecruiters: c.knownRecruiters,
-    })),
+    candidates.map(async (c) => {
+      const votingDecision = await getLatestVotingDecisionForCandidate(
+        c.userId,
+      );
+      return {
+        ...c.user,
+        dynamic: c.dynamic,
+        interview: c.interview,
+        interviewClassification: c.interviewClassification,
+        dynamicClassification: c.dynamicClassification,
+        application: {
+          ...c.application,
+          profilePicture: await getFilenameUrl(c.application?.profilePicture),
+          interests: c.application?.interests.map((i) => i.interest),
+        },
+        knownRecruiters: c.knownRecruiters,
+        votingDecision,
+      };
+    }),
   );
 
   if (restrictions.length > 0) {
