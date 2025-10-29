@@ -1,4 +1,11 @@
-import { integer, pgTable, serial, text, jsonb } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  serial,
+  text,
+  jsonb,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";
@@ -13,6 +20,7 @@ export const interview = pgTable("interview", {
   slot: integer("slot")
     .notNull()
     .references(() => slot.id),
+  locked: boolean("locked").notNull().default(false),
 });
 
 export const recruiterToInterview = pgTable("recruiter_to_interview", {

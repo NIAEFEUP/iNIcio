@@ -162,6 +162,13 @@
       "when": 1761498482880,
       "tag": "0022_sweet_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1761750920109,
+      "tag": "0023_exotic_triathlon",
+      "breakpoints": true
     }
   ]
 }

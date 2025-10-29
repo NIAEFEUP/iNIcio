@@ -1,0 +1,1 @@
+ALTER TABLE "interview" ADD COLUMN "locked" boolean DEFAULT false NOT NULL;
