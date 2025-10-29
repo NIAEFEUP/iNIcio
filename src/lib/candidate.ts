@@ -19,6 +19,11 @@ export type CandidateWithMetadata = User & {
   application: (Application & { interests: string[] }) | null;
   dynamicClassification: string;
   interviewClassification: string;
+  votingDecision?: {
+    decision: "approve" | "reject";
+    approveCount: number;
+    rejectCount: number;
+  } | null;
 };
 
 export enum CandidateFilterRestriction {

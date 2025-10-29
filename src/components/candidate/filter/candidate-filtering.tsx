@@ -30,6 +30,7 @@ type CandidatesPageFilter = {
   year: string;
   departments: string[];
   classifications: string[];
+  decision: string;
 };
 
 interface CandidateFilteringProps {
@@ -50,13 +51,15 @@ export default function CandidateFiltering({
     year: "all",
     departments: [] as string[],
     classifications: [] as string[],
+    decision: "all",
   });
 
   const hasActiveFilters =
     filters.course !== "all" ||
     filters.year !== "all" ||
     filters.departments.length > 0 ||
-    filters.classifications.length > 0;
+    filters.classifications.length > 0 ||
+    filters.decision !== "all";
 
   useEffect(() => {
     if (!query.trim()) setFilteredCandidates(candidates);
@@ -109,6 +112,23 @@ export default function CandidateFiltering({
         ),
       );
     }
+
+    if (filters.decision !== "all") {
+      setFilteredCandidates(
+        candidates.filter((c) => {
+          if (filters.decision === "approved") {
+            return c.votingDecision?.decision === "approve";
+          }
+          if (filters.decision === "rejected") {
+            return c.votingDecision?.decision === "reject";
+          }
+          if (filters.decision === "pending") {
+            return !c.votingDecision;
+          }
+          return true;
+        }),
+      );
+    }
   }, [filters, candidates, hasActiveFilters, setFilteredCandidates]);
 
   const handleDepartmentFilter = (department: string, checked: boolean) => {
@@ -138,6 +158,7 @@ export default function CandidateFiltering({
       year: "all",
       departments: [],
       classifications: [],
+      decision: "all",
     });
   };
 
@@ -186,6 +207,23 @@ export default function CandidateFiltering({
                   {year}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.decision}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, decision: value }))
+            }
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Decisão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Decisão</SelectItem>
+              <SelectItem value="approved">Aprovado</SelectItem>
+              <SelectItem value="rejected">Rejeitado</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
             </SelectContent>
           </Select>
 
@@ -315,6 +353,24 @@ export default function CandidateFiltering({
                 <button
                   onClick={() =>
                     setFilters((prev) => ({ ...prev, year: "all" }))
+                  }
+                  className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+            {filters.decision !== "all" && (
+              <Badge variant="secondary" className="gap-1">
+                Decisão:{" "}
+                {filters.decision === "approved"
+                  ? "Aprovado"
+                  : filters.decision === "rejected"
+                    ? "Rejeitado"
+                    : "Pendente"}
+                <button
+                  onClick={() =>
+                    setFilters((prev) => ({ ...prev, decision: "all" }))
                   }
                   className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
                 >
