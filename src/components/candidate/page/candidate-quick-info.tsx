@@ -227,15 +227,16 @@ export default function CandidateQuickInfo({
             <div className="h-4 w-px bg-border" />
 
             {displayInterviewButton && (
-              <a
+              <Link
                 href={`/candidate/${candidate?.id}/interview`}
                 className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
+                target="_blank"
               >
                 <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
                   Entrevista
                 </span>
                 <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </a>
+              </Link>
             )}
           </div>
         </CardFooter>

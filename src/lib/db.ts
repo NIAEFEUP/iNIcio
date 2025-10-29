@@ -2,6 +2,7 @@ import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../db/schema";
 import { eq } from "drizzle-orm";
+import { Pool } from "pg";
 
 export type Recruitment = typeof schema.recruitment.$inferSelect;
 export type Interview = typeof schema.interview.$inferSelect;
@@ -38,7 +39,14 @@ export type VotingPhase = typeof schema.votingPhase.$inferSelect & {
 export type CandidateVote = typeof schema.candidateVote.$inferSelect;
 export type RecruiterVote = typeof schema.recruiterVote.$inferSelect;
 
-export const db = drizzle(process.env.DATABASE_URL!, { schema });
+const pool =
+  globalThis.pgPool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 100,
+  });
+
+export const db = drizzle(pool, { schema });
 
 export const getAllCandidateUsers = async () => {
   return await db
