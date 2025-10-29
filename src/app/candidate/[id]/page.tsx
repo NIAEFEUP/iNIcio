@@ -2,6 +2,7 @@ import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
+import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
 import CommentFrame from "@/components/comments/comment-frame";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +11,7 @@ import { submitApplicationComment } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import { getApplicationComments } from "@/lib/comment";
+import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
 
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 
@@ -29,6 +31,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const candidate = await getCandidateWithMetadata(id);
   const comments = await getApplicationComments(id);
+  const votingDecision = await getLatestVotingDecisionForCandidate(id);
 
   const recruiters = await getRecruiters();
 
@@ -41,8 +44,9 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   return (
     <div className="h-screen mx-4 md:mx-16">
       <section className="flex flex-col md:flex-row gap-4 h-full">
-        <div>
+        <div className="space-y-4">
           <CandidateQuickInfo candidate={candidate} fullDetails={true} />
+          <CandidateVotingStatus votingDecision={votingDecision} />
         </div>
 
         <Tabs defaultValue="answers" className="w-full h-3/4">
