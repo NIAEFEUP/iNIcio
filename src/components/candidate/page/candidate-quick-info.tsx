@@ -135,7 +135,11 @@ export default function CandidateQuickInfo({
                 ? "default"
                 : "destructive"
             }
-            className="text-xs font-semibold"
+            className={`text-xs font-semibold ${
+              candidate.votingDecision.decision === "approve"
+                ? "bg-green-600 text-white"
+                : ""
+            }`}
           >
             {candidate.votingDecision.decision === "approve"
               ? "✓ Aprovado"

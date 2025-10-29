@@ -50,7 +50,9 @@ export default function CandidateVotingStatus({
               </h3>
               <Badge
                 variant={isApproved ? "default" : "destructive"}
-                className="text-xs"
+                className={`text-xs ${
+                  isApproved ? "bg-green-600 hover:bg-green-700 text-white" : ""
+                }`}
               >
                 {isApproved ? "Aprovado" : "Rejeitado"}
               </Badge>
