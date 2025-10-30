@@ -1,7 +1,6 @@
 import { candidate } from "@/db/schema";
 import {
   Application,
-  Candidate,
   db,
   Dynamic,
   Interview,

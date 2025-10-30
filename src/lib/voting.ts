@@ -3,6 +3,7 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { CandidateVote, db } from "./db";
 import {
+  application,
   candidate,
   candidateVote,
   recruiterVote,
@@ -12,7 +13,6 @@ import {
 } from "@/db/schema";
 import { CandidateWithMetadata } from "./candidate";
 import { getFilenameUrl } from "./file-upload";
-import { application } from "@/drizzle/schema";
 
 export async function getCurrentVotingPhase(id: number) {
   const vPhase = await db.query.votingPhase.findFirst({
@@ -303,45 +303,43 @@ export async function makeCandidateVoteDefinitive(
 }
 
 export async function getLatestVotingDecisionForCandidate(candidateId: string) {
-  await db.transaction(async (tx) => {
-    const latestVotingPhase = await db.query.votingPhaseCandidate.findFirst({
-      where: eq(votingPhaseCandidate.candidateId, candidateId),
-      orderBy: [desc(votingPhaseCandidate.votingPhaseId)],
-      with: {
-        votingPhase: true,
-      },
-    });
-
-    if (!latestVotingPhase || !latestVotingPhase.voteFinished) {
-      return null;
-    }
-
-    const votes = await db.query.candidateVote.findMany({
-      where: and(
-        eq(candidateVote.votingPhaseId, latestVotingPhase.votingPhaseId),
-        eq(candidateVote.candidateId, candidateId),
-      ),
-    });
-
-    const approveCount = votes.filter((v) => v.decision === "approve").length;
-    const rejectCount = votes.filter((v) => v.decision === "reject").length;
-
-    const c = await db.query.candidate.findFirst({
-      where: eq(candidate.userId, candidateId),
-      with: {
-        application: true,
-      },
-    });
-
-    const rejected = latestVotingPhase.voteFinished && !application.accepted;
-
-    return {
-      votingPhaseId: latestVotingPhase.votingPhaseId,
-      voteFinished: latestVotingPhase.voteFinished,
-      approveCount,
-      rejectCount,
-      decision: rejected ? "reject" : "approve",
-      createdAt: latestVotingPhase.votingPhase.created_at,
-    };
+  const latestVotingPhase = await db.query.votingPhaseCandidate.findFirst({
+    where: eq(votingPhaseCandidate.candidateId, candidateId),
+    orderBy: [desc(votingPhaseCandidate.votingPhaseId)],
+    with: {
+      votingPhase: true,
+    },
   });
+
+  if (!latestVotingPhase || !latestVotingPhase.voteFinished) {
+    return null;
+  }
+
+  const votes = await db.query.candidateVote.findMany({
+    where: and(
+      eq(candidateVote.votingPhaseId, latestVotingPhase.votingPhaseId),
+      eq(candidateVote.candidateId, candidateId),
+    ),
+  });
+
+  const approveCount = votes.filter((v) => v.decision === "approve").length;
+  const rejectCount = votes.filter((v) => v.decision === "reject").length;
+
+  const c = await db.query.candidate.findFirst({
+    where: eq(candidate.userId, candidateId),
+    with: {
+      application: true,
+    },
+  });
+
+  const rejected = latestVotingPhase.voteFinished && !c.application.accepted;
+
+  return {
+    votingPhaseId: latestVotingPhase.votingPhaseId,
+    voteFinished: latestVotingPhase.voteFinished,
+    approveCount,
+    rejectCount,
+    decision: rejected ? "reject" : ("approve" as "approve" | "reject"),
+    createdAt: latestVotingPhase.votingPhase.created_at,
+  };
 }

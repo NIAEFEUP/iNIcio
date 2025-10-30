@@ -12,7 +12,7 @@ type VotingDecision = {
 };
 
 interface CandidateVotingStatusProps {
-  votingDecision: VotingDecision | null;
+  votingDecision: VotingDecision | void | null;
 }
 
 export default function CandidateVotingStatus({

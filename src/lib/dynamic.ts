@@ -14,6 +14,7 @@ import { FilterRestriction } from "./restriction";
 import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
+  CandidateWithMetadata,
 } from "./candidate";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 
@@ -219,7 +220,7 @@ export async function createDynamicComment(
 
 export async function getAllCandidatesWithDynamic(
   restrictions: Array<CandidateFilterRestriction> = [],
-) {
+): Promise<Array<CandidateWithMetadata>> {
   const candidates = await db.query.candidate.findMany({
     where: (candidate, { exists }) =>
       exists(
@@ -251,11 +252,12 @@ export async function getAllCandidatesWithDynamic(
 
   candidates.sort((a, b) => a.application.id - b.application.id);
 
-  const res = await Promise.all(
+  const res: Array<CandidateWithMetadata> = await Promise.all(
     candidates.map(async (c) => {
       const votingDecision = await getLatestVotingDecisionForCandidate(
         c.userId,
       );
+
       return {
         ...c.user,
         dynamic: c.dynamic,
@@ -273,14 +275,14 @@ export async function getAllCandidatesWithDynamic(
     }),
   );
 
-  if (restrictions.length > 0) {
-    return restrictions.reduce(
-      (result, filter) => candidateFilterRestrictions[filter](result),
-      res,
-    );
-  }
+  // if (restrictions.length > 0) {
+  //   return restrictions.reduce(
+  //     (result, filter) => candidateFilterRestrictions[filter](result),
+  //     res,
+  //   );
+  // }
 
-  return res;
+  return Promise.resolve(res);
 }
 
 export async function addDynamicTemplate(content: Array<any>) {
