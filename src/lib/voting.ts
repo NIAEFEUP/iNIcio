@@ -303,36 +303,45 @@ export async function makeCandidateVoteDefinitive(
 }
 
 export async function getLatestVotingDecisionForCandidate(candidateId: string) {
-  const latestVotingPhase = await db.query.votingPhaseCandidate.findFirst({
-    where: eq(votingPhaseCandidate.candidateId, candidateId),
-    orderBy: [desc(votingPhaseCandidate.votingPhaseId)],
-    with: {
-      votingPhase: true,
-    },
+  await db.transaction(async (tx) => {
+    const latestVotingPhase = await db.query.votingPhaseCandidate.findFirst({
+      where: eq(votingPhaseCandidate.candidateId, candidateId),
+      orderBy: [desc(votingPhaseCandidate.votingPhaseId)],
+      with: {
+        votingPhase: true,
+      },
+    });
+
+    if (!latestVotingPhase || !latestVotingPhase.voteFinished) {
+      return null;
+    }
+
+    const votes = await db.query.candidateVote.findMany({
+      where: and(
+        eq(candidateVote.votingPhaseId, latestVotingPhase.votingPhaseId),
+        eq(candidateVote.candidateId, candidateId),
+      ),
+    });
+
+    const approveCount = votes.filter((v) => v.decision === "approve").length;
+    const rejectCount = votes.filter((v) => v.decision === "reject").length;
+
+    const c = await db.query.candidate.findFirst({
+      where: eq(candidate.userId, candidateId),
+      with: {
+        application: true,
+      },
+    });
+
+    const rejected = latestVotingPhase.voteFinished && !application.accepted;
+
+    return {
+      votingPhaseId: latestVotingPhase.votingPhaseId,
+      voteFinished: latestVotingPhase.voteFinished,
+      approveCount,
+      rejectCount,
+      decision: rejected ? "reject" : "approve",
+      createdAt: latestVotingPhase.votingPhase.created_at,
+    };
   });
-
-  if (!latestVotingPhase || !latestVotingPhase.voteFinished) {
-    return null;
-  }
-
-  const votes = await db.query.candidateVote.findMany({
-    where: and(
-      eq(candidateVote.votingPhaseId, latestVotingPhase.votingPhaseId),
-      eq(candidateVote.candidateId, candidateId),
-    ),
-  });
-
-  const approveCount = votes.filter((v) => v.decision === "approve").length;
-  const rejectCount = votes.filter((v) => v.decision === "reject").length;
-
-  return {
-    votingPhaseId: latestVotingPhase.votingPhaseId,
-    voteFinished: latestVotingPhase.voteFinished,
-    approveCount,
-    rejectCount,
-    decision: (approveCount > rejectCount ? "approve" : "reject") as
-      | "approve"
-      | "reject",
-    createdAt: latestVotingPhase.votingPhase.created_at,
-  };
 }
