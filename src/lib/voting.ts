@@ -243,6 +243,11 @@ export async function deleteCandidateVotes(
           eq(votingPhaseCandidate.candidateId, candidateId),
         ),
       );
+
+    await tx
+      .update(application)
+      .set({ accepted: false })
+      .where(eq(application.candidateId, candidateId));
   });
 }
 
