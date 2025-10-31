@@ -16,9 +16,9 @@ export async function getMessage(candidateId: string) {
   const result = await getLatestVotingDecisionForCandidate(candidateId);
 
   if (result.decision === "reject") {
-    return getRejectedMessage();
+    return { decision: "rejected", message: await getRejectedMessage() };
   } else {
-    return getAcceptedMessage();
+    return { decision: "approved", message: await getAcceptedMessage() };
   }
 }
 

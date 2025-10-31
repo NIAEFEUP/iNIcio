@@ -10,6 +10,7 @@ const progressPhaseActions: { [key: string]: string } = {
   recruiter_availability: "/recruiter/availability",
   profile: "/profile",
   who_knows: "/candidates",
+  resultado: "/candidate/result",
 };
 
 interface ProgressPhaseCardShowcaseProps {

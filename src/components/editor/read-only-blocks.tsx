@@ -1,8 +1,9 @@
 "use client";
 
 import { useCreateBlockNote } from "@blocknote/react";
-
 import { BlockNoteView } from "@blocknote/mantine";
+import "@blocknote/mantine/style.css";
+import "@blocknote/core/fonts/inter.css";
 import { BlockNoteSchema, defaultInlineContentSpecs } from "@blocknote/core";
 import { Mention } from "./mentions";
 import { useEffect } from "react";

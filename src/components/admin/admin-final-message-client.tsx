@@ -16,6 +16,8 @@ import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
 import { useState } from "react";
 import DynamicTemplateEditor from "./dynamic-template-editor";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import AcceptedMessageTemplateEditor from "./accepted-message-template-editor";
+import RejectedMessageTemplateEditor from "./rejected-message-template-editor";
 
 interface AdminTemplateClientProps {
   acceptedMessageOverrideAction: (update: Array<any>) => Promise<void>;
@@ -40,11 +42,13 @@ export default function AdminFinalMessageClient({
 }: AdminTemplateClientProps) {
   const [acceptedMessageTemplateState, setAcceptedMessageTemplate] = useState({
     id: acceptedMessageTemplate.id,
+    type: acceptedMessageTemplate.type,
     content: acceptedMessageTemplate.content,
   });
 
   const [rejectedMessageTemplateState, setRejectedMessageTemplate] = useState({
     id: rejectedMessageTemplate.id,
+    type: rejectedMessageTemplate.type,
     content: rejectedMessageTemplate.content,
   });
 
@@ -84,8 +88,8 @@ export default function AdminFinalMessageClient({
             </DialogHeader>
           </DialogContent>
         </Dialog>
-        <InterviewTemplateEditor
-          addInterviewTemplateAction={addAcceptedMessageTemplateAction}
+        <AcceptedMessageTemplateEditor
+          addAcceptedMessageTemplateAction={addAcceptedMessageTemplateAction}
           user={session?.user}
           token={jwt}
           templateState={acceptedMessageTemplateState}
@@ -118,8 +122,8 @@ export default function AdminFinalMessageClient({
           </DialogContent>
         </Dialog>
 
-        <DynamicTemplateEditor
-          addInterviewTemplateAction={addRejectedMessageTemplateAction}
+        <RejectedMessageTemplateEditor
+          addRejectedMessageTemplateAction={addRejectedMessageTemplateAction}
           user={session?.user}
           token={jwt}
           templateState={rejectedMessageTemplateState}

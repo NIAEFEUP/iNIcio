@@ -67,7 +67,7 @@ export default function ProgressPhaseCard({
   return (
     <div
       onClick={() => {
-        if (!checked && available) redirect(redirectUrl);
+        console.log({ checked, available, redirectUrl });
       }}
     >
       <Card className={cn(getBorderColor(), getBackgroundColor())}>

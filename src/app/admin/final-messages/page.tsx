@@ -8,10 +8,8 @@ import { finalMessageTemplate } from "@/db/schema";
 import {
   addAcceptedMessageTemplate,
   addRejectedMessageTemplate,
-  getAcceptedMessage,
   getAcceptedMessageTemplate,
   getRejectedMessageTemplate,
-  getRejectedMessage,
 } from "@/lib/final-messages";
 import AdminFinalMessageClient from "@/components/admin/admin-final-message-client";
 import { eq } from "drizzle-orm";
