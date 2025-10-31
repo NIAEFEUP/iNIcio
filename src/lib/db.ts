@@ -38,6 +38,8 @@ export type VotingPhase = typeof schema.votingPhase.$inferSelect & {
 };
 export type CandidateVote = typeof schema.candidateVote.$inferSelect;
 export type RecruiterVote = typeof schema.recruiterVote.$inferSelect;
+export type FinalMessageTemplate =
+  typeof schema.finalMessageTemplate.$inferSelect;
 
 const pool =
   globalThis.pgPool ??
