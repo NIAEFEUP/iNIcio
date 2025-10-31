@@ -68,7 +68,7 @@ export default function AdminResources({
         <ResourceCard
           title="Mensagem Final"
           quantityText="Editar texto de Aceite / Recusado"
-          onClick={() => redirect("/messages")}
+          onClick={() => redirect("/admin/final-messages")}
         />
 
         <ResourceCard
