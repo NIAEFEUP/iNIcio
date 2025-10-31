@@ -1,15 +1,6 @@
-import {
-  interview,
-  interviewComment,
-  interviewTemplate,
-  slot,
-  recruiterToInterview,
-  finalMessageTemplate,
-} from "@/db/schema";
-import { db, InterviewTemplate, Slot, FinalMessageTemplate } from "./db";
-import { and, eq, gt } from "drizzle-orm";
-import { getFilenameUrl } from "./file-upload";
-import { Comment } from "@/components/candidate/page/candidate-comments";
+import { finalMessageTemplate } from "@/db/schema";
+import { db, FinalMessageTemplate } from "./db";
+import { eq } from "drizzle-orm";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 
 export async function getMessage(candidateId: string) {
@@ -36,31 +27,6 @@ export async function getRejectedMessage() {
     .from(finalMessageTemplate)
     .where(eq(finalMessageTemplate.type, "rejected"));
   return message[0];
-}
-
-export async function updateInterview(candidateId: string, content: any) {
-  // TODO: 2 of these
-  await db.transaction(async (trx) => {
-    await trx
-      .update(interview)
-      .set({ content: content })
-      .where(eq(interview.candidateId, candidateId));
-  });
-}
-
-export async function addInterviewTemplate(content: Array<any>) {
-  // TODO: i need on of these for the other message
-  if (content.length === 0) return;
-
-  await db.transaction(async (trx) => {
-    const template = await trx.query.interviewTemplate.findFirst();
-
-    if (template) {
-      await trx.update(interviewTemplate).set({ content: content });
-    } else {
-      await trx.insert(interviewTemplate).values({ content: content });
-    }
-  });
 }
 
 export async function addAcceptedMessageTemplate(content: Array<any>) {
@@ -133,42 +99,4 @@ export async function getRejectedMessageTemplate(): Promise<FinalMessageTemplate
   }
 
   return template;
-}
-
-export function getCandidateInterviewLink(candidateId: string) {
-  return `/candidate/${candidateId}/interview`;
-}
-
-export async function getInterviewComments(
-  interviewId: number,
-): Promise<Array<Comment>> {
-  const comments = await db.query.interviewComment.findMany({
-    where: eq(interviewComment.interviewId, interviewId),
-    with: {
-      author: {
-        with: {
-          user: true,
-        },
-      },
-    },
-  });
-
-  return await Promise.all(
-    comments.map(
-      async (c): Promise<Comment> => ({
-        user: {
-          ...c.author.user,
-          image: await getFilenameUrl(c.author.user.image),
-        },
-        comment: {
-          id: c.id,
-          content: c.content,
-          createdAt: c.createdAt,
-          interviewId: c.interviewId,
-          authorId: c.authorId,
-        },
-        type: "interview",
-      }),
-    ),
-  );
 }
