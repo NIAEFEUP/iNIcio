@@ -29,7 +29,7 @@ export default async function ResultPage() {
                 {isApproved ? (
                   <CheckCircle2 className="w-20 h-20 text-green-500 mb-4" />
                 ) : (
-                  <XCircle className="w-20 h-20 text-red-500 mb-4" />
+                  <div></div>
                 )}
               </div>
             </div>
