@@ -30,8 +30,6 @@ export default function RejectedMessageTemplateEditor({
         templateState.content = editor?.document;
         setTemplateState(templateState);
       }}
-      saveHandler={addRejectedMessageTemplateAction}
-      saveHandlerTimeout={1000}
       entity={templateState}
     />
   );

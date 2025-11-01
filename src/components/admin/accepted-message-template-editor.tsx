@@ -30,8 +30,6 @@ export default function AcceptedMessageTemplateEditor({
         templateState.content = editor?.document;
         setTemplateState(templateState);
       }}
-      saveHandler={addAcceptedMessageTemplateAction}
-      saveHandlerTimeout={1000}
       entity={templateState}
     />
   );
