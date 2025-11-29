@@ -10,6 +10,7 @@ import { Button } from "./ui/button";
 
 import NotificationPopup from "./notifications/notification-popup";
 import { Notification } from "@/lib/db";
+import Image from "next/image";
 
 type Props = {
   className?: string;
@@ -43,12 +44,17 @@ export default function Navbar({
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <a
             href="/"
             className="flex items-center space-x-2 transition-opacity hover:opacity-80"
           >
-            <img src="/logo.svg" alt="Logo" className="h-4 w-auto" />
+            <Image
+              src="/logo.svg"
+              alt="Logo"
+              className="h-4 w-auto"
+              width={40}
+              height={40}
+            />
           </a>
 
           {/* Desktop Navigation */}

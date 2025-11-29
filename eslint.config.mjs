@@ -14,7 +14,6 @@ const eslintConfig = [
   {
     ignores: ["src/components/ui"],
     rules: {
-      "@next/next/no-img-element": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@next/next/no-html-link-for-pages": "off",
     },
