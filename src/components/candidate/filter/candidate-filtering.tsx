@@ -83,52 +83,49 @@ export default function CandidateFiltering({
       return;
     }
 
+    let filtered = [...candidates];
+
     if (filters.departments.length > 0) {
-      setFilteredCandidates(
-        candidates.filter((c) =>
-          c.application.interests.some((i) =>
-            filters.departments.includes(i.toLowerCase()),
-          ),
+      filtered = filtered.filter((c) =>
+        c.application.interests.some((i) =>
+          filters.departments.includes(i.toLowerCase()),
         ),
       );
     }
 
     if (filters.course !== "all") {
-      setFilteredCandidates(
-        candidates.filter((c) => c.application.degree === filters.course),
+      filtered = filtered.filter(
+        (c) => c.application.degree === filters.course,
       );
     }
 
     if (filters.year !== "all") {
-      setFilteredCandidates(
-        candidates.filter((c) => c.application.curricularYear === filters.year),
+      filtered = filtered.filter(
+        (c) => c.application.curricularYear === filters.year,
       );
     }
 
     if (filters.classifications.length > 0) {
-      setFilteredCandidates(
-        candidates.filter((c) =>
-          filters.classifications.includes(c.interviewClassification),
-        ),
+      filtered = filtered.filter((c) =>
+        filters.classifications.includes(c.interviewClassification),
       );
     }
 
     if (filters.decision !== "all") {
-      setFilteredCandidates(
-        candidates.filter((c) => {
-          if (filters.decision === "approved") {
-            return c.votingDecision?.decision === "approve";
-          }
-          if (filters.decision === "rejected") {
-            return c.votingDecision?.decision === "reject";
-          }
-          if (filters.decision === "pending") {
-            return !c.votingDecision;
-          }
-          return true;
-        }),
-      );
+      filtered = filtered.filter((c) => {
+        if (filters.decision === "approved") {
+          return c.votingDecision?.decision === "approve";
+        }
+        if (filters.decision === "rejected") {
+          return c.votingDecision?.decision === "reject";
+        }
+        if (filters.decision === "pending") {
+          return !c.votingDecision;
+        }
+        return true;
+      });
     }
+    setFilteredCandidates(filtered);
   }, [filters, candidates, hasActiveFilters, setFilteredCandidates]);
 
   const handleDepartmentFilter = (department: string, checked: boolean) => {
