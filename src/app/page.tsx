@@ -68,7 +68,7 @@ export default async function Home() {
               </div>
 
               <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-                Se tiveres interesse em juntar-te à equipa do{" "}
+                Se estiveres interessado em juntar-te à equipa do{" "}
                 <span className="text-primary font-semibold">NIAEFEUP</span>,
                 contacta-nos para saberes quando vamos abrir o próximo
                 recrutamento.
