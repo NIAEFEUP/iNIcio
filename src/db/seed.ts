@@ -35,7 +35,7 @@ async function main() {
   await db.insert(user).values({
     id: "1",
     name: "Candidato 1",
-    email: "utilizador@utilizador",
+    email: "utilizador@utilizador.com",
     emailVerified: true,
     image:
       "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSsuz2-gtje6NEAJQN1o9Nt-2vqFFuzXiuSa66ySKTnCKso2JPquWNlrGgC5ejIHyad3Itp5h2XkSESUmj1SZgHhCIFVa1ZuDm4efLyEUqz",
@@ -47,7 +47,7 @@ async function main() {
   await db.insert(user).values({
     id: "2",
     name: "Candidato 2",
-    email: "candidato2@utilizador",
+    email: "candidato2@utilizador.com",
     emailVerified: true,
     image:
       "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSsuz2-gtje6NEAJQN1o9Nt-2vqFFuzXiuSa66ySKTnCKso2JPquWNlrGgC5ejIHyad3Itp5h2XkSESUmj1SZgHhCIFVa1ZuDm4efLyEUqz",
