@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { hashPassword } from "better-auth/crypto";
 import {
   user,
   candidate,
@@ -77,16 +78,33 @@ async function main() {
 
   await db.insert(account).values({
     id: "1",
-    accountId: "1",
-    providerId: "1",
+    accountId: "3",
+    providerId: "credential",
+    issuer: "local:credential",
     userId: "3",
-    accessToken: "1",
-    refreshToken: "1",
-    idToken: "1",
-    accessTokenExpiresAt: new Date(),
-    refreshTokenExpiresAt: new Date(),
-    scope: "1",
-    password: "testeteste",
+    password: await hashPassword("testeteste"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.insert(account).values({
+    id: "2",
+    accountId: "1",
+    providerId: "credential",
+    issuer: "local:credential",
+    userId: "1",
+    password: await hashPassword("testeteste"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.insert(account).values({
+    id: "3",
+    accountId: "2",
+    providerId: "credential",
+    issuer: "local:credential",
+    userId: "2",
+    password: await hashPassword("testeteste"),
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -182,14 +200,14 @@ async function main() {
   await db.insert(recruitment).values({
     year: 2025,
     active: "true",
-    start: new Date(),
+    start: new Date("2025-09-01T00:00:00.000Z"),
     end: new Date("2025-09-30T16:00:00.000Z"),
   });
 
   await db.insert(recruitmentPhase).values({
     recruitmentYear: 2025,
     role: "candidate",
-    start: new Date(),
+    start: new Date("2025-09-01T00:00:00.000Z"),
     end: new Date("2025-09-30T16:00:00.000Z"),
     title: "Entrevista",
     description: "Marca a tua entrevista",
@@ -198,7 +216,7 @@ async function main() {
   await db.insert(recruitmentPhase).values({
     recruitmentYear: 2025,
     role: "candidate",
-    start: new Date(),
+    start: new Date("2025-09-01T00:00:00.000Z"),
     end: new Date("2025-09-30T16:00:00.000Z"),
     title: "Dinâmica",
     description: "Marca a tua dinâmica",

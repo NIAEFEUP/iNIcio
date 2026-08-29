@@ -342,6 +342,7 @@ export const account = pgTable(
     id: text().primaryKey().notNull(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
+    issuer: text("issuer").notNull(),
     userId: text("user_id").notNull(),
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
