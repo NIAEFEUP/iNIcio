@@ -44,18 +44,16 @@ export async function getApplicationComments(
     .orderBy(desc(applicationComment.createdAt), desc(applicationComment.id));
 
   return await Promise.all(
-    results.map(
-      async (e): Promise<Comment> => ({
-        user: {
-          ...e.user,
-          image: await getFilenameUrl(e.user.image),
-        },
-        comment: {
-          ...e.application_comment,
-        },
-        type: "application",
-      }),
-    ),
+    results.map(async (e): Promise<Comment> => ({
+      user: {
+        ...e.user,
+        image: await getFilenameUrl(e.user.image),
+      },
+      comment: {
+        ...e.application_comment,
+      },
+      type: "application",
+    })),
   );
 }
 
@@ -72,21 +70,19 @@ export async function getDynamicComments(dynamicId: number) {
   });
 
   return await Promise.all(
-    results.map(
-      async (e): Promise<Comment> => ({
-        user: {
-          ...e.author.user,
-          image: await getFilenameUrl(e.author.user.image),
-        },
-        comment: {
-          id: e.id,
-          content: e.content,
-          createdAt: e.createdAt,
-          dynamicId: e.dynamicId,
-          authorId: e.authorId,
-        },
-        type: "dynamic",
-      }),
-    ),
+    results.map(async (e): Promise<Comment> => ({
+      user: {
+        ...e.author.user,
+        image: await getFilenameUrl(e.author.user.image),
+      },
+      comment: {
+        id: e.id,
+        content: e.content,
+        createdAt: e.createdAt,
+        dynamicId: e.dynamicId,
+        authorId: e.authorId,
+      },
+      type: "dynamic",
+    })),
   );
 }
