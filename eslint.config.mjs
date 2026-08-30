@@ -1,21 +1,17 @@
-import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import prettier from "eslint-config-prettier/flat";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const eslintConfig = [
-  ...nextCoreWebVitals,
+export default defineConfig([
+  ...nextVitals,
   ...nextTypescript,
   {
-    ignores: ["src/components/ui"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@next/next/no-html-link-for-pages": "off",
     },
   },
-];
-
-export default eslintConfig;
+  prettier,
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "inicio-ws/**"]),
+]);
