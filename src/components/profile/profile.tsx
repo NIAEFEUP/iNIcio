@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap } from "lucide-react";
 import { Application } from "@/lib/db";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/use-session";
 import CandidateAnswers from "../candidate/page/candidate-answers";
 
 interface ProfileProps {
@@ -21,7 +21,7 @@ export default function Profile({
   applicationInterests,
   pictureUrl,
 }: ProfileProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
   return (
     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">

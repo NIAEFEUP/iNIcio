@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/use-session";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
@@ -27,7 +27,7 @@ export default function Navbar({
   isCandidate,
   notifications,
 }: Props) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

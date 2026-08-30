@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/use-session";
 import { ProfileImageUpload } from "../ui/profile-image-upload";
 
 interface ProfilePictureUploadProps {
@@ -22,7 +22,7 @@ export function EditProfileImage({
   getSignedPictureUrl,
   className,
 }: ProfilePictureUploadProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
   const [previewUrl, setPreviewUrl] = useState<string>(currentPicture);
   const fileInputRef = useRef<HTMLInputElement>(null);

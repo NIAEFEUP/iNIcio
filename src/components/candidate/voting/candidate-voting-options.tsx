@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useContext, useEffect } from "react";
 import { CandidateVotingContext } from "@/lib/contexts/CandidateVotingContext";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/use-session";
 
 export default function CandidateVotingOptions() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function CandidateVotingOptions() {
     currentCandidate,
   } = useContext(CandidateVotingContext);
 
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setAlreadyVotedForCurrentCandidate(
