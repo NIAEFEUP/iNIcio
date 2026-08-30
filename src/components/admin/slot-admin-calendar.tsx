@@ -115,8 +115,10 @@ export default function SlotAdminCalendar({
         { type: "remove", slot: currentSlots[existingIndex] },
       ]);
 
-      slots[slotType] = currentSlots.filter((_, i) => i != existingIndex);
-      setSlots(slots);
+      setSlots((prev) => ({
+        ...prev,
+        [slotType]: prev[slotType].filter((_, i) => i !== existingIndex),
+      }));
     } else {
       const newSlot: NewSlot = {
         start,

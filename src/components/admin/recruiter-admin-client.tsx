@@ -49,10 +49,6 @@ export default function RecruiterAdminClient({
     Array<{ id: string; name: string; email: string }>
   >([]);
 
-  const [allUsers, setAllUsers] = useState<
-    Array<{ id: string; name: string; email: string }>
-  >(users || []);
-
   const [selected, setSelected] = useState<{
     id: string;
     name: string;
@@ -74,7 +70,7 @@ export default function RecruiterAdminClient({
           { userId: idToAdd, name: selected.name, email: selected.email },
         ]);
       } else {
-        const u = allUsers.find(
+        const u = (users || []).find(
           (x) =>
             x.id === idToAdd || x.id.toLowerCase() === idToAdd.toLowerCase(),
         );
@@ -111,17 +107,14 @@ export default function RecruiterAdminClient({
   }
 
   useEffect(() => {
-    if (!isOpen) return;
-    setAllUsers(users || []);
-  }, [isOpen, users]);
-
-  useEffect(() => {
-    if (!query) return setResults([]);
-
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
+      if (!query) {
+        setResults([]);
+        return;
+      }
       const q = query.toLowerCase();
-      const filtered = allUsers.filter(
+      const filtered = (users || []).filter(
         (u) =>
           u.id.toLowerCase().includes(q) ||
           u.name.toLowerCase().includes(q) ||
@@ -129,7 +122,7 @@ export default function RecruiterAdminClient({
       );
       setResults(filtered.slice(0, 50));
     }, 150);
-  }, [query, allUsers]);
+  }, [query, users]);
 
   return (
     <div className="mx-16 md:mx-64">

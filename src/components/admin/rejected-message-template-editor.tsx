@@ -27,8 +27,7 @@ export default function RejectedMessageTemplateEditor({
       roomId="rejected-message-template-room"
       userName={user.name || "Anonymous"}
       onChange={(editor) => {
-        templateState.content = editor?.document;
-        setTemplateState(templateState);
+        setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
       entity={templateState}
     />

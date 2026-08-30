@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   parseISO,
   startOfDay,
@@ -27,32 +26,30 @@ export function WeekViewMultiDayEventsRow({
   const weekEnd = endOfWeek(selectedDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const processedEvents = useMemo(() => {
-    return multiDayEvents
-      .map((event) => {
-        const start = parseISO(event.startDate);
-        const end = parseISO(event.endDate);
-        const adjustedStart = isBefore(start, weekStart) ? weekStart : start;
-        const adjustedEnd = isAfter(end, weekEnd) ? weekEnd : end;
-        const startIndex = differenceInDays(adjustedStart, weekStart);
-        const endIndex = differenceInDays(adjustedEnd, weekStart);
+  const processedEvents = multiDayEvents
+    .map((event) => {
+      const start = parseISO(event.startDate);
+      const end = parseISO(event.endDate);
+      const adjustedStart = isBefore(start, weekStart) ? weekStart : start;
+      const adjustedEnd = isAfter(end, weekEnd) ? weekEnd : end;
+      const startIndex = differenceInDays(adjustedStart, weekStart);
+      const endIndex = differenceInDays(adjustedEnd, weekStart);
 
-        return {
-          ...event,
-          adjustedStart,
-          adjustedEnd,
-          startIndex,
-          endIndex,
-        };
-      })
-      .sort((a, b) => {
-        const startDiff = a.adjustedStart.getTime() - b.adjustedStart.getTime();
-        if (startDiff !== 0) return startDiff;
-        return b.endIndex - b.startIndex - (a.endIndex - a.startIndex);
-      });
-  }, [multiDayEvents, weekStart, weekEnd]);
+      return {
+        ...event,
+        adjustedStart,
+        adjustedEnd,
+        startIndex,
+        endIndex,
+      };
+    })
+    .sort((a, b) => {
+      const startDiff = a.adjustedStart.getTime() - b.adjustedStart.getTime();
+      if (startDiff !== 0) return startDiff;
+      return b.endIndex - b.startIndex - (a.endIndex - a.startIndex);
+    });
 
-  const eventRows = useMemo(() => {
+  const eventRows = (() => {
     const rows: (typeof processedEvents)[] = [];
 
     processedEvents.forEach((event) => {
@@ -71,23 +68,21 @@ export function WeekViewMultiDayEventsRow({
     });
 
     return rows;
-  }, [processedEvents]);
+  })();
 
-  const hasEventsInWeek = useMemo(() => {
-    return multiDayEvents.some((event) => {
-      const start = parseISO(event.startDate);
-      const end = parseISO(event.endDate);
+  const hasEventsInWeek = multiDayEvents.some((event) => {
+    const start = parseISO(event.startDate);
+    const end = parseISO(event.endDate);
 
-      return (
-        // Event starts within the week
-        (start >= weekStart && start <= weekEnd) ||
-        // Event ends within the week
-        (end >= weekStart && end <= weekEnd) ||
-        // Event spans the entire week
-        (start <= weekStart && end >= weekEnd)
-      );
-    });
-  }, [multiDayEvents, weekStart, weekEnd]);
+    return (
+      // Event starts within the week
+      (start >= weekStart && start <= weekEnd) ||
+      // Event ends within the week
+      (end >= weekStart && end <= weekEnd) ||
+      // Event spans the entire week
+      (start <= weekStart && end >= weekEnd)
+    );
+  });
 
   if (!hasEventsInWeek) {
     return null;

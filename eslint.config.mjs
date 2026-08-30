@@ -13,5 +13,11 @@ export default defineConfig([
     },
   },
   prettier,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "inicio-ws/**"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "inicio-ws/**",
+  ]),
 ]);
