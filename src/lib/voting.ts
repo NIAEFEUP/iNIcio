@@ -1,7 +1,7 @@
 import "server-only";
 
 import { and, desc, eq } from "drizzle-orm";
-import { CandidateVote, db } from "./db";
+import { db } from "./db";
 import {
   application,
   candidate,
@@ -11,7 +11,6 @@ import {
   votingPhaseCandidate,
   votingPhaseStatus,
 } from "@/db/schema";
-import { CandidateWithMetadata } from "./candidate";
 import { getFilenameUrl } from "./file-upload";
 
 export async function getCurrentVotingPhase(id: number) {

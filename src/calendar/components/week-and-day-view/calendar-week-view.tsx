@@ -12,7 +12,6 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
-import { DroppableTimeBlock } from "@/calendar/components/dnd/droppable-time-block";
 import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
 import { WeekViewMultiDayEventsRow } from "@/calendar/components/week-and-day-view/week-view-multi-day-events-row";
 

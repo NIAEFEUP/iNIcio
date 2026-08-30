@@ -1,4 +1,4 @@
-import { CALENDAR_ITENS_MOCK, COLORS, USERS_MOCK } from "@/calendar/mocks";
+import { COLORS, USERS_MOCK } from "@/calendar/mocks";
 import { IEvent } from "./interfaces";
 import { db } from "@/lib/db";
 import { recruiterToDynamic, recruiterToInterview } from "@/db/schema";
@@ -136,7 +136,7 @@ export const getEvents = async (userId: string) => {
     });
   });
 
-  dynamics.forEach((dynamicItem, index) => {
+  dynamics.forEach((dynamicItem) => {
     const slotStart = dynamicItem.slot.start;
     const slotEnd = new Date(
       slotStart.getTime() + dynamicItem.slot.duration * 60000,

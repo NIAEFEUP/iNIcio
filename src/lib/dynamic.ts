@@ -10,12 +10,7 @@ import { db, DynamicTemplate, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/drizzle/schema";
-import { FilterRestriction } from "./restriction";
-import {
-  CandidateFilterRestriction,
-  candidateFilterRestrictions,
-  CandidateWithMetadata,
-} from "./candidate";
+import { CandidateWithMetadata } from "./candidate";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 
 export async function tryToAddCandidateToDynamic(
@@ -163,7 +158,7 @@ export async function getDynamicInterviewers(dynamicId: number) {
 }
 
 export async function getCandidateDynamic(candidateId: string) {
-  const res = await db.query.dynamic.findFirst({
+  await db.query.dynamic.findFirst({
     with: {
       candidates: {
         where: eq(candidateToDynamic.candidateId, candidateId),
@@ -218,9 +213,9 @@ export async function createDynamicComment(
   });
 }
 
-export async function getAllCandidatesWithDynamic(
-  restrictions: Array<CandidateFilterRestriction> = [],
-): Promise<Array<CandidateWithMetadata>> {
+export async function getAllCandidatesWithDynamic(): Promise<
+  Array<CandidateWithMetadata>
+> {
   const candidates = await db.query.candidate.findMany({
     where: (candidate, { exists }) =>
       exists(
@@ -274,13 +269,6 @@ export async function getAllCandidatesWithDynamic(
       };
     }),
   );
-
-  // if (restrictions.length > 0) {
-  //   return restrictions.reduce(
-  //     (result, filter) => candidateFilterRestrictions[filter](result),
-  //     res,
-  //   );
-  // }
 
   return Promise.resolve(res);
 }

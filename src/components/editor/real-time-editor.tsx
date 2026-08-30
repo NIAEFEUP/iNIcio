@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -102,7 +102,7 @@ export default function RealTimeEditor({
     return () => {
       clearInterval(timeout);
     };
-  }, [editor, saveHandler, saveHandlerTimeout]);
+  }, [editor, saveHandler, saveHandlerTimeout, currentContent]);
 
   useEffect(() => {
     return () => {

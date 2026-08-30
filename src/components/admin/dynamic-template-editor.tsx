@@ -1,8 +1,8 @@
 "use client";
 
-import { DynamicTemplate, InterviewTemplate, User } from "@/lib/db";
+import { InterviewTemplate, User } from "@/lib/db";
 import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface DynamicTemplateEditorProps {
   user: User;

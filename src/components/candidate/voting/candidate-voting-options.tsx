@@ -12,7 +12,6 @@ export default function CandidateVotingOptions() {
   const {
     setAlreadyVotedForCurrentCandidate,
     alreadyVotedForCurrentCandidate,
-    candidates,
     currentVotingPhase,
     submitVoteAction,
     recruiterVotes,

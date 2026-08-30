@@ -9,7 +9,6 @@ import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import CandidateVotingStats from "./candidate-voting-stats";
-import { cn } from "@/lib/utils";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
@@ -64,7 +63,7 @@ export function CandidateVotingSlideshow({
   );
   const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
 
-  const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [, setDirection] = useState<"next" | "prev">("next");
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);

@@ -12,7 +12,6 @@ import {
   ApplicationComment,
   DynamicComment,
   InterviewComment,
-  NewApplicationComment,
   User,
 } from "@/lib/db";
 import { Send } from "lucide-react";

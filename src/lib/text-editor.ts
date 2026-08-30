@@ -1,7 +1,5 @@
 import { User } from "./db";
 
-import * as Y from "yjs";
-
 export function getMentionMenuItems(users: Array<User>, editor: any) {
   return users.map((user) => ({
     title: user.name,

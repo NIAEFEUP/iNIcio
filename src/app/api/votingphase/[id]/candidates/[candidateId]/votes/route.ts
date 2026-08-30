@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { isRecruiter } from "@/lib/recruiter";
-import { getCandidateVotes, getVotingPhaseStatus } from "@/lib/voting";
+import { getCandidateVotes } from "@/lib/voting";
 
 export async function GET(request: NextRequest, context: any) {
   try {

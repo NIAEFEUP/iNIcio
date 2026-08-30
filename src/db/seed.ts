@@ -13,7 +13,6 @@ import {
   interview,
   dynamic,
   recruitmentPhaseStatus,
-  candidateToDynamic,
   admin,
 } from "./schema";
 

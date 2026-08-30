@@ -2,7 +2,7 @@
 
 import { FinalMessageTemplate, User } from "@/lib/db";
 import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface AcceptedMessageTemplateEditorProps {
   user: User;
@@ -15,7 +15,6 @@ interface AcceptedMessageTemplateEditorProps {
 export default function AcceptedMessageTemplateEditor({
   user,
   token,
-  addAcceptedMessageTemplateAction,
   templateState,
   setTemplateState,
 }: AcceptedMessageTemplateEditorProps) {
