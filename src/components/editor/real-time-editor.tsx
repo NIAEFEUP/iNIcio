@@ -13,7 +13,7 @@ import {
   defaultInlineContentSpecs,
   filterSuggestionItems,
 } from "@blocknote/core";
-import { CollaborationExtension } from "@blocknote/core/yjs";
+import { withCollaboration } from "@blocknote/core/yjs";
 import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
@@ -65,11 +65,11 @@ export default function RealTimeEditor({
     },
   });
 
-  const editor = useCreateBlockNote({
-    schema,
-    extensions: collab
-      ? [
-          CollaborationExtension({
+  const editor = useCreateBlockNote(
+    collab
+      ? withCollaboration({
+          schema,
+          collaboration: {
             provider: provider!,
             fragment: doc!.getXmlFragment(`document-store-${docId}`),
             user: {
@@ -77,10 +77,10 @@ export default function RealTimeEditor({
               color: getRandomColor(),
             },
             showCursorLabels: "activity",
-          }),
-        ]
-      : undefined,
-  });
+          },
+        })
+      : { schema },
+  );
 
   useEffect(() => {
     if (!editor || !entity?.content) return;
