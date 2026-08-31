@@ -17,6 +17,8 @@ import {
 } from "./schema";
 
 async function main() {
+  const currentYear = new Date().getFullYear();
+
   await db.delete(admin);
   await db.delete(interview);
   await db.delete(dynamic);
@@ -197,68 +199,68 @@ async function main() {
   // });
 
   await db.insert(recruitment).values({
-    year: 2025,
+    year: currentYear,
     active: "true",
-    start: new Date("2025-09-01T00:00:00.000Z"),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
   });
 
   await db.insert(recruitmentPhase).values({
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
     role: "candidate",
-    start: new Date("2025-09-01T00:00:00.000Z"),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     title: "Entrevista",
     description: "Marca a tua entrevista",
   });
 
   await db.insert(recruitmentPhase).values({
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
     role: "candidate",
-    start: new Date("2025-09-01T00:00:00.000Z"),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     title: "Dinâmica",
     description: "Marca a tua dinâmica",
   });
 
   await db.insert(slot).values({
     id: 1,
-    start: new Date("2025-09-30T01:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T01:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 2,
-    start: new Date("2025-09-30T10:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T10:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 3,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 4,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "dynamic",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 5,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "interview-dynamic",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(interview).values({
