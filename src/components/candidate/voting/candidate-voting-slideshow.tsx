@@ -144,9 +144,11 @@ export function CandidateVotingSlideshow({
   const [prevVotesLength, setPrevVotesLength] = useState<number | undefined>(
     votesLength,
   );
-  if (votesLength === 0 && prevVotesLength !== 0) {
-    setPrevVotesLength(0);
-    setAlreadyVotedForCurrentCandidate(false);
+  if (votesLength !== prevVotesLength) {
+    if (votesLength === 0 && prevVotesLength !== 0) {
+      setAlreadyVotedForCurrentCandidate(false);
+    }
+    setPrevVotesLength(votesLength);
   }
 
   return (
