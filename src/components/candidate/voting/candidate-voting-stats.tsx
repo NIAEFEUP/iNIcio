@@ -71,8 +71,8 @@ export default function CandidateVotingStats({
             <>
               <Button
                 onClick={async () => {
-                  await makeVoteDefinitive("accept");
-                  setCurrentCandidateFinished(true);
+                  const ok = await makeVoteDefinitive("accept");
+                  if (ok) setCurrentCandidateFinished(true);
                 }}
               >
                 Aceitar definitivo
@@ -80,8 +80,8 @@ export default function CandidateVotingStats({
               <Button
                 variant="secondary"
                 onClick={async () => {
-                  await makeVoteDefinitive("reject");
-                  setCurrentCandidateFinished(true);
+                  const ok = await makeVoteDefinitive("reject");
+                  if (ok) setCurrentCandidateFinished(true);
                 }}
               >
                 Rejeitar definitivo
