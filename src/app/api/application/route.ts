@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-import { db, getRecruitmentCandidatePhases } from "@/lib/db";
+import { db } from "@/lib/db";
 
 import {
   application,
   applicationInterests,
   candidate,
+  recruitmentPhase,
   recruitmentPhaseStatus,
   user,
 } from "@/db/schema";
@@ -106,7 +107,10 @@ export async function POST(req: Request) {
 
     await tx.insert(candidate).values({ userId: session.user.id });
 
-    const phases = await getRecruitmentCandidatePhases();
+    const phases = await tx
+      .select()
+      .from(recruitmentPhase)
+      .where(eq(recruitmentPhase.role, "candidate"));
 
     for (const phase of phases) {
       await tx.insert(recruitmentPhaseStatus).values({
