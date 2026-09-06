@@ -17,8 +17,8 @@ jobs:
       - name: Upload to NIployments register
         uses: NIAEFEUP/push-to-niployments@v2.2
         with:
-          docker_dockerfile: inicio-ws/Dockerfile
-          docker_context: .
+          docker_dockerfile: Dockerfile
+          docker_context: inicio-ws
           repository_name: inicio-ws
           NIPLOYMENTS_REGISTRY_URL: ${{ vars.NIPLOYMENTS_REGISTRY_URL }}
           NIPLOYMENTS_REGISTRY_USERNAME: ${{ vars.NIPLOYMENTS_REGISTRY_USERNAME }}
