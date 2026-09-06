@@ -2,7 +2,7 @@
 
 import { FinalMessageTemplate, User } from "@/lib/db";
 import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface RejectedMessageTemplateEditorProps {
   user: User;
@@ -15,7 +15,6 @@ interface RejectedMessageTemplateEditorProps {
 export default function RejectedMessageTemplateEditor({
   user,
   token,
-  addRejectedMessageTemplateAction,
   templateState,
   setTemplateState,
 }: RejectedMessageTemplateEditorProps) {
@@ -27,8 +26,7 @@ export default function RejectedMessageTemplateEditor({
       roomId="rejected-message-template-room"
       userName={user.name || "Anonymous"}
       onChange={(editor) => {
-        templateState.content = editor?.document;
-        setTemplateState(templateState);
+        setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
       entity={templateState}
     />

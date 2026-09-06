@@ -21,14 +21,13 @@ import {
   Calendar,
   Camera,
   FileText,
-  Linkedin,
-  Github,
   Globe,
   Heart,
   MessageSquare,
   Lightbulb,
   Send,
 } from "lucide-react";
+import { FaLinkedin, FaGithub } from "react-icons/fa";
 import { Separator } from "@/components/ui/separator";
 
 type ApplicationClientProps = {
@@ -466,7 +465,7 @@ export default function ApplicationClient({
             <CardContent className="space-y-6">
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <Linkedin className="h-4 w-4 text-primary" />
+                  <FaLinkedin className="h-4 w-4 text-primary" />
                   LinkedIn
                 </label>
                 <input
@@ -482,7 +481,7 @@ export default function ApplicationClient({
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <Github className="h-4 w-4 text-primary" />
+                    <FaGithub className="h-4 w-4 text-primary" />
                     GitHub
                   </label>
                   <input

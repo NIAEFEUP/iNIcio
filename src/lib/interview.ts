@@ -170,21 +170,19 @@ export async function getInterviewComments(
   });
 
   return await Promise.all(
-    comments.map(
-      async (c): Promise<Comment> => ({
-        user: {
-          ...c.author.user,
-          image: await getFilenameUrl(c.author.user.image),
-        },
-        comment: {
-          id: c.id,
-          content: c.content,
-          createdAt: c.createdAt,
-          interviewId: c.interviewId,
-          authorId: c.authorId,
-        },
-        type: "interview",
-      }),
-    ),
+    comments.map(async (c): Promise<Comment> => ({
+      user: {
+        ...c.author.user,
+        image: await getFilenameUrl(c.author.user.image),
+      },
+      comment: {
+        id: c.id,
+        content: c.content,
+        createdAt: c.createdAt,
+        interviewId: c.interviewId,
+        authorId: c.authorId,
+      },
+      type: "interview",
+    })),
   );
 }

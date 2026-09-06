@@ -1,7 +1,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { Label } from "@radix-ui/react-label";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface CandidateQuickInfoSelectProps {
   candidate: CandidateWithMetadata;
@@ -18,10 +18,12 @@ export default function CandidateQuickInfoSelect({
   candidateSelected = false,
 }: CandidateQuickInfoSelectProps) {
   const [checked, setChecked] = useState<boolean>(candidateSelected);
-
-  useEffect(() => {
+  const [prevCandidateSelected, setPrevCandidateSelected] =
+    useState<boolean>(candidateSelected);
+  if (prevCandidateSelected !== candidateSelected) {
+    setPrevCandidateSelected(candidateSelected);
     setChecked(candidateSelected);
-  }, [candidateSelected]);
+  }
 
   return (
     <div className="flex items-center gap-3">

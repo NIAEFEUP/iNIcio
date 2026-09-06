@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -13,6 +13,7 @@ import {
   defaultInlineContentSpecs,
   filterSuggestionItems,
 } from "@blocknote/core";
+import { withCollaboration } from "@blocknote/core/yjs";
 import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
@@ -64,20 +65,22 @@ export default function RealTimeEditor({
     },
   });
 
-  const editor = useCreateBlockNote({
-    schema,
-    collaboration: collab
-      ? {
-          provider,
-          fragment: doc.getXmlFragment(`document-store-${docId}`),
-          user: {
-            name: userName,
-            color: getRandomColor(),
+  const editor = useCreateBlockNote(
+    collab
+      ? withCollaboration({
+          schema,
+          collaboration: {
+            provider: provider!,
+            fragment: doc!.getXmlFragment(`document-store-${docId}`),
+            user: {
+              name: userName,
+              color: getRandomColor(),
+            },
+            showCursorLabels: "activity",
           },
-          showCursorLabels: "activity",
-        }
-      : undefined,
-  });
+        })
+      : { schema },
+  );
 
   useEffect(() => {
     if (!editor || !entity?.content) return;
@@ -99,7 +102,7 @@ export default function RealTimeEditor({
     return () => {
       clearInterval(timeout);
     };
-  }, [editor, saveHandler, saveHandlerTimeout]);
+  }, [editor, saveHandler, saveHandlerTimeout, currentContent]);
 
   useEffect(() => {
     return () => {

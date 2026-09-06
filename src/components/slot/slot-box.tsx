@@ -4,9 +4,6 @@ export default function SlotBox({
   existingSlot,
   isSlotSelected,
   getTypeColor,
-  handleCellClick,
-  date,
-  time,
 }) {
   return (
     <div

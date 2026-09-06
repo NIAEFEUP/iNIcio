@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { hashPassword } from "better-auth/crypto";
 import {
   user,
   candidate,
@@ -12,11 +13,12 @@ import {
   interview,
   dynamic,
   recruitmentPhaseStatus,
-  candidateToDynamic,
   admin,
 } from "./schema";
 
 async function main() {
+  const currentYear = new Date().getFullYear();
+
   await db.delete(admin);
   await db.delete(interview);
   await db.delete(dynamic);
@@ -34,7 +36,7 @@ async function main() {
   await db.insert(user).values({
     id: "1",
     name: "Candidato 1",
-    email: "utilizador@utilizador",
+    email: "utilizador@utilizador.com",
     emailVerified: true,
     image:
       "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSsuz2-gtje6NEAJQN1o9Nt-2vqFFuzXiuSa66ySKTnCKso2JPquWNlrGgC5ejIHyad3Itp5h2XkSESUmj1SZgHhCIFVa1ZuDm4efLyEUqz",
@@ -46,7 +48,7 @@ async function main() {
   await db.insert(user).values({
     id: "2",
     name: "Candidato 2",
-    email: "candidato2@utilizador",
+    email: "candidato2@utilizador.com",
     emailVerified: true,
     image:
       "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSsuz2-gtje6NEAJQN1o9Nt-2vqFFuzXiuSa66ySKTnCKso2JPquWNlrGgC5ejIHyad3Itp5h2XkSESUmj1SZgHhCIFVa1ZuDm4efLyEUqz",
@@ -77,16 +79,33 @@ async function main() {
 
   await db.insert(account).values({
     id: "1",
-    accountId: "1",
-    providerId: "1",
+    accountId: "3",
+    providerId: "credential",
+    issuer: "local:credential",
     userId: "3",
-    accessToken: "1",
-    refreshToken: "1",
-    idToken: "1",
-    accessTokenExpiresAt: new Date(),
-    refreshTokenExpiresAt: new Date(),
-    scope: "1",
-    password: "testeteste",
+    password: await hashPassword("testeteste"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.insert(account).values({
+    id: "2",
+    accountId: "1",
+    providerId: "credential",
+    issuer: "local:credential",
+    userId: "1",
+    password: await hashPassword("testeteste"),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  await db.insert(account).values({
+    id: "3",
+    accountId: "2",
+    providerId: "credential",
+    issuer: "local:credential",
+    userId: "2",
+    password: await hashPassword("testeteste"),
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -180,68 +199,68 @@ async function main() {
   // });
 
   await db.insert(recruitment).values({
-    year: 2025,
+    year: currentYear,
     active: "true",
-    start: new Date(),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
   });
 
   await db.insert(recruitmentPhase).values({
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
     role: "candidate",
-    start: new Date(),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     title: "Entrevista",
     description: "Marca a tua entrevista",
   });
 
   await db.insert(recruitmentPhase).values({
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
     role: "candidate",
-    start: new Date(),
-    end: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
+    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     title: "Dinâmica",
     description: "Marca a tua dinâmica",
   });
 
   await db.insert(slot).values({
     id: 1,
-    start: new Date("2025-09-30T01:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T01:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 2,
-    start: new Date("2025-09-30T10:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T10:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 3,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "interview",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 4,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "dynamic",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(slot).values({
     id: 5,
-    start: new Date("2025-09-30T16:00:00.000Z"),
+    start: new Date(`${currentYear}-09-30T16:00:00.000Z`),
     duration: 30,
     type: "interview-dynamic",
-    recruitmentYear: 2025,
+    recruitmentYear: currentYear,
   });
 
   await db.insert(interview).values({

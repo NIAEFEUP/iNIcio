@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { BookingPicker } from "./booking-picker";
 import { SlotType } from "../admin/slot-admin-calendar";
 import { useState } from "react";

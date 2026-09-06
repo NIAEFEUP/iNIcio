@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
@@ -9,7 +9,6 @@ import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import CandidateVotingStats from "./candidate-voting-stats";
-import { cn } from "@/lib/utils";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
@@ -64,7 +63,7 @@ export function CandidateVotingSlideshow({
   );
   const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
 
-  const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [, setDirection] = useState<"next" | "prev">("next");
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);
@@ -104,15 +103,21 @@ export function CandidateVotingSlideshow({
 
   const votedCount = finishedCandidates;
 
-  useEffect(() => {
-    const newIndex = candidates.findIndex(
-      (c) => c.id === votingPhaseStatus?.candidateId,
-    );
+  const phaseCandidateId = votingPhaseStatus?.candidateId;
+  const [prevPhaseCandidateId, setPrevPhaseCandidateId] = useState<
+    string | undefined
+  >(phaseCandidateId);
+  if (
+    phaseCandidateId !== undefined &&
+    prevPhaseCandidateId !== phaseCandidateId
+  ) {
+    setPrevPhaseCandidateId(phaseCandidateId);
+    const newIndex = candidates.findIndex((c) => c.id === phaseCandidateId);
     if (newIndex !== -1) {
       setCurrentIndex(newIndex);
       setCurrentCandidate(candidates[newIndex]);
     }
-  }, [votingPhaseStatus, candidates]);
+  }
 
   async function makeVoteDefinitive(decision: "accept" | "reject") {
     const ok = await makeVoteDefinitiveAction(
@@ -135,11 +140,16 @@ export function CandidateVotingSlideshow({
     return ok;
   }
 
-  useEffect(() => {
-    if (votes?.length === 0) {
+  const votesLength = votes?.length;
+  const [prevVotesLength, setPrevVotesLength] = useState<number | undefined>(
+    votesLength,
+  );
+  if (votesLength !== prevVotesLength) {
+    if (votesLength === 0 && prevVotesLength !== 0) {
       setAlreadyVotedForCurrentCandidate(false);
     }
-  }, [votes]);
+    setPrevVotesLength(votesLength);
+  }
 
   return (
     <CandidateVotingProvider

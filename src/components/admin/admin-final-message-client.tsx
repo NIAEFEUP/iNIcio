@@ -4,17 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 import { FinalMessageTemplate } from "@/lib/db";
-import InterviewTemplateEditor from "./interview-template-editor";
-import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
 import { useState } from "react";
-import DynamicTemplateEditor from "./dynamic-template-editor";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import AcceptedMessageTemplateEditor from "./accepted-message-template-editor";
 import RejectedMessageTemplateEditor from "./rejected-message-template-editor";

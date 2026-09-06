@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -133,7 +133,7 @@ export function BookingPicker({
 
           {selectedRecruiters?.length > 0 && (
             <div className="space-y-2">
-              {selectedRecruiters?.map((interviewer, idx) => {
+              {selectedRecruiters?.map((interviewer) => {
                 return (
                   <div
                     key={crypto.randomUUID()}

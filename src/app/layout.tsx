@@ -4,7 +4,6 @@ import "./globals.css";
 
 import NavbarController from "@/components/navbar-controller";
 import { Toaster } from "sonner";
-import Head from "next/head";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -24,9 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt" className={montserrat.variable}>
-      <Head>
-        <link rel="icon" href="favicon.ico" />
-      </Head>
       <body className={`flex flex-col h-screen antialiased`}>
         <NavbarController />
         <main className="grow">{children}</main>

@@ -1,12 +1,5 @@
 import Link from "next/link";
-import {
-  Columns,
-  Grid3x3,
-  List,
-  Plus,
-  Grid2x2,
-  CalendarRange,
-} from "lucide-react";
+import { Columns, List, CalendarRange } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -24,7 +17,7 @@ interface IProps {
   urlId: string;
 }
 
-export function CalendarHeader({ view, events, urlId }: IProps) {
+export function CalendarHeader({ view, events }: IProps) {
   const params = useParams();
 
   const id = params.id;

@@ -1,4 +1,3 @@
-import { Comment } from "@/components/candidate/page/candidate-comments";
 import {
   NewApplicationComment,
   NewDynamicComment,

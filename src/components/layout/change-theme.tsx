@@ -1,35 +1,38 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import { setTheme } from "@/cookies/set";
 
-export function ToggleTheme() {
-  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">();
+const themeListeners = new Set<() => void>();
 
-  useEffect(() => {
-    const currentTheme = document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light";
-    setCurrentTheme(currentTheme);
-  }, []);
+function readTheme(): "light" | "dark" {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+export function ToggleTheme() {
+  const currentTheme = useSyncExternalStore(
+    (listener) => {
+      themeListeners.add(listener);
+      return () => themeListeners.delete(listener);
+    },
+    readTheme,
+    () => "light",
+  );
 
   const toggleTheme = () => {
     const newTheme = currentTheme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    setCurrentTheme(newTheme);
+    themeListeners.forEach((listener) => listener());
   };
-
-  if (!currentTheme) return <Skeleton className="size-9" />;
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme}>
-      {currentTheme === "light" && <Sun />}
-      {currentTheme === "dark" && <Moon />}
+      {currentTheme === "light" ? <Moon /> : <Sun />}
     </Button>
   );
 }

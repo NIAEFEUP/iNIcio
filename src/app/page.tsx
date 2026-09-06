@@ -36,9 +36,7 @@ export default async function Home() {
                     ...session?.user,
                     image: session?.user.image ?? "/default-avatar.png",
                     role: session?.user.role as
-                      | "recruiter"
-                      | "candidate"
-                      | "admin",
+                      "recruiter" | "candidate" | "admin",
                   }
                 : null
             }

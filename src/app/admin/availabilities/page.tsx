@@ -14,7 +14,6 @@ import {
 
 import {
   getEventAvailabilities,
-  getUsers,
   getUsersRecruiters,
 } from "@/calendar/requests";
 import { auth } from "@/lib/auth";

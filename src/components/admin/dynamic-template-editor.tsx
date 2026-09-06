@@ -1,8 +1,8 @@
 "use client";
 
-import { DynamicTemplate, InterviewTemplate, User } from "@/lib/db";
+import { InterviewTemplate, User } from "@/lib/db";
 import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface DynamicTemplateEditorProps {
   user: User;
@@ -27,8 +27,7 @@ export default function DynamicTemplateEditor({
       roomId="interview-template-room"
       userName={user.name || "Anonymous"}
       onChange={(editor) => {
-        templateState.content = editor?.document;
-        setTemplateState(templateState);
+        setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
       saveHandler={addInterviewTemplateAction}
       saveHandlerTimeout={1000}

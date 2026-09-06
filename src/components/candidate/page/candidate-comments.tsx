@@ -7,12 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/use-session";
 import {
   ApplicationComment,
   DynamicComment,
   InterviewComment,
-  NewApplicationComment,
   User,
 } from "@/lib/db";
 import { Send } from "lucide-react";
@@ -44,7 +43,7 @@ export default function CandidateComments({
   comments,
   saveToDatabase,
 }: CandidateCommentsProps) {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
   const [commentsState, setCommentsState] = useState<Array<Comment>>(comments);
 

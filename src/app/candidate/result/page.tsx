@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { getMessage } from "@/lib/final-messages";
 import { headers } from "next/headers";
 import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default async function ResultPage() {
   const session = await auth.api.getSession({

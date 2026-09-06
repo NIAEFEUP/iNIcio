@@ -99,9 +99,6 @@ export default function ChooseCustomSlot({
                           existingSlot={existingSlot}
                           isSlotSelected={isSlotSelected}
                           getTypeColor={getTypeColor}
-                          handleCellClick={handleCellClick}
-                          date={date}
-                          time={time}
                         />
                       </td>
                     );

@@ -1,11 +1,11 @@
-name: Deploy
+name: Deploy WS
 
 on:
   push:
     branches:
       - main
-  paths:
-    - "inicio-ws/**"
+    paths:
+      - "inicio-ws/**"
 
 jobs:
   build:

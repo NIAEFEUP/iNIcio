@@ -58,7 +58,7 @@
     ]
   },
   "dependencies": {
-    "@y/protocols": "^1.0.6-1",
+    "y-protocols": "^1.0.6",
     "jsonwebtoken": "^9.0.2",
     "lib0": "^0.2.102"
   },
@@ -69,10 +69,10 @@
     "standard": "^17.1.2",
     "typescript": "^5.8.3",
     "ws": "^6.2.1",
-    "yjs": "^14.0.0-7"
+    "yjs": "^13.6.27"
   },
   "peerDependencies": {
-    "yjs": "^14.0.0-7"
+    "yjs": "^13.6.27"
   },
   "engines": {
     "npm": ">=8.0.0",

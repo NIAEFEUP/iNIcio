@@ -1,20 +1,6 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-
-import { db, getRecruitmentCandidatePhases } from "@/lib/db";
-
-import {
-  application,
-  applicationInterests,
-  recruitmentPhaseStatus,
-  user,
-} from "@/db/schema";
-import { candidate } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
-import { fromFullUrlToPath } from "@/lib/file-upload";
 import { redirect } from "next/navigation";
 
-export async function POST(req: Request) {
+export async function POST() {
   redirect("/");
 
   // const session = await auth.api.getSession({

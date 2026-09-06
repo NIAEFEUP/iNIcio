@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { CandidateVotingContext } from "@/lib/contexts/CandidateVotingContext";
 import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
 import { Check, Eye, EyeOff, X } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 
 export default function CandidateVotingShowResults() {
   const [show, setShow] = useState<boolean>(false);
@@ -16,21 +16,12 @@ export default function CandidateVotingShowResults() {
     currentCandidate?.id,
   );
 
-  const [approvedCount, setApprovedCount] = useState<number>(
-    votes ? votes.filter((v) => v.decision === "approve").length : 0,
-  );
-  const [rejectedCount, setRejectedCount] = useState<number>(
-    votes ? votes.filter((v) => v.decision === "reject").length : 0,
-  );
-
-  useEffect(() => {
-    setApprovedCount(
-      votes ? votes.filter((v) => v.decision === "approve").length : 0,
-    );
-    setRejectedCount(
-      votes ? votes.filter((v) => v.decision === "reject").length : 0,
-    );
-  }, [votes]);
+  const approvedCount = votes
+    ? votes.filter((v) => v.decision === "approve").length
+    : 0;
+  const rejectedCount = votes
+    ? votes.filter((v) => v.decision === "reject").length
+    : 0;
 
   return (
     <div className="flex flex-col gap-2">

@@ -8,8 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 import Link from "next/link";
 import SignedRecruitmentActiveMessage from "./signed-recruitment-active-message";

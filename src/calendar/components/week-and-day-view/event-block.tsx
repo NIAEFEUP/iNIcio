@@ -54,7 +54,8 @@ const calendarWeekEventCardVariants = cva(
 );
 
 interface IProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends
+    HTMLAttributes<HTMLDivElement>,
     Omit<VariantProps<typeof calendarWeekEventCardVariants>, "color"> {
   event: IEvent;
 }

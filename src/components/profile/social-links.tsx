@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Github, Linkedin, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 interface SocialLink {
   name: string;
@@ -19,11 +20,11 @@ export function SocialLinks({
   websiteUrl,
 }: SocialLinksProps) {
   const socials: SocialLink[] = [
-    { name: "GitHub", url: githubUrl, icon: <Github className="h-4 w-4" /> },
+    { name: "GitHub", url: githubUrl, icon: <FaGithub className="h-4 w-4" /> },
     {
       name: "LinkedIn",
       url: linkedinUrl,
-      icon: <Linkedin className="h-4 w-4" />,
+      icon: <FaLinkedin className="h-4 w-4" />,
     },
     { name: "Website", url: websiteUrl, icon: <Globe className="h-4 w-4" /> },
   ];
