@@ -11,7 +11,7 @@ import { relations } from "drizzle-orm";
 import { applicationToTag } from "./tag";
 import { applicationComment } from "./comment";
 import { appreciation } from "./appreciation";
-import { user } from "@/drizzle/schema";
+import { user } from "./auth";
 
 export const application = pgTable("application", {
   id: serial("id").primaryKey(),

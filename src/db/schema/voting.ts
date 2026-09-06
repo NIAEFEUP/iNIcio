@@ -7,7 +7,8 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
-import { candidate, user } from "@/drizzle/schema";
+import { user } from "./auth";
+import { candidate } from "./user_roles";
 import { relations } from "drizzle-orm";
 
 export const votingPhase = pgTable("voting_phase", {

@@ -9,7 +9,7 @@ import {
 import { db, DynamicTemplate, Slot } from "./db";
 import { eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
-import { application } from "@/drizzle/schema";
+import { application } from "@/db/schema";
 import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
