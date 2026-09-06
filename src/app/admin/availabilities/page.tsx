@@ -44,7 +44,7 @@ export default async function AdminAllocations() {
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 px-8 py-4">
         <ClientContainer view="week" />
 
-        <Accordion type="single" collapsible>
+        <Accordion>
           <AccordionItem value="item-1" className="border-none">
             <AccordionTrigger className="flex-none gap-2 py-0 hover:no-underline">
               <div className="flex items-center gap-2">

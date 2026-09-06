@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
@@ -28,8 +29,13 @@ export default function Navbar({
   notifications,
 }: Props) {
   const { data: session } = useSession();
+  const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

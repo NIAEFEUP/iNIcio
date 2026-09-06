@@ -77,7 +77,7 @@ export function CalendarAgendaView({
 
   return (
     <div className="h-[800px]">
-      <ScrollArea className="h-full" type="always">
+      <ScrollArea className="h-full">
         <div className="space-y-6 p-4">
           {eventsByDay.map((dayGroup) => (
             <AgendaDayGroup

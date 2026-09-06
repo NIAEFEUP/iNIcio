@@ -129,9 +129,7 @@ export default function RecruiterAdminClient({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Gestão de Recrutadores</h1>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button>Adicionar Recrutador</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button>Adicionar Recrutador</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Adicionar Recrutador</DialogTitle>
@@ -191,9 +189,9 @@ export default function RecruiterAdminClient({
                 <TableCell>{r.email ?? "-"}</TableCell>
                 <TableCell>
                   <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="destructive">Remover</Button>
-                    </DialogTrigger>
+                    <DialogTrigger
+                      render={<Button variant="destructive">Remover</Button>}
+                    />
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>

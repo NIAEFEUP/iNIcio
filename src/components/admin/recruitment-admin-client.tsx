@@ -121,12 +121,13 @@ export default function RecruitmentAdminClient({
             </h1>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar
+                </Button>
+              }
+            />
             <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">

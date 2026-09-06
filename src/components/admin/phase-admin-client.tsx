@@ -172,11 +172,13 @@ export default function PhaseAdminClient({
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Fases</h1>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar
+                </Button>
+              }
+            />
             <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">
@@ -291,7 +293,10 @@ export default function PhaseAdminClient({
                     <div className="col-span-3">
                       <Select
                         onValueChange={(val) =>
-                          setForm((f) => ({ ...f, role: val }))
+                          setForm((f) => ({
+                            ...f,
+                            role: (val as string) ?? "",
+                          }))
                         }
                       >
                         <SelectTrigger className="w-full">
@@ -507,7 +512,7 @@ export default function PhaseAdminClient({
                   <div className="col-span-3">
                     <Select
                       onValueChange={(val) =>
-                        setForm((f) => ({ ...f, role: val }))
+                        setForm((f) => ({ ...f, role: (val as string) ?? "" }))
                       }
                       value={form.role}
                     >

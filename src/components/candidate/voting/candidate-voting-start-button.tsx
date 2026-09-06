@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 export default function CandidateVotingStartButton() {
   return (
     <>
-      <Button asChild>
-        <Link href="/candidates/voting/create">Começar votação</Link>
+      <Button render={<Link href="/candidates/voting/create" />}>
+        Começar votação
       </Button>
     </>
   );

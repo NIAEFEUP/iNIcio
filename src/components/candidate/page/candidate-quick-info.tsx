@@ -217,10 +217,10 @@ export default function CandidateQuickInfo({
               <Select
                 onValueChange={(value) => {
                   if (showClassifyInterview) {
-                    addInterviewClassification(candidate.id, value);
+                    addInterviewClassification(candidate.id, String(value));
                   }
                   if (showClassifyDynamic) {
-                    addDynamicClassification(candidate.id, value);
+                    addDynamicClassification(candidate.id, String(value));
                   }
                 }}
               >
