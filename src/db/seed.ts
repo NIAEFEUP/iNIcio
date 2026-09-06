@@ -312,9 +312,9 @@ async function main() {
       degree: "meic",
       curricularYear: "3bsc",
       experience: "2 anos de desenvolvimento web",
-      motivation: "Quero fazer parte da NIA",
+      motivation: "Quero fazer parte do NIAEFEUP",
       selfPromotion: "Gosto de projetos open source",
-      interestJustification: "A NIA alinha com os meus interesses",
+      interestJustification: "O NIAEFEUP alinha com os meus interesses",
       recruitmentFirstInteraction: "amigos",
       suggestions: "Nenhuma",
       accepted: true,
@@ -724,9 +724,9 @@ async function main() {
       degree: "meic",
       curricularYear: "3bsc",
       experience: "2 anos de desenvolvimento web",
-      motivation: "Quero fazer parte da NIA",
+      motivation: "Quero fazer parte do NIAEFEUP",
       selfPromotion: "Gosto de projetos open source",
-      interestJustification: "A NIA alinha com os meus interesses",
+      interestJustification: "O NIAEFEUP alinha com os meus interesses",
       recruitmentFirstInteraction: "amigos",
       suggestions: "Nenhuma",
       accepted: false,
@@ -820,7 +820,7 @@ async function main() {
     content: [
       {
         type: "paragraph",
-        content: "Parabéns! Foste aceite na NIA.",
+        content: "Parabéns! Foste aceite no NI!",
       },
     ],
   });
