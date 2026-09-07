@@ -21,6 +21,7 @@ export default async function NavbarController() {
 
   return (
     <Navbar
+      session={session ?? null}
       isAdmin={admin ? true : false}
       isRecruiter={recruiter ? true : false}
       isCandidate={candidate ? true : false}
