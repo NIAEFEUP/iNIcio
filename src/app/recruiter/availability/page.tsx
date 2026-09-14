@@ -12,10 +12,14 @@ import {
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
+import { getActiveRecruitment } from "@/lib/recruitment";
+
 export default async function RecruiterAvailabilityPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  const activeRecruitment = await getActiveRecruitment();
 
   async function confirm(availabilityOperations: AvailabilityOperation[]) {
     "use server";
@@ -30,8 +34,8 @@ export default async function RecruiterAvailabilityPage() {
               and(
                 eq(recruiterAvailability.start, operation.availability.start),
                 eq(
-                  recruiterAvailability.recruitmentYear,
-                  operation.availability.recruitmentYear,
+                  recruiterAvailability.recruitmentId,
+                  operation.availability.recruitmentId,
                 ),
                 eq(
                   recruiterAvailability.duration,
@@ -55,7 +59,10 @@ export default async function RecruiterAvailabilityPage() {
     return true;
   }
 
-  const currentAvailabilities = await getAvailabilities(session?.user.id);
+  const currentAvailabilities = await getAvailabilities(
+    session?.user.id,
+    activeRecruitment?.id,
+  );
 
   return (
     <>
@@ -66,6 +73,7 @@ export default async function RecruiterAvailabilityPage() {
         currentAvailabilities={currentAvailabilities}
         saveAvailabilities={confirm}
         recruiterId={session?.user.id}
+        recruitmentId={activeRecruitment?.id}
       />
     </>
   );

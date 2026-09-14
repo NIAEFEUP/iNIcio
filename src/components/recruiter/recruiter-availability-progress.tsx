@@ -23,6 +23,7 @@ export type AvailabilityOperation = {
 interface RecruiterAvailabilityClientProps {
   currentAvailabilities: RecruiterAvailability[];
   recruiterId: string;
+  recruitmentId?: number;
   saveAvailabilities: (
     availabilities: AvailabilityOperation[],
   ) => Promise<boolean>;
@@ -31,6 +32,7 @@ interface RecruiterAvailabilityClientProps {
 export default function RecruiterAvailabilityClient({
   currentAvailabilities,
   recruiterId,
+  recruitmentId,
   saveAvailabilities,
 }: RecruiterAvailabilityClientProps) {
   const [availabilities, setAvailabilities] = useState<
@@ -76,7 +78,7 @@ export default function RecruiterAvailabilityClient({
       const newAvailibity = {
         start: start,
         duration: 30,
-        recruitmentYear: new Date().getFullYear(),
+        recruitmentId: recruitmentId ?? 1,
         recruiterId: recruiterId,
       };
 
