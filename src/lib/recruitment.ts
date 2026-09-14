@@ -6,80 +6,109 @@ import {
   recruiter,
   user,
   recruiterToCandidate,
+  usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, eq, gt, or } from "drizzle-orm";
+import { and, desc, eq, gt, or } from "drizzle-orm";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
-    orderBy: (recruitment, { desc }) => [desc(recruitment.year)],
+    orderBy: (recruitment, { desc }) => [
+      desc(recruitment.start),
+      desc(recruitment.id),
+    ],
+  });
+}
+
+export async function getActiveRecruitment() {
+  return await db.query.recruitment.findFirst({
+    where: eq(recruitment.active, "true"),
+    orderBy: (recruitment, { desc }) => [
+      desc(recruitment.start),
+      desc(recruitment.id),
+    ],
+  });
+}
+
+export async function getRecruitmentById(id: number) {
+  return await db.query.recruitment.findFirst({
+    where: eq(recruitment.id, id),
   });
 }
 
 export async function getRecruitments() {
-  const recruitments = await db.select().from(recruitment);
+  const recruitments = await db
+    .select()
+    .from(recruitment)
+    .orderBy(desc(recruitment.start), desc(recruitment.id));
 
   return recruitments;
 }
 
-export async function addRecruitment(r: Recruitment) {
-  await db.insert(recruitment).values({
-    year: r.year,
-    start: r.start,
-    end: r.end,
-    active: r.active,
-  });
+export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
+  const [created] = await db
+    .insert(recruitment)
+    .values({
+      lectiveYear: r.lectiveYear,
+      semester: r.semester,
+      title: r.title,
+      start: r.start,
+      end: r.end,
+      active: r.active,
+    })
+    .returning({ id: recruitment.id });
+
+  return created;
 }
 
 export async function editRecruitment(r: Recruitment) {
   await db
     .update(recruitment)
     .set({
-      year: r.year,
+      lectiveYear: r.lectiveYear,
+      semester: r.semester,
+      title: r.title,
       start: r.start,
       end: r.end,
       active: r.active,
     })
-    .where(eq(recruitment.year, r.year));
+    .where(eq(recruitment.id, r.id));
 }
 
-export async function deleteRecruitment(year: number) {
-  await db.delete(recruitment).where(eq(recruitment.year, year));
+export async function deleteRecruitment(id: number) {
+  await db.delete(recruitment).where(eq(recruitment.id, id));
 }
 
 export async function isRecruitmentActive() {
-  const currentYear = new Date().getFullYear();
-
-  const currentRecrutment = await db
-    .select()
-    .from(recruitment)
-    .where(
-      and(eq(recruitment.year, currentYear), eq(recruitment.active, "true")),
-    );
-
-  return currentRecrutment.length > 0;
+  const active = await getActiveRecruitment();
+  return active !== null && active !== undefined;
 }
 
-export async function getAllRecruitmentPhases() {
-  const currentYear = new Date().getFullYear();
+export async function getAllRecruitmentPhases(recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   const recruitmentPhases = await db
     .select()
     .from(recruitmentPhase)
-    .where(eq(recruitmentPhase.recruitmentYear, currentYear));
+    .where(eq(recruitmentPhase.recruitmentId, targetId));
 
   return recruitmentPhases;
 }
 
-export async function getRecruitmentPhases(role: "candidate" | "recruiter") {
-  const currentYear = new Date().getFullYear();
+export async function getRecruitmentPhases(
+  role: "candidate" | "recruiter",
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   const recruitmentPhases = await db
     .select()
     .from(recruitmentPhase)
     .where(
       and(
-        eq(recruitmentPhase.recruitmentYear, currentYear),
+        eq(recruitmentPhase.recruitmentId, targetId),
         eq(recruitmentPhase.role, role),
       ),
     )
@@ -90,7 +119,7 @@ export async function getRecruitmentPhases(role: "candidate" | "recruiter") {
 
 export async function addRecruitmentPhase(r: RecruitmentPhase) {
   await db.insert(recruitmentPhase).values({
-    recruitmentYear: r.recruitmentYear,
+    recruitmentId: r.recruitmentId,
     title: r.title,
     description: r.description,
     clientIdentifier: r.clientIdentifier,
@@ -104,7 +133,7 @@ export async function editRecruitmentPhase(r: RecruitmentPhase) {
   await db
     .update(recruitmentPhase)
     .set({
-      recruitmentYear: r.recruitmentYear,
+      recruitmentId: r.recruitmentId,
       title: r.title,
       description: r.description,
       start: r.start,
@@ -119,8 +148,9 @@ export async function deleteRecruitmentPhase(id: number) {
   await db.delete(recruitmentPhase).where(eq(recruitmentPhase.id, id));
 }
 
-export async function getInterviewSlots() {
-  const currentYear = new Date().getFullYear();
+export async function getInterviewSlots(recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   return await db.transaction(async (trx) => {
     const interviewSlots = await trx
@@ -128,16 +158,8 @@ export async function getInterviewSlots() {
       .from(slot)
       .where(
         and(
-          or(
-            and(
-              eq(slot.type, "interview-dynamic"),
-              eq(slot.recruitmentYear, currentYear),
-            ),
-            and(
-              eq(slot.type, "interview"),
-              eq(slot.recruitmentYear, currentYear),
-            ),
-          ),
+          or(eq(slot.type, "interview-dynamic"), eq(slot.type, "interview")),
+          eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),
       )
@@ -147,8 +169,9 @@ export async function getInterviewSlots() {
   });
 }
 
-export async function getDynamicSlots() {
-  const currentYear = new Date().getFullYear();
+export async function getDynamicSlots(recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   return await db.transaction(async (trx) => {
     const dynamicSlots = await trx
@@ -156,16 +179,8 @@ export async function getDynamicSlots() {
       .from(slot)
       .where(
         and(
-          or(
-            and(
-              eq(slot.type, "dynamic"),
-              eq(slot.recruitmentYear, currentYear),
-            ),
-            and(
-              eq(slot.type, "interview-dynamic"),
-              eq(slot.recruitmentYear, currentYear),
-            ),
-          ),
+          or(eq(slot.type, "dynamic"), eq(slot.type, "interview-dynamic")),
+          eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),
       )
@@ -215,15 +230,17 @@ export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
         ),
       );
 
-    await tx
-      .update(recruitmentPhaseStatus)
-      .set({ status: "done" })
-      .where(
-        and(
-          eq(recruitmentPhaseStatus.userId, userId),
-          eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
-        ),
-      );
+    if (phaseStatus.length > 0) {
+      await tx
+        .update(recruitmentPhaseStatus)
+        .set({ status: "done" })
+        .where(
+          and(
+            eq(recruitmentPhaseStatus.userId, userId),
+            eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
+          ),
+        );
+    }
   });
 }
 
@@ -247,44 +264,145 @@ export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
         ),
       );
 
-    await tx
-      .update(recruitmentPhaseStatus)
-      .set({ status: "done" })
-      .where(
-        and(
-          eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
-          eq(recruitmentPhaseStatus.userId, userId),
-        ),
-      );
+    if (phaseStatus.length > 0) {
+      await tx
+        .update(recruitmentPhaseStatus)
+        .set({ status: "done" })
+        .where(
+          and(
+            eq(recruitmentPhaseStatus.userId, userId),
+            eq(recruitmentPhaseStatus.phaseId, phaseStatus[0].phaseId),
+          ),
+        );
+    }
   });
 }
 
-export async function addRecruiter(userId: string) {
-  await db.insert(recruiter).values({ userId });
-}
-
-export async function deleteRecruiter(userId: string) {
+export async function addRecruiter(userId: string, recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   await db.transaction(async (tx) => {
-    await tx
-      .delete(recruiterToCandidate)
-      .where(eq(recruiterToCandidate.recruiterId, userId));
-
-    await tx.delete(recruiter).where(eq(recruiter.userId, userId));
+    await tx.insert(recruiter).values({ userId }).onConflictDoNothing();
+    if (targetId) {
+      await tx
+        .insert(usersToRecruitments)
+        .values({ userId, recruitmentId: targetId })
+        .onConflictDoNothing();
+    }
   });
 }
 
-export async function getRecruiters() {
+export async function deleteRecruiter(userId: string, recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  await db.transaction(async (tx) => {
+    if (targetId) {
+      await tx
+        .delete(usersToRecruitments)
+        .where(
+          and(
+            eq(usersToRecruitments.userId, userId),
+            eq(usersToRecruitments.recruitmentId, targetId),
+          ),
+        );
+      await tx
+        .delete(recruiterToCandidate)
+        .where(
+          and(
+            eq(recruiterToCandidate.recruiterId, userId),
+            eq(recruiterToCandidate.recruitmentId, targetId),
+          ),
+        );
+    } else {
+      await tx
+        .delete(recruiterToCandidate)
+        .where(eq(recruiterToCandidate.recruiterId, userId));
+
+      await tx
+        .delete(usersToRecruitments)
+        .where(eq(usersToRecruitments.userId, userId));
+
+      await tx.delete(recruiter).where(eq(recruiter.userId, userId));
+    }
+  });
+}
+
+export async function addRecruiterToRecruitment(
+  userId: string,
+  recruitmentId: number,
+) {
+  await db
+    .insert(usersToRecruitments)
+    .values({ userId, recruitmentId })
+    .onConflictDoNothing();
+}
+
+export async function removeRecruiterFromRecruitment(
+  userId: string,
+  recruitmentId: number,
+) {
+  await db
+    .delete(usersToRecruitments)
+    .where(
+      and(
+        eq(usersToRecruitments.userId, userId),
+        eq(usersToRecruitments.recruitmentId, recruitmentId),
+      ),
+    );
+}
+
+export async function getRecruiters(recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (targetId) {
+    const enrolled = await db
+      .select({
+        userId: usersToRecruitments.userId,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      })
+      .from(usersToRecruitments)
+      .innerJoin(user, eq(user.id, usersToRecruitments.userId))
+      .where(eq(usersToRecruitments.recruitmentId, targetId));
+
+    if (enrolled.length > 0) {
+      return enrolled;
+    }
+  }
+
+  // Fallback to platform recruiters if no active recruitment or none enrolled yet
   const res = await db
-    .select({ userId: recruiter.userId, name: user.name, email: user.email })
+    .select({
+      userId: recruiter.userId,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+    })
     .from(recruiter)
     .leftJoin(user, eq(user.id, recruiter.userId));
 
   return res;
 }
 
+export async function getAllPlatformRecruiters() {
+  return await db
+    .select({
+      userId: recruiter.userId,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+    })
+    .from(recruiter)
+    .leftJoin(user, eq(user.id, recruiter.userId));
+}
+
 export async function getUsers(limit = 500) {
   const res = await db
-    .select({ id: user.id, name: user.name, email: user.email })
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+    })
     .from(user)
     .limit(limit);
 

@@ -1,4 +1,4 @@
-import { candidate } from "@/db/schema";
+import { candidate, recruiterToCandidate } from "@/db/schema";
 import {
   Application,
   db,
@@ -7,9 +7,11 @@ import {
   RecruiterToCandidate,
   User,
 } from "./db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { FilterRestriction } from "./restriction";
+import { getActiveRecruitment } from "./recruitment";
+import { getLatestVotingDecisionForCandidate } from "./voting";
 
 export type CandidateWithMetadata = User & {
   knownRecruiters: RecruiterToCandidate[];
@@ -39,7 +41,19 @@ export const candidateFilterRestrictions: FilterRestriction<
   ONLY_WITH_INTERVIEW_AND_DYNAMIC: restrictInterviewAndDynamic,
 };
 
-export async function isCandidate(candidateId: string) {
+export async function isCandidate(candidateId: string, recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (targetId) {
+    const query = await db.query.candidate.findFirst({
+      where: and(
+        eq(candidate.userId, candidateId),
+        eq(candidate.recruitmentId, targetId),
+      ),
+    });
+    return query !== null && query !== undefined;
+  }
+
   const query = await db.query.candidate.findFirst({
     where: eq(candidate.userId, candidateId),
   });
@@ -49,9 +63,19 @@ export async function isCandidate(candidateId: string) {
 
 export async function getCandidateWithMetadata(
   candidateId: string,
+  recruitmentId?: number,
 ): Promise<CandidateWithMetadata> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  const whereClause = targetId
+    ? and(
+        eq(candidate.userId, candidateId),
+        eq(candidate.recruitmentId, targetId),
+      )
+    : eq(candidate.userId, candidateId);
+
   const res = await db.query.candidate.findFirst({
-    where: eq(candidate.userId, candidateId),
+    where: whereClause,
     with: {
       user: true,
       dynamic: {
@@ -73,28 +97,49 @@ export async function getCandidateWithMetadata(
     },
   });
 
+  if (!res) {
+    throw new Error(`Candidate with ID ${candidateId} not found`);
+  }
+
+  const votingDecision = targetId
+    ? await getLatestVotingDecisionForCandidate(candidateId, targetId)
+    : null;
+
   return {
     ...res.user,
     image: await getFilenameUrl(res.user?.image),
-    dynamic: res.dynamic,
-    interview: res.interview,
-    dynamicClassification: res.dynamicClassification,
-    interviewClassification: res.interviewClassification,
+    dynamic: res.dynamic as any,
+    interview: res.interview as any,
+    dynamicClassification: res.dynamicClassification ?? "none",
+    interviewClassification: res.interviewClassification ?? "none",
     knownRecruiters: res.knownRecruiters,
-    application: {
-      ...res.application,
-      profilePicture: await getFilenameUrl(res.application?.profilePicture),
-      curriculum: await getFilenameUrl(res.application?.curriculum),
-      interests: res.application?.interests.map((i) => i.interest),
-    },
+    votingDecision,
+    application: res.application
+      ? {
+          ...res.application,
+          profilePicture: await getFilenameUrl(res.application?.profilePicture),
+          curriculum: await getFilenameUrl(res.application?.curriculum),
+          interests: res.application?.interests.map((i) => i.interest),
+        }
+      : null,
   };
 }
 
 export default async function getCandidateWithInterviewAndDynamic(
   candidateId: string,
+  recruitmentId?: number,
 ) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  const whereClause = targetId
+    ? and(
+        eq(candidate.userId, candidateId),
+        eq(candidate.recruitmentId, targetId),
+      )
+    : eq(candidate.userId, candidateId);
+
   return await db.query.candidate.findFirst({
-    where: eq(candidate.userId, candidateId),
+    where: whereClause,
     with: {
       user: true,
       dynamic: {
