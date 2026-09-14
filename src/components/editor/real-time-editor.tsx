@@ -91,12 +91,14 @@ export default function RealTimeEditor({
   useEffect(() => {
     if (!saveHandler || !editor) return;
 
-    const timeout = setInterval(async () => {
-      const stringEditorDocument = JSON.stringify(editor.document);
-      if (currentContent === stringEditorDocument) return;
+    const timeout = setInterval(() => {
+      void (async () => {
+        const stringEditorDocument = JSON.stringify(editor.document);
+        if (currentContent === stringEditorDocument) return;
 
-      await saveHandler(editor.document);
-      setCurrentContent(JSON.stringify(stringEditorDocument));
+        await saveHandler(editor.document);
+        setCurrentContent(JSON.stringify(stringEditorDocument));
+      })();
     }, saveHandlerTimeout);
 
     return () => {
