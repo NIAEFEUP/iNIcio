@@ -9,6 +9,8 @@ import { areFriends } from "@/lib/friend";
 import { isRecruiter } from "@/lib/recruiter";
 import { isAdmin } from "@/lib/admin";
 
+import { getActiveRecruitment } from "@/lib/recruitment";
+
 export async function PUT(req: Request) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -22,6 +24,13 @@ export async function PUT(req: Request) {
 
   const json = await req.json();
 
+  const targetRecruitmentId =
+    json.recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (!targetRecruitmentId) {
+    return new Response("No active recruitment", { status: 400 });
+  }
+
   if (await areFriends(session.user.id, json.candidateId)) {
     await db
       .delete(recruiterToCandidate)
@@ -29,12 +38,14 @@ export async function PUT(req: Request) {
         and(
           eq(recruiterToCandidate.recruiterId, session.user.id),
           eq(recruiterToCandidate.candidateId, json.candidateId),
+          eq(recruiterToCandidate.recruitmentId, targetRecruitmentId),
         ),
       );
   } else {
     await db.insert(recruiterToCandidate).values({
       recruiterId: session.user.id,
       candidateId: json.candidateId,
+      recruitmentId: targetRecruitmentId,
     });
   }
 

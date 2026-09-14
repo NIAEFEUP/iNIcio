@@ -250,9 +250,17 @@ export async function createDynamicComment(
 }
 
 export async function getAllCandidatesWithDynamic(
-  recruitmentId?: number,
-  restrictions?: Array<CandidateFilterRestriction>,
+  recruitmentIdOrRestrictions?: number | Array<CandidateFilterRestriction>,
+  restrictionsParam?: Array<CandidateFilterRestriction>,
 ): Promise<Array<CandidateWithMetadata>> {
+  const recruitmentId =
+    typeof recruitmentIdOrRestrictions === "number"
+      ? recruitmentIdOrRestrictions
+      : undefined;
+  const restrictions = Array.isArray(recruitmentIdOrRestrictions)
+    ? recruitmentIdOrRestrictions
+    : restrictionsParam;
+
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
 
   const candidates = await db.query.candidate.findMany({

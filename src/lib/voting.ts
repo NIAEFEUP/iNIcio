@@ -12,68 +12,36 @@ import {
   votingPhaseStatus,
 } from "@/db/schema";
 import { getFilenameUrl } from "./file-upload";
+import { getCandidateWithMetadata } from "./candidate";
 
 export async function getCurrentVotingPhase(id: number) {
   const vPhase = await db.query.votingPhase.findFirst({
     where: (vp) => eq(vp.id, id),
     with: {
       status: true,
-      candidates: {
-        with: {
-          candidate: {
-            with: {
-              user: true,
-              dynamic: {
-                with: {
-                  dynamic: {
-                    with: {
-                      slot: true,
-                    },
-                  },
-                },
-              },
-              interview: true,
-              application: {
-                with: {
-                  interests: true,
-                },
-              },
-              knownRecruiters: true,
-            },
-          },
-        },
-      },
+      candidates: true,
     },
   });
 
+  if (!vPhase) return null;
+
+  const candidates = await Promise.all(
+    vPhase.candidates.map(async (c) => {
+      const candidateData = await getCandidateWithMetadata(
+        c.candidateId,
+        vPhase.recruitmentId,
+      );
+      return {
+        ...candidateData,
+        isFinished: await getIsVoteFinished(id, c.candidateId),
+      };
+    }),
+  );
+
   return {
     ...vPhase,
-    candidates: await Promise.all(
-      vPhase.candidates.map(async (c) => ({
-        ...{
-          ...c.candidate.user,
-          image: await getFilenameUrl(c.candidate.user?.image),
-          dynamic: c.candidate.dynamic,
-          interview: c.candidate.interview,
-          isFinished: await getIsVoteFinished(id, c.candidateId),
-          dynamicClassification: c.candidate.dynamicClassification,
-          interviewClassification: c.candidate.interviewClassification,
-          knownRecruiters: c.candidate.knownRecruiters,
-          application: {
-            ...c.candidate.application,
-            profilePicture: await getFilenameUrl(
-              c.candidate.application?.profilePicture,
-            ),
-            curriculum: await getFilenameUrl(
-              c.candidate.application?.curriculum,
-            ),
-            interests: c.candidate.application?.interests.map(
-              (i) => i.interest,
-            ),
-          },
-        },
-      })),
-    ),
+    status: vPhase.status!,
+    candidates,
   };
 }
 
