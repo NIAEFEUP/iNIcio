@@ -5,6 +5,7 @@ import {
   serial,
   text,
   boolean,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
@@ -13,26 +14,32 @@ import { relations } from "drizzle-orm";
 
 export const votingPhase = pgTable("voting_phase", {
   id: serial("id").primaryKey(),
-  recruitmentYear: integer("recruitment_year")
+  recruitmentId: integer("recruitment_id")
     .notNull()
-    .references(() => recruitment.year),
+    .references(() => recruitment.id, { onDelete: "cascade" }),
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const votingPhaseCandidate = pgTable("voting_phase_candidate", {
-  votingPhaseId: integer("voting_phase_id")
-    .notNull()
-    .references(() => votingPhase.id),
-  candidateId: text("candidate_id")
-    .notNull()
-    .references(() => candidate.userId),
-  voteFinished: boolean("vote_finished").notNull().default(false),
-});
+export const votingPhaseCandidate = pgTable(
+  "voting_phase_candidate",
+  {
+    votingPhaseId: integer("voting_phase_id")
+      .notNull()
+      .references(() => votingPhase.id, { onDelete: "cascade" }),
+    candidateId: text("candidate_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    voteFinished: boolean("vote_finished").notNull().default(false),
+  },
+  (table) => [
+    primaryKey({ columns: [table.votingPhaseId, table.candidateId] }),
+  ],
+);
 
 export const votingPhaseStatus = pgTable("voting_phase_status", {
   votingPhaseId: integer("voting_phase_id")
     .notNull()
-    .references(() => votingPhase.id),
+    .references(() => votingPhase.id, { onDelete: "cascade" }),
   candidateId: text("candidate_id").references(() => user.id),
   accepted_candidates: integer("accepted_candidates").notNull().default(0),
   rejected_candidates: integer("rejected_candidates").notNull().default(0),
@@ -40,8 +47,8 @@ export const votingPhaseStatus = pgTable("voting_phase_status", {
 
 export const votingPhaseRelations = relations(votingPhase, ({ one, many }) => ({
   recruitment: one(recruitment, {
-    fields: [votingPhase.recruitmentYear],
-    references: [recruitment.year],
+    fields: [votingPhase.recruitmentId],
+    references: [recruitment.id],
   }),
   candidates: many(votingPhaseCandidate),
   status: one(votingPhaseStatus, {
@@ -53,9 +60,9 @@ export const votingPhaseRelations = relations(votingPhase, ({ one, many }) => ({
 export const votingPhaseCandidateRelations = relations(
   votingPhaseCandidate,
   ({ one }) => ({
-    candidate: one(candidate, {
+    user: one(user, {
       fields: [votingPhaseCandidate.candidateId],
-      references: [candidate.userId],
+      references: [user.id],
     }),
     votingPhase: one(votingPhase, {
       fields: [votingPhaseCandidate.votingPhaseId],
@@ -67,10 +74,10 @@ export const votingPhaseCandidateRelations = relations(
 export const candidateVote = pgTable("candidate_vote", {
   votingPhaseId: integer("voting_phase_id")
     .notNull()
-    .references(() => votingPhase.id),
+    .references(() => votingPhase.id, { onDelete: "cascade" }),
   candidateId: text("candidate_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: "cascade" }),
   decision: text("decision", { enum: ["approve", "reject"] })
     .notNull()
     .default("approve"),
@@ -82,11 +89,11 @@ export const candidateVote = pgTable("candidate_vote", {
 export const recruiterVote = pgTable("recruiter_vote", {
   votingPhaseId: integer("voting_phase_id")
     .notNull()
-    .references(() => votingPhase.id),
+    .references(() => votingPhase.id, { onDelete: "cascade" }),
   recruiterId: text("recruiter_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: "cascade" }),
   candidateId: text("candidate_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: "cascade" }),
 });
