@@ -47,7 +47,7 @@ export function BookingPicker({
   selectedRecruiters,
   setSelectedRecruiters,
 }: BookingPickerProps) {
-  const { recruiters } = useAvailableRecruiters(
+  const { recruiters, isLoading } = useAvailableRecruiters(
     start,
     new Date(start.getTime() + duration * 60 * 1000),
   );
@@ -165,9 +165,16 @@ export function BookingPicker({
             <Select
               value={selectedRecruiter}
               onValueChange={(value) => addInterviewer(value)}
+              disabled={isLoading}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an interviewer" />
+                <SelectValue
+                  placeholder={
+                    isLoading
+                      ? "A carregar recrutadores..."
+                      : "Selecione um entrevistador"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {recruiters

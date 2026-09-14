@@ -4,16 +4,18 @@ import { useState } from "react";
 
 import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
-import { useSession } from "@/lib/use-session";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 import NotificationPopup from "./notifications/notification-popup";
 import { Notification } from "@/lib/db";
 import Image from "next/image";
+import type { Session } from "better-auth";
+import type { User } from "@/lib/auth";
 
 type Props = {
   className?: string;
+  session: { session: Session; user: User } | null;
   isAdmin: boolean;
   isRecruiter: boolean;
   isCandidate: boolean;
@@ -22,13 +24,12 @@ type Props = {
 
 export default function Navbar({
   className,
+  session,
   isAdmin,
   isRecruiter,
   isCandidate,
   notifications,
 }: Props) {
-  const { data: session } = useSession();
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
