@@ -11,10 +11,12 @@ import {
 } from "@/lib/recruiter";
 import { getFilenameUrl } from "@/lib/file-upload";
 
-export const getEventAvailabilities = async () => {
+import { getActiveRecruitment } from "@/lib/recruitment";
+
+export const getEventAvailabilities = async (recruitmentId?: number) => {
   const calendarEvents: IEvent[] = [];
 
-  const availabilities = await getAllRecruiterAvailabilities();
+  const availabilities = await getAllRecruiterAvailabilities(recruitmentId);
 
   await Promise.all(
     availabilities.map(async (availability) => {
@@ -43,22 +45,30 @@ export const getEventAvailabilities = async () => {
   return calendarEvents;
 };
 
-export const getEvents = async (userId: string) => {
+export const getEvents = async (userId: string, recruitmentId?: number) => {
   const calendarEvents: IEvent[] = [];
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
 
   const interviews = await db.query.interview.findMany({
-    where: (i, { exists }) =>
-      exists(
-        db
-          .select()
-          .from(recruiterToInterview)
-          .where(
-            and(
-              eq(recruiterToInterview.interviewId, i.id),
-              eq(recruiterToInterview.recruiterId, userId),
+    where: (i, { exists, and: andWhere, eq: eqWhere }) => {
+      const conditions = [
+        exists(
+          db
+            .select()
+            .from(recruiterToInterview)
+            .where(
+              and(
+                eq(recruiterToInterview.interviewId, i.id),
+                eq(recruiterToInterview.recruiterId, userId),
+              ),
             ),
-          ),
-      ),
+        ),
+      ];
+      if (targetId) {
+        conditions.push(eqWhere(i.recruitmentId, targetId));
+      }
+      return andWhere(...conditions);
+    },
     with: {
       slot: true,
       candidate: {
@@ -79,18 +89,25 @@ export const getEvents = async (userId: string) => {
   });
 
   const dynamics = await db.query.dynamic.findMany({
-    where: (i, { exists }) =>
-      exists(
-        db
-          .select()
-          .from(recruiterToDynamic)
-          .where(
-            and(
-              eq(recruiterToDynamic.dynamicId, i.id),
-              eq(recruiterToDynamic.recruiterId, userId),
+    where: (i, { exists, and: andWhere, eq: eqWhere }) => {
+      const conditions = [
+        exists(
+          db
+            .select()
+            .from(recruiterToDynamic)
+            .where(
+              and(
+                eq(recruiterToDynamic.dynamicId, i.id),
+                eq(recruiterToDynamic.recruiterId, userId),
+              ),
             ),
-          ),
-      ),
+        ),
+      ];
+      if (targetId) {
+        conditions.push(eqWhere(i.recruitmentId, targetId));
+      }
+      return andWhere(...conditions);
+    },
     with: {
       slot: true,
       candidates: {
@@ -172,8 +189,8 @@ export const getUsers = async () => {
   return USERS_MOCK;
 };
 
-export const getUsersRecruiters = async () => {
-  const recruiters = await getAllRecruiters();
+export const getUsersRecruiters = async (recruitmentId?: number) => {
+  const recruiters = await getAllRecruiters(recruitmentId);
 
   return recruiters.map((recruiter) => ({
     id: recruiter.user.id,

@@ -12,9 +12,10 @@ import {
   recruitmentPhaseStatus,
   user,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
+import { getActiveRecruitment } from "@/lib/recruitment";
 
 const applicationSchema = z.object({
   fullname: z.string().min(1),
@@ -61,6 +62,14 @@ export async function POST(req: Request) {
     );
   }
 
+  const activeRecruitment = await getActiveRecruitment();
+  if (!activeRecruitment) {
+    return NextResponse.json(
+      { error: "Não existe nenhum recrutamento ativo" },
+      { status: 400 },
+    );
+  }
+
   const data = parsed.data;
 
   await db.transaction(async (tx) => {
@@ -85,6 +94,7 @@ export async function POST(req: Request) {
         suggestions: data.suggestions,
         accepted: false,
         candidateId: session.user.id,
+        recruitmentId: activeRecruitment.id,
       })
       .returning({ id: application.id });
 
@@ -105,19 +115,33 @@ export async function POST(req: Request) {
       });
     }
 
-    await tx.insert(candidate).values({ userId: session.user.id });
+    await tx
+      .insert(candidate)
+      .values({
+        userId: session.user.id,
+        recruitmentId: activeRecruitment.id,
+      })
+      .onConflictDoNothing();
 
     const phases = await tx
       .select()
       .from(recruitmentPhase)
-      .where(eq(recruitmentPhase.role, "candidate"));
+      .where(
+        and(
+          eq(recruitmentPhase.recruitmentId, activeRecruitment.id),
+          eq(recruitmentPhase.role, "candidate"),
+        ),
+      );
 
     for (const phase of phases) {
-      await tx.insert(recruitmentPhaseStatus).values({
-        userId: session.user.id,
-        phaseId: phase.id,
-        status: "todo",
-      });
+      await tx
+        .insert(recruitmentPhaseStatus)
+        .values({
+          userId: session.user.id,
+          phaseId: phase.id,
+          status: "todo",
+        })
+        .onConflictDoNothing();
     }
   });
 

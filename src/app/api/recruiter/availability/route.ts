@@ -31,8 +31,13 @@ export async function GET(request: NextRequest) {
     const start = new Date(startParam);
     const end = new Date(endParam);
 
+    const recruitmentIdParam = searchParams.get("recruitmentId");
+    const recruitmentId = recruitmentIdParam
+      ? Number.parseInt(recruitmentIdParam, 10)
+      : undefined;
+
     return NextResponse.json({
-      recruiters: await getAvailableRecruiters(start, end),
+      recruiters: await getAvailableRecruiters(start, end, recruitmentId),
     });
   } catch (error) {
     console.error("Upload API error:", error);
