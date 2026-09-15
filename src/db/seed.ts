@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { hashPassword } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   user,
   candidate,
@@ -37,8 +37,8 @@ import {
 } from "./schema";
 
 async function main() {
-  const currentYear = new Date().getFullYear();
-  const pastYear = currentYear - 1;
+  const currentLectiveYear = "2026/2027";
+  const pastLectiveYear = "2025/2026";
 
   // ── Clear all tables (dependency order) ──────────────────────────
   await db.delete(notification);
@@ -117,97 +117,75 @@ async function main() {
     updatedAt: now,
   });
 
-  // ── Role tables ──────────────────────────────────────────────────
-  await db.insert(candidate).values({ userId: "1" });
-  await db.insert(candidate).values({ userId: "2" });
+  // ── Global platform roles ─────────────────────────────────────────
   await db.insert(recruiter).values({ userId: "3" });
   await db.insert(admin).values({ userId: "4" });
-
-  await db.insert(recruiterToCandidate).values({
-    recruiterId: "3",
-    candidateId: "1",
-  });
-  await db.insert(recruiterToCandidate).values({
-    recruiterId: "3",
-    candidateId: "2",
-  });
 
   // ── Accounts (password: testeteste) ──────────────────────────────
   const hashed = await hashPassword("testeteste");
 
-  await db.insert(account).values({
-    id: "1",
-    accountId: "1",
-    providerId: "credential",
-    issuer: "local:credential",
-    userId: "1",
-    password: hashed,
-    createdAt: now,
-    updatedAt: now,
-  });
+  for (const id of ["1", "2", "3", "4"]) {
+    await db.insert(account).values({
+      id,
+      accountId: id,
+      providerId: "credential",
+      issuer: "local:credential",
+      userId: id,
+      password: hashed,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 
-  await db.insert(account).values({
-    id: "2",
-    accountId: "2",
-    providerId: "credential",
-    issuer: "local:credential",
-    userId: "2",
-    password: hashed,
-    createdAt: now,
-    updatedAt: now,
-  });
+  // ── Past recruitment (2025/2026 Semester 1 - completed, inactive) ─
+  const [pastRecruitment] = await db
+    .insert(recruitment)
+    .values({
+      lectiveYear: pastLectiveYear,
+      semester: 1,
+      title: `Recrutamento ${pastLectiveYear} - 1º Semestre`,
+      active: "false",
+      start: new Date("2025-09-01T00:00:00.000Z"),
+      end: new Date("2025-10-01T00:00:00.000Z"),
+    })
+    .returning({ id: recruitment.id });
 
-  await db.insert(account).values({
-    id: "3",
-    accountId: "3",
-    providerId: "credential",
-    issuer: "local:credential",
-    userId: "3",
-    password: hashed,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  await db.insert(account).values({
-    id: "4",
-    accountId: "4",
-    providerId: "credential",
-    issuer: "local:credential",
-    userId: "4",
-    password: hashed,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  // ── Past recruitment (completed, inactive) ───────────────────────
-  await db.insert(recruitment).values({
-    year: pastYear,
-    active: "false",
-    start: new Date(`${pastYear}-09-01T00:00:00.000Z`),
-    end: new Date(`${pastYear}-10-01T00:00:00.000Z`),
-  });
-
-  await db.insert(usersToRecruitments).values({
-    userId: "1",
-    recruitmentYear: pastYear,
-  });
-  await db.insert(usersToRecruitments).values({
-    userId: "2",
-    recruitmentYear: pastYear,
-  });
+  // Enrolled users for past recruitment
   await db.insert(usersToRecruitments).values({
     userId: "3",
-    recruitmentYear: pastYear,
+    recruitmentId: pastRecruitment.id,
+  });
+
+  // Past candidate entries
+  await db.insert(candidate).values({
+    userId: "1",
+    recruitmentId: pastRecruitment.id,
+  });
+  await db.insert(candidate).values({
+    userId: "2",
+    recruitmentId: pastRecruitment.id,
+  });
+
+  await db.insert(recruiterToCandidate).values({
+    recruiterId: "3",
+    candidateId: "1",
+    recruitmentId: pastRecruitment.id,
+  });
+  await db.insert(recruiterToCandidate).values({
+    recruiterId: "3",
+    candidateId: "2",
+    recruitmentId: pastRecruitment.id,
   });
 
   const [pastPhase1] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
       role: "candidate",
-      start: new Date(`${pastYear}-09-01T00:00:00.000Z`),
-      end: new Date(`${pastYear}-09-15T00:00:00.000Z`),
+      start: new Date("2025-09-01T00:00:00.000Z"),
+      end: new Date("2025-09-15T00:00:00.000Z"),
       title: "Candidatura",
+      clientIdentifier: "candidatura",
       description: "Submete a tua candidatura",
     })
     .returning({ id: recruitmentPhase.id });
@@ -215,11 +193,12 @@ async function main() {
   const [pastPhase2] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
       role: "recruiter",
-      start: new Date(`${pastYear}-09-01T00:00:00.000Z`),
-      end: new Date(`${pastYear}-09-15T00:00:00.000Z`),
+      start: new Date("2025-09-01T00:00:00.000Z"),
+      end: new Date("2025-09-15T00:00:00.000Z"),
       title: "Avaliação de Candidaturas",
+      clientIdentifier: "avaliacao",
       description: "Avalia as candidaturas recebidas",
     })
     .returning({ id: recruitmentPhase.id });
@@ -227,11 +206,12 @@ async function main() {
   const [pastPhase3] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
       role: "candidate",
-      start: new Date(`${pastYear}-09-15T00:00:00.000Z`),
-      end: new Date(`${pastYear}-09-30T00:00:00.000Z`),
+      start: new Date("2025-09-15T00:00:00.000Z"),
+      end: new Date("2025-09-30T00:00:00.000Z"),
       title: "Entrevista",
+      clientIdentifier: "entrevista",
       description: "Marca a tua entrevista",
     })
     .returning({ id: recruitmentPhase.id });
@@ -239,16 +219,16 @@ async function main() {
   const [pastPhase4] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
       role: "candidate",
-      start: new Date(`${pastYear}-09-15T00:00:00.000Z`),
-      end: new Date(`${pastYear}-09-30T00:00:00.000Z`),
+      start: new Date("2025-09-15T00:00:00.000Z"),
+      end: new Date("2025-09-30T00:00:00.000Z"),
       title: "Dinâmica",
+      clientIdentifier: "dinâmica",
       description: "Participa na dinâmica de grupo",
     })
     .returning({ id: recruitmentPhase.id });
 
-  // All past phases are "done" for both candidates
   for (const phaseId of [
     pastPhase1.id,
     pastPhase2.id,
@@ -271,51 +251,50 @@ async function main() {
   const [pastSlot1] = await db
     .insert(slot)
     .values({
-      start: new Date(`${pastYear}-09-20T10:00:00.000Z`),
+      start: new Date("2025-09-20T10:00:00.000Z"),
       duration: 30,
       type: "interview",
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
     })
     .returning({ id: slot.id });
 
   const [pastSlot2] = await db
     .insert(slot)
     .values({
-      start: new Date(`${pastYear}-09-20T14:00:00.000Z`),
+      start: new Date("2025-09-20T14:00:00.000Z"),
       duration: 60,
       type: "dynamic",
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
     })
     .returning({ id: slot.id });
 
   const [pastSlot3] = await db
     .insert(slot)
     .values({
-      start: new Date(`${pastYear}-09-21T10:00:00.000Z`),
+      start: new Date("2025-09-21T10:00:00.000Z"),
       duration: 45,
       type: "interview-dynamic",
-      recruitmentYear: pastYear,
+      recruitmentId: pastRecruitment.id,
     })
     .returning({ id: slot.id });
 
-  // ── Past applications (both accepted) ────────────────────────────
+  // ── Past applications ────────────────────────────────────────────
   const [pastApp1] = await db
     .insert(application)
     .values({
       candidateId: "1",
+      recruitmentId: pastRecruitment.id,
       studentNumber: 202100001,
       fullName: "Candidato 1",
       linkedIn: "https://linkedin.com/in/candidato1",
       github: "https://github.com/candidato1",
       phone: "910000001",
-      studentYear: "202100001",
       degree: "meic",
       curricularYear: "3bsc",
       experience: "2 anos de desenvolvimento web",
       motivation: "Quero fazer parte do NIAEFEUP",
       selfPromotion: "Gosto de projetos open source",
       interestJustification: "O NIAEFEUP alinha com os meus interesses",
-      recruitmentFirstInteraction: "amigos",
       suggestions: "Nenhuma",
       accepted: true,
     })
@@ -325,25 +304,23 @@ async function main() {
     .insert(application)
     .values({
       candidateId: "2",
+      recruitmentId: pastRecruitment.id,
       studentNumber: 202100002,
       fullName: "Candidato 2",
       linkedIn: "https://linkedin.com/in/candidato2",
       github: "https://github.com/candidato2",
       phone: "910000002",
-      studentYear: "202100002",
       degree: "leic",
       curricularYear: "2bsc",
       experience: "1 ano de desenvolvimento mobile",
       motivation: "Quero aprender mais",
       selfPromotion: "Dedicado e proativo",
       interestJustification: "Interesse em tecnologia",
-      recruitmentFirstInteraction: "email",
       suggestions: "Mais eventos",
       accepted: true,
     })
     .returning({ id: application.id });
 
-  // Application interests
   await db.insert(applicationInterests).values({
     applicationId: pastApp1.id,
     interest: "projetos",
@@ -357,7 +334,6 @@ async function main() {
     interest: "comunicacao",
   });
 
-  // Tags
   const [tagWeb] = await db
     .insert(tag)
     .values({ name: "web" })
@@ -376,7 +352,6 @@ async function main() {
     tagId: tagMobile.id,
   });
 
-  // Appreciations (grade 0-3)
   await db.insert(appreciation).values({
     applicationId: pastApp1.id,
     recruiterId: "3",
@@ -388,7 +363,6 @@ async function main() {
     grade: 2,
   });
 
-  // Application comments
   await db.insert(applicationComment).values({
     applicationId: pastApp1.id,
     authorId: "3",
@@ -403,6 +377,7 @@ async function main() {
         { type: "paragraph", content: "Entrevista passada - Candidato 1" },
       ],
       candidateId: "1",
+      recruitmentId: pastRecruitment.id,
       slot: pastSlot1.id,
       locked: true,
     })
@@ -415,6 +390,7 @@ async function main() {
         { type: "paragraph", content: "Entrevista passada - Candidato 2" },
       ],
       candidateId: "2",
+      recruitmentId: pastRecruitment.id,
       slot: pastSlot3.id,
       locked: true,
     })
@@ -441,16 +417,19 @@ async function main() {
     .values({
       content: [{ type: "paragraph", content: "Dinâmica passada" }],
       slot: pastSlot2.id,
+      recruitmentId: pastRecruitment.id,
     })
     .returning({ id: dynamic.id });
 
   await db.insert(candidateToDynamic).values({
     candidateId: "1",
     dynamicId: pastDynamic.id,
+    recruitmentId: pastRecruitment.id,
   });
   await db.insert(candidateToDynamic).values({
     candidateId: "2",
     dynamicId: pastDynamic.id,
+    recruitmentId: pastRecruitment.id,
   });
 
   await db.insert(recruiterToDynamic).values({
@@ -467,7 +446,7 @@ async function main() {
   // ── Past voting (completed, both approved) ───────────────────────
   const [pastVoting] = await db
     .insert(votingPhase)
-    .values({ recruitmentYear: pastYear })
+    .values({ recruitmentId: pastRecruitment.id })
     .returning({ id: votingPhase.id });
 
   await db.insert(votingPhaseCandidate).values({
@@ -496,7 +475,12 @@ async function main() {
 
   await db.insert(candidateVote).values({
     votingPhaseId: pastVoting.id,
-    candidateId: "3",
+    candidateId: "1",
+    decision: "approve",
+  });
+  await db.insert(candidateVote).values({
+    votingPhaseId: pastVoting.id,
+    candidateId: "2",
     decision: "approve",
   });
   await db.insert(recruiterVote).values({
@@ -510,56 +494,73 @@ async function main() {
     candidateId: "2",
   });
 
-  // Candidate final classifications (past)
   await db
     .update(candidate)
     .set({
       interviewClassification: "muito forte",
       dynamicClassification: "normal",
     })
-    .where(eq(candidate.userId, "1"));
+    .where(
+      and(
+        eq(candidate.userId, "1"),
+        eq(candidate.recruitmentId, pastRecruitment.id),
+      ),
+    );
+
   await db
     .update(candidate)
     .set({
       interviewClassification: "normal",
       dynamicClassification: "muito forte",
     })
-    .where(eq(candidate.userId, "2"));
+    .where(
+      and(
+        eq(candidate.userId, "2"),
+        eq(candidate.recruitmentId, pastRecruitment.id),
+      ),
+    );
 
-  // ── Current recruitment (active) ─────────────────────────────────
-  await db.insert(recruitment).values({
-    year: currentYear,
-    active: "true",
-    start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
-    end: new Date(`${currentYear}-09-30T16:00:00.000Z`),
-  });
+  // ── Current active recruitment (2026/2027 Semester 1) ────────────
+  const [currentRecruitment] = await db
+    .insert(recruitment)
+    .values({
+      lectiveYear: currentLectiveYear,
+      semester: 1,
+      title: `Recrutamento ${currentLectiveYear} - 1º Semestre`,
+      active: "true",
+      start: new Date("2026-09-01T00:00:00.000Z"),
+      end: new Date("2026-09-30T16:00:00.000Z"),
+    })
+    .returning({ id: recruitment.id });
 
-  await db.insert(usersToRecruitments).values({
-    userId: "1",
-    recruitmentYear: currentYear,
-  });
-  await db.insert(usersToRecruitments).values({
-    userId: "2",
-    recruitmentYear: currentYear,
-  });
+  // Recruiter 1 enrolled in current recruitment
   await db.insert(usersToRecruitments).values({
     userId: "3",
-    recruitmentYear: currentYear,
+    recruitmentId: currentRecruitment.id,
   });
-  await db.insert(usersToRecruitments).values({
-    userId: "4",
-    recruitmentYear: currentYear,
+
+  // Candidate 1 reapplied in current recruitment!
+  await db.insert(candidate).values({
+    userId: "1",
+    recruitmentId: currentRecruitment.id,
+  });
+
+  await db.insert(recruiterToCandidate).values({
+    recruiterId: "3",
+    candidateId: "1",
+    recruitmentId: currentRecruitment.id,
   });
 
   // ── Current phases ───────────────────────────────────────────────
   const [phase1] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
       role: "candidate",
-      start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
-      end: new Date(`${currentYear}-09-10T00:00:00.000Z`),
+      start: new Date("2026-09-01T00:00:00.000Z"),
+      end: new Date("2026-09-10T00:00:00.000Z"),
       title: "Candidatura",
+      clientIdentifier: "candidatura",
       description: "Submete a tua candidatura",
     })
     .returning({ id: recruitmentPhase.id });
@@ -567,11 +568,12 @@ async function main() {
   const [phase2] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
       role: "recruiter",
-      start: new Date(`${currentYear}-09-01T00:00:00.000Z`),
-      end: new Date(`${currentYear}-09-10T00:00:00.000Z`),
+      start: new Date("2026-09-01T00:00:00.000Z"),
+      end: new Date("2026-09-10T00:00:00.000Z"),
       title: "Avaliação de Candidaturas",
+      clientIdentifier: "avaliacao",
       description: "Avalia as candidaturas recebidas",
     })
     .returning({ id: recruitmentPhase.id });
@@ -579,11 +581,12 @@ async function main() {
   const [phase3] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
       role: "candidate",
-      start: new Date(`${currentYear}-09-10T00:00:00.000Z`),
-      end: new Date(`${currentYear}-09-20T00:00:00.000Z`),
+      start: new Date("2026-09-10T00:00:00.000Z"),
+      end: new Date("2026-09-20T00:00:00.000Z"),
       title: "Entrevista",
+      clientIdentifier: "entrevista",
       description: "Marca a tua entrevista",
     })
     .returning({ id: recruitmentPhase.id });
@@ -591,11 +594,12 @@ async function main() {
   const [phase4] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
       role: "candidate",
-      start: new Date(`${currentYear}-09-10T00:00:00.000Z`),
-      end: new Date(`${currentYear}-09-20T00:00:00.000Z`),
+      start: new Date("2026-09-10T00:00:00.000Z"),
+      end: new Date("2026-09-20T00:00:00.000Z"),
       title: "Dinâmica",
+      clientIdentifier: "dinâmica",
       description: "Participa na dinâmica de grupo",
     })
     .returning({ id: recruitmentPhase.id });
@@ -603,18 +607,17 @@ async function main() {
   const [phase5] = await db
     .insert(recruitmentPhase)
     .values({
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
       role: "recruiter",
-      start: new Date(`${currentYear}-09-20T00:00:00.000Z`),
-      end: new Date(`${currentYear}-09-30T00:00:00.000Z`),
+      start: new Date("2026-09-20T00:00:00.000Z"),
+      end: new Date("2026-09-30T00:00:00.000Z"),
       title: "Votação",
+      clientIdentifier: "votacao",
       description: "Vota sobre os candidatos",
     })
     .returning({ id: recruitmentPhase.id });
 
-  // Phase statuses demonstrating all 3 states:
-  // Candidate 1: application done, interview done, dynamic todo, voting blocked
-  // Candidate 2: application done, interview todo, dynamic blocked, voting blocked
+  // Phase statuses for Candidate 1 in current recruitment
   await db.insert(recruitmentPhaseStatus).values({
     userId: "1",
     phaseId: phase1.id,
@@ -641,93 +644,66 @@ async function main() {
     status: "blocked",
   });
 
-  await db.insert(recruitmentPhaseStatus).values({
-    userId: "2",
-    phaseId: phase1.id,
-    status: "done",
-  });
-  await db.insert(recruitmentPhaseStatus).values({
-    userId: "2",
-    phaseId: phase2.id,
-    status: "done",
-  });
-  await db.insert(recruitmentPhaseStatus).values({
-    userId: "2",
-    phaseId: phase3.id,
-    status: "todo",
-  });
-  await db.insert(recruitmentPhaseStatus).values({
-    userId: "2",
-    phaseId: phase4.id,
-    status: "blocked",
-  });
-  await db.insert(recruitmentPhaseStatus).values({
-    userId: "2",
-    phaseId: phase5.id,
-    status: "blocked",
-  });
-
-  // ── Current slots (all 3 types) ──────────────────────────────────
+  // ── Current slots ────────────────────────────────────────────────
   const [slot1] = await db
     .insert(slot)
     .values({
-      start: new Date(`${currentYear}-09-15T10:00:00.000Z`),
+      start: new Date("2026-09-15T10:00:00.000Z"),
       duration: 30,
       type: "interview",
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
     })
     .returning({ id: slot.id });
 
   await db.insert(slot).values({
-    start: new Date(`${currentYear}-09-15T11:00:00.000Z`),
+    start: new Date("2026-09-15T11:00:00.000Z"),
     duration: 30,
     type: "interview",
-    recruitmentYear: currentYear,
+    recruitmentId: currentRecruitment.id,
   });
 
   const [slot3] = await db
     .insert(slot)
     .values({
-      start: new Date(`${currentYear}-09-16T14:00:00.000Z`),
+      start: new Date("2026-09-16T14:00:00.000Z"),
       duration: 60,
       type: "dynamic",
-      recruitmentYear: currentYear,
+      recruitmentId: currentRecruitment.id,
     })
     .returning({ id: slot.id });
 
   await db.insert(slot).values({
-    start: new Date(`${currentYear}-09-17T10:00:00.000Z`),
+    start: new Date("2026-09-17T10:00:00.000Z"),
     duration: 45,
     type: "interview-dynamic",
-    recruitmentYear: currentYear,
+    recruitmentId: currentRecruitment.id,
   });
 
   // ── Recruiter availability ───────────────────────────────────────
   await db.insert(recruiterAvailability).values({
-    start: new Date(`${currentYear}-09-15T09:00:00.000Z`),
+    start: new Date("2026-09-15T09:00:00.000Z"),
     duration: 180,
     recruiterId: "3",
-    recruitmentYear: currentYear,
+    recruitmentId: currentRecruitment.id,
   });
 
-  // ── Current applications ─────────────────────────────────────────
+  // ── Current application (Candidate 1 in 2026/2027) ────────────────
   const [currentApp1] = await db
     .insert(application)
     .values({
       candidateId: "1",
+      recruitmentId: currentRecruitment.id,
       studentNumber: 202100001,
       fullName: "Candidato 1",
       linkedIn: "https://linkedin.com/in/candidato1",
       github: "https://github.com/candidato1",
       phone: "910000001",
-      studentYear: "202100001",
       degree: "meic",
-      curricularYear: "3bsc",
-      experience: "2 anos de desenvolvimento web",
-      motivation: "Quero fazer parte do NIAEFEUP",
-      selfPromotion: "Gosto de projetos open source",
+      curricularYear: "4msc",
+      experience: "3 anos de desenvolvimento web",
+      motivation: "Re-candidatura para continuar a contribuir para o NIAEFEUP",
+      selfPromotion: "Gosto de projetos open source e mentoria",
       interestJustification: "O NIAEFEUP alinha com os meus interesses",
-      recruitmentFirstInteraction: "amigos",
       suggestions: "Nenhuma",
       accepted: false,
     })
@@ -741,17 +717,14 @@ async function main() {
     applicationId: currentApp1.id,
     interest: "website",
   });
-  await db.insert(applicationInterests).values({
-    applicationId: currentApp1.id,
-    interest: "sinf",
-  });
 
-  // ── Current interview (unlocked, for candidate 1) ────────────────
+  // ── Current interview ────────────────────────────────────────────
   const [currentInterview] = await db
     .insert(interview)
     .values({
-      content: [{ type: "paragraph", content: "Olá, tudo bem?" }],
+      content: [{ type: "paragraph", content: "Olá, entrevista 2026/2027!" }],
       candidateId: "1",
+      recruitmentId: currentRecruitment.id,
       slot: slot1.id,
       locked: false,
     })
@@ -766,14 +739,16 @@ async function main() {
   const [currentDynamic] = await db
     .insert(dynamic)
     .values({
-      content: [{ type: "paragraph", content: "Dinâmica de grupo atual" }],
+      content: [{ type: "paragraph", content: "Dinâmica de grupo 2026/2027" }],
       slot: slot3.id,
+      recruitmentId: currentRecruitment.id,
     })
     .returning({ id: dynamic.id });
 
   await db.insert(candidateToDynamic).values({
     candidateId: "1",
     dynamicId: currentDynamic.id,
+    recruitmentId: currentRecruitment.id,
   });
 
   await db.insert(recruiterToDynamic).values({
@@ -784,7 +759,7 @@ async function main() {
   // ── Current voting (in progress) ─────────────────────────────────
   const [currentVoting] = await db
     .insert(votingPhase)
-    .values({ recruitmentYear: currentYear })
+    .values({ recruitmentId: currentRecruitment.id })
     .returning({ id: votingPhase.id });
 
   await db.insert(votingPhaseCandidate).values({
@@ -806,12 +781,6 @@ async function main() {
     type: "phase_unlocked",
     data: { phase: "Entrevista" },
     isRead: false,
-  });
-  await db.insert(notification).values({
-    userId: "2",
-    type: "phase_unlocked",
-    data: { phase: "Candidatura" },
-    isRead: true,
   });
 
   // ── Final message templates ──────────────────────────────────────
@@ -836,11 +805,19 @@ async function main() {
 
   console.log("Seed completed successfully!");
   console.log("");
+  console.log("Recruitments created:");
+  console.log(`  Past:    ${pastLectiveYear} (Sem 1) - Inactive`);
+  console.log(`  Current: ${currentLectiveYear} (Sem 1) - Active`);
+  console.log("");
   console.log("Users created:");
   console.log("  Admin:      admin@test.com     (password: testeteste)");
   console.log("  Recruiter:  recrutador@test.com (password: testeteste)");
-  console.log("  Candidate1: candidato1@test.com (password: testeteste)");
-  console.log("  Candidate2: candidato2@test.com (password: testeteste)");
+  console.log(
+    "  Candidate1: candidato1@test.com (password: testeteste) [applied in both years]",
+  );
+  console.log(
+    "  Candidate2: candidato2@test.com (password: testeteste) [applied in past year only]",
+  );
 }
 
 main();

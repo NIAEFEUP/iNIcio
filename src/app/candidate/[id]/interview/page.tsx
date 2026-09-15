@@ -21,7 +21,7 @@ import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { candidate } from "@/db/schema";
 import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
@@ -69,10 +69,18 @@ export default async function InterviewPage({ params }: any) {
 
     if (!session || !(await isRecruiter(session.user.id))) redirect("/");
 
+    const recruitmentId = interview?.recruitmentId;
+    if (!recruitmentId) return;
+
     await db
       .update(candidate)
       .set({ interviewClassification: classification })
-      .where(eq(candidate.userId, candidateId));
+      .where(
+        and(
+          eq(candidate.userId, candidateId),
+          eq(candidate.recruitmentId, recruitmentId),
+        ),
+      );
   }
 
   const candidateWithMetadata = await getCandidateWithMetadata(id);

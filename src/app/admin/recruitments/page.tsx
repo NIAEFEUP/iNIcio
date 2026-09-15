@@ -22,10 +22,10 @@ export default async function RecruitmentAdmin() {
     await editRecruitment(recruitment);
   };
 
-  const deleteRecruitmentAction = async (year: number) => {
+  const deleteRecruitmentAction = async (id: number) => {
     "use server";
 
-    await deleteRecruitment(year);
+    await deleteRecruitment(id);
   };
 
   return (

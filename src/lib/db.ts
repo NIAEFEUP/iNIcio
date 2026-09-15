@@ -50,7 +50,15 @@ const pool =
 
 export const db = drizzle(pool, { schema });
 
-export const getAllCandidateUsers = async () => {
+export const getAllCandidateUsers = async (recruitmentId?: number) => {
+  if (recruitmentId) {
+    return await db
+      .select()
+      .from(schema.candidate)
+      .innerJoin(schema.user, eq(schema.candidate.userId, schema.user.id))
+      .where(eq(schema.candidate.recruitmentId, recruitmentId))
+      .then((res) => res.map((row) => row.user));
+  }
   return await db
     .select()
     .from(schema.candidate)

@@ -7,7 +7,7 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/db/schema";
 import {
@@ -16,14 +16,28 @@ import {
   CandidateWithMetadata,
 } from "./candidate";
 import { getLatestVotingDecisionForCandidate } from "./voting";
+import { getActiveRecruitment } from "./recruitment";
 
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
   slotParam: Slot,
+  recruitmentId?: number,
 ) {
+  const targetRecruitmentId =
+    recruitmentId ??
+    slotParam.recruitmentId ??
+    (await getActiveRecruitment())?.id;
+
+  if (!targetRecruitmentId) {
+    throw new Error("No recruitment specified or active");
+  }
+
   await db.transaction(async (trx) => {
     const candidateDynamic = await db.query.candidateToDynamic.findFirst({
-      where: eq(candidateToDynamic.candidateId, candidateId),
+      where: and(
+        eq(candidateToDynamic.candidateId, candidateId),
+        eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
+      ),
       with: {
         dynamic: {
           with: {
@@ -41,7 +55,12 @@ export async function tryToAddCandidateToDynamic(
 
       await trx
         .delete(candidateToDynamic)
-        .where(eq(candidateToDynamic.candidateId, candidateId));
+        .where(
+          and(
+            eq(candidateToDynamic.candidateId, candidateId),
+            eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
+          ),
+        );
     }
 
     const s = await trx
@@ -69,6 +88,7 @@ export async function tryToAddCandidateToDynamic(
           .insert(dynamic)
           .values({
             slot: slotParam.id,
+            recruitmentId: targetRecruitmentId,
             content: dynamicTemplate ? dynamicTemplate.content : [],
           })
           .returning({ id: dynamic.id });
@@ -76,11 +96,13 @@ export async function tryToAddCandidateToDynamic(
         await trx.insert(candidateToDynamic).values({
           candidateId: candidateId,
           dynamicId: insertedDynamic.id,
+          recruitmentId: targetRecruitmentId,
         });
       } else {
         await trx.insert(candidateToDynamic).values({
           candidateId: candidateId,
           dynamicId: possibleDynamic[0].id,
+          recruitmentId: targetRecruitmentId,
         });
       }
     } else {
@@ -161,11 +183,21 @@ export async function getDynamicInterviewers(dynamicId: number) {
   return interviewers.map((interviewer) => interviewer.recruiter.user);
 }
 
-export async function getCandidateDynamic(candidateId: string) {
-  await db.query.dynamic.findFirst({
+export async function getCandidateDynamic(
+  candidateId: string,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  return await db.query.dynamic.findFirst({
+    where: targetId ? eq(dynamic.recruitmentId, targetId) : undefined,
     with: {
       candidates: {
-        where: eq(candidateToDynamic.candidateId, candidateId),
+        where: targetId
+          ? and(
+              eq(candidateToDynamic.candidateId, candidateId),
+              eq(candidateToDynamic.recruitmentId, targetId),
+            )
+          : eq(candidateToDynamic.candidateId, candidateId),
         with: {
           candidate: {
             with: {
@@ -218,16 +250,41 @@ export async function createDynamicComment(
 }
 
 export async function getAllCandidatesWithDynamic(
-  restrictions?: Array<CandidateFilterRestriction>,
+  recruitmentIdOrRestrictions?: number | Array<CandidateFilterRestriction>,
+  restrictionsParam?: Array<CandidateFilterRestriction>,
 ): Promise<Array<CandidateWithMetadata>> {
+  const recruitmentId =
+    typeof recruitmentIdOrRestrictions === "number"
+      ? recruitmentIdOrRestrictions
+      : undefined;
+  const restrictions = Array.isArray(recruitmentIdOrRestrictions)
+    ? recruitmentIdOrRestrictions
+    : restrictionsParam;
+
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
   const candidates = await db.query.candidate.findMany({
-    where: (candidate, { exists }) =>
-      exists(
-        db
-          .select()
-          .from(application)
-          .where(eq(application.candidateId, candidate.userId)),
-      ),
+    where: (candidateTable, { eq, and, exists }) => {
+      const conditions = [
+        exists(
+          db
+            .select()
+            .from(application)
+            .where(
+              targetId
+                ? and(
+                    eq(application.candidateId, candidateTable.userId),
+                    eq(application.recruitmentId, targetId),
+                  )
+                : eq(application.candidateId, candidateTable.userId),
+            ),
+        ),
+      ];
+      if (targetId) {
+        conditions.push(eq(candidateTable.recruitmentId, targetId));
+      }
+      return and(...conditions);
+    },
     with: {
       user: true,
       interview: true,
@@ -249,25 +306,31 @@ export async function getAllCandidatesWithDynamic(
     },
   });
 
-  candidates.sort((a, b) => a.application.id - b.application.id);
+  candidates.sort(
+    (a, b) => (a.application?.id ?? 0) - (b.application?.id ?? 0),
+  );
 
   const res: Array<CandidateWithMetadata> = await Promise.all(
     candidates.map(async (c) => {
-      const votingDecision = await getLatestVotingDecisionForCandidate(
-        c.userId,
-      );
+      const votingDecision = targetId
+        ? await getLatestVotingDecisionForCandidate(c.userId, targetId)
+        : await getLatestVotingDecisionForCandidate(c.userId);
 
       return {
         ...c.user,
-        dynamic: c.dynamic,
-        interview: c.interview,
-        interviewClassification: c.interviewClassification,
-        dynamicClassification: c.dynamicClassification,
-        application: {
-          ...c.application,
-          profilePicture: await getFilenameUrl(c.application?.profilePicture),
-          interests: c.application?.interests.map((i) => i.interest),
-        },
+        dynamic: c.dynamic as any,
+        interview: c.interview as any,
+        interviewClassification: c.interviewClassification ?? "none",
+        dynamicClassification: c.dynamicClassification ?? "none",
+        application: c.application
+          ? {
+              ...c.application,
+              profilePicture: await getFilenameUrl(
+                c.application?.profilePicture,
+              ),
+              interests: c.application?.interests.map((i) => i.interest),
+            }
+          : null,
         knownRecruiters: c.knownRecruiters,
         votingDecision,
       };

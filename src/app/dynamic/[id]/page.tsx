@@ -20,7 +20,7 @@ import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { db } from "@/lib/db";
 import { candidate } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -55,10 +55,18 @@ export default async function DynamicPage({ params }: any) {
 
     if (!session || !(await isRecruiter(session.user.id))) redirect("/");
 
+    const dynamicData = await getDynamic(id);
+    const whereClause = dynamicData?.recruitmentId
+      ? and(
+          eq(candidate.userId, candidateId),
+          eq(candidate.recruitmentId, dynamicData.recruitmentId),
+        )
+      : eq(candidate.userId, candidateId);
+
     await db
       .update(candidate)
       .set({ dynamicClassification: classification })
-      .where(eq(candidate.userId, candidateId));
+      .where(whereClause);
   }
 
   const dynamic = await getDynamic(id);

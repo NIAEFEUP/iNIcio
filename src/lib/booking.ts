@@ -1,8 +1,14 @@
 import { db } from "./db";
+import { getActiveRecruitment } from "./recruitment";
 
-export async function getBookings() {
+export async function getBookings(recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
   return await db.transaction(async (tx) => {
     const interviews = await tx.query.interview.findMany({
+      where: targetId
+        ? (interview, { eq }) => eq(interview.recruitmentId, targetId)
+        : undefined,
       with: {
         slot: true,
         candidate: {
@@ -42,6 +48,9 @@ export async function getBookings() {
     });
 
     const dynamics = await tx.query.dynamic.findMany({
+      where: targetId
+        ? (dynamic, { eq }) => eq(dynamic.recruitmentId, targetId)
+        : undefined,
       with: {
         slot: true,
         candidates: {

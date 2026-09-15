@@ -9,11 +9,22 @@ import { db, InterviewTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
+import { getActiveRecruitment } from "./recruitment";
 
 export default async function addInterviewWithSlot(
   candidateId: string,
   slotParam: Slot,
+  recruitmentId?: number,
 ) {
+  const targetRecruitmentId =
+    recruitmentId ??
+    slotParam.recruitmentId ??
+    (await getActiveRecruitment())?.id;
+
+  if (!targetRecruitmentId) {
+    throw new Error("No recruitment specified or active");
+  }
+
   await db.transaction(async (trx) => {
     const s = await trx
       .select()
@@ -28,7 +39,10 @@ export default async function addInterviewWithSlot(
         .where(eq(slot.id, slotParam.id));
 
       const i = await trx.query.interview.findFirst({
-        where: eq(interview.candidateId, candidateId),
+        where: and(
+          eq(interview.candidateId, candidateId),
+          eq(interview.recruitmentId, targetRecruitmentId),
+        ),
         with: {
           slot: true,
         },
@@ -50,6 +64,7 @@ export default async function addInterviewWithSlot(
         await trx.insert(interview).values({
           slot: slotParam.id,
           candidateId: candidateId,
+          recruitmentId: targetRecruitmentId,
           content: interviewTemplate ? interviewTemplate.content : [],
         });
 
@@ -62,11 +77,19 @@ export default async function addInterviewWithSlot(
   });
 }
 
-export async function getInterview(candidateId: string) {
-  const interviews = await db
-    .select()
-    .from(interview)
-    .where(eq(interview.candidateId, candidateId));
+export async function getInterview(
+  candidateId: string,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  const whereClause = targetId
+    ? and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, targetId),
+      )
+    : eq(interview.candidateId, candidateId);
+
+  const interviews = await db.select().from(interview).where(whereClause);
 
   return interviews[0];
 }
@@ -85,12 +108,21 @@ export async function getInterviewers(interviewId: number) {
   return interviewers.map((interviewer) => interviewer.recruiter.user);
 }
 
-export async function updateInterview(candidateId: string, content: any) {
+export async function updateInterview(
+  candidateId: string,
+  content: any,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  const whereClause = targetId
+    ? and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, targetId),
+      )
+    : eq(interview.candidateId, candidateId);
+
   await db.transaction(async (trx) => {
-    await trx
-      .update(interview)
-      .set({ content: content })
-      .where(eq(interview.candidateId, candidateId));
+    await trx.update(interview).set({ content: content }).where(whereClause);
   });
 }
 
@@ -98,12 +130,21 @@ export async function addInterviewComment(
   authorId: string,
   content: Array<any>,
   candidateId: string,
+  recruitmentId?: number,
 ): Promise<boolean> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  const whereClause = targetId
+    ? and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, targetId),
+      )
+    : eq(interview.candidateId, candidateId);
+
   return await db.transaction(async (trx) => {
     const i = await trx
       .select()
       .from(interview)
-      .where(eq(interview.candidateId, candidateId))
+      .where(whereClause)
       .for("update");
 
     if (i.length === 0) return false;
