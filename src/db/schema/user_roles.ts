@@ -84,6 +84,19 @@ export const recruiterToCandidateRelations = relations(
       fields: [recruiterToCandidate.recruitmentId],
       references: [recruitment.id],
     }),
+    candidate: one(candidate, {
+      fields: [
+        recruiterToCandidate.candidateId,
+        recruiterToCandidate.recruitmentId,
+      ],
+      references: [candidate.userId, candidate.recruitmentId],
+      relationName: "candidate_knownRecruiters",
+    }),
+    recruiterRef: one(recruiter, {
+      fields: [recruiterToCandidate.recruiterId],
+      references: [recruiter.userId],
+      relationName: "recruiter_knownCandidates",
+    }),
   }),
 );
 
@@ -92,7 +105,9 @@ export const recruiterRelations = relations(recruiter, ({ one, many }) => ({
     fields: [recruiter.userId],
     references: [user.id],
   }),
-  knownCandidates: many(recruiterToCandidate),
+  knownCandidates: many(recruiterToCandidate, {
+    relationName: "recruiter_knownCandidates",
+  }),
   appreciations: many(appreciation),
   interviews: many(recruiterToInterview),
   dynamics: many(recruiterToDynamic),
@@ -122,5 +137,7 @@ export const candidateRelations = relations(candidate, ({ many, one }) => ({
       candidateToDynamic.recruitmentId,
     ],
   }),
-  knownRecruiters: many(recruiterToCandidate),
+  knownRecruiters: many(recruiterToCandidate, {
+    relationName: "candidate_knownRecruiters",
+  }),
 }));
