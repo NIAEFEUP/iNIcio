@@ -74,7 +74,7 @@
     "@types/node": "^20.19.43",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
+    "@types/react-dom": "^19.2.7",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.3",
     "eslint-config-prettier": "^10.1.8",
