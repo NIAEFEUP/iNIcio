@@ -17,6 +17,10 @@ export default async function RecruitmentAdmin() {
   const add = async (phase: RecruitmentPhase) => {
     "use server";
 
+    if (!phase.recruitmentId) {
+      throw new Error("No recruitment selected");
+    }
+
     await addRecruitmentPhase(phase);
   };
 
