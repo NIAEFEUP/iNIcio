@@ -1,4 +1,5 @@
 import {
+  foreignKey,
   integer,
   pgTable,
   serial,
@@ -13,7 +14,6 @@ import { candidate, recruiter } from "./user_roles";
 import { relations } from "drizzle-orm";
 import { interviewComment } from "./comment";
 import { slot } from "./recruitment_phase";
-import { user } from "./auth";
 import { recruitment } from "./recruitment";
 
 export const interview = pgTable(
@@ -24,9 +24,7 @@ export const interview = pgTable(
       .notNull()
       .references(() => recruitment.id, { onDelete: "cascade" }),
     content: jsonb("content").notNull().default([]),
-    candidateId: text("candidate_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    candidateId: text("candidate_id").notNull(),
     slot: integer("slot")
       .notNull()
       .references(() => slot.id),
@@ -39,6 +37,11 @@ export const interview = pgTable(
     ),
     index("interview_recruitment_id_idx").on(table.recruitmentId),
     index("interview_slot_idx").on(table.slot),
+    foreignKey({
+      columns: [table.candidateId, table.recruitmentId],
+      foreignColumns: [candidate.userId, candidate.recruitmentId],
+      name: "interview_candidate_fk",
+    }).onDelete("cascade"),
   ],
 );
 

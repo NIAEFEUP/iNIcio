@@ -89,6 +89,7 @@ export async function createVotingPhase(
           .values({
             votingPhaseId: vPhase[0].id,
             candidateId: candidate,
+            recruitmentId: targetId,
           })
           .returning({ id: votingPhaseCandidate.candidateId });
       }

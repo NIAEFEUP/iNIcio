@@ -452,11 +452,13 @@ async function main() {
   await db.insert(votingPhaseCandidate).values({
     votingPhaseId: pastVoting.id,
     candidateId: "1",
+    recruitmentId: pastRecruitment.id,
     voteFinished: true,
   });
   await db.insert(votingPhaseCandidate).values({
     votingPhaseId: pastVoting.id,
     candidateId: "2",
+    recruitmentId: pastRecruitment.id,
     voteFinished: true,
   });
 
@@ -765,6 +767,7 @@ async function main() {
   await db.insert(votingPhaseCandidate).values({
     votingPhaseId: currentVoting.id,
     candidateId: "1",
+    recruitmentId: currentRecruitment.id,
     voteFinished: false,
   });
 

@@ -6,33 +6,53 @@ import {
   text,
   boolean,
   primaryKey,
+  unique,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
 import { candidate } from "./user_roles";
 import { relations } from "drizzle-orm";
 
-export const votingPhase = pgTable("voting_phase", {
-  id: serial("id").primaryKey(),
-  recruitmentId: integer("recruitment_id")
-    .notNull()
-    .references(() => recruitment.id, { onDelete: "cascade" }),
-  created_at: timestamp("created_at").defaultNow(),
-});
+export const votingPhase = pgTable(
+  "voting_phase",
+  {
+    id: serial("id").primaryKey(),
+    recruitmentId: integer("recruitment_id")
+      .notNull()
+      .references(() => recruitment.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("voting_phase_id_recruitment_unique").on(
+      table.id,
+      table.recruitmentId,
+    ),
+  ],
+);
 
 export const votingPhaseCandidate = pgTable(
   "voting_phase_candidate",
   {
-    votingPhaseId: integer("voting_phase_id")
+    votingPhaseId: integer("voting_phase_id").notNull(),
+    candidateId: text("candidate_id").notNull(),
+    recruitmentId: integer("recruitment_id")
       .notNull()
-      .references(() => votingPhase.id, { onDelete: "cascade" }),
-    candidateId: text("candidate_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => recruitment.id, { onDelete: "cascade" }),
     voteFinished: boolean("vote_finished").notNull().default(false),
   },
   (table) => [
     primaryKey({ columns: [table.votingPhaseId, table.candidateId] }),
+    foreignKey({
+      columns: [table.votingPhaseId, table.recruitmentId],
+      foreignColumns: [votingPhase.id, votingPhase.recruitmentId],
+      name: "voting_phase_candidate_phase_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.candidateId, table.recruitmentId],
+      foreignColumns: [candidate.userId, candidate.recruitmentId],
+      name: "voting_phase_candidate_candidate_fk",
+    }).onDelete("cascade"),
   ],
 );
 
