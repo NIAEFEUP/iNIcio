@@ -69,12 +69,18 @@ export default async function RecruiterAvailabilityPage() {
       <h1 className="text-4xl text-center font-bold">
         Marca as tuas disponibilidades
       </h1>
-      <RecruiterAvailabilityClient
-        currentAvailabilities={currentAvailabilities}
-        saveAvailabilities={confirm}
-        recruiterId={session?.user.id}
-        recruitmentId={activeRecruitment?.id}
-      />
+      {activeRecruitment ? (
+        <RecruiterAvailabilityClient
+          currentAvailabilities={currentAvailabilities}
+          saveAvailabilities={confirm}
+          recruiterId={session?.user.id}
+          recruitmentId={activeRecruitment.id}
+        />
+      ) : (
+        <p className="text-center text-muted-foreground">
+          Não existe um recrutamento ativo
+        </p>
+      )}
     </>
   );
 }
