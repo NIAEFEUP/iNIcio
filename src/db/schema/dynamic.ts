@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  foreignKey,
   integer,
   pgTable,
   serial,
@@ -12,7 +13,6 @@ import {
 import { candidate, recruiter } from "./user_roles";
 import { dynamicComment } from "./comment";
 import { slot } from "./recruitment_phase";
-import { user } from "./auth";
 import { recruitment } from "./recruitment";
 
 export const dynamic = pgTable(
@@ -28,6 +28,7 @@ export const dynamic = pgTable(
       .references(() => slot.id),
   },
   (table) => [
+    unique("dynamic_id_recruitment_unique").on(table.id, table.recruitmentId),
     index("dynamic_recruitment_id_idx").on(table.recruitmentId),
     index("dynamic_slot_idx").on(table.slot),
   ],
@@ -36,9 +37,7 @@ export const dynamic = pgTable(
 export const candidateToDynamic = pgTable(
   "candidate_to_dynamic",
   {
-    candidateId: text("candidate_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    candidateId: text("candidate_id").notNull(),
     dynamicId: integer("dynamic_id")
       .notNull()
       .references(() => dynamic.id, { onDelete: "cascade" }),
@@ -52,6 +51,16 @@ export const candidateToDynamic = pgTable(
       table.candidateId,
       table.recruitmentId,
     ),
+    foreignKey({
+      columns: [table.candidateId, table.recruitmentId],
+      foreignColumns: [candidate.userId, candidate.recruitmentId],
+      name: "candidate_to_dynamic_candidate_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.dynamicId, table.recruitmentId],
+      foreignColumns: [dynamic.id, dynamic.recruitmentId],
+      name: "candidate_to_dynamic_dynamic_fk",
+    }).onDelete("cascade"),
   ],
 );
 
@@ -93,8 +102,8 @@ export const candidateToDynamicRelations = relations(
       references: [candidate.userId, candidate.recruitmentId],
     }),
     dynamic: one(dynamic, {
-      fields: [candidateToDynamic.dynamicId],
-      references: [dynamic.id],
+      fields: [candidateToDynamic.dynamicId, candidateToDynamic.recruitmentId],
+      references: [dynamic.id, dynamic.recruitmentId],
     }),
   }),
 );
