@@ -16,7 +16,9 @@ import { getActiveRecruitment } from "@/lib/recruitment";
 export const getEventAvailabilities = async (recruitmentId?: number) => {
   const calendarEvents: IEvent[] = [];
 
-  const availabilities = await getAllRecruiterAvailabilities(recruitmentId);
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return calendarEvents;
+  const availabilities = await getAllRecruiterAvailabilities(targetId);
 
   await Promise.all(
     availabilities.map(async (availability) => {
@@ -48,6 +50,7 @@ export const getEventAvailabilities = async (recruitmentId?: number) => {
 export const getEvents = async (userId: string, recruitmentId?: number) => {
   const calendarEvents: IEvent[] = [];
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return calendarEvents;
 
   const interviews = await db.query.interview.findMany({
     where: (i, { exists, and: andWhere, eq: eqWhere }) => {

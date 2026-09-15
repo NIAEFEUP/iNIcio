@@ -29,6 +29,7 @@ export async function getAvailableRecruiters(
   recruitmentId?: number,
 ): Promise<User[]> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
   const startUtc = new Date(start.toISOString());
   const endUtc = new Date(end.toISOString());
 
