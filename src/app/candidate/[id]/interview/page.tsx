@@ -52,7 +52,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!isRecruiter(session?.user.id)) redirect("/");
+    if (!(await isRecruiter(session?.user.id))) redirect("/");
 
     return await addInterviewComment(
       session ? session.user.id : "",
