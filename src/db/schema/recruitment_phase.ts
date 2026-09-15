@@ -7,22 +7,29 @@ import {
   serial,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
 
-export const slot = pgTable("slot", {
-  id: serial("id").primaryKey(),
-  start: timestamp("start").notNull(),
-  duration: integer("duration").notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  type: text("type", {
-    enum: ["interview", "dynamic", "interview-dynamic"],
-  }).default("interview-dynamic"),
-  recruitmentId: integer("recruitment_id")
-    .notNull()
-    .references(() => recruitment.id, { onDelete: "cascade" }),
-});
+export const slot = pgTable(
+  "slot",
+  {
+    id: serial("id").primaryKey(),
+    start: timestamp("start").notNull(),
+    duration: integer("duration").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    type: text("type", {
+      enum: ["interview", "dynamic", "interview-dynamic"],
+    }).default("interview-dynamic"),
+    recruitmentId: integer("recruitment_id")
+      .notNull()
+      .references(() => recruitment.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("slot_id_recruitment_unique").on(table.id, table.recruitmentId),
+  ],
+);
 
 export const recruiterAvailability = pgTable("recruiter_availability", {
   id: serial("id").primaryKey(),

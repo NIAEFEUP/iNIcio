@@ -25,9 +25,7 @@ export const interview = pgTable(
       .references(() => recruitment.id, { onDelete: "cascade" }),
     content: jsonb("content").notNull().default([]),
     candidateId: text("candidate_id").notNull(),
-    slot: integer("slot")
-      .notNull()
-      .references(() => slot.id),
+    slot: integer("slot").notNull(),
     locked: boolean("locked").notNull().default(false),
   },
   (table) => [
@@ -42,6 +40,11 @@ export const interview = pgTable(
       foreignColumns: [candidate.userId, candidate.recruitmentId],
       name: "interview_candidate_fk",
     }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.slot, table.recruitmentId],
+      foreignColumns: [slot.id, slot.recruitmentId],
+      name: "interview_slot_fk",
+    }),
   ],
 );
 
