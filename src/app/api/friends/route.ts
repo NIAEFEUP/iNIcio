@@ -31,7 +31,9 @@ export async function PUT(req: Request) {
     return new Response("No active recruitment", { status: 400 });
   }
 
-  if (await areFriends(session.user.id, json.candidateId)) {
+  if (
+    await areFriends(session.user.id, json.candidateId, targetRecruitmentId)
+  ) {
     await db
       .delete(recruiterToCandidate)
       .where(
