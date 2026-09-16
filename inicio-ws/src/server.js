@@ -40,9 +40,12 @@ server.on("upgrade", (request, socket, head) => {
         return;
       }
 
+      const room = (request.url || "").slice(1).split("?")[0];
+      console.log(`[ws] connected room=${room}`);
       wss.emit("connection", ws, request);
+      ws.once("close", () => console.log(`[ws] disconnected room=${room}`));
     } catch (error) {
-      console.error(error);
+      console.error("[ws] authentication failed", error.message);
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
       socket.destroy();
     }
