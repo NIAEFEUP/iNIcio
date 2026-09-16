@@ -188,16 +188,22 @@ export async function getCandidateDynamic(
   recruitmentId?: number,
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  const link = await db.query.candidateToDynamic.findFirst({
+    where: targetId
+      ? and(
+          eq(candidateToDynamic.candidateId, candidateId),
+          eq(candidateToDynamic.recruitmentId, targetId),
+        )
+      : eq(candidateToDynamic.candidateId, candidateId),
+  });
+
+  if (!link) return null;
+
   return await db.query.dynamic.findFirst({
-    where: targetId ? eq(dynamic.recruitmentId, targetId) : undefined,
+    where: eq(dynamic.id, link.dynamicId),
     with: {
       candidates: {
-        where: targetId
-          ? and(
-              eq(candidateToDynamic.candidateId, candidateId),
-              eq(candidateToDynamic.recruitmentId, targetId),
-            )
-          : eq(candidateToDynamic.candidateId, candidateId),
         with: {
           candidate: {
             with: {

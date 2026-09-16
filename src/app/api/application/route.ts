@@ -16,6 +16,7 @@ import { and, eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
 import { getActiveRecruitment } from "@/lib/recruitment";
+import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
   fullname: z.string().min(1),
@@ -46,6 +47,9 @@ export async function POST(req: Request) {
   });
 
   if (!session) return new Response("Unauthorized", { status: 401 });
+
+  if (await isRecruiter(session.user.id))
+    return new Response("Forbidden", { status: 403 });
 
   let raw: unknown;
   try {

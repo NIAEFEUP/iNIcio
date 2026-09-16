@@ -198,6 +198,8 @@ export async function deleteCandidateVotes(
       where: eq(votingPhase.id, votingPhaseId),
     });
 
+    if (!vp) return;
+
     await tx
       .delete(candidateVote)
       .where(
@@ -226,14 +228,15 @@ export async function deleteCandidateVotes(
         ),
       );
 
-    const appWhere = vp
-      ? and(
+    await tx
+      .update(application)
+      .set({ accepted: false })
+      .where(
+        and(
           eq(application.candidateId, candidateId),
           eq(application.recruitmentId, vp.recruitmentId),
-        )
-      : eq(application.candidateId, candidateId);
-
-    await tx.update(application).set({ accepted: false }).where(appWhere);
+        ),
+      );
   });
 }
 
@@ -244,6 +247,14 @@ export async function makeCandidateVoteDefinitive(
 ) {
   try {
     await db.transaction(async (tx) => {
+      const vp = await tx.query.votingPhase.findFirst({
+        where: eq(votingPhase.id, votingPhaseId),
+      });
+
+      if (!vp) {
+        return false;
+      }
+
       const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
         where: and(
           eq(votingPhaseCandidate.candidateId, candidateId),
@@ -251,7 +262,7 @@ export async function makeCandidateVoteDefinitive(
         ),
       });
 
-      if (vPhaseCandidate?.voteFinished) {
+      if (!vPhaseCandidate || vPhaseCandidate.voteFinished) {
         return false;
       }
 
@@ -290,21 +301,15 @@ export async function makeCandidateVoteDefinitive(
           ),
         );
 
-      const vp = await tx.query.votingPhase.findFirst({
-        where: eq(votingPhase.id, votingPhaseId),
-      });
-
-      const appWhere = vp
-        ? and(
-            eq(application.candidateId, candidateId),
-            eq(application.recruitmentId, vp.recruitmentId),
-          )
-        : eq(application.candidateId, candidateId);
-
       await tx
         .update(application)
         .set({ accepted: decision === "accept" })
-        .where(appWhere);
+        .where(
+          and(
+            eq(application.candidateId, candidateId),
+            eq(application.recruitmentId, vp.recruitmentId),
+          ),
+        );
     });
     return true;
   } catch (e) {
