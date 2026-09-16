@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -44,7 +44,14 @@ export default function RealTimeEditor({
   collab = true,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
+  const fragment = useMemo(
+    () => (doc ? doc.getXmlFragment(`document-store-${docId}`) : null),
+    [doc, docId],
+  );
   const [currentContent, setCurrentContent] = useState<string>("");
+  const hasSeededContent = useRef(false);
+  const isReady = useRef(!collab);
+  const isSaving = useRef(false);
 
   const provider = useMemo(
     () =>
@@ -83,21 +90,57 @@ export default function RealTimeEditor({
   );
 
   useEffect(() => {
-    if (!editor || !entity?.content) return;
+    if (!editor) return;
 
-    editor.replaceBlocks(editor.document, entity.content);
-  }, [editor, entity?.content]);
+    const seedDocument = () => {
+      if (hasSeededContent.current) return;
+
+      // Let the websocket deliver the shared document before seeding it from
+      // the database. This prevents a late joiner from overwriting edits.
+      if (collab && fragment && fragment.length > 0) {
+        hasSeededContent.current = true;
+        isReady.current = true;
+        return;
+      }
+
+      if (entity?.content) {
+        editor.replaceBlocks(editor.document, entity.content);
+      }
+      hasSeededContent.current = true;
+      isReady.current = true;
+    };
+
+    if (!collab || !provider) {
+      seedDocument();
+      return;
+    }
+
+    if (provider.synced) {
+      seedDocument();
+      return;
+    }
+
+    provider.on("sync", seedDocument);
+    return () => provider.off("sync", seedDocument);
+  }, [collab, editor, entity?.content, fragment, provider]);
 
   useEffect(() => {
     if (!saveHandler || !editor) return;
 
     const timeout = setInterval(() => {
       void (async () => {
+        if (!isReady.current || isSaving.current) return;
+
         const stringEditorDocument = JSON.stringify(editor.document);
         if (currentContent === stringEditorDocument) return;
 
-        await saveHandler(editor.document);
-        setCurrentContent(JSON.stringify(stringEditorDocument));
+        isSaving.current = true;
+        try {
+          await saveHandler(editor.document);
+          setCurrentContent(stringEditorDocument);
+        } finally {
+          isSaving.current = false;
+        }
       })();
     }, saveHandlerTimeout);
 
@@ -118,6 +161,7 @@ export default function RealTimeEditor({
         transition-all duration-200 p-4 focus-within:ring-2 focus-within:ring-blue-500 overflow-y-auto break-words whitespace-pre-wrap
       "
       editor={editor}
+      editable={true}
       data-color-scheme="light"
       onChange={onChange}
     >
