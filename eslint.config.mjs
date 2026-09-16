@@ -7,6 +7,25 @@ export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
   {
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-misused-promises": [
+        "error",
+        {
+          checksVoidReturn: {
+            attributes: false,
+          },
+        },
+      ],
+    },
+  },
+  {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@next/next/no-html-link-for-pages": "off",

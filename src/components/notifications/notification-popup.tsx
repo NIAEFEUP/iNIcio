@@ -42,7 +42,9 @@ export default function NotificationPopup({
   );
 
   const markAllAsRead = () => {
-    notifications.forEach((n) => markNotificationAsRead(n.id));
+    notifications.forEach((n) => {
+      void markNotificationAsRead(n.id);
+    });
     setUnreadCount(0);
   };
 

@@ -24,7 +24,6 @@ import { getRole } from "@/lib/role";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { candidate } from "@/db/schema";
-import { ReadOnlyBlocks } from "@/components/editor/read-only-blocks";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -52,7 +51,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!isRecruiter(session?.user.id)) redirect("/");
+    if (!(await isRecruiter(session?.user.id))) redirect("/");
 
     return await addInterviewComment(
       session ? session.user.id : "",
@@ -124,21 +123,17 @@ export default async function InterviewPage({ params }: any) {
 
             <div className="lg:col-span-4">
               <EditorFrame>
-                {interview.locked ? (
-                  <ReadOnlyBlocks blocks={interview.content as Array<any>} />
-                ) : (
-                  <RealTimeEditor
-                    token={jwt}
-                    key={`interview-editor-${id}`}
-                    roomId={`interview-${id}`}
-                    docId={`interview-${id}`}
-                    userName={session ? session.user.name : "Anonymous"}
-                    saveHandler={handleContentSave}
-                    entity={interview}
-                    mentionItems={recruiters}
-                    saveHandlerTimeout={250}
-                  />
-                )}
+                <RealTimeEditor
+                  token={jwt}
+                  key={`interview-editor-${id}`}
+                  roomId={`interview-${id}`}
+                  docId={`interview-${id}`}
+                  userName={session ? session.user.name : "Anonymous"}
+                  saveHandler={handleContentSave}
+                  entity={interview}
+                  mentionItems={recruiters}
+                  saveHandlerTimeout={250}
+                />
               </EditorFrame>
             </div>
           </div>

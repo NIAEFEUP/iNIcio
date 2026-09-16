@@ -2,7 +2,7 @@ import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CommentFrame from "@/components/comments/comment-frame";
 import EditorFrame from "@/components/editor/editor-frame";
-import RealTimeEditor from "@/components/editor/real-time-editor";
+import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { auth } from "@/lib/auth";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import {
