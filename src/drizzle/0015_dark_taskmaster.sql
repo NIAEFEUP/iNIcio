@@ -1,1 +1,0 @@
-ALTER TABLE "voting_phase_status" ALTER COLUMN "user_id" DROP NOT NULL;

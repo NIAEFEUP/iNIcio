@@ -39,7 +39,7 @@ Edit the `.env` file to set your database connection string and other necessary 
 This will apply the current schema to the running PostgreSQL container.
 
 ```bash
-npx drizzle-kit push
+npm run db:push
 ```
 
 ### 5. Start the development server
@@ -64,7 +64,7 @@ docker compose down
 docker compose up -d
 
 # Push the schema to the database
-npx drizzle-kit push
+npm run db:push
 ```
 
 ## 🗄️ Database & Drizzle ORM
@@ -113,6 +113,19 @@ import { db } from "@/db/db";
 
 **Whenever you create a new file inside `schema/`, make sure to add its exports to index.ts.**
 
-### ⚠️ Migrations in Production
+### 🔄 Applying Schema Changes
 
-Once the website is in production, you should **not** edit existing schema files directly. Instead, use Drizzle migrations to apply changes.
+This project follows Drizzle's **codebase-first** workflow: the TypeScript schema in `src/db/schema/` is the single source of truth, and changes are applied with [`drizzle-kit push`](https://orm.drizzle.team/docs/drizzle-kit-push). There are **no migration SQL files** to maintain by hand.
+
+To change the database:
+
+1. Edit the relevant file(s) in `src/db/schema/` (and re-export anything new from `index.ts`).
+2. Apply the changes:
+
+   ```bash
+   npm run db:push
+   ```
+
+   Drizzle diffs the live database against the schema and generates and applies the DDL itself. Destructive changes (dropping a column or table) prompt for confirmation, so read those prompts carefully.
+
+Data-only changes (for example backfilling a newly added column) can't be expressed as a schema diff; run them once against the database (e.g. with `psql`) or add them to the seed script. Do not commit hand-written schema SQL.
