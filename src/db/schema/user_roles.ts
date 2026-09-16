@@ -1,4 +1,10 @@
-import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import {
+  foreignKey,
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import { relations } from "drizzle-orm";
 import { recruitmentPhaseStatus } from "./recruitment_phase";
@@ -54,10 +60,8 @@ export const recruiterToCandidate = pgTable(
   {
     recruiterId: text("recruiter_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    candidateId: text("candidate_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => recruiter.userId, { onDelete: "cascade" }),
+    candidateId: text("candidate_id").notNull(),
     recruitmentId: integer("recruitment_id")
       .notNull()
       .references(() => recruitment.id, { onDelete: "cascade" }),
@@ -66,6 +70,11 @@ export const recruiterToCandidate = pgTable(
     primaryKey({
       columns: [table.recruiterId, table.candidateId, table.recruitmentId],
     }),
+    foreignKey({
+      columns: [table.candidateId, table.recruitmentId],
+      foreignColumns: [candidate.userId, candidate.recruitmentId],
+      name: "recruiter_to_candidate_candidate_fk",
+    }).onDelete("cascade"),
   ],
 );
 
