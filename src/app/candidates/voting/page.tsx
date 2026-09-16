@@ -12,7 +12,7 @@ export default async function CandidatesVotingPage() {
 
   const admin = await isAdmin(session?.user.id);
 
-  const votingPhases = await getVotingPhases(new Date().getFullYear());
+  const votingPhases = await getVotingPhases();
 
   return (
     <div className="flex flex-col gap-4 mx-auto max-w-[60em] w-full">

@@ -311,6 +311,15 @@ export async function deleteRecruiter(userId: string, recruitmentId?: number) {
             eq(recruiterToCandidate.recruitmentId, targetId),
           ),
         );
+
+      const remaining = await tx
+        .select()
+        .from(usersToRecruitments)
+        .where(eq(usersToRecruitments.userId, userId));
+
+      if (remaining.length === 0) {
+        await tx.delete(recruiter).where(eq(recruiter.userId, userId));
+      }
     } else {
       await tx
         .delete(recruiterToCandidate)
