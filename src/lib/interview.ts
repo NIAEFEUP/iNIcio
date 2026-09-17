@@ -82,14 +82,17 @@ export async function getInterview(
   recruitmentId?: number,
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  const whereClause = targetId
-    ? and(
+  if (!targetId) return undefined;
+
+  const interviews = await db
+    .select()
+    .from(interview)
+    .where(
+      and(
         eq(interview.candidateId, candidateId),
         eq(interview.recruitmentId, targetId),
-      )
-    : eq(interview.candidateId, candidateId);
-
-  const interviews = await db.select().from(interview).where(whereClause);
+      ),
+    );
 
   return interviews[0];
 }
@@ -114,15 +117,18 @@ export async function updateInterview(
   recruitmentId?: number,
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  const whereClause = targetId
-    ? and(
-        eq(interview.candidateId, candidateId),
-        eq(interview.recruitmentId, targetId),
-      )
-    : eq(interview.candidateId, candidateId);
+  if (!targetId) return;
 
   await db.transaction(async (trx) => {
-    await trx.update(interview).set({ content: content }).where(whereClause);
+    await trx
+      .update(interview)
+      .set({ content: content })
+      .where(
+        and(
+          eq(interview.candidateId, candidateId),
+          eq(interview.recruitmentId, targetId),
+        ),
+      );
   });
 }
 
@@ -133,18 +139,18 @@ export async function addInterviewComment(
   recruitmentId?: number,
 ): Promise<boolean> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  const whereClause = targetId
-    ? and(
-        eq(interview.candidateId, candidateId),
-        eq(interview.recruitmentId, targetId),
-      )
-    : eq(interview.candidateId, candidateId);
+  if (!targetId) return false;
 
   return await db.transaction(async (trx) => {
     const i = await trx
       .select()
       .from(interview)
-      .where(whereClause)
+      .where(
+        and(
+          eq(interview.candidateId, candidateId),
+          eq(interview.recruitmentId, targetId),
+        ),
+      )
       .for("update");
 
     if (i.length === 0) return false;

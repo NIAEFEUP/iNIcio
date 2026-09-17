@@ -75,23 +75,22 @@ export async function getAvailabilities(
   recruiterId: string,
   recruitmentId?: number,
 ) {
-  const conditions = [eq(recruiterAvailability.recruiterId, recruiterId)];
-  if (recruitmentId) {
-    conditions.push(eq(recruiterAvailability.recruitmentId, recruitmentId));
-  }
+  if (!recruitmentId) return [];
 
   return await db.query.recruiterAvailability.findMany({
-    where: and(...conditions),
+    where: and(
+      eq(recruiterAvailability.recruiterId, recruiterId),
+      eq(recruiterAvailability.recruitmentId, recruitmentId),
+    ),
   });
 }
 
 export async function getAllRecruiterAvailabilities(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   return await db.query.recruiterAvailability.findMany({
-    where: targetId
-      ? eq(recruiterAvailability.recruitmentId, targetId)
-      : undefined,
+    where: eq(recruiterAvailability.recruitmentId, targetId),
     with: {
       recruiter: true,
     },

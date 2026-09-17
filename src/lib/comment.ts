@@ -32,12 +32,12 @@ export async function getApplicationComments(
   recruitmentId?: number,
 ): Promise<Array<Comment>> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  const whereClause = targetId
-    ? and(
-        eq(application.candidateId, candidateId),
-        eq(application.recruitmentId, targetId),
-      )
-    : eq(application.candidateId, candidateId);
+  if (!targetId) return [];
+
+  const whereClause = and(
+    eq(application.candidateId, candidateId),
+    eq(application.recruitmentId, targetId),
+  );
 
   const app = await db.select().from(application).where(whereClause);
 

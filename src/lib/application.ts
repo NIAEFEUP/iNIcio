@@ -12,12 +12,12 @@ export async function getApplication(
   recruitmentId?: number,
 ): Promise<Application | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  const whereClause = targetId
-    ? and(
-        eq(application.candidateId, id),
-        eq(application.recruitmentId, targetId),
-      )
-    : eq(application.candidateId, id);
+  if (!targetId) return null;
+
+  const whereClause = and(
+    eq(application.candidateId, id),
+    eq(application.recruitmentId, targetId),
+  );
 
   const app = await db.query.application.findFirst({
     where: whereClause,

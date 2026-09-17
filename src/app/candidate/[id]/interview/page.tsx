@@ -15,7 +15,7 @@ import {
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
@@ -85,6 +85,8 @@ export default async function InterviewPage({ params }: any) {
   const candidateWithMetadata = await getCandidateWithMetadata(id);
 
   const interview = await getInterview(id);
+
+  if (!interview) notFound();
 
   const recruiters = await getRecruiters();
 
