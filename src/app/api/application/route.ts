@@ -15,7 +15,10 @@ import {
 import { and, eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
-import { getActiveRecruitment } from "@/lib/recruitment";
+import {
+  getActiveRecruitment,
+  getCurrentRecruitmentState,
+} from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
@@ -71,6 +74,13 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Não existe nenhum recrutamento ativo" },
       { status: 400 },
+    );
+  }
+
+  if (!(await getCurrentRecruitmentState()).canApply) {
+    return NextResponse.json(
+      { error: "As candidaturas não estão abertas" },
+      { status: 403 },
     );
   }
 

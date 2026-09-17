@@ -10,6 +10,10 @@ import {
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
 import { and, desc, eq, gt, or } from "drizzle-orm";
+import {
+  getRecruitmentState,
+  type RecruitmentState,
+} from "./recruitment-state";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
@@ -94,6 +98,15 @@ export async function getAllRecruitmentPhases(recruitmentId?: number) {
     .where(eq(recruitmentPhase.recruitmentId, targetId));
 
   return recruitmentPhases;
+}
+
+export async function getCurrentRecruitmentState(): Promise<RecruitmentState> {
+  const activeRecruitment = await getActiveRecruitment();
+  const phases = activeRecruitment
+    ? await getAllRecruitmentPhases(activeRecruitment.id)
+    : [];
+
+  return getRecruitmentState(activeRecruitment ?? null, phases);
 }
 
 export async function getRecruitmentPhases(
