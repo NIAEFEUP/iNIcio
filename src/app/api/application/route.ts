@@ -19,7 +19,6 @@ import { getActiveRecruitment } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
-  fullname: z.string().min(1),
   student_number: z
     .union([z.string(), z.number()])
     .refine((value) => value !== "" && !Number.isNaN(Number(value)), {
@@ -28,7 +27,6 @@ const applicationSchema = z.object({
   phone: z.string().optional(),
   degree: z.string().optional(),
   curricular_year: z.string().optional(),
-  profile_picture: z.string().default(""),
   curriculum: z.string().default(""),
   interests: z.array(z.string()).default([]),
   linkedin: z.string().optional(),
@@ -76,78 +74,74 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
 
-  await db.transaction(async (tx) => {
-    const app = await tx
-      .insert(application)
-      .values({
-        fullName: data.fullname,
-        submittedAt: new Date(),
-        studentNumber: Number(data.student_number),
-        linkedIn: data.linkedin,
-        github: data.github,
-        personalWebsite: data.website,
-        interestJustification: data.interest_justification,
-        phone: data.phone,
-        degree: data.degree,
-        curricularYear: data.curricular_year,
-        profilePicture: fromFullUrlToPath(data.profile_picture),
-        curriculum: fromFullUrlToPath(data.curriculum),
-        experience: data.experience,
-        motivation: data.motivation,
-        selfPromotion: data.self_promotion,
-        suggestions: data.suggestions,
-        accepted: false,
-        candidateId: session.user.id,
-        recruitmentId: activeRecruitment.id,
-      })
-      .returning({ id: application.id });
-
-    if (data.profile_picture) {
-      await tx
-        .update(user)
-        .set({
-          image: data.profile_picture,
-          updatedAt: new Date(),
+  try {
+    await db.transaction(async (tx) => {
+      const app = await tx
+        .insert(application)
+        .values({
+          submittedAt: new Date(),
+          studentNumber: Number(data.student_number),
+          linkedIn: data.linkedin,
+          github: data.github,
+          personalWebsite: data.website,
+          interestJustification: data.interest_justification,
+          phone: data.phone,
+          degree: data.degree,
+          curricularYear: data.curricular_year,
+          curriculum: fromFullUrlToPath(data.curriculum),
+          experience: data.experience,
+          motivation: data.motivation,
+          selfPromotion: data.self_promotion,
+          suggestions: data.suggestions,
+          accepted: false,
+          candidateId: session.user.id,
+          recruitmentId: activeRecruitment.id,
         })
-        .where(eq(user.id, session.user.id));
-    }
+        .returning({ id: application.id });
 
-    for (const interest of data.interests) {
-      await tx.insert(applicationInterests).values({
-        applicationId: app[0].id,
-        interest,
-      });
-    }
+      for (const interest of data.interests) {
+        await tx.insert(applicationInterests).values({
+          applicationId: app[0].id,
+          interest,
+        });
+      }
 
-    await tx
-      .insert(candidate)
-      .values({
-        userId: session.user.id,
-        recruitmentId: activeRecruitment.id,
-      })
-      .onConflictDoNothing();
-
-    const phases = await tx
-      .select()
-      .from(recruitmentPhase)
-      .where(
-        and(
-          eq(recruitmentPhase.recruitmentId, activeRecruitment.id),
-          eq(recruitmentPhase.role, "candidate"),
-        ),
-      );
-
-    for (const phase of phases) {
       await tx
-        .insert(recruitmentPhaseStatus)
+        .insert(candidate)
         .values({
           userId: session.user.id,
-          phaseId: phase.id,
-          status: "todo",
+          recruitmentId: activeRecruitment.id,
         })
         .onConflictDoNothing();
-    }
-  });
 
-  return new Response();
+      const phases = await tx
+        .select()
+        .from(recruitmentPhase)
+        .where(
+          and(
+            eq(recruitmentPhase.recruitmentId, activeRecruitment.id),
+            eq(recruitmentPhase.role, "candidate"),
+          ),
+        );
+
+      for (const phase of phases) {
+        await tx
+          .insert(recruitmentPhaseStatus)
+          .values({
+            userId: session.user.id,
+            phaseId: phase.id,
+            status: "todo",
+          })
+          .onConflictDoNothing();
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Failed to submit application:", error);
+    return NextResponse.json(
+      { error: "Erro interno no servidor ao submeter a candidatura." },
+      { status: 500 },
+    );
+  }
 }

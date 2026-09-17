@@ -117,7 +117,6 @@ export async function getCandidateWithMetadata(
     application: res.application
       ? {
           ...res.application,
-          profilePicture: await getFilenameUrl(res.application?.profilePicture),
           curriculum: await getFilenameUrl(res.application?.curriculum),
           interests: res.application?.interests.map((i) => i.interest),
         }

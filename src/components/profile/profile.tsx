@@ -2,25 +2,14 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { GraduationCap } from "lucide-react";
-import { Application } from "@/lib/db";
+
 import { useSession } from "@/lib/use-session";
-import CandidateAnswers from "../candidate/page/candidate-answers";
 
 interface ProfileProps {
-  isCandidate: boolean;
-  application: Application | null | undefined;
-  applicationInterests: string[];
   pictureUrl: string | null;
 }
 
-export default function Profile({
-  isCandidate,
-  application,
-  applicationInterests,
-  pictureUrl,
-}: ProfileProps) {
+export default function Profile({ pictureUrl }: ProfileProps) {
   const { data: session, isPending } = useSession();
 
   if (isPending) {
@@ -45,55 +34,8 @@ export default function Profile({
             <h3 className="text-2xl font-bold text-card-foreground">
               {session?.user?.name}
             </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
-                  Curso:
-                </span>
-                <span className="text-sm font-semibold text-card-foreground uppercase">
-                  {application?.degree}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 flex items-center justify-center">
-                  <div className="h-2 w-2 bg-primary rounded-full"></div>
-                </div>
-                <span className="text-sm font-medium text-muted-foreground">
-                  Ano:
-                </span>
-                <span className="text-sm font-semibold text-card-foreground">
-                  {application?.curricularYear}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-muted-foreground">
-                Departamentos:
-              </span>
-              <div className="flex gap-2 flex-wrap">
-                {applicationInterests.map((interest) => (
-                  <Badge
-                    key={interest}
-                    variant="secondary"
-                    className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
-                  >
-                    {interest}
-                  </Badge>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
-
-        {isCandidate && (
-          <div className="space-y-1">
-            <CandidateAnswers application={application} />
-          </div>
-        )}
       </CardContent>
     </Card>
   );

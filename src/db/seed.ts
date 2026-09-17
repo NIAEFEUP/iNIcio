@@ -235,7 +235,6 @@ async function main() {
     candidateId: string;
     recruitmentId: number;
     studentNumber: number;
-    fullName: string;
     degree: string;
     curricularYear: string;
     phone?: string;
@@ -256,7 +255,6 @@ async function main() {
         candidateId: params.candidateId,
         recruitmentId: params.recruitmentId,
         studentNumber: params.studentNumber,
-        fullName: params.fullName,
         linkedIn: params.linkedIn,
         github: params.github,
         phone: params.phone,
@@ -537,7 +535,6 @@ async function main() {
     candidateId: "1",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100001,
-    fullName: "Candidato 1",
     linkedIn: "https://linkedin.com/in/candidato1",
     github: "https://github.com/candidato1",
     phone: "910000001",
@@ -556,7 +553,6 @@ async function main() {
     candidateId: "2",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100002,
-    fullName: "Candidato 2",
     linkedIn: "https://linkedin.com/in/candidato2",
     github: "https://github.com/candidato2",
     phone: "910000002",
@@ -575,7 +571,6 @@ async function main() {
     candidateId: "10",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100008,
-    fullName: "Candidato 8",
     degree: "leic",
     curricularYear: "1bsc",
     phone: "910000008",
@@ -866,7 +861,6 @@ async function main() {
     candidateId: "1",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100001,
-    fullName: "Candidato 1",
     linkedIn: "https://linkedin.com/in/candidato1",
     github: "https://github.com/candidato1",
     phone: "910000001",
@@ -886,7 +880,6 @@ async function main() {
     candidateId: "6",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100004,
-    fullName: "Candidato 4",
     phone: "910000004",
     degree: "leic",
     curricularYear: "1bsc",
@@ -902,7 +895,6 @@ async function main() {
     candidateId: "7",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100005,
-    fullName: "Candidato 5",
     phone: "910000005",
     degree: "leic",
     curricularYear: "2bsc",
@@ -918,7 +910,6 @@ async function main() {
     candidateId: "8",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100006,
-    fullName: "Candidato 6",
     phone: "910000006",
     degree: "meic",
     curricularYear: "1msc",
@@ -935,7 +926,6 @@ async function main() {
     candidateId: "9",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100007,
-    fullName: "Candidato 7",
     phone: "910000007",
     degree: "leic",
     curricularYear: "1bsc",

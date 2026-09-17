@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ProfileImageUpload } from "@/components/ui/profile-image-upload";
 import { CVUpload } from "@/components/ui/cv-upload";
 import {
   User,
@@ -30,13 +29,7 @@ import {
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 import { Separator } from "@/components/ui/separator";
 
-type ApplicationClientProps = {
-  savedPicture?: string | null;
-};
-
-export default function ApplicationClient({
-  savedPicture = null,
-}: ApplicationClientProps) {
+export default function ApplicationClient() {
   const [formData, setFormData] = useState(() => {
     let savedApp = null;
 
@@ -50,7 +43,6 @@ export default function ApplicationClient({
           student_number: "",
           degree: "",
           curricular_year: "",
-          profile_picture: "",
           curriculum: "",
           linkedin: "",
           github: "",
@@ -62,22 +54,14 @@ export default function ApplicationClient({
           self_promotion: "",
           recruitment_first_interaction: [] as string[],
           suggestions: "",
-          fullname: "",
         };
   });
 
   useEffect(() => {
-    localStorage.setItem(
-      "application",
-      JSON.stringify({
-        ...formData,
-        profile_picture: savedPicture ? savedPicture : formData.profile_picture,
-      }),
-    );
-  }, [formData, savedPicture]);
+    localStorage.setItem("application", JSON.stringify(formData));
+  }, [formData]);
 
   const [uploadedFiles, setUploadedFiles] = useState({
-    profileImage: null as { fileName: string; url: string } | null,
     cv: null as { fileName: string; url: string } | null,
   });
 
@@ -86,22 +70,10 @@ export default function ApplicationClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    localStorage.setItem(
-      "application",
-      JSON.stringify({
-        ...formData,
-        profile_picture: savedPicture ? savedPicture : formData.profile_picture,
-      }),
-    );
-
-    if (!uploadedFiles.profileImage) {
-      alert("Por favor submete uma fotografia.");
-      return;
-    }
+    localStorage.setItem("application", JSON.stringify(formData));
 
     const submissionData = {
       ...formData,
-      profile_picture: uploadedFiles.profileImage?.url || "",
       curriculum: uploadedFiles.cv?.url || "",
     };
 
@@ -146,20 +118,6 @@ export default function ApplicationClient({
       [fieldName]: prev[fieldName].includes(value)
         ? prev[fieldName].filter((item) => item !== value)
         : [...prev[fieldName], value],
-    }));
-  };
-
-  const handleProfileImageSuccess = (result: {
-    fileName: string;
-    url: string;
-  }) => {
-    setUploadedFiles((prev) => ({
-      ...prev,
-      profileImage: result,
-    }));
-    setFormData((prev) => ({
-      ...prev,
-      profile_picture: result.fileName,
     }));
   };
 
@@ -290,21 +248,6 @@ export default function ApplicationClient({
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <User className="h-4 w-4 text-primary" />
-                  Nome Completo *
-                </label>
-                <input
-                  type="text"
-                  name="fullname"
-                  placeholder="Nome completo"
-                  value={formData.fullname}
-                  onChange={handleInputChange}
-                  className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                  required
-                />
-              </div>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
@@ -416,21 +359,6 @@ export default function ApplicationClient({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-3">
-                    <Camera className="h-4 w-4 text-primary" />
-                    Fotografia *
-                  </label>
-                  <ProfileImageUpload
-                    onSuccess={handleProfileImageSuccess}
-                    onError={handleUploadError}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Escolhe uma foto onde sejas facilmente identificável.
-                  </p>
-                </div>
-
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-3">
                     <FileText className="h-4 w-4 text-primary" />
