@@ -360,36 +360,18 @@ export async function removeRecruiterFromRecruitment(
 
 export async function getRecruiters(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
-  if (targetId) {
-    const enrolled = await db
-      .select({
-        userId: usersToRecruitments.userId,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-      })
-      .from(usersToRecruitments)
-      .innerJoin(user, eq(user.id, usersToRecruitments.userId))
-      .where(eq(usersToRecruitments.recruitmentId, targetId));
-
-    if (enrolled.length > 0) {
-      return enrolled;
-    }
-  }
-
-  // Fallback to platform recruiters if no active recruitment or none enrolled yet
-  const res = await db
+  return await db
     .select({
-      userId: recruiter.userId,
+      userId: usersToRecruitments.userId,
       name: user.name,
       email: user.email,
       image: user.image,
     })
-    .from(recruiter)
-    .leftJoin(user, eq(user.id, recruiter.userId));
-
-  return res;
+    .from(usersToRecruitments)
+    .innerJoin(user, eq(user.id, usersToRecruitments.userId))
+    .where(eq(usersToRecruitments.recruitmentId, targetId));
 }
 
 export async function getAllPlatformRecruiters() {

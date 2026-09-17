@@ -1,8 +1,4 @@
-import {
-  recruiter,
-  recruiterAvailability,
-  usersToRecruitments,
-} from "@/db/schema";
+import { recruiterAvailability, usersToRecruitments } from "@/db/schema";
 import { db, RecruiterAvailability } from "./db";
 import { and, eq } from "drizzle-orm";
 import { isAdmin } from "./admin";
@@ -28,24 +24,16 @@ export async function isRecruiter(id: string, recruitmentId?: number) {
 
 export async function getRecruiters(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
-  if (targetId) {
-    const enrolled = await db.query.usersToRecruitments.findMany({
-      where: eq(usersToRecruitments.recruitmentId, targetId),
-      with: {
-        user: true,
-      },
-    });
-
-    if (enrolled.length > 0) {
-      return enrolled.map((e) => e.user);
-    }
-  }
-
-  return await db.query.user.findMany({
-    where: (user, { exists }) =>
-      exists(db.select().from(recruiter).where(eq(recruiter.userId, user.id))),
+  const enrolled = await db.query.usersToRecruitments.findMany({
+    where: eq(usersToRecruitments.recruitmentId, targetId),
+    with: {
+      user: true,
+    },
   });
+
+  return enrolled.map((e) => e.user);
 }
 
 export async function addAvailability(availablity: RecruiterAvailability) {
@@ -95,26 +83,17 @@ export async function getAllRecruiterAvailabilities(recruitmentId?: number) {
 
 export async function getAllRecruiters(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
-  if (targetId) {
-    const enrolled = await db.query.usersToRecruitments.findMany({
-      where: eq(usersToRecruitments.recruitmentId, targetId),
-      with: {
-        user: true,
-      },
-    });
-
-    if (enrolled.length > 0) {
-      return enrolled.map((e) => ({
-        userId: e.userId,
-        user: e.user,
-      }));
-    }
-  }
-
-  return await db.query.recruiter.findMany({
+  const enrolled = await db.query.usersToRecruitments.findMany({
+    where: eq(usersToRecruitments.recruitmentId, targetId),
     with: {
       user: true,
     },
   });
+
+  return enrolled.map((e) => ({
+    userId: e.userId,
+    user: e.user,
+  }));
 }
