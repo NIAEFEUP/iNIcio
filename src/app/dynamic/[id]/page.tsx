@@ -13,14 +13,15 @@ import {
 } from "@/lib/dynamic";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDynamicComments } from "@/lib/comment";
+import { getActiveRecruitment } from "@/lib/recruitment";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { db } from "@/lib/db";
 import { candidate } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -29,10 +30,15 @@ export default async function DynamicPage({ params }: any) {
     headers: await headers(),
   });
 
+  const activeRecruitment = await getActiveRecruitment();
+  const recruitmentId = activeRecruitment?.id;
+  if (!recruitmentId) notFound();
+
   async function handleContentSave(content: any) {
     "use server";
 
-    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
+      redirect("/");
 
     await updateDynamic(id, content);
   }
@@ -40,7 +46,8 @@ export default async function DynamicPage({ params }: any) {
   async function handleCommentSave(content: Array<any>) {
     "use server";
 
-    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
+      redirect("/");
 
     await createDynamicComment(id, content, session?.user.id);
 
@@ -53,17 +60,24 @@ export default async function DynamicPage({ params }: any) {
   ) {
     "use server";
 
-    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
+      redirect("/");
 
     await db
       .update(candidate)
       .set({ dynamicClassification: classification })
-      .where(eq(candidate.userId, candidateId));
+      .where(
+        and(
+          eq(candidate.userId, candidateId),
+          eq(candidate.recruitmentId, recruitmentId),
+        ),
+      );
   }
 
-  const dynamic = await getDynamic(id);
+  const dynamic = await getDynamic(id, recruitmentId);
+  if (!dynamic) notFound();
 
-  const recruiters = await getRecruiters();
+  const recruiters = await getRecruiters(recruitmentId);
 
   const interviewers = await getDynamicInterviewers(dynamic.id);
 

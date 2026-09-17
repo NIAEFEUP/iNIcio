@@ -12,9 +12,11 @@ import {
   recruitmentPhaseStatus,
   user,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
+import { getActiveRecruitment } from "@/lib/recruitment";
+import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
   fullname: z.string().min(1),
@@ -46,6 +48,9 @@ export async function POST(req: Request) {
 
   if (!session) return new Response("Unauthorized", { status: 401 });
 
+  if (await isRecruiter(session.user.id))
+    return new Response("Forbidden", { status: 403 });
+
   let raw: unknown;
   try {
     raw = await req.json();
@@ -57,6 +62,14 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid application payload" },
+      { status: 400 },
+    );
+  }
+
+  const activeRecruitment = await getActiveRecruitment();
+  if (!activeRecruitment) {
+    return NextResponse.json(
+      { error: "Não existe nenhum recrutamento ativo" },
       { status: 400 },
     );
   }
@@ -85,6 +98,7 @@ export async function POST(req: Request) {
         suggestions: data.suggestions,
         accepted: false,
         candidateId: session.user.id,
+        recruitmentId: activeRecruitment.id,
       })
       .returning({ id: application.id });
 
@@ -105,19 +119,33 @@ export async function POST(req: Request) {
       });
     }
 
-    await tx.insert(candidate).values({ userId: session.user.id });
+    await tx
+      .insert(candidate)
+      .values({
+        userId: session.user.id,
+        recruitmentId: activeRecruitment.id,
+      })
+      .onConflictDoNothing();
 
     const phases = await tx
       .select()
       .from(recruitmentPhase)
-      .where(eq(recruitmentPhase.role, "candidate"));
+      .where(
+        and(
+          eq(recruitmentPhase.recruitmentId, activeRecruitment.id),
+          eq(recruitmentPhase.role, "candidate"),
+        ),
+      );
 
     for (const phase of phases) {
-      await tx.insert(recruitmentPhaseStatus).values({
-        userId: session.user.id,
-        phaseId: phase.id,
-        status: "todo",
-      });
+      await tx
+        .insert(recruitmentPhaseStatus)
+        .values({
+          userId: session.user.id,
+          phaseId: phase.id,
+          status: "todo",
+        })
+        .onConflictDoNothing();
     }
   });
 

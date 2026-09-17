@@ -15,13 +15,14 @@ import {
 import EditorFrame from "@/components/editor/editor-frame";
 import CommentFrame from "@/components/comments/comment-frame";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
+import { getActiveRecruitment } from "@/lib/recruitment";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { candidate } from "@/db/schema";
 
@@ -32,6 +33,10 @@ export default async function InterviewPage({ params }: any) {
     headers: await headers(),
   });
 
+  const activeRecruitment = await getActiveRecruitment();
+  const recruitmentId = activeRecruitment?.id;
+  if (!recruitmentId) notFound();
+
   async function handleContentSave(content: any) {
     "use server";
 
@@ -39,7 +44,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!(await isRecruiter(session?.user.id))) redirect("/");
+    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
 
     await updateInterview(id, content);
   }
@@ -51,7 +56,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!(await isRecruiter(session?.user.id))) redirect("/");
+    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
 
     return await addInterviewComment(
       session ? session.user.id : "",
@@ -66,19 +71,32 @@ export default async function InterviewPage({ params }: any) {
   ) {
     "use server";
 
-    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
+      redirect("/");
+
+    if (!recruitmentId) return;
 
     await db
       .update(candidate)
       .set({ interviewClassification: classification })
-      .where(eq(candidate.userId, candidateId));
+      .where(
+        and(
+          eq(candidate.userId, candidateId),
+          eq(candidate.recruitmentId, recruitmentId),
+        ),
+      );
   }
 
-  const candidateWithMetadata = await getCandidateWithMetadata(id);
+  const candidateWithMetadata = await getCandidateWithMetadata(
+    id,
+    recruitmentId,
+  );
 
-  const interview = await getInterview(id);
+  const interview = await getInterview(id, recruitmentId);
 
-  const recruiters = await getRecruiters();
+  if (!interview) notFound();
+
+  const recruiters = await getRecruiters(recruitmentId);
 
   const interviewers = await getInterviewers(interview.id);
 

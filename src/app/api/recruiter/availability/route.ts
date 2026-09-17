@@ -31,8 +31,20 @@ export async function GET(request: NextRequest) {
     const start = new Date(startParam);
     const end = new Date(endParam);
 
+    const recruitmentIdParam = searchParams.get("recruitmentId");
+    let recruitmentId: number | undefined;
+    if (recruitmentIdParam) {
+      recruitmentId = Number.parseInt(recruitmentIdParam, 10);
+      if (!Number.isInteger(recruitmentId) || recruitmentId <= 0) {
+        return NextResponse.json(
+          { error: "Invalid recruitmentId" },
+          { status: 400 },
+        );
+      }
+    }
+
     return NextResponse.json({
-      recruiters: await getAvailableRecruiters(start, end),
+      recruiters: await getAvailableRecruiters(start, end, recruitmentId),
     });
   } catch (error) {
     console.error("Upload API error:", error);

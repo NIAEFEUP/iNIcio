@@ -23,7 +23,7 @@ import { CandidateWithMetadata } from "@/lib/candidate";
 
 interface SlotAdminCalendarProps {
   candidates: Array<CandidateWithMetadata>;
-  recruitmentYear: number;
+  recruitmentId: number;
   existingSlots?: {
     interview: Slot[];
     dynamic: Slot[];
@@ -42,7 +42,7 @@ export enum SlotType {
 
 export default function SlotAdminCalendar({
   candidates,
-  recruitmentYear,
+  recruitmentId,
   existingSlots = {
     interview: [],
     dynamic: [],
@@ -125,7 +125,7 @@ export default function SlotAdminCalendar({
         duration: slotConfig[slotType].duration,
         quantity: slotConfig[slotType].quantity,
         type: slotType,
-        recruitmentYear,
+        recruitmentId,
       };
 
       setSlots({ ...slots, [slotType]: [...currentSlots, newSlot] });

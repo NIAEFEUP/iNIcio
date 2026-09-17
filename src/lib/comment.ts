@@ -5,9 +5,10 @@ import {
   user,
 } from "@/db/schema";
 import { db } from "./db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
+import { getActiveRecruitment } from "./recruitment";
 
 export async function addApplicationComment(
   applicationId: number,
@@ -28,11 +29,17 @@ export async function addApplicationComment(
 
 export async function getApplicationComments(
   candidateId: string,
+  recruitmentId?: number,
 ): Promise<Array<Comment>> {
-  const app = await db
-    .select()
-    .from(application)
-    .where(eq(application.candidateId, candidateId));
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
+
+  const whereClause = and(
+    eq(application.candidateId, candidateId),
+    eq(application.recruitmentId, targetId),
+  );
+
+  const app = await db.select().from(application).where(whereClause);
 
   if (app.length === 0) return [];
 

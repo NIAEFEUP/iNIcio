@@ -33,13 +33,19 @@ export function getTimeString(date: Date) {
   });
 }
 
-export function generateDates() {
-  const dates = [];
-  const start = new Date(2025, 9, 13); // Months are 0-indexed (9 = October)
-  const end = new Date(2025, 9, 17);
+export function generateDates(weekStart?: Date) {
+  const base = weekStart ?? new Date();
+  const monday = new Date(base);
+  const dayOfWeek = monday.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  monday.setDate(monday.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(new Date(d));
+  const dates = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
   }
 
   return dates;

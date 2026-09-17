@@ -1,1 +1,0 @@
-ALTER TABLE "application_comment" ALTER COLUMN "created_at" SET DEFAULT now();

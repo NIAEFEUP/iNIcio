@@ -6,6 +6,8 @@ import { getLatestVotingDecisionForCandidate } from "./voting";
 export async function getMessage(candidateId: string) {
   const result = await getLatestVotingDecisionForCandidate(candidateId);
 
+  if (!result) return null;
+
   if (result.decision === "reject") {
     return { decision: "rejected", message: await getRejectedMessage() };
   } else {
