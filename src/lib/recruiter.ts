@@ -13,21 +13,17 @@ export async function isRecruiter(id: string, recruitmentId?: number) {
 
   if (await isAdmin(id)) return true;
 
-  if (recruitmentId) {
-    const enrolled = await db.query.usersToRecruitments.findFirst({
-      where: and(
-        eq(usersToRecruitments.userId, id),
-        eq(usersToRecruitments.recruitmentId, recruitmentId),
-      ),
-    });
-    if (enrolled) return true;
-  }
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return false;
 
-  const isPlatformRecruiter = await db.query.recruiter.findFirst({
-    where: eq(recruiter.userId, id),
+  const enrolled = await db.query.usersToRecruitments.findFirst({
+    where: and(
+      eq(usersToRecruitments.userId, id),
+      eq(usersToRecruitments.recruitmentId, targetId),
+    ),
   });
 
-  return isPlatformRecruiter !== null && isPlatformRecruiter !== undefined;
+  return enrolled !== null && enrolled !== undefined;
 }
 
 export async function getRecruiters(recruitmentId?: number) {

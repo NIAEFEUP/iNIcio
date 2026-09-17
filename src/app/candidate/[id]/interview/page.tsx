@@ -17,6 +17,7 @@ import CommentFrame from "@/components/comments/comment-frame";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { notFound, redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
+import { getActiveRecruitment } from "@/lib/recruitment";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
@@ -32,6 +33,10 @@ export default async function InterviewPage({ params }: any) {
     headers: await headers(),
   });
 
+  const activeRecruitment = await getActiveRecruitment();
+  const recruitmentId = activeRecruitment?.id;
+  if (!recruitmentId) notFound();
+
   async function handleContentSave(content: any) {
     "use server";
 
@@ -39,7 +44,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!(await isRecruiter(session?.user.id))) redirect("/");
+    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
 
     await updateInterview(id, content);
   }
@@ -51,7 +56,7 @@ export default async function InterviewPage({ params }: any) {
       headers: await headers(),
     });
 
-    if (!(await isRecruiter(session?.user.id))) redirect("/");
+    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
 
     return await addInterviewComment(
       session ? session.user.id : "",
@@ -66,9 +71,9 @@ export default async function InterviewPage({ params }: any) {
   ) {
     "use server";
 
-    if (!session || !(await isRecruiter(session.user.id))) redirect("/");
+    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
+      redirect("/");
 
-    const recruitmentId = interview?.recruitmentId;
     if (!recruitmentId) return;
 
     await db
@@ -82,13 +87,16 @@ export default async function InterviewPage({ params }: any) {
       );
   }
 
-  const candidateWithMetadata = await getCandidateWithMetadata(id);
+  const candidateWithMetadata = await getCandidateWithMetadata(
+    id,
+    recruitmentId,
+  );
 
-  const interview = await getInterview(id);
+  const interview = await getInterview(id, recruitmentId);
 
   if (!interview) notFound();
 
-  const recruiters = await getRecruiters();
+  const recruiters = await getRecruiters(recruitmentId);
 
   const interviewers = await getInterviewers(interview.id);
 

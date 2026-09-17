@@ -111,9 +111,14 @@ export async function tryToAddCandidateToDynamic(
   });
 }
 
-export async function getDynamic(dynamicId: number) {
+export async function getDynamic(dynamicId: number, recruitmentId?: number) {
+  const where =
+    recruitmentId !== undefined
+      ? and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, recruitmentId))
+      : eq(dynamic.id, dynamicId);
+
   const res = await db.query.dynamic.findFirst({
-    where: eq(dynamic.id, dynamicId),
+    where,
     with: {
       candidates: {
         with: {
@@ -146,6 +151,8 @@ export async function getDynamic(dynamicId: number) {
       },
     },
   });
+
+  if (!res) return null;
 
   return {
     ...res,
