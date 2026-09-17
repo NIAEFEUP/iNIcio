@@ -3,10 +3,9 @@ import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
 
-import { recruiterToCandidate } from "@/db/schema";
+import { recruiterToCandidate, usersToRecruitments } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { areFriends } from "@/lib/friend";
-import { isRecruiter } from "@/lib/recruiter";
 import { isAdmin } from "@/lib/admin";
 
 import { getActiveRecruitment } from "@/lib/recruitment";
@@ -16,11 +15,9 @@ export async function PUT(req: Request) {
     headers: await headers(),
   });
 
-  if (
-    !(await isRecruiter(session?.user.id)) &&
-    !(await isAdmin(session?.user.id))
-  )
+  if (!session?.user) {
     return new Response("Unauthorized", { status: 401 });
+  }
 
   const json = await req.json();
 
@@ -29,6 +26,19 @@ export async function PUT(req: Request) {
 
   if (!targetRecruitmentId) {
     return new Response("No active recruitment", { status: 400 });
+  }
+
+  const isAuthorized =
+    (await isAdmin(session.user.id)) ||
+    (await db.query.usersToRecruitments.findFirst({
+      where: and(
+        eq(usersToRecruitments.userId, session.user.id),
+        eq(usersToRecruitments.recruitmentId, targetRecruitmentId),
+      ),
+    })) !== undefined;
+
+  if (!isAuthorized) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   if (
