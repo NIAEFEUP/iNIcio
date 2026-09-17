@@ -221,7 +221,7 @@ export async function getCandidateDynamic(
   });
 }
 
-export async function updateDynamic(dynamicId: number, content: any) {
+export async function updateDynamic(dynamicId: number, content: unknown) {
   await db.transaction(async (trx) => {
     try {
       await trx
@@ -319,8 +319,8 @@ export async function getAllCandidatesWithDynamic(
 
       return {
         ...c.user,
-        dynamic: c.dynamic as any,
-        interview: c.interview as any,
+        dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
+        interview: c.interview as CandidateWithMetadata["interview"],
         interviewClassification: c.interviewClassification ?? "none",
         dynamicClassification: c.dynamicClassification ?? "none",
         application: c.application

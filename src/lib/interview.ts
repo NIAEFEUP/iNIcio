@@ -113,7 +113,7 @@ export async function getInterviewers(interviewId: number) {
 
 export async function updateInterview(
   candidateId: string,
-  content: any,
+  content: unknown,
   recruitmentId?: number,
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;

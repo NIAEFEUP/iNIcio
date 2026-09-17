@@ -108,8 +108,8 @@ export async function getCandidateWithMetadata(
   return {
     ...res.user,
     image: await getFilenameUrl(res.user?.image),
-    dynamic: res.dynamic as any,
-    interview: res.interview as any,
+    dynamic: res.dynamic as CandidateWithMetadata["dynamic"],
+    interview: res.interview as CandidateWithMetadata["interview"],
     dynamicClassification: res.dynamicClassification ?? "none",
     interviewClassification: res.interviewClassification ?? "none",
     knownRecruiters: res.knownRecruiters,
