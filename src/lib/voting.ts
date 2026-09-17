@@ -323,6 +323,7 @@ export async function getLatestVotingDecisionForCandidate(
   recruitmentId?: number,
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return null;
 
   const latestVotingPhases = await db.query.votingPhaseCandidate.findMany({
     where: eq(votingPhaseCandidate.candidateId, candidateId),
@@ -332,8 +333,8 @@ export async function getLatestVotingDecisionForCandidate(
     },
   });
 
-  const matchingPhase = latestVotingPhases.find((p) =>
-    targetId ? p.votingPhase.recruitmentId === targetId : true,
+  const matchingPhase = latestVotingPhases.find(
+    (p) => p.votingPhase.recruitmentId === targetId,
   );
 
   if (!matchingPhase || !matchingPhase.voteFinished) {
@@ -351,12 +352,10 @@ export async function getLatestVotingDecisionForCandidate(
   const rejectCount = votes.filter((v) => v.decision === "reject").length;
 
   const c = await db.query.candidate.findFirst({
-    where: targetId
-      ? and(
-          eq(candidate.userId, candidateId),
-          eq(candidate.recruitmentId, targetId),
-        )
-      : eq(candidate.userId, candidateId),
+    where: and(
+      eq(candidate.userId, candidateId),
+      eq(candidate.recruitmentId, targetId),
+    ),
     with: {
       application: true,
     },

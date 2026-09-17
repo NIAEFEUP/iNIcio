@@ -67,12 +67,12 @@ export async function getCandidateWithMetadata(
 ): Promise<CandidateWithMetadata> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
 
-  const whereClause = targetId
-    ? and(
-        eq(candidate.userId, candidateId),
-        eq(candidate.recruitmentId, targetId),
-      )
-    : eq(candidate.userId, candidateId);
+  if (!targetId) throw new Error("No recruitment specified or active");
+
+  const whereClause = and(
+    eq(candidate.userId, candidateId),
+    eq(candidate.recruitmentId, targetId),
+  );
 
   const res = await db.query.candidate.findFirst({
     where: whereClause,

@@ -189,13 +189,13 @@ export async function getCandidateDynamic(
 ) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
 
+  if (!targetId) return null;
+
   const link = await db.query.candidateToDynamic.findFirst({
-    where: targetId
-      ? and(
-          eq(candidateToDynamic.candidateId, candidateId),
-          eq(candidateToDynamic.recruitmentId, targetId),
-        )
-      : eq(candidateToDynamic.candidateId, candidateId),
+    where: and(
+      eq(candidateToDynamic.candidateId, candidateId),
+      eq(candidateToDynamic.recruitmentId, targetId),
+    ),
   });
 
   if (!link) return null;
@@ -268,29 +268,24 @@ export async function getAllCandidatesWithDynamic(
     : restrictionsParam;
 
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
 
   const candidates = await db.query.candidate.findMany({
-    where: (candidateTable, { eq, and, exists }) => {
-      const conditions = [
+    where: (candidateTable, { eq, and, exists }) =>
+      and(
+        eq(candidateTable.recruitmentId, targetId),
         exists(
           db
             .select()
             .from(application)
             .where(
-              targetId
-                ? and(
-                    eq(application.candidateId, candidateTable.userId),
-                    eq(application.recruitmentId, targetId),
-                  )
-                : eq(application.candidateId, candidateTable.userId),
+              and(
+                eq(application.candidateId, candidateTable.userId),
+                eq(application.recruitmentId, targetId),
+              ),
             ),
         ),
-      ];
-      if (targetId) {
-        conditions.push(eq(candidateTable.recruitmentId, targetId));
-      }
-      return and(...conditions);
-    },
+      ),
     with: {
       user: true,
       interview: true,
