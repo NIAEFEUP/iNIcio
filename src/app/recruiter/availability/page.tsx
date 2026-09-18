@@ -12,14 +12,14 @@ import {
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
-import { getActiveRecruitment } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function RecruiterAvailabilityPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const activeRecruitment = await getActiveRecruitment();
+  const targetRecruitment = await getTargetRecruitment();
 
   async function confirm(availabilityOperations: AvailabilityOperation[]) {
     "use server";
@@ -61,7 +61,7 @@ export default async function RecruiterAvailabilityPage() {
 
   const currentAvailabilities = await getAvailabilities(
     session?.user.id,
-    activeRecruitment?.id,
+    targetRecruitment?.id,
   );
 
   return (
@@ -69,12 +69,12 @@ export default async function RecruiterAvailabilityPage() {
       <h1 className="text-4xl text-center font-bold">
         Marca as tuas disponibilidades
       </h1>
-      {activeRecruitment ? (
+      {targetRecruitment ? (
         <RecruiterAvailabilityClient
           currentAvailabilities={currentAvailabilities}
           saveAvailabilities={confirm}
           recruiterId={session?.user.id}
-          recruitmentId={activeRecruitment.id}
+          recruitmentId={targetRecruitment.id}
         />
       ) : (
         <p className="text-center text-muted-foreground">

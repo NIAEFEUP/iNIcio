@@ -11,6 +11,7 @@ export interface User {
   image?: string | null;
   role?: string;
   isAdmin?: boolean;
+  isRecruiter?: boolean;
 }
 
 export function useAuth() {
@@ -21,6 +22,8 @@ export function useAuth() {
     ? {
         ...data.user,
         isAdmin: data.user.role === "admin",
+        isRecruiter:
+          data.user.role === "recruiter" || data.user.role === "admin",
       }
     : null;
 

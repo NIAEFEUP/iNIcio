@@ -17,7 +17,7 @@ import CommentFrame from "@/components/comments/comment-frame";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { notFound, redirect } from "next/navigation";
 import { getCandidateWithMetadata } from "@/lib/candidate";
-import { getActiveRecruitment } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
@@ -33,8 +33,8 @@ export default async function InterviewPage({ params }: any) {
     headers: await headers(),
   });
 
-  const activeRecruitment = await getActiveRecruitment();
-  const recruitmentId = activeRecruitment?.id;
+  const targetRecruitment = await getTargetRecruitment();
+  const recruitmentId = targetRecruitment?.id;
   if (!recruitmentId) notFound();
 
   async function handleContentSave(content: any) {

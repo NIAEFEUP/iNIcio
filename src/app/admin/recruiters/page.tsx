@@ -5,9 +5,11 @@ import {
   deleteRecruiter,
   getRecruiters,
 } from "@/lib/recruitment";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 export default async function RecruitersAdminPage() {
-  const recruiters = await getRecruiters();
+  const targetId = await getTargetRecruitmentId();
+  const recruiters = await getRecruiters(targetId);
   const users = await getUsers();
 
   async function addRecruiterAction(userId: string) {

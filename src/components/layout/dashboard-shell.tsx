@@ -1,0 +1,59 @@
+import type { ReactNode } from "react";
+import { SidebarLayout } from "@/components/layout/sidebar-layout";
+import type { RecruitmentOption } from "@/components/sidebar/sidebar-header";
+import { isAdmin } from "@/lib/admin";
+import { auth } from "@/lib/auth";
+import { getRecruitments } from "@/lib/recruitment";
+import { isRecruiter } from "@/lib/recruiter";
+import { getSelectedRecruitmentId } from "@/lib/selected-recruitment";
+import { headers } from "next/headers";
+
+export async function DashboardShell({ children }: { children: ReactNode }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const userId = session?.user?.id;
+
+  const [rawRecruitments, selectedRecruitmentId, userIsAdmin, userIsRecruiter] =
+    await Promise.all([
+      getRecruitments(),
+      getSelectedRecruitmentId(),
+      isAdmin(userId),
+      isRecruiter(userId),
+    ]);
+
+  const isActive = (value: boolean | string) =>
+    value === true || value === "true";
+
+  const recruitments: RecruitmentOption[] = rawRecruitments.map((r) => ({
+    id: r.id,
+    year: Number.parseInt(r.lectiveYear, 10),
+    semester: r.semester,
+    title: r.title,
+    active: isActive(r.active),
+    start: r.start.toISOString(),
+    end: r.end.toISOString(),
+  }));
+
+  const user = session?.user
+    ? {
+        ...session.user,
+        isAdmin: Boolean(userIsAdmin),
+        isRecruiter: Boolean(userIsRecruiter),
+      }
+    : null;
+
+  return (
+    <SidebarLayout
+      user={user}
+      isAuthenticated={Boolean(session?.user)}
+      isAdmin={Boolean(userIsAdmin)}
+      isRecruiter={Boolean(userIsRecruiter)}
+      recruitments={recruitments}
+      selectedRecruitmentId={selectedRecruitmentId ?? undefined}
+    >
+      {children}
+    </SidebarLayout>
+  );
+}

@@ -1,10 +1,10 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
+import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
+export default async function RecruiterLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -13,7 +13,11 @@ export default async function AdminLayout({
     headers: await headers(),
   });
 
-  if (!(await isAdmin(session?.user.id))) {
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  if (!(await isRecruiter(session?.user.id))) {
     redirect("/");
   }
 

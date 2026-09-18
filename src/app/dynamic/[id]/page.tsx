@@ -15,7 +15,7 @@ import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getDynamicComments } from "@/lib/comment";
-import { getActiveRecruitment } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
@@ -30,8 +30,8 @@ export default async function DynamicPage({ params }: any) {
     headers: await headers(),
   });
 
-  const activeRecruitment = await getActiveRecruitment();
-  const recruitmentId = activeRecruitment?.id;
+  const targetRecruitment = await getTargetRecruitment();
+  const recruitmentId = targetRecruitment?.id;
   if (!recruitmentId) notFound();
 
   async function handleContentSave(content: any) {

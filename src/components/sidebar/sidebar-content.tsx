@@ -1,17 +1,20 @@
 "use client";
 
 import {
-  Briefcase,
   Calendar,
+  CalendarClock,
   Clock,
   FileText,
-  Home,
+  LayoutDashboard,
   Layers,
   MessageSquare,
   UserCheck,
+  UserCog,
   Users,
+  UsersRound,
   Vote,
 } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -22,86 +25,125 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import type { User as UserType } from "@/hooks/use-auth";
 
 interface SidebarContentProps {
   currentPath?: string;
+  isRecruiter?: boolean;
+  isAdmin?: boolean;
+  user?: UserType | null;
 }
 
-export function SidebarContentComponent({ currentPath }: SidebarContentProps) {
+type IconType = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
+
+interface NavItem {
+  title: string;
+  path?: string;
+  icon: IconType;
+  exact?: boolean;
+  disabled?: boolean;
+}
+
+function isActivePath(activePath: string, path?: string, exact?: boolean) {
+  if (!path) return false;
+  if (exact || path === "/admin") return activePath === path;
+  return activePath === path || activePath.startsWith(`${path}/`);
+}
+
+export function SidebarContentComponent({
+  currentPath,
+  isRecruiter = false,
+  isAdmin = false,
+  user,
+}: SidebarContentProps) {
   const pathname = usePathname();
   const activePath = currentPath || pathname || "";
 
-  const adminSections = [
+  const canRecruit = isRecruiter || isAdmin;
+
+  const recruiterSections: NavItem[] = [
     {
-      group: "Geral",
-      items: [
-        { title: "Dashboard", path: "/admin", icon: Home },
-        {
-          title: "Recrutamentos",
-          path: "/admin/recruitments",
-          icon: Briefcase,
-        },
-        { title: "Fases", path: "/admin/phases", icon: Layers },
-      ],
+      title: "Disponibilidades",
+      path: "/recruiter/availability",
+      icon: Clock,
     },
-    {
-      group: "Pessoas & Votações",
-      items: [
-        { title: "Recrutadores", path: "/admin/recruiters", icon: Users },
-        { title: "Candidatos", path: "/candidates", icon: UserCheck },
-        { title: "Votações", path: "/candidates/voting", icon: Vote },
-      ],
-    },
-    {
-      group: "Agendamentos",
-      items: [
-        { title: "Slots", path: "/admin/interviews", icon: Calendar },
-        {
-          title: "Disponibilidades",
-          path: "/admin/availabilities",
-          icon: Clock,
-        },
-      ],
-    },
-    {
-      group: "Configurações",
-      items: [
-        { title: "Templates", path: "/admin/templates", icon: FileText },
-        {
-          title: "Mensagens Finais",
-          path: "/admin/final-messages",
-          icon: MessageSquare,
-        },
-      ],
-    },
+    ...(user?.id
+      ? [
+          {
+            title: "Alocações",
+            path: `/calendar/${user.id}`,
+            icon: Calendar,
+          },
+        ]
+      : []),
+    { title: "Candidatos", path: "/candidates", icon: UserCheck, exact: true },
+    { title: "Votações", path: "/candidates/voting", icon: Vote },
   ];
+
+  const adminSections: NavItem[] = [
+    { title: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    {
+      title: "Disponibilidades",
+      path: "/admin/availabilities",
+      icon: CalendarClock,
+    },
+    { title: "Fases", path: "/admin/phases", icon: Layers },
+    { title: "Slots", path: "/admin/interviews", icon: Users },
+    { title: "Recrutadores", path: "/admin/recruiters", icon: UserCog },
+  ];
+
+  const platformSections: NavItem[] = [
+    { title: "Documentos", path: "/admin/templates", icon: FileText },
+    {
+      title: "Mensagens Finais",
+      path: "/admin/final-messages",
+      icon: MessageSquare,
+    },
+    { title: "Utilizadores", icon: UsersRound, disabled: true },
+  ];
+
+  const renderGroup = (label: string, items: NavItem[]) => (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => {
+            const Icon = item.icon;
+            if (item.disabled) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    disabled
+                    className="opacity-60 cursor-default"
+                  >
+                    <Icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  render={<Link href={item.path!} />}
+                  isActive={isActivePath(activePath, item.path, item.exact)}
+                >
+                  <Icon />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
 
   return (
     <>
-      {adminSections.map((section) => (
-        <SidebarGroup key={section.group}>
-          <SidebarGroupLabel>{section.group}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePath === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      render={<Link href={item.path} />}
-                      isActive={isActive}
-                    >
-                      <Icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      ))}
+      {canRecruit && renderGroup("Recrutador", recruiterSections)}
+      {isAdmin && renderGroup("Recrutamento", adminSections)}
+      {isAdmin && renderGroup("Plataforma", platformSections)}
     </>
   );
 }

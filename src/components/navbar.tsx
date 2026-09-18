@@ -33,7 +33,29 @@ export default function Navbar({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  if (pathname?.startsWith("/admin")) {
+  const dashboardPrefixes = [
+    "/admin",
+    "/recruiter",
+    "/calendar",
+    "/candidates",
+    "/dynamic",
+  ];
+
+  const candidateCountdownPrefixes = [
+    "/candidate/progress",
+    "/candidate/result",
+    "/candidate/interview",
+    "/candidate/dynamic",
+  ];
+
+  const isDashboardRoute =
+    dashboardPrefixes.some((prefix) => pathname?.startsWith(prefix)) ||
+    (pathname?.startsWith("/candidate/") &&
+      !candidateCountdownPrefixes.some((prefix) =>
+        pathname.startsWith(prefix),
+      ));
+
+  if (isDashboardRoute) {
     return null;
   }
 

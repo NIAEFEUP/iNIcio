@@ -21,15 +21,17 @@ import { headers } from "next/headers";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import { getRole } from "@/lib/role";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { ClientContainer } from "@/calendar/components/client-container";
 
 export default async function AdminAllocations() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!(await isAdmin(session?.user.id))) redirect("/");
 
+  const targetId = await getTargetRecruitmentId();
   const [events, users] = await Promise.all([
-    getEventAvailabilities(),
-    getUsersRecruiters(),
+    getEventAvailabilities(targetId),
+    getUsersRecruiters(targetId),
   ]);
 
   const role = await getRole(session?.user.id);

@@ -5,14 +5,14 @@ import {
   editRecruitmentPhase,
   deleteRecruitmentPhase,
   getAllRecruitmentPhases,
-  getActiveRecruitment,
 } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function RecruitmentAdmin({ searchParams }: any) {
   const params = await searchParams;
-  const activeRecruitment = await getActiveRecruitment();
+  const targetRecruitment = await getTargetRecruitment();
 
-  let recruitmentId = activeRecruitment?.id;
+  let recruitmentId = targetRecruitment?.id;
   if (params.recruitmentId !== undefined && params.recruitmentId !== null) {
     const parsed = Number.parseInt(String(params.recruitmentId), 10);
 

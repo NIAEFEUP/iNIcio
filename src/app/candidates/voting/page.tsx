@@ -3,6 +3,7 @@
 import CandidateVotingPhaseCard from "@/components/candidate/voting/candidate-voting-phase-card";
 import CandidateVotingStartButton from "@/components/candidate/voting/candidate-voting-start-button";
 import { getVotingPhases } from "@/lib/voting";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { isAdmin } from "@/lib/admin";
@@ -12,7 +13,8 @@ export default async function CandidatesVotingPage() {
 
   const admin = await isAdmin(session?.user.id);
 
-  const votingPhases = await getVotingPhases();
+  const targetId = await getTargetRecruitmentId();
+  const votingPhases = await getVotingPhases(targetId);
 
   return (
     <div className="flex flex-col gap-4 mx-auto max-w-[60em] w-full">

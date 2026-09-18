@@ -1,6 +1,7 @@
 import ProgressPhaseCardShowcase from "@/components/progress/progress-phase-card-showcase";
 import { auth } from "@/lib/auth";
 import { getRecruitmentPhases } from "@/lib/recruitment";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { headers } from "next/headers";
 
 const checkedVerifiers: {
@@ -17,8 +18,10 @@ export default async function RecruiterProgress() {
     headers: await headers(),
   });
 
+  const targetId = await getTargetRecruitmentId();
+
   const progressPhases = await Promise.all(
-    (await getRecruitmentPhases("recruiter")).map(async (phase) => {
+    (await getRecruitmentPhases("recruiter", targetId)).map(async (phase) => {
       const isDone = checkedVerifiers[
         phase.clientIdentifier.trim().toLowerCase()
       ]

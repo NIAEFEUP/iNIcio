@@ -2,7 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import SlotAdminCalendar from "@/components/admin/slot-admin-calendar";
 
-import { getActiveRecruitment, getLatestRecruitment } from "@/lib/recruitment";
+import { getLatestRecruitment } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import { db, NewSlot, Slot } from "@/lib/db";
 
 import { slot } from "@/db/schema";
@@ -71,7 +72,7 @@ export default async function SlotsPage() {
   };
 
   const currentRecruitment =
-    (await getActiveRecruitment()) ?? (await getLatestRecruitment());
+    (await getTargetRecruitment()) ?? (await getLatestRecruitment());
   const existingSlots = await getExistingSlots(currentRecruitment?.id);
   const bookings = await getBookings(currentRecruitment?.id);
   const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);

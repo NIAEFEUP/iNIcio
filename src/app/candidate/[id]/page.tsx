@@ -14,6 +14,7 @@ import { getApplicationComments } from "@/lib/comment";
 import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
 
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -29,11 +30,13 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const { id } = await params;
 
-  const candidate = await getCandidateWithMetadata(id);
+  const targetId = await getTargetRecruitmentId();
+
+  const candidate = await getCandidateWithMetadata(id, targetId);
   const comments = await getApplicationComments(id);
   const votingDecision = await getLatestVotingDecisionForCandidate(id);
 
-  const recruiters = await getRecruiters();
+  const recruiters = await getRecruiters(targetId);
 
   const saveToDatabase = async (content: Array<any>) => {
     "use server";

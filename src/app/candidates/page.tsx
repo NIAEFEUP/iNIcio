@@ -2,10 +2,12 @@ import CandidatesClient from "@/components/candidates/candidates-client";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { headers } from "next/headers";
 
 export default async function Friends() {
-  const candidates = await getAllCandidatesWithDynamic();
+  const targetId = await getTargetRecruitmentId();
+  const candidates = await getAllCandidatesWithDynamic(targetId);
 
   const session = await auth.api.getSession({
     headers: await headers(),

@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+import { RecruitmentManagerDialog } from "@/components/recruitment/recruitment-manager-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -11,47 +13,78 @@ import { SidebarContentComponent } from "./sidebar-content";
 import { SidebarFooterComponent } from "./sidebar-footer";
 import {
   SidebarHeaderComponent,
+  type RecruitmentManagerMode,
   type RecruitmentOption,
 } from "./sidebar-header";
 
 export interface AppSidebarProps {
   user?: UserType | null;
   isAuthenticated?: boolean;
+  isAdmin?: boolean;
+  isRecruiter?: boolean;
   onLogout?: () => Promise<void>;
   currentPath?: string;
   recruitments?: RecruitmentOption[];
-  selectedYear?: number;
-  onSelectRecruitment?: (year: number) => void;
+  selectedRecruitmentId?: number;
+  onSelectRecruitment?: (id: number) => void;
 }
 
 export function AppSidebar({
   user,
   isAuthenticated = false,
+  isAdmin = false,
+  isRecruiter = false,
   onLogout,
   currentPath = "",
   recruitments,
-  selectedYear,
+  selectedRecruitmentId,
   onSelectRecruitment,
 }: AppSidebarProps) {
+  const [managerOpen, setManagerOpen] = React.useState(false);
+  const [managerMode, setManagerMode] =
+    React.useState<RecruitmentManagerMode>("overview");
+
+  const openManager = React.useCallback((mode: RecruitmentManagerMode) => {
+    setManagerMode(mode);
+    setManagerOpen(true);
+  }, []);
+
   return (
-    <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader>
-        <SidebarHeaderComponent
-          recruitments={recruitments}
-          selectedYear={selectedYear}
-          onSelectRecruitment={onSelectRecruitment}
-        />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarContentComponent currentPath={currentPath} />
-      </SidebarContent>
-      <SidebarFooter className="border-t border-border/60">
-        <SidebarFooterComponent
-          user={user}
-          isAuthenticated={isAuthenticated}
-          onLogout={onLogout}
-        />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      <Sidebar variant="inset" collapsible="icon">
+        <SidebarHeader>
+          <SidebarHeaderComponent
+            recruitments={recruitments}
+            selectedRecruitmentId={selectedRecruitmentId}
+            onSelectRecruitment={onSelectRecruitment}
+            onOpenManager={openManager}
+            isAdmin={isAdmin}
+          />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarContentComponent
+            currentPath={currentPath}
+            isRecruiter={isRecruiter}
+            isAdmin={isAdmin}
+            user={user}
+          />
+        </SidebarContent>
+        <SidebarFooter className="border-t border-border/60">
+          <SidebarFooterComponent
+            user={user}
+            isAuthenticated={isAuthenticated}
+            onLogout={onLogout}
+          />
+        </SidebarFooter>
+      </Sidebar>
+
+      <RecruitmentManagerDialog
+        key={`${managerMode}-${managerOpen}`}
+        open={managerOpen}
+        onOpenChange={setManagerOpen}
+        recruitments={recruitments ?? []}
+        initialMode={managerMode}
+      />
+    </>
   );
 }
