@@ -22,6 +22,8 @@ export default async function Home() {
     headers: await headers(),
   });
 
+  const isAuthenticated = !!session?.user;
+
   if (await isCandidate(session?.user.id)) {
     redirect("/candidate/progress");
   }
@@ -59,16 +61,25 @@ export default async function Home() {
       case "upcoming":
         return (
           <ApplicationsUnavailableMessage
-            phases={recruitmentState.phases}
+            phases={isAuthenticated ? recruitmentState.phases : []}
             opensAt={recruitmentState.applicationPhase?.start ?? null}
+            isAuthenticated={isAuthenticated}
           />
         );
       case "none":
         return (
-          <ApplicationsUnavailableMessage phases={recruitmentState.phases} />
+          <ApplicationsUnavailableMessage
+            phases={isAuthenticated ? recruitmentState.phases : []}
+            isAuthenticated={isAuthenticated}
+          />
         );
       case "closed":
-        return <ApplicationsClosedMessage phases={recruitmentState.phases} />;
+        return (
+          <ApplicationsClosedMessage
+            phases={isAuthenticated ? recruitmentState.phases : []}
+            isAuthenticated={isAuthenticated}
+          />
+        );
     }
   }
 
