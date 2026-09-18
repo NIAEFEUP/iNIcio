@@ -1,5 +1,5 @@
 {
-  "id": "ff61bac9-3608-4678-923c-9671f3902002",
+  "id": "b04ed2ac-4eb7-43ab-b47e-f2fb0a49a2e3",
   "prevId": "434cb37a-ab65-4959-992a-31e9d2b91a64",
   "version": "7",
   "dialect": "postgresql",
@@ -1438,10 +1438,10 @@
         },
         "active": {
           "name": "active",
-          "type": "text",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": "'true'"
+          "default": true
         }
       },
       "indexes": {
