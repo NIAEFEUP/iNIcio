@@ -11,17 +11,18 @@ import {
 import { Users } from "lucide-react";
 
 import Link from "next/link";
-import SignedRecruitmentActiveMessage from "./signed-recruitment-active-message";
+import SubmittedApplicationMessage from "./submitted-application-message";
 import { User } from "@/lib/db";
 
 interface RecruitmentActiveMessageProps {
-  isRecruiter: boolean;
   user: User;
+  /** Formatted deadline of the application phase, if it has one. */
+  applicationDeadline?: string | null;
 }
 
 export default function RecruitmentActiveMessage({
-  isRecruiter,
   user,
+  applicationDeadline,
 }: RecruitmentActiveMessageProps) {
   return (
     <>
@@ -57,6 +58,14 @@ export default function RecruitmentActiveMessage({
                   FEUP. Conecta-te, aprende e cresce connosco numa jornada
                   incrível de descoberta tecnológica.
                 </p>
+                {applicationDeadline && (
+                  <p className="text-md text-muted-foreground mb-8">
+                    Candidaturas abertas até{" "}
+                    <span className="text-primary font-semibold">
+                      {applicationDeadline}
+                    </span>
+                  </p>
+                )}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Link href="/signup" className="w-full">
                     <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer w-full">
@@ -93,7 +102,7 @@ export default function RecruitmentActiveMessage({
           </section>
         </>
       ) : (
-        <SignedRecruitmentActiveMessage isRecruiter={isRecruiter} />
+        <SubmittedApplicationMessage />
       )}
     </>
   );
