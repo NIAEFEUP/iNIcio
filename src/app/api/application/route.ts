@@ -46,6 +46,15 @@ export async function POST(req: Request) {
 
   if (!session) return new Response("Unauthorized", { status: 401 });
 
+  if (!session.user.image) {
+    return NextResponse.json(
+      {
+        error: "É necessário ter uma fotografia de perfil para se candidatar.",
+      },
+      { status: 403 },
+    );
+  }
+
   if (await isRecruiter(session.user.id))
     return new Response("Forbidden", { status: 403 });
 

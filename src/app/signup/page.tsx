@@ -18,7 +18,7 @@ import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, Camera } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
-import { ProfileImageUpload } from "@/components/ui/profile-image-upload";
+import { FileUpload } from "@/components/ui/file-upload";
 
 const formSchema = z
   .object({
@@ -47,7 +47,8 @@ export default function SignUp() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const [hasUploadedPicture, setHasUploadedPicture] = useState(false);
+  const [signupData, setSignupData] = useState<FormData | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,28 +61,60 @@ export default function SignUp() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const {} = await authClient.signUp.email(
-      {
-        email: values.email,
-        password: values.password,
-        name: `${values.name} ${values.surname}`,
-      },
-      {
-        onRequest: () => {
-          setIsLoading(true);
-        },
-        onSuccess: () => {
-          setIsLoading(false);
-          setStep(2);
-        },
-        onError: (ctx) => {
-          setIsLoading(false);
-          setErrorMessage(ctx.error.message);
-        },
-      },
-    );
+  async function onSubmit(values: FormData) {
+    setSignupData(values);
+    setErrorMessage(null);
+    setStep(2);
   }
+
+  const handleCompleteSignup = async () => {
+    if (!signupData || !selectedImage) return;
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const { data: session } = await authClient.getSession({ query: {} });
+
+      if (!session) {
+        const { error: signUpError } = await authClient.signUp.email({
+          email: signupData.email,
+          password: signupData.password,
+          name: `${signupData.name} ${signupData.surname}`,
+        });
+
+        if (signUpError) {
+          setErrorMessage(signUpError.message);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+      formData.append("type", "profile");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao enviar a fotografia de perfil");
+      }
+
+      const uploadData = await res.json();
+
+      await authClient.updateUser({
+        image: uploadData.fileName,
+      });
+
+      window.location.href = "/application";
+    } catch (err: any) {
+      setErrorMessage(err.message || "Erro durante a criação de conta");
+      setIsLoading(false);
+    }
+  };
 
   const handleReset = () => {
     form.reset();
@@ -280,31 +313,42 @@ export default function SignUp() {
                   .
                 </p>
 
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? "Registando..." : "Registar"}
+                <Button type="submit" variant="secondary" className="w-full">
+                  Continuar
                 </Button>
               </form>
             </Form>
           ) : (
             <div className="space-y-6">
-              <ProfileImageUpload
-                onSuccess={() => setHasUploadedPicture(true)}
+              <FileUpload
+                type="image"
+                onFileSelect={(file) => setSelectedImage(file)}
+                onFileRemove={() => setSelectedImage(null)}
+                currentFileName={selectedImage?.name}
                 required
               />
+
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-600 text-sm">{errorMessage}</p>
+                </div>
+              )}
+
               <Button
-                onClick={() => {
-                  window.location.href = "/application";
-                }}
+                onClick={handleCompleteSignup}
                 variant="secondary"
-                disabled={!hasUploadedPicture}
+                disabled={!selectedImage || isLoading}
                 className="w-full"
               >
-                Concluir Registo
+                {isLoading ? "A concluir..." : "Concluir Registo"}
+              </Button>
+              <Button
+                onClick={() => setStep(1)}
+                variant="ghost"
+                disabled={isLoading}
+                className="w-full"
+              >
+                Voltar
               </Button>
             </div>
           )}
