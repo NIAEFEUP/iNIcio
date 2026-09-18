@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   pgTable,
@@ -21,7 +22,7 @@ export const recruitment = pgTable(
     title: text("title").notNull().default("Recrutamento 1º Semestre"),
     start: timestamp("start").notNull().defaultNow(),
     end: timestamp("end").notNull(),
-    active: text("active").notNull().default("true"),
+    active: boolean("active").notNull().default(true),
   },
   (table) => [
     unique("recruitment_lective_year_semester_unique").on(
