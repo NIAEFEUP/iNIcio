@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useSession } from "@/lib/use-session";
 
 const nameSchema = z.object({
-  name: z.string().min(1, "O nome é obrigatório"),
+  name: z.string().trim().min(1, "O nome é obrigatório"),
 });
 
 type NameFormData = z.infer<typeof nameSchema>;
