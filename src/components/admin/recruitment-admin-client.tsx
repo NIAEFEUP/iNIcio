@@ -45,6 +45,24 @@ interface RecruitmentAdminClientProps {
   duplicatePhases: (id: number) => Promise<number>;
 }
 
+/**
+ * Replaces (or appends) a recruitment and mirrors the server-side invariant:
+ * an active recruitment deactivates every other one.
+ */
+function upsertRecruitment(
+  rows: Recruitment[],
+  updated: Recruitment,
+): Recruitment[] {
+  const exists = rows.some((r) => r.id === updated.id);
+  const next = exists
+    ? rows.map((r) => (r.id === updated.id ? updated : r))
+    : [...rows, updated];
+
+  return updated.active
+    ? next.map((r) => (r.id === updated.id ? r : { ...r, active: false }))
+    : next;
+}
+
 export default function RecruitmentAdminClient({
   recruitments,
   addRecruitment,
@@ -118,19 +136,14 @@ export default function RecruitmentAdminClient({
     try {
       if (editingRecruitment) {
         await editRecruitment(newRecruitment);
-        setRecruitmentsState((prev) =>
-          prev.map((r) =>
-            r.id === editingRecruitment.id ? newRecruitment : r,
-          ),
-        );
+        setRecruitmentsState((prev) => upsertRecruitment(prev, newRecruitment));
         toast("Recrutamento atualizado");
         setIsEditDialogOpen(false);
       } else {
         const created = await addRecruitment(newRecruitment);
-        setRecruitmentsState((prev) => [
-          ...prev,
-          { ...newRecruitment, id: created.id },
-        ]);
+        setRecruitmentsState((prev) =>
+          upsertRecruitment(prev, { ...newRecruitment, id: created.id }),
+        );
         toast("Recrutamento adicionado");
         setIsAddDialogOpen(false);
       }
