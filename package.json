@@ -11,7 +11,8 @@
     "format": "prettier . --check",
     "format:fix": "prettier . --write",
     "prepare": "husky",
-    "seed": "node --import tsx ./src/db/seed.ts"
+    "seed": "node --import tsx ./src/db/seed.ts",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",

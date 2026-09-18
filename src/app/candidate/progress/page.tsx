@@ -6,17 +6,18 @@ import {
   getRecruitmentPhases,
   isRecruitmentPhaseDone,
 } from "@/lib/recruitment";
+import { RecruitmentPhase } from "@/lib/db";
 import { headers } from "next/headers";
 
 const checkedVerifiers: {
   [key: string]: (
     userId: string | undefined,
-    phaseId?: number,
+    phase: RecruitmentPhase,
   ) => Promise<boolean>;
 } = {
-  candidatura: hasApplication,
-  entrevista: isRecruitmentPhaseDone,
-  dinâmica: isRecruitmentPhaseDone,
+  candidatura: (userId, phase) => hasApplication(userId, phase.recruitmentId),
+  entrevista: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
+  dinâmica: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
 };
 
 export default async function CandidateProgress() {
@@ -31,7 +32,7 @@ export default async function CandidateProgress() {
       ]
         ? await checkedVerifiers[phase.clientIdentifier.trim().toLowerCase()](
             session?.user.id,
-            phase.id,
+            phase,
           )
         : false;
 

@@ -3,18 +3,24 @@ import { db } from "./db";
 import { recruiterToCandidate } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 
-export async function areFriends(recruiterId: string, candidateId: string) {
+export async function areFriends(
+  recruiterId: string,
+  candidateId: string,
+  recruitmentId?: number,
+) {
+  const conditions = [
+    eq(recruiterToCandidate.recruiterId, recruiterId),
+    eq(recruiterToCandidate.candidateId, candidateId),
+  ];
+  if (recruitmentId !== undefined) {
+    conditions.push(eq(recruiterToCandidate.recruitmentId, recruitmentId));
+  }
   return (
     (
       await db
         .select()
         .from(recruiterToCandidate)
-        .where(
-          and(
-            eq(recruiterToCandidate.recruiterId, recruiterId),
-            eq(recruiterToCandidate.candidateId, candidateId),
-          ),
-        )
+        .where(and(...conditions))
     ).length > 0
   );
 }

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import SlotAdminCalendar from "@/components/admin/slot-admin-calendar";
 
-import { getLatestRecruitment } from "@/lib/recruitment";
+import { getActiveRecruitment, getLatestRecruitment } from "@/lib/recruitment";
 import { db, NewSlot, Slot } from "@/lib/db";
 
 import { slot } from "@/db/schema";
@@ -57,7 +57,7 @@ export default async function SlotsPage() {
               and(
                 eq(slot.start, s.slot.start),
                 eq(slot.type, s.slot.type),
-                eq(slot.recruitmentYear, s.slot.recruitmentYear),
+                eq(slot.recruitmentId, s.slot.recruitmentId),
                 eq(slot.duration, s.slot.duration),
               ),
             );
@@ -70,10 +70,11 @@ export default async function SlotsPage() {
     });
   };
 
-  const latestRecruitment = await getLatestRecruitment();
-  const existingSlots = await getExistingSlots(latestRecruitment?.year);
-  const bookings = await getBookings();
-  const candidates = await getAllCandidatesWithDynamic();
+  const currentRecruitment =
+    (await getActiveRecruitment()) ?? (await getLatestRecruitment());
+  const existingSlots = await getExistingSlots(currentRecruitment?.id);
+  const bookings = await getBookings(currentRecruitment?.id);
+  const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,19 +89,19 @@ export default async function SlotsPage() {
           </div>
         </div>
 
-        {latestRecruitment && (
+        {currentRecruitment && (
           <>
             <SlotAdminCalendar
               candidates={candidates}
               bookings={bookings}
-              recruitmentYear={latestRecruitment.year}
+              recruitmentId={currentRecruitment.id}
               existingSlots={existingSlots}
               saveSlots={saveSlots}
             />
           </>
         )}
 
-        {!latestRecruitment && (
+        {!currentRecruitment && (
           <Card>
             <CardContent className="p-12 text-center">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

@@ -21,7 +21,11 @@ export default function Profile({
   applicationInterests,
   pictureUrl,
 }: ProfileProps) {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return null;
+  }
 
   return (
     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">

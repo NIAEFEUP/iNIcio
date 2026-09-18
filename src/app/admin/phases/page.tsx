@@ -5,13 +5,21 @@ import {
   editRecruitmentPhase,
   deleteRecruitmentPhase,
   getAllRecruitmentPhases,
+  getActiveRecruitment,
 } from "@/lib/recruitment";
 
 export default async function RecruitmentAdmin() {
-  const recruitmentPhases = await getAllRecruitmentPhases();
+  const activeRecruitment = await getActiveRecruitment();
+  const recruitmentPhases = await getAllRecruitmentPhases(
+    activeRecruitment?.id,
+  );
 
   const add = async (phase: RecruitmentPhase) => {
     "use server";
+
+    if (!phase.recruitmentId) {
+      throw new Error("No recruitment selected");
+    }
 
     await addRecruitmentPhase(phase);
   };
@@ -34,6 +42,7 @@ export default async function RecruitmentAdmin() {
       addPhase={add}
       editPhase={edit}
       deletePhase={remove}
+      defaultRecruitmentId={activeRecruitment?.id}
     />
   );
 }

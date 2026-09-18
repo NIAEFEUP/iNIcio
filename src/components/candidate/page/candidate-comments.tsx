@@ -43,7 +43,7 @@ export default function CandidateComments({
   comments,
   saveToDatabase,
 }: CandidateCommentsProps) {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
   const [commentsState, setCommentsState] = useState<Array<Comment>>(comments);
 
@@ -101,7 +101,7 @@ export default function CandidateComments({
     <ScrollArea className="h-128 flex flex-col gap-4">
       <Table>
         <TableBody className="w-full">
-          {session && (
+          {!isPending && session && (
             <TableRow className="flex flex-col md:flex-row items-center mx-4">
               <TableCell className="w-full">
                 <form

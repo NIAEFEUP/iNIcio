@@ -27,7 +27,7 @@ export default async function AdminLayout({
 
   const rawRecruitments = await getRecruitments();
   const recruitments = rawRecruitments.map((r) => ({
-    year: r.year,
+    year: Number.parseInt(r.lectiveYear, 10),
     active: r.active,
     start: r.start.toISOString(),
     end: r.end.toISOString(),

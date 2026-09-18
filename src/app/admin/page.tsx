@@ -4,10 +4,14 @@ import { db, getAllCandidateUsers } from "@/lib/db";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
 import { PageHeader } from "@/components/layout/page-header";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function AdminPage() {
   const recruiters = await db.select().from(recruiter);
   const candidates = await getAllCandidateUsers();
+
+  const session = await auth.api.getSession({ headers: await headers() });
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +28,11 @@ export default async function AdminPage() {
         <h2 className="text-base font-semibold text-foreground">
           Recursos de Gestão
         </h2>
-        <AdminResources recruiters={recruiters} candidates={candidates} />
+        <AdminResources
+          recruiters={recruiters}
+          candidates={candidates}
+          userId={session!.user.id}
+        />
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ export default async function Home() {
                   }
                 : null
             }
-            isRecruiter={recruiter !== undefined && recruiter !== null}
+            isRecruiter={!!recruiter}
           />
         </>
       ) : (

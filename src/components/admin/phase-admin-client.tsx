@@ -46,6 +46,7 @@ interface PhaseAdminClientProps {
   addPhase: (p: RecruitmentPhase) => Promise<void>;
   editPhase: (p: RecruitmentPhase) => Promise<void>;
   deletePhase: (id: number) => Promise<void>;
+  defaultRecruitmentId?: number;
 }
 
 export default function PhaseAdminClient({
@@ -53,6 +54,7 @@ export default function PhaseAdminClient({
   addPhase,
   editPhase,
   deletePhase,
+  defaultRecruitmentId,
 }: PhaseAdminClientProps) {
   const [phasesState, setPhasesState] = useState<RecruitmentPhase[]>(phases);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -66,7 +68,7 @@ export default function PhaseAdminClient({
     end: "",
     clientIdentifier: "",
     role: "candidate",
-    recruitmentYear: new Date().getFullYear().toString(),
+    recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
 
   const resetForm = () =>
@@ -78,15 +80,20 @@ export default function PhaseAdminClient({
       end: "",
       role: "candidate",
       clientIdentifier: "",
-      recruitmentYear: new Date().getFullYear().toString(),
+      recruitmentId: defaultRecruitmentId?.toString() ?? "",
     });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!editing && !form.recruitmentId) {
+      toast("Não existe um recrutamento ativo para associar a fase");
+      return;
+    }
+
     const phase: any = {
       id: form.id ? Number.parseInt(form.id) : undefined,
-      recruitmentYear: Number.parseInt(form.recruitmentYear),
+      recruitmentId: Number.parseInt(form.recruitmentId),
       title: form.title,
       description: form.description,
       clientIdentifier: form.clientIdentifier,
@@ -143,9 +150,7 @@ export default function PhaseAdminClient({
       end: p.end ? new Date(p.end).toISOString().slice(0, 16) : "",
       role: (p.role as string) ?? "candidate",
       clientIdentifier: p.clientIdentifier ?? "",
-      recruitmentYear: (
-        p.recruitmentYear ?? new Date().getFullYear()
-      ).toString(),
+      recruitmentId: p.recruitmentId?.toString() ?? "",
     });
     setIsEditOpen(true);
   };
@@ -174,7 +179,10 @@ export default function PhaseAdminClient({
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger
               render={
-                <Button className="bg-primary hover:bg-primary/90">
+                <Button
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!defaultRecruitmentId}
+                >
                   <Plus className="w-4 h-4 mr-2" /> Adicionar
                 </Button>
               }

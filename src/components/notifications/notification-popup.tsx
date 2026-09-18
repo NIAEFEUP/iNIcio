@@ -14,6 +14,7 @@ import { Notification } from "@/lib/db";
 import { Bell } from "lucide-react";
 import { useState } from "react";
 import CommentMentionNotification from "./comment-mention-notification";
+import DefaultNotification from "./default-notification";
 import { markNotificationAsRead } from "@/app/actions";
 
 interface BaseNotificationProps {
@@ -42,7 +43,9 @@ export default function NotificationPopup({
   );
 
   const markAllAsRead = () => {
-    notifications.forEach((n) => markNotificationAsRead(n.id));
+    notifications.forEach((n) => {
+      void markNotificationAsRead(n.id);
+    });
     setUnreadCount(0);
   };
 
@@ -89,7 +92,9 @@ export default function NotificationPopup({
             </div>
           ) : (
             notifications.map((notification) => {
-              const Component = notificationComponents[notification.type];
+              const Component =
+                notificationComponents[notification.type] ??
+                DefaultNotification;
               return (
                 <DropdownMenuItem
                   key={notification.id}
