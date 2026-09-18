@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -74,6 +74,7 @@ export default function PhaseAdminClient({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<RecruitmentPhase | null>(null);
+  const [now, setNow] = useState(() => new Date());
   const [form, setForm] = useState({
     id: "",
     title: "",
@@ -84,6 +85,13 @@ export default function PhaseAdminClient({
     role: "candidate",
     recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
+
+  // Keep phase badges fresh while the page stays open.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const resetForm = () =>
     setForm({
@@ -372,7 +380,7 @@ export default function PhaseAdminClient({
               </TableHeader>
               <TableBody>
                 {phasesState.map((p) => {
-                  const state = getPhaseState(p);
+                  const state = getPhaseState(p, now);
 
                   return (
                     <TableRow key={p.id} className="border-border align-top">
