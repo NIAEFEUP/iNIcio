@@ -14,7 +14,7 @@ export default async function RecruitmentAdmin() {
   const add = async (recruitment: Recruitment) => {
     "use server";
 
-    await addRecruitment(recruitment);
+    return addRecruitment(recruitment);
   };
 
   const edit = async (recruitment: Recruitment) => {

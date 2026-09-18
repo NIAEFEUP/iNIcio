@@ -39,7 +39,7 @@ import { Recruitment } from "@/lib/db";
 
 interface RecruitmentAdminClientProps {
   recruitments: Recruitment[];
-  addRecruitment: (recruitment: Recruitment) => Promise<void>;
+  addRecruitment: (recruitment: Recruitment) => Promise<{ id: number }>;
   editRecruitment: (recruitment: Recruitment) => Promise<void>;
   deleteRecruitment: (id: number) => Promise<void>;
   duplicatePhases: (id: number) => Promise<number>;
@@ -126,8 +126,11 @@ export default function RecruitmentAdminClient({
         toast("Recrutamento atualizado");
         setIsEditDialogOpen(false);
       } else {
-        await addRecruitment(newRecruitment);
-        setRecruitmentsState((prev) => [...prev, newRecruitment]);
+        const created = await addRecruitment(newRecruitment);
+        setRecruitmentsState((prev) => [
+          ...prev,
+          { ...newRecruitment, id: created.id },
+        ]);
         toast("Recrutamento adicionado");
         setIsAddDialogOpen(false);
       }
