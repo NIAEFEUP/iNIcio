@@ -3,6 +3,9 @@ import type { Recruitment, RecruitmentPhase } from "./db";
 /** A phase is `upcoming` before `start`, `closed` after `end`, else `open`. */
 export type PhaseState = "upcoming" | "open" | "closed";
 
+/** State of the application phase, or `none` when it is not defined. */
+export type ApplicationStatus = PhaseState | "none";
+
 /** Effective state of a recruitment. */
 export type RecruitmentStatus =
   "no-recruitment" | "upcoming" | "open" | "closed";
@@ -18,6 +21,8 @@ export interface RecruitmentState {
   nextPhase: RecruitmentPhase | null;
   /** Phase that gates applications (matched by `clientIdentifier`). */
   applicationPhase: RecruitmentPhase | null;
+  /** Whether that phase is open, upcoming, closed or not defined. */
+  applicationStatus: ApplicationStatus;
   canApply: boolean;
 }
 
@@ -127,6 +132,7 @@ export function getRecruitmentState(
       currentPhase: null,
       nextPhase: null,
       applicationPhase: null,
+      applicationStatus: "none",
       canApply: false,
     };
   }
@@ -154,6 +160,10 @@ export function getRecruitmentState(
     (phase) => getPhaseState(phase, now) === "upcoming",
   );
 
+  const applicationStatus: ApplicationStatus = applicationPhase
+    ? getPhaseState(applicationPhase, now)
+    : "none";
+
   return {
     status,
     recruitment,
@@ -161,9 +171,7 @@ export function getRecruitmentState(
     currentPhase: getCurrentPhase(phases, now),
     nextPhase: upcoming.length > 0 ? minBy(upcoming, byStart) : null,
     applicationPhase,
-    canApply:
-      status === "open" &&
-      applicationPhase !== null &&
-      getPhaseState(applicationPhase, now) === "open",
+    applicationStatus,
+    canApply: status === "open" && applicationStatus === "open",
   };
 }

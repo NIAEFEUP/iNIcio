@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 import RecruitmentActiveMessage from "@/components/home/recruitment-active-message";
 import RecruiterActiveMessage from "@/components/home/recruiter-active-message";
 import ApplicationsClosedMessage from "@/components/home/applications-closed-message";
+import ApplicationsUnavailableMessage from "@/components/home/applications-unavailable-message";
 import NotRecruitingMessage from "@/components/home/not-recruiting-message";
 
 export default async function Home() {
@@ -32,30 +33,43 @@ export default async function Home() {
       return <RecruiterActiveMessage />;
     }
 
-    if (!recruitmentState.canApply) {
-      return <ApplicationsClosedMessage phases={recruitmentState.phases} />;
+    switch (recruitmentState.applicationStatus) {
+      case "open":
+        return (
+          <RecruitmentActiveMessage
+            user={
+              session?.user
+                ? {
+                    ...session?.user,
+                    image: session?.user.image ?? "/default-avatar.png",
+                    role: session?.user.role as
+                      "recruiter" | "candidate" | "admin",
+                  }
+                : null
+            }
+            applicationDeadline={
+              recruitmentState.applicationPhase?.end
+                ? new Date(
+                    recruitmentState.applicationPhase.end,
+                  ).toLocaleString("pt-PT")
+                : null
+            }
+          />
+        );
+      case "upcoming":
+        return (
+          <ApplicationsUnavailableMessage
+            phases={recruitmentState.phases}
+            opensAt={recruitmentState.applicationPhase?.start ?? null}
+          />
+        );
+      case "none":
+        return (
+          <ApplicationsUnavailableMessage phases={recruitmentState.phases} />
+        );
+      case "closed":
+        return <ApplicationsClosedMessage phases={recruitmentState.phases} />;
     }
-
-    return (
-      <RecruitmentActiveMessage
-        user={
-          session?.user
-            ? {
-                ...session?.user,
-                image: session?.user.image ?? "/default-avatar.png",
-                role: session?.user.role as "recruiter" | "candidate" | "admin",
-              }
-            : null
-        }
-        applicationDeadline={
-          recruitmentState.applicationPhase?.end
-            ? new Date(recruitmentState.applicationPhase.end).toLocaleString(
-                "pt-PT",
-              )
-            : null
-        }
-      />
-    );
   }
 
   return (
