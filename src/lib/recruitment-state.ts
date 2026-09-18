@@ -21,8 +21,40 @@ export interface RecruitmentState {
   canApply: boolean;
 }
 
+/** Canonical `clientIdentifier` of each known phase kind. */
+export const RECRUITMENT_PHASE_IDENTIFIERS = {
+  application: "candidatura",
+  interview: "entrevista",
+  dynamic: "dinâmica",
+  review: "avaliacao",
+  voting: "votacao",
+} as const;
+
+export type RecruitmentPhaseKind = keyof typeof RECRUITMENT_PHASE_IDENTIFIERS;
+
 /** `clientIdentifier` of the phase that gates applications. */
-export const APPLICATION_PHASE_IDENTIFIER = "candidatura";
+export const APPLICATION_PHASE_IDENTIFIER =
+  RECRUITMENT_PHASE_IDENTIFIERS.application;
+
+/** Phases have free-text identifiers; matching normalizes trim and case. */
+export function normalizePhaseIdentifier(
+  value: string | null | undefined,
+): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+/** Maps a phase to its known kind, or `null` when the identifier is unknown. */
+export function getRecruitmentPhaseKind(
+  phase: Pick<RecruitmentPhase, "clientIdentifier">,
+): RecruitmentPhaseKind | null {
+  const normalized = normalizePhaseIdentifier(phase.clientIdentifier);
+
+  return (
+    (Object.entries(RECRUITMENT_PHASE_IDENTIFIERS).find(
+      ([, identifier]) => identifier === normalized,
+    )?.[0] as RecruitmentPhaseKind) ?? null
+  );
+}
 
 function minBy<T>(phases: T[], key: (item: T) => number): T {
   return phases.reduce((best, item) => (key(item) < key(best) ? item : best));
@@ -108,10 +140,14 @@ export function getRecruitmentState(
     status = recruitment.active ? "open" : "closed";
   }
 
-  const identifier = applicationIdentifier.trim().toLowerCase();
+  const normalizedApplicationIdentifier = normalizePhaseIdentifier(
+    applicationIdentifier,
+  );
   const applicationPhase =
     phases.find(
-      (phase) => phase.clientIdentifier.trim().toLowerCase() === identifier,
+      (phase) =>
+        normalizePhaseIdentifier(phase.clientIdentifier) ===
+        normalizedApplicationIdentifier,
     ) ?? null;
 
   const upcoming = phases.filter(

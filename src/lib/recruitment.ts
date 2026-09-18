@@ -9,9 +9,10 @@ import {
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, ne, or } from "drizzle-orm";
+import { and, desc, eq, gt, ne, or, sql } from "drizzle-orm";
 import {
   getRecruitmentState,
+  RECRUITMENT_PHASE_IDENTIFIERS,
   type RecruitmentState,
 } from "./recruitment-state";
 
@@ -109,11 +110,6 @@ export async function editRecruitment(r: Recruitment) {
 
 export async function deleteRecruitment(id: number) {
   await db.delete(recruitment).where(eq(recruitment.id, id));
-}
-
-export async function isRecruitmentActive() {
-  const active = await getActiveRecruitment();
-  return active !== null && active !== undefined;
 }
 
 export async function getAllRecruitmentPhases(recruitmentId?: number) {
@@ -305,7 +301,7 @@ export async function markInterviewRecruitmentPhaseAsDone(userId: string) {
       .where(
         and(
           eq(recruitmentPhaseStatus.userId, userId),
-          eq(recruitmentPhase.clientIdentifier, "entrevista"),
+          sql`lower(trim(${recruitmentPhase.clientIdentifier})) = ${RECRUITMENT_PHASE_IDENTIFIERS.interview}`,
         ),
       );
 
@@ -339,7 +335,7 @@ export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
       .where(
         and(
           eq(recruitmentPhaseStatus.userId, userId),
-          eq(recruitmentPhase.clientIdentifier, "dinâmica"),
+          sql`lower(trim(${recruitmentPhase.clientIdentifier})) = ${RECRUITMENT_PHASE_IDENTIFIERS.dynamic}`,
         ),
       );
 
