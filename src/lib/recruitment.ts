@@ -26,7 +26,7 @@ export async function getLatestRecruitment() {
 
 export async function getActiveRecruitment() {
   return await db.query.recruitment.findFirst({
-    where: eq(recruitment.active, "true"),
+    where: eq(recruitment.active, true),
     orderBy: (recruitment, { desc }) => [
       desc(recruitment.start),
       desc(recruitment.id),
@@ -62,8 +62,8 @@ export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
   assertRecruitmentWindow(r);
 
   const [created] = await db.transaction(async (trx) => {
-    if (r.active === "true") {
-      await trx.update(recruitment).set({ active: "false" });
+    if (r.active) {
+      await trx.update(recruitment).set({ active: false });
     }
 
     return trx
@@ -86,10 +86,10 @@ export async function editRecruitment(r: Recruitment) {
   assertRecruitmentWindow(r);
 
   await db.transaction(async (trx) => {
-    if (r.active === "true") {
+    if (r.active) {
       await trx
         .update(recruitment)
-        .set({ active: "false" })
+        .set({ active: false })
         .where(ne(recruitment.id, r.id));
     }
 

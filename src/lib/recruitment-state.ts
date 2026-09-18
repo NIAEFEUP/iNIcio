@@ -78,7 +78,8 @@ export function getCurrentPhase(
 /**
  * Derives the full state of a recruitment. `status` is date based, except that
  * being inside the recruitment window only yields `open` when
- * `recruitment.active` is `"true"` (the admin kill switch).
+ * `recruitment.active` is `true` (the admin kill switch), so the effective-open
+ * rule is `active && start <= now <= end`.
  */
 export function getRecruitmentState(
   recruitment: Recruitment | null,
@@ -104,7 +105,7 @@ export function getRecruitmentState(
   } else if (now > recruitment.end) {
     status = "closed";
   } else {
-    status = recruitment.active === "true" ? "open" : "closed";
+    status = recruitment.active ? "open" : "closed";
   }
 
   const identifier = applicationIdentifier.trim().toLowerCase();

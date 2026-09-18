@@ -68,7 +68,7 @@ export default function RecruitmentAdminClient({
     title: "Recrutamento 1º Semestre",
     start: "",
     end: "",
-    active: "true",
+    active: true,
   });
 
   const applyDefaultsFromStart = (start: string) => {
@@ -144,7 +144,7 @@ export default function RecruitmentAdminClient({
       title: "Recrutamento 1º Semestre",
       start: "",
       end: "",
-      active: "true",
+      active: true,
     });
     setEditingRecruitment(null);
   };
@@ -331,11 +331,11 @@ export default function RecruitmentAdminClient({
                     <div className="col-span-3">
                       <Switch
                         id="add-active"
-                        checked={formData.active === "true"}
+                        checked={formData.active}
                         onCheckedChange={(checked) =>
                           setFormData((prev) => ({
                             ...prev,
-                            active: checked ? "true" : "false",
+                            active: checked,
                           }))
                         }
                       />
@@ -408,18 +408,14 @@ export default function RecruitmentAdminClient({
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          recruitment.active === "true"
-                            ? "default"
-                            : "secondary"
-                        }
+                        variant={recruitment.active ? "default" : "secondary"}
                         className={
-                          recruitment.active === "true"
+                          recruitment.active
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground"
                         }
                       >
-                        {recruitment.active === "true" ? "Ativo" : "Inativo"}
+                        {recruitment.active ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -595,11 +591,11 @@ export default function RecruitmentAdminClient({
                   <div className="col-span-3">
                     <Switch
                       id="edit-active"
-                      checked={formData.active === "true"}
+                      checked={formData.active}
                       onCheckedChange={(checked) =>
                         setFormData((prev) => ({
                           ...prev,
-                          active: checked ? "true" : "false",
+                          active: checked,
                         }))
                       }
                     />
