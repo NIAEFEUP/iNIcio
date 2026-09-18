@@ -297,7 +297,9 @@ export default function SignUp() {
                 required
               />
               <Button
-                onClick={() => router.push("/application")}
+                onClick={() => {
+                  window.location.href = "/application";
+                }}
                 variant="secondary"
                 disabled={!hasUploadedPicture}
                 className="w-full"
