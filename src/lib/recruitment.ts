@@ -87,6 +87,18 @@ export async function editRecruitment(r: Recruitment) {
   assertRecruitmentWindow(r);
 
   await db.transaction(async (trx) => {
+    // Lock and validate the target before touching other rows, so a stale id
+    // cannot deactivate every recruitment while updating none of them.
+    const [target] = await trx
+      .select({ id: recruitment.id })
+      .from(recruitment)
+      .where(eq(recruitment.id, r.id))
+      .for("update");
+
+    if (!target) {
+      throw new Error("Recrutamento não encontrado");
+    }
+
     if (r.active) {
       await trx
         .update(recruitment)
