@@ -147,8 +147,7 @@ export default function ApplicationClient() {
           </h1>
           <div className="space-y-6 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">
-              Utiliza o teu email pessoal. Convém estares atento ao teu email
-              nos próximos dias!
+              Convém estares atento ao teu email nos próximos dias.
             </p>
             <p>
               Apenas usaremos o teu número telefónico para contactos mais
