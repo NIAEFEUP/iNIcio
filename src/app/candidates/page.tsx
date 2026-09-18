@@ -1,5 +1,4 @@
 import CandidatesClient from "@/components/candidates/candidates-client";
-import { PageHeader } from "@/components/layout/page-header";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
@@ -16,7 +15,6 @@ export default async function Friends() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Candidatos" />
       <CandidatesClient
         candidates={candidates}
         authUser={
