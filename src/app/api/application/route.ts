@@ -149,7 +149,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Failed to submit application:", error);
     return NextResponse.json(
-      { error: "Erro interno no servidor ao submeter a candidatura." },
+      { message: "Erro interno no servidor ao submeter a candidatura." },
       { status: 500 },
     );
   }
