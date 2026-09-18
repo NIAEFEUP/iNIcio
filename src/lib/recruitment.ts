@@ -162,13 +162,18 @@ export async function duplicatePhasesFromPreviousRecruitment(
   return phases.length;
 }
 
-export async function getCurrentRecruitmentState(): Promise<RecruitmentState> {
-  const activeRecruitment = await getActiveRecruitment();
-  const phases = activeRecruitment
-    ? await getAllRecruitmentPhases(activeRecruitment.id)
+export async function getCurrentRecruitmentState(
+  recruitmentId?: number,
+): Promise<RecruitmentState> {
+  const recruitment = recruitmentId
+    ? await getRecruitmentById(recruitmentId)
+    : await getActiveRecruitment();
+
+  const phases = recruitment
+    ? await getAllRecruitmentPhases(recruitment.id)
     : [];
 
-  return getRecruitmentState(activeRecruitment ?? null, phases);
+  return getRecruitmentState(recruitment ?? null, phases);
 }
 
 export async function getRecruitmentPhases(
