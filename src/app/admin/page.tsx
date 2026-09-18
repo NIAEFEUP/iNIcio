@@ -1,14 +1,19 @@
 import AdminResources from "@/components/admin/admin-resources";
-import { recruiter } from "@/db/schema";
-import { db, getAllCandidateUsers } from "@/lib/db";
+import { getAllCandidateUsers } from "@/lib/db";
+import { getAllRecruiters } from "@/lib/recruiter";
+import { getActiveRecruitment } from "@/lib/recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 export default async function AdminPage() {
-  const recruiters = await db.select().from(recruiter);
-  const candidates = await getAllCandidateUsers();
+  const recruitmentId = (await getActiveRecruitment())?.id;
+
+  const recruiters = recruitmentId ? await getAllRecruiters(recruitmentId) : [];
+  const candidates = recruitmentId
+    ? await getAllCandidateUsers(recruitmentId)
+    : [];
 
   const session = await auth.api.getSession({ headers: await headers() });
 
