@@ -1,5 +1,5 @@
 import { recruiterAvailability, usersToRecruitments } from "@/db/schema";
-import { db, RecruiterAvailability } from "./db";
+import { db, NewRecruiterAvailability } from "./db";
 import { and, eq } from "drizzle-orm";
 import { isAdmin } from "./admin";
 import { getActiveRecruitment } from "./recruitment";
@@ -36,13 +36,15 @@ export async function getRecruiters(recruitmentId?: number) {
   return enrolled.map((e) => e.user);
 }
 
-export async function addAvailability(availablity: RecruiterAvailability) {
+export async function addAvailability(availablity: NewRecruiterAvailability) {
   return await db.insert(recruiterAvailability).values({
     ...availablity,
   });
 }
 
-export async function removeAvailability(availablity: RecruiterAvailability) {
+export async function removeAvailability(
+  availablity: NewRecruiterAvailability,
+) {
   return await db
     .delete(recruiterAvailability)
     .where(
