@@ -4,6 +4,7 @@ import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
+import { PageHeader } from "@/components/layout/page-header";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
@@ -65,15 +66,18 @@ export default async function AdminTemplates() {
   );
 
   return (
-    <AdminTemplateClient
-      interviewOverrideAction={interviewOverrideAction}
-      dynamicOverrideAction={dynamicOverrideAction}
-      addInterviewTemplateAction={addInterviewTemplateAction}
-      addDynamicTemplateAction={addDynamicTemplateAction}
-      session={session}
-      jwt={jwt}
-      interviewTemplate={interviewTemplate}
-      dynamicTemplate={dynamicTemplate}
-    />
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Documentos" />
+      <AdminTemplateClient
+        interviewOverrideAction={interviewOverrideAction}
+        dynamicOverrideAction={dynamicOverrideAction}
+        addInterviewTemplateAction={addInterviewTemplateAction}
+        addDynamicTemplateAction={addDynamicTemplateAction}
+        session={session}
+        jwt={jwt}
+        interviewTemplate={interviewTemplate}
+        dynamicTemplate={dynamicTemplate}
+      />
+    </div>
   );
 }

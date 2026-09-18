@@ -51,7 +51,7 @@ export default async function Layout({
         urlId={id}
         authUserRole={role}
       >
-        <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 px-8 py-4">
+        <div className="flex flex-col gap-6">
           {children}
 
           <Accordion>

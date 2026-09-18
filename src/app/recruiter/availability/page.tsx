@@ -1,6 +1,8 @@
 import RecruiterAvailabilityClient, {
   AvailabilityOperation,
 } from "@/components/recruiter/recruiter-availability-progress";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import { recruiterAvailability } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,6 +12,7 @@ import {
   removeAvailability,
 } from "@/lib/recruiter";
 import { and, eq } from "drizzle-orm";
+import { Calendar } from "lucide-react";
 import { headers } from "next/headers";
 
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
@@ -65,10 +68,8 @@ export default async function RecruiterAvailabilityPage() {
   );
 
   return (
-    <>
-      <h1 className="text-4xl text-center font-bold">
-        Marca as tuas disponibilidades
-      </h1>
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Marca as tuas disponibilidades" />
       {targetRecruitment ? (
         <RecruiterAvailabilityClient
           currentAvailabilities={currentAvailabilities}
@@ -77,10 +78,15 @@ export default async function RecruiterAvailabilityPage() {
           recruitmentId={targetRecruitment.id}
         />
       ) : (
-        <p className="text-center text-muted-foreground">
-          Não existe um recrutamento ativo
-        </p>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              Não existe um recrutamento ativo
+            </p>
+          </CardContent>
+        </Card>
       )}
-    </>
+    </div>
   );
 }

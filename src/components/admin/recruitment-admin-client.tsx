@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { PageHeader } from "@/components/layout/page-header";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -201,15 +202,10 @@ export default function RecruitmentAdminClient({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Recrutamentos
-            </h1>
-          </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Recrutamentos"
+        actions={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger
               render={
@@ -370,8 +366,8 @@ export default function RecruitmentAdminClient({
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-
+        }
+      >
         {/* Recruitments Table */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -630,7 +626,7 @@ export default function RecruitmentAdminClient({
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageHeader>
     </div>
   );
 }

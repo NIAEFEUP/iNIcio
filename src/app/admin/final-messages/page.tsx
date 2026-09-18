@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
+import { PageHeader } from "@/components/layout/page-header";
 
 import { db } from "@/lib/db";
 import { finalMessageTemplate } from "@/db/schema";
@@ -76,15 +77,18 @@ export default async function AdminTemplates() {
   );
 
   return (
-    <AdminFinalMessageClient
-      acceptedMessageOverrideAction={acceptedMessageOverrideAction}
-      rejectedMessageOverrideAction={rejectedMessageOverrideAction}
-      addAcceptedMessageTemplateAction={addAcceptedMessageTemplateAction}
-      addRejectedMessageTemplateAction={addRejectedTemplateAction}
-      session={session}
-      jwt={jwt}
-      acceptedMessageTemplate={acceptedTemplate}
-      rejectedMessageTemplate={rejectedTemplate}
-    />
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Mensagens Finais" />
+      <AdminFinalMessageClient
+        acceptedMessageOverrideAction={acceptedMessageOverrideAction}
+        rejectedMessageOverrideAction={rejectedMessageOverrideAction}
+        addAcceptedMessageTemplateAction={addAcceptedMessageTemplateAction}
+        addRejectedMessageTemplateAction={addRejectedTemplateAction}
+        session={session}
+        jwt={jwt}
+        acceptedMessageTemplate={acceptedTemplate}
+        rejectedMessageTemplate={rejectedTemplate}
+      />
+    </div>
   );
 }

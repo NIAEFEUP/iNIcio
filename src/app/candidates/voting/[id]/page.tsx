@@ -1,4 +1,5 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
+import { PageHeader } from "@/components/layout/page-header";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import {
@@ -85,17 +86,20 @@ export default async function CandidateVotingPage({
   );
 
   return (
-    <CandidateVotingSlideshow
-      candidates={currentVotingPhase.candidates}
-      admin={admin ? true : false}
-      currentVotingPhase={currentVotingPhase}
-      submitVoteAction={submitVoteAction}
-      resetCandidateVotes={resetCandidateVotes}
-      changeCurrentVotingPhaseStatusCandidateAction={
-        changeCurrentVotingPhaseStatusCandidateAction
-      }
-      recruiterVotes={recruiterVotes}
-      makeVoteDefinitiveAction={makeVoteDefinitiveAction}
-    />
+    <>
+      <PageHeader title="Votação" />
+      <CandidateVotingSlideshow
+        candidates={currentVotingPhase.candidates}
+        admin={admin ? true : false}
+        currentVotingPhase={currentVotingPhase}
+        submitVoteAction={submitVoteAction}
+        resetCandidateVotes={resetCandidateVotes}
+        changeCurrentVotingPhaseStatusCandidateAction={
+          changeCurrentVotingPhaseStatusCandidateAction
+        }
+        recruiterVotes={recruiterVotes}
+        makeVoteDefinitiveAction={makeVoteDefinitiveAction}
+      />
+    </>
   );
 }

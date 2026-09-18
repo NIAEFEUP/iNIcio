@@ -4,6 +4,7 @@ import {
   getUsersRecruiters,
 } from "@/calendar/requests";
 import { ClientContainer } from "@/calendar/components/client-container";
+import { PageHeader } from "@/components/layout/page-header";
 import type { TCalendarView } from "@/calendar/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -35,7 +36,8 @@ export default async function AvailabilitiesCalendarShell({
       authUserRole={role}
       urlId={""}
     >
-      <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 px-8 py-4">
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Disponibilidades" />
         <ClientContainer view={view} />
       </div>
     </CalendarProvider>

@@ -4,6 +4,7 @@ import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
 import CommentFrame from "@/components/comments/comment-frame";
+import { PageHeader } from "@/components/layout/page-header";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -46,6 +47,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   return (
     <div className="h-screen mx-4 md:mx-16">
+      <PageHeader title={candidate.name} />
       <section className="flex flex-col md:flex-row gap-4 h-full">
         <div className="space-y-4">
           <CandidateQuickInfo candidate={candidate} fullDetails={true} />

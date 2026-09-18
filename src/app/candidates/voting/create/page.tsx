@@ -7,6 +7,7 @@ import { getAllPossibleApplicationInterests } from "@/lib/application";
 import CandidateVotingChoiceClient from "@/components/candidate/voting/candidates-voting-client";
 import { createVotingPhase } from "@/lib/voting";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
+import { PageHeader } from "@/components/layout/page-header";
 import { CandidateFilterRestriction } from "@/lib/candidate";
 
 export default async function CandidateVotingCreatePage() {
@@ -26,19 +27,22 @@ export default async function CandidateVotingCreatePage() {
   }
 
   return (
-    <CandidateVotingChoiceClient
-      candidates={candidates}
-      authUser={
-        session
-          ? {
-              ...session.user,
-              image: session.user.image ?? "",
-              role: session.user.role as "recruiter" | "candidate" | "admin",
-            }
-          : undefined
-      }
-      availableDepartments={await getAllPossibleApplicationInterests()}
-      handleCandidateSelection={handleCandidateSelection}
-    />
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Criar votação" />
+      <CandidateVotingChoiceClient
+        candidates={candidates}
+        authUser={
+          session
+            ? {
+                ...session.user,
+                image: session.user.image ?? "",
+                role: session.user.role as "recruiter" | "candidate" | "admin",
+              }
+            : undefined
+        }
+        availableDepartments={await getAllPossibleApplicationInterests()}
+        handleCandidateSelection={handleCandidateSelection}
+      />
+    </div>
   );
 }
