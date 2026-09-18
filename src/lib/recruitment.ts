@@ -9,7 +9,7 @@ import {
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, or } from "drizzle-orm";
+import { and, desc, eq, gt, ne, or } from "drizzle-orm";
 import {
   getRecruitmentState,
   type RecruitmentState,
@@ -49,34 +49,62 @@ export async function getRecruitments() {
   return recruitments;
 }
 
+function assertRecruitmentWindow(r: Pick<Recruitment, "start" | "end">) {
+  const start = new Date(r.start).getTime();
+  const end = new Date(r.end).getTime();
+
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+    throw new Error("A data de fim tem de ser posterior à data de início");
+  }
+}
+
 export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
-  const [created] = await db
-    .insert(recruitment)
-    .values({
-      lectiveYear: r.lectiveYear,
-      semester: r.semester,
-      title: r.title,
-      start: r.start,
-      end: r.end,
-      active: r.active,
-    })
-    .returning({ id: recruitment.id });
+  assertRecruitmentWindow(r);
+
+  const [created] = await db.transaction(async (trx) => {
+    if (r.active === "true") {
+      await trx.update(recruitment).set({ active: "false" });
+    }
+
+    return trx
+      .insert(recruitment)
+      .values({
+        lectiveYear: r.lectiveYear,
+        semester: r.semester,
+        title: r.title,
+        start: r.start,
+        end: r.end,
+        active: r.active,
+      })
+      .returning({ id: recruitment.id });
+  });
 
   return created;
 }
 
 export async function editRecruitment(r: Recruitment) {
-  await db
-    .update(recruitment)
-    .set({
-      lectiveYear: r.lectiveYear,
-      semester: r.semester,
-      title: r.title,
-      start: r.start,
-      end: r.end,
-      active: r.active,
-    })
-    .where(eq(recruitment.id, r.id));
+  assertRecruitmentWindow(r);
+
+  await db.transaction(async (trx) => {
+    if (r.active === "true") {
+      await trx
+        .update(recruitment)
+        .set({ active: "false" })
+        .where(ne(recruitment.id, r.id));
+    }
+
+    await trx
+      .update(recruitment)
+      .set({
+        lectiveYear: r.lectiveYear,
+        semester: r.semester,
+        title: r.title,
+        start: r.start,
+        end: r.end,
+        active: r.active,
+      })
+      .where(eq(recruitment.id, r.id));
+  });
 }
 
 export async function deleteRecruitment(id: number) {
@@ -98,6 +126,44 @@ export async function getAllRecruitmentPhases(recruitmentId?: number) {
     .where(eq(recruitmentPhase.recruitmentId, targetId));
 
   return recruitmentPhases;
+}
+
+/**
+ * Copies the phases of the most recent other recruitment into the given one.
+ * Returns the number of copied phases, or 0 when there is nothing to copy
+ * (no other recruitment, previous one without phases, or the target already
+ * has phases).
+ */
+export async function duplicatePhasesFromPreviousRecruitment(
+  recruitmentId: number,
+) {
+  const recruitments = await getRecruitments();
+
+  const target = recruitments.find((r) => r.id === recruitmentId);
+  if (!target) return 0;
+
+  const existing = await getAllRecruitmentPhases(recruitmentId);
+  if (existing.length > 0) return 0;
+
+  const source = recruitments.find((r) => r.id !== recruitmentId);
+  if (!source) return 0;
+
+  const phases = await getAllRecruitmentPhases(source.id);
+  if (phases.length === 0) return 0;
+
+  await db.insert(recruitmentPhase).values(
+    phases.map((phase) => ({
+      recruitmentId,
+      title: phase.title,
+      description: phase.description,
+      clientIdentifier: phase.clientIdentifier,
+      start: phase.start,
+      end: phase.end,
+      role: phase.role,
+    })),
+  );
+
+  return phases.length;
 }
 
 export async function getCurrentRecruitmentState(): Promise<RecruitmentState> {

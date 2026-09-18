@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Recruitment } from "@/lib/db";
 
@@ -41,6 +42,7 @@ interface RecruitmentAdminClientProps {
   addRecruitment: (recruitment: Recruitment) => Promise<void>;
   editRecruitment: (recruitment: Recruitment) => Promise<void>;
   deleteRecruitment: (id: number) => Promise<void>;
+  duplicatePhases: (id: number) => Promise<number>;
 }
 
 export default function RecruitmentAdminClient({
@@ -48,6 +50,7 @@ export default function RecruitmentAdminClient({
   addRecruitment,
   editRecruitment,
   deleteRecruitment,
+  duplicatePhases,
 }: RecruitmentAdminClientProps) {
   const [recruitmentsState, setRecruitmentsState] =
     useState<Recruitment[]>(recruitments);
@@ -68,31 +71,70 @@ export default function RecruitmentAdminClient({
     active: "true",
   });
 
+  const applyDefaultsFromStart = (start: string) => {
+    const date = new Date(start);
+    if (Number.isNaN(date.getTime())) return;
+
+    const year = date.getFullYear();
+    const isFirstSemester = date.getMonth() >= 6;
+    const semester = isFirstSemester ? 1 : 2;
+    const lectiveYear = isFirstSemester
+      ? `${year}/${year + 1}`
+      : `${year - 1}/${year}`;
+
+    setFormData((prev) => ({
+      ...prev,
+      lectiveYear,
+      semester,
+      title: `Recrutamento ${semester}º Semestre`,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const startDate = new Date(formData.start);
+    const endDate = new Date(formData.end);
+
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      startDate >= endDate
+    ) {
+      toast("A data de fim tem de ser posterior à data de início");
+      return;
+    }
 
     const newRecruitment: Recruitment = {
       id: editingRecruitment ? editingRecruitment.id : 0,
       lectiveYear: formData.lectiveYear,
       semester: Number(formData.semester),
       title: formData.title,
-      start: new Date(formData.start),
-      end: new Date(formData.end),
+      start: startDate,
+      end: endDate,
       active: formData.active,
     };
 
-    if (editingRecruitment) {
-      await editRecruitment(newRecruitment);
-      setRecruitmentsState((prev) =>
-        prev.map((r) => (r.id === editingRecruitment.id ? newRecruitment : r)),
-      );
-      toast("Recrutamento atualizado");
-      setIsEditDialogOpen(false);
-    } else {
-      await addRecruitment(newRecruitment);
-      setRecruitmentsState((prev) => [...prev, newRecruitment]);
-      toast("Recrutamento adicionado");
-      setIsAddDialogOpen(false);
+    try {
+      if (editingRecruitment) {
+        await editRecruitment(newRecruitment);
+        setRecruitmentsState((prev) =>
+          prev.map((r) =>
+            r.id === editingRecruitment.id ? newRecruitment : r,
+          ),
+        );
+        toast("Recrutamento atualizado");
+        setIsEditDialogOpen(false);
+      } else {
+        await addRecruitment(newRecruitment);
+        setRecruitmentsState((prev) => [...prev, newRecruitment]);
+        toast("Recrutamento adicionado");
+        setIsAddDialogOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro na submissão");
+      return;
     }
 
     setFormData({
@@ -122,9 +164,24 @@ export default function RecruitmentAdminClient({
   };
 
   const handleDelete = async (id: number) => {
-    await deleteRecruitment(id);
-    setRecruitmentsState((prev) => prev.filter((r) => r.id !== id));
-    toast("Recrutamento apagado");
+    try {
+      await deleteRecruitment(id);
+      setRecruitmentsState((prev) => prev.filter((r) => r.id !== id));
+      toast("Recrutamento apagado");
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro ao apagar");
+    }
+  };
+
+  const handleDuplicatePhases = async (id: number) => {
+    try {
+      const count = await duplicatePhases(id);
+      toast(count > 0 ? "Fases copiadas" : "Não há fases para duplicar");
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro ao duplicar as fases");
+    }
   };
 
   return (
@@ -232,12 +289,13 @@ export default function RecruitmentAdminClient({
                       id="start"
                       type="datetime-local"
                       value={formData.start}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        applyDefaultsFromStart(e.target.value);
                         setFormData((prev) => ({
                           ...prev,
                           start: e.target.value,
-                        }))
-                      }
+                        }));
+                      }}
                       className="col-span-3 bg-input border-border text-foreground"
                       required
                     />
@@ -373,6 +431,25 @@ export default function RecruitmentAdminClient({
                           className="text-muted-foreground hover:text-card-foreground"
                         >
                           <Edit className="w-4 h-4" />
+                        </Button>
+                        <Link
+                          href={`/admin/phases?recruitmentId=${recruitment.id}`}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-card-foreground"
+                          >
+                            Fases
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDuplicatePhases(recruitment.id)}
+                          className="text-muted-foreground hover:text-card-foreground"
+                        >
+                          Duplicar fases
                         </Button>
                         <Button
                           variant="ghost"
