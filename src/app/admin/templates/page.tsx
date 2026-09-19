@@ -68,6 +68,7 @@ export default async function AdminTemplates() {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
+    ["interview-template-room"],
   );
 
   return (

@@ -76,9 +76,10 @@ export default function RealTimeEditor({
     () =>
       collab
         ? new WebsocketProvider(
-            `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${encodeURIComponent(token)}`,
+            process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? "",
             roomId,
             doc,
+            { params: { token } },
           )
         : null,
     [doc, roomId, token, collab],

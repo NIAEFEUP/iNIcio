@@ -10,12 +10,14 @@ import { setupWSConnection } from "./utils.js";
 const wss = new WebSocket.Server({ noServer: true });
 const host = process.env.HOST || "localhost";
 const port = number.parseInt(process.env.PORT || "1234");
-const jwtSecret = process.env.JWT_SECRET || "inicio";
+const jwtSecret = process.env.JWT_SECRET;
 
-if (!process.env.JWT_SECRET) {
-  console.warn(
-    "[ws] JWT_SECRET is not set, falling back to the default value. Tokens signed with a different secret will be rejected.",
+// Fail closed: without a strong secret, forged tokens would be accepted.
+if (!jwtSecret) {
+  console.error(
+    "[ws] JWT_SECRET is not set. Refusing to start without a secret.",
   );
+  process.exit(1);
 }
 
 const server = http.createServer((_request, response) => {
@@ -26,13 +28,24 @@ const server = http.createServer((_request, response) => {
 wss.on("connection", setupWSConnection);
 
 server.on("upgrade", (request, socket, head) => {
-  const params = new URLSearchParams(request.url?.replace(/^.*\?/, ""));
-
-  const token = params.get("token") ? params.get("token")?.split("/")[0] : "";
-
-  if (!token) {
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+  const reject = (status, reason) => {
+    socket.write(`HTTP/1.1 ${status} ${reason}\r\n\r\n`);
     socket.destroy();
+  };
+
+  let url;
+  try {
+    url = new URL(request.url || "/", "http://localhost");
+  } catch {
+    reject("400 Bad Request");
+    return;
+  }
+
+  const token = url.searchParams.get("token");
+  const room = decodeURIComponent(url.pathname.slice(1));
+
+  if (!token || !room) {
+    reject("401 Unauthorized");
     return;
   }
 
@@ -44,19 +57,24 @@ server.on("upgrade", (request, socket, head) => {
     payload = jwt.verify(token, jwtSecret);
   } catch (error) {
     console.error("[ws] authentication failed", error.message);
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-    socket.destroy();
+    reject("401 Unauthorized");
     return;
   }
 
   if (payload.role !== "recruiter" && payload.role !== "admin") {
-    socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
-    socket.destroy();
+    reject("403 Forbidden");
+    return;
+  }
+
+  // The token is bound to the rooms it was minted for. Reject any other room so
+  // a token cannot be replayed against a document the user was never granted.
+  if (!Array.isArray(payload.rooms) || !payload.rooms.includes(room)) {
+    console.error(`[ws] room access denied room=${room}`);
+    reject("403 Forbidden");
     return;
   }
 
   wss.handleUpgrade(request, socket, head, (ws) => {
-    const room = (request.url || "").slice(1).split("?")[0];
     console.log(`[ws] connected room=${room}`);
     wss.emit("connection", ws, request);
     ws.once("close", () => console.log(`[ws] disconnected room=${room}`));

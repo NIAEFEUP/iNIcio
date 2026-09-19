@@ -105,6 +105,7 @@ export default async function InterviewPage({ params }: any) {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
+    [`interview-${id}`],
   );
 
   return (

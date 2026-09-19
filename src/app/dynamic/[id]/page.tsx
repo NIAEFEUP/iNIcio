@@ -85,6 +85,7 @@ export default async function DynamicPage({ params }: any) {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
+    [`dynamic-${id}`],
   );
 
   return (

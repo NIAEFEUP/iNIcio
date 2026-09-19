@@ -79,6 +79,7 @@ export default async function AdminTemplates() {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
+    ["accepted-message-template-room", "rejected-message-template-room"],
   );
 
   return (
