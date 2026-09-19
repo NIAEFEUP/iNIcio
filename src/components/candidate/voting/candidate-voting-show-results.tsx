@@ -1,27 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { CandidateVotingContext } from "@/lib/contexts/CandidateVotingContext";
-import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
 import { Check, Eye, EyeOff, X } from "lucide-react";
 import { useContext, useState } from "react";
 
 export default function CandidateVotingShowResults() {
   const [show, setShow] = useState<boolean>(false);
 
-  const { currentCandidate, currentVotingPhase } = useContext(
-    CandidateVotingContext,
-  );
+  const { approvedCount, rejectedCount } = useContext(CandidateVotingContext);
 
-  const { votes } = useCurrentCandidateVotes(
-    currentVotingPhase.id,
-    currentCandidate?.id,
-  );
-
-  const approvedCount = votes
-    ? votes.filter((v) => v.decision === "approve").length
-    : 0;
-  const rejectedCount = votes
-    ? votes.filter((v) => v.decision === "reject").length
-    : 0;
+  const total = approvedCount + rejectedCount;
+  const approvedPercentage = total === 0 ? 0 : (approvedCount / total) * 100;
+  const rejectedPercentage = total === 0 ? 0 : (rejectedCount / total) * 100;
 
   return (
     <div className="flex flex-col gap-2">
@@ -37,9 +26,7 @@ export default function CandidateVotingShowResults() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">A favor</p>
-                <p className="text-xs">
-                  {(approvedCount / (approvedCount + rejectedCount)) * 100}%
-                </p>
+                <p className="text-xs">{approvedPercentage}%</p>
               </div>
             </div>
             <div className="text-center">
@@ -51,9 +38,7 @@ export default function CandidateVotingShowResults() {
               </div>
               <div>
                 <p className="text-xs text-destructive/80">Contra</p>
-                <p className="text-xs">
-                  {(rejectedCount / (approvedCount + rejectedCount)) * 100}%
-                </p>
+                <p className="text-xs">{rejectedPercentage}%</p>
               </div>
             </div>
           </div>
