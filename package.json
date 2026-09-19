@@ -12,6 +12,8 @@
     "format:fix": "prettier . --write",
     "prepare": "husky",
     "seed": "node --import tsx ./src/db/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
