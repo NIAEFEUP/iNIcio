@@ -10,6 +10,7 @@ import {
 import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
 import { deleteCandidateVotes } from "@/lib/voting";
+import { redirect } from "next/navigation";
 
 interface CandidateVotingPageProps {
   params: any;
@@ -76,9 +77,10 @@ export default async function CandidateVotingPage({
   const admin = await isAdmin(session?.user.id);
 
   const currentVotingPhase = await getCurrentVotingPhase(id);
+  if (!currentVotingPhase) redirect("/candidates");
 
   const recruiterVotes = await getRecruiterVotes(
-    currentVotingPhase?.id,
+    currentVotingPhase.id,
     session?.user.id,
   );
 

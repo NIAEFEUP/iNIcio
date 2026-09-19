@@ -21,18 +21,28 @@ export async function markNotificationAsRead(id: number) {
   });
 }
 
+import { getActiveRecruitment } from "@/lib/recruitment";
+
 export async function getAvailableRecruiters(
   start: Date,
   end: Date,
+  recruitmentId?: number,
 ): Promise<User[]> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
   const startUtc = new Date(start.toISOString());
   const endUtc = new Date(end.toISOString());
 
+  const conditions = [
+    gte(recruiterAvailability.start, startUtc),
+    lt(recruiterAvailability.start, endUtc),
+  ];
+  if (targetId) {
+    conditions.push(eq(recruiterAvailability.recruitmentId, targetId));
+  }
+
   const results = await db.query.recruiterAvailability.findMany({
-    where: and(
-      gte(recruiterAvailability.start, startUtc),
-      lt(recruiterAvailability.start, endUtc),
-    ),
+    where: and(...conditions),
     with: {
       recruiter: {
         with: {

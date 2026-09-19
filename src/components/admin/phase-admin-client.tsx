@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,12 +40,27 @@ import {
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RecruitmentPhase } from "@/lib/db";
+import { Badge } from "@/components/ui/badge";
+import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
+
+const PHASE_STATE_LABELS: Record<PhaseState, string> = {
+  upcoming: "Futura",
+  open: "A decorrer",
+  closed: "Terminada",
+};
+
+const PHASE_STATE_BADGE_CLASSES: Record<PhaseState, string> = {
+  open: "bg-primary text-primary-foreground",
+  upcoming: "bg-secondary text-secondary-foreground",
+  closed: "bg-secondary text-secondary-foreground",
+};
 
 interface PhaseAdminClientProps {
   phases: RecruitmentPhase[];
   addPhase: (p: RecruitmentPhase) => Promise<void>;
   editPhase: (p: RecruitmentPhase) => Promise<void>;
   deletePhase: (id: number) => Promise<void>;
+  defaultRecruitmentId?: number;
 }
 
 export default function PhaseAdminClient({
@@ -53,11 +68,13 @@ export default function PhaseAdminClient({
   addPhase,
   editPhase,
   deletePhase,
+  defaultRecruitmentId,
 }: PhaseAdminClientProps) {
   const [phasesState, setPhasesState] = useState<RecruitmentPhase[]>(phases);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<RecruitmentPhase | null>(null);
+  const [now, setNow] = useState(() => new Date());
   const [form, setForm] = useState({
     id: "",
     title: "",
@@ -66,8 +83,15 @@ export default function PhaseAdminClient({
     end: "",
     clientIdentifier: "",
     role: "candidate",
-    recruitmentYear: new Date().getFullYear().toString(),
+    recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
+
+  // Keep phase badges fresh while the page stays open.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const resetForm = () =>
     setForm({
@@ -78,15 +102,20 @@ export default function PhaseAdminClient({
       end: "",
       role: "candidate",
       clientIdentifier: "",
-      recruitmentYear: new Date().getFullYear().toString(),
+      recruitmentId: defaultRecruitmentId?.toString() ?? "",
     });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!editing && !form.recruitmentId) {
+      toast("Não existe um recrutamento ativo para associar a fase");
+      return;
+    }
+
     const phase: any = {
       id: form.id ? Number.parseInt(form.id) : undefined,
-      recruitmentYear: Number.parseInt(form.recruitmentYear),
+      recruitmentId: Number.parseInt(form.recruitmentId),
       title: form.title,
       description: form.description,
       clientIdentifier: form.clientIdentifier,
@@ -143,9 +172,7 @@ export default function PhaseAdminClient({
       end: p.end ? new Date(p.end).toISOString().slice(0, 16) : "",
       role: (p.role as string) ?? "candidate",
       clientIdentifier: p.clientIdentifier ?? "",
-      recruitmentYear: (
-        p.recruitmentYear ?? new Date().getFullYear()
-      ).toString(),
+      recruitmentId: p.recruitmentId?.toString() ?? "",
     });
     setIsEditOpen(true);
   };
@@ -173,7 +200,10 @@ export default function PhaseAdminClient({
           <h1 className="text-3xl font-bold text-foreground">Fases</h1>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                disabled={!defaultRecruitmentId}
+              >
                 <Plus className="w-4 h-4 mr-2" /> Adicionar
               </Button>
             </DialogTrigger>
@@ -341,52 +371,71 @@ export default function PhaseAdminClient({
                     Início
                   </TableHead>
                   <TableHead className="text-muted-foreground">Fim</TableHead>
+                  <TableHead className="text-muted-foreground">
+                    Estado
+                  </TableHead>
                   <TableHead className="text-muted-foreground">Papel</TableHead>
                   <TableHead className="text-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {phasesState.map((p) => (
-                  <TableRow key={p.id} className="border-border align-top">
-                    <TableCell className="font-medium text-card-foreground">
-                      {p.title}
-                    </TableCell>
-                    <TableCell className="text-card-foreground max-w-xl break-words whitespace-pre-wrap">
-                      {p.description}
-                    </TableCell>
-                    <TableCell className="text-card-foreground">
-                      {p.start
-                        ? new Date(p.start).toLocaleString("pt-PT")
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-card-foreground">
-                      {p.end ? new Date(p.end).toLocaleString("pt-PT") : "-"}
-                    </TableCell>
-                    <TableCell className="text-card-foreground">
-                      {p.role}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(p)}
-                          className="text-muted-foreground hover:text-card-foreground"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(p.id!)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {phasesState.map((p) => {
+                  const state = getPhaseState(p, now);
+
+                  return (
+                    <TableRow key={p.id} className="border-border align-top">
+                      <TableCell className="font-medium text-card-foreground">
+                        {p.title}
+                      </TableCell>
+                      <TableCell className="text-card-foreground max-w-xl break-words whitespace-pre-wrap">
+                        {p.description}
+                      </TableCell>
+                      <TableCell className="text-card-foreground">
+                        {p.start
+                          ? new Date(p.start).toLocaleString("pt-PT")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-card-foreground">
+                        {p.end ? new Date(p.end).toLocaleString("pt-PT") : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
+                            {PHASE_STATE_LABELS[state]}
+                          </Badge>
+                          {state === "open" && p.end && (
+                            <span className="text-xs text-muted-foreground">
+                              termina {new Date(p.end).toLocaleString("pt-PT")}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-card-foreground">
+                        {p.role}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(p)}
+                            className="text-muted-foreground hover:text-card-foreground"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(p.id!)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

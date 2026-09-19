@@ -8,6 +8,7 @@ import {
   application,
   applicationInterests,
   candidate,
+  recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
   user,
@@ -15,6 +16,9 @@ import {
 import { eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
+import { getActiveRecruitment } from "@/lib/recruitment";
+import { getRecruitmentState } from "@/lib/recruitment-state";
+import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
   fullname: z.string().min(1),
@@ -46,6 +50,9 @@ export async function POST(req: Request) {
 
   if (!session) return new Response("Unauthorized", { status: 401 });
 
+  if (await isRecruiter(session.user.id))
+    return new Response("Forbidden", { status: 403 });
+
   let raw: unknown;
   try {
     raw = await req.json();
@@ -61,9 +68,47 @@ export async function POST(req: Request) {
     );
   }
 
+  const activeRecruitment = await getActiveRecruitment();
+  if (!activeRecruitment) {
+    return NextResponse.json(
+      { error: "Não existe nenhum recrutamento ativo" },
+      { status: 400 },
+    );
+  }
+
   const data = parsed.data;
 
-  await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
+    // Lock the target recruitment so eligibility cannot change between the
+    // check and the writes, even if an admin switches/closes it concurrently.
+    const [target] = await tx
+      .select()
+      .from(recruitment)
+      .where(eq(recruitment.id, activeRecruitment.id))
+      .for("update");
+
+    if (!target) {
+      return {
+        ok: false as const,
+        status: 400,
+        error: "Não existe nenhum recrutamento ativo",
+      };
+    }
+
+    const phases = await tx
+      .select()
+      .from(recruitmentPhase)
+      .where(eq(recruitmentPhase.recruitmentId, target.id))
+      .for("update");
+
+    if (!getRecruitmentState(target, phases).canApply) {
+      return {
+        ok: false as const,
+        status: 403,
+        error: "As candidaturas não estão abertas",
+      };
+    }
+
     const app = await tx
       .insert(application)
       .values({
@@ -85,6 +130,7 @@ export async function POST(req: Request) {
         suggestions: data.suggestions,
         accepted: false,
         candidateId: session.user.id,
+        recruitmentId: target.id,
       })
       .returning({ id: application.id });
 
@@ -105,21 +151,36 @@ export async function POST(req: Request) {
       });
     }
 
-    await tx.insert(candidate).values({ userId: session.user.id });
-
-    const phases = await tx
-      .select()
-      .from(recruitmentPhase)
-      .where(eq(recruitmentPhase.role, "candidate"));
+    await tx
+      .insert(candidate)
+      .values({
+        userId: session.user.id,
+        recruitmentId: target.id,
+      })
+      .onConflictDoNothing();
 
     for (const phase of phases) {
-      await tx.insert(recruitmentPhaseStatus).values({
-        userId: session.user.id,
-        phaseId: phase.id,
-        status: "todo",
-      });
+      if (phase.role !== "candidate") continue;
+
+      await tx
+        .insert(recruitmentPhaseStatus)
+        .values({
+          userId: session.user.id,
+          phaseId: phase.id,
+          status: "todo",
+        })
+        .onConflictDoNothing();
     }
+
+    return { ok: true as const };
   });
+
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
+    );
+  }
 
   return new Response();
 }

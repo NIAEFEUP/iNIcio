@@ -8,11 +8,13 @@ import { redirect } from "next/navigation";
 interface AdminResourcesProps {
   recruiters: Array<Recruiter>;
   candidates: Array<User>;
+  userId: string;
 }
 
 export default function AdminResources({
   recruiters,
   candidates,
+  userId,
 }: AdminResourcesProps) {
   return (
     <div>
@@ -62,19 +64,13 @@ export default function AdminResources({
         <ResourceCard
           title="Calendário"
           quantityText="Visualizar tarefas"
-          onClick={() => redirect("/calendar")}
+          onClick={() => redirect(`/calendar/${userId}`)}
         />
 
         <ResourceCard
           title="Mensagem Final"
           quantityText="Editar texto de Aceite / Recusado"
           onClick={() => redirect("/admin/final-messages")}
-        />
-
-        <ResourceCard
-          title="Passagem de candidatos a membros"
-          quantityText="Publicar resultados"
-          onClick={() => redirect("/results")}
         />
       </div>
     </div>

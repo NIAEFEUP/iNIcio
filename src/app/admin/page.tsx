@@ -3,10 +3,14 @@ import { recruiter } from "@/db/schema";
 import { db, getAllCandidateUsers } from "@/lib/db";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function AdminPage() {
   const recruiters = await db.select().from(recruiter);
   const candidates = await getAllCandidateUsers();
+
+  const session = await auth.api.getSession({ headers: await headers() });
 
   return (
     <div className="flex flex-col gap-y-16">
@@ -20,7 +24,11 @@ export default async function AdminPage() {
           />
         </div>
 
-        <AdminResources recruiters={recruiters} candidates={candidates} />
+        <AdminResources
+          recruiters={recruiters}
+          candidates={candidates}
+          userId={session!.user.id}
+        />
       </div>
     </div>
   );

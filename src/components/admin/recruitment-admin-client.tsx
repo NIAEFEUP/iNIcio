@@ -33,14 +33,34 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Recruitment } from "@/lib/db";
 
 interface RecruitmentAdminClientProps {
   recruitments: Recruitment[];
-  addRecruitment: (recruitment: Recruitment) => Promise<void>;
+  addRecruitment: (recruitment: Recruitment) => Promise<{ id: number }>;
   editRecruitment: (recruitment: Recruitment) => Promise<void>;
-  deleteRecruitment: (year: number) => Promise<void>;
+  deleteRecruitment: (id: number) => Promise<void>;
+  duplicatePhases: (id: number) => Promise<number>;
+}
+
+/**
+ * Replaces (or appends) a recruitment and mirrors the server-side invariant:
+ * an active recruitment deactivates every other one.
+ */
+function upsertRecruitment(
+  rows: Recruitment[],
+  updated: Recruitment,
+): Recruitment[] {
+  const exists = rows.some((r) => r.id === updated.id);
+  const next = exists
+    ? rows.map((r) => (r.id === updated.id ? updated : r))
+    : [...rows, updated];
+
+  return updated.active
+    ? next.map((r) => (r.id === updated.id ? r : { ...r, active: false }))
+    : next;
 }
 
 export default function RecruitmentAdminClient({
@@ -48,6 +68,7 @@ export default function RecruitmentAdminClient({
   addRecruitment,
   editRecruitment,
   deleteRecruitment,
+  duplicatePhases,
 }: RecruitmentAdminClientProps) {
   const [recruitmentsState, setRecruitmentsState] =
     useState<Recruitment[]>(recruitments);
@@ -55,47 +76,102 @@ export default function RecruitmentAdminClient({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRecruitment, setEditingRecruitment] =
     useState<Recruitment | null>(null);
+
+  const defaultLectiveYear = `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`;
+
   const [formData, setFormData] = useState({
-    year: "",
+    id: 0,
+    lectiveYear: defaultLectiveYear,
+    semester: 1,
+    title: "Recrutamento 1º Semestre",
     start: "",
     end: "",
-    active: "true",
+    active: true,
   });
+
+  const applyDefaultsFromStart = (start: string) => {
+    const date = new Date(start);
+    if (Number.isNaN(date.getTime())) return;
+
+    const year = date.getFullYear();
+    const isFirstSemester = date.getMonth() >= 6;
+    const semester = isFirstSemester ? 1 : 2;
+    const lectiveYear = isFirstSemester
+      ? `${year}/${year + 1}`
+      : `${year - 1}/${year}`;
+
+    setFormData((prev) => ({
+      ...prev,
+      lectiveYear,
+      semester,
+      title: `Recrutamento ${semester}º Semestre`,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const startDate = new Date(formData.start);
+    const endDate = new Date(formData.end);
+
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      startDate >= endDate
+    ) {
+      toast("A data de fim tem de ser posterior à data de início");
+      return;
+    }
+
     const newRecruitment: Recruitment = {
-      year: Number.parseInt(formData.year),
-      start: new Date(formData.start),
-      end: new Date(formData.end),
+      id: editingRecruitment ? editingRecruitment.id : 0,
+      lectiveYear: formData.lectiveYear,
+      semester: Number(formData.semester),
+      title: formData.title,
+      start: startDate,
+      end: endDate,
       active: formData.active,
     };
 
-    if (editingRecruitment) {
-      await editRecruitment(newRecruitment);
-      setRecruitmentsState((prev) =>
-        prev.map((r) =>
-          r.year === editingRecruitment.year ? newRecruitment : r,
-        ),
-      );
-      toast("Recrutamento atualizado");
-      setIsEditDialogOpen(false);
-    } else {
-      await addRecruitment(newRecruitment);
-      setRecruitmentsState((prev) => [...prev, newRecruitment]);
-      toast("Recrutamento adicionado");
-      setIsAddDialogOpen(false);
+    try {
+      if (editingRecruitment) {
+        await editRecruitment(newRecruitment);
+        setRecruitmentsState((prev) => upsertRecruitment(prev, newRecruitment));
+        toast("Recrutamento atualizado");
+        setIsEditDialogOpen(false);
+      } else {
+        const created = await addRecruitment(newRecruitment);
+        setRecruitmentsState((prev) =>
+          upsertRecruitment(prev, { ...newRecruitment, id: created.id }),
+        );
+        toast("Recrutamento adicionado");
+        setIsAddDialogOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro na submissão");
+      return;
     }
 
-    setFormData({ year: "", start: "", end: "", active: "true" });
+    setFormData({
+      id: 0,
+      lectiveYear: defaultLectiveYear,
+      semester: 1,
+      title: "Recrutamento 1º Semestre",
+      start: "",
+      end: "",
+      active: true,
+    });
     setEditingRecruitment(null);
   };
 
   const handleEdit = (recruitment: Recruitment) => {
     setEditingRecruitment(recruitment);
     setFormData({
-      year: recruitment.year.toString(),
+      id: recruitment.id,
+      lectiveYear: recruitment.lectiveYear,
+      semester: recruitment.semester,
+      title: recruitment.title,
       start: new Date(recruitment.start).toISOString().slice(0, 16),
       end: new Date(recruitment.end).toISOString().slice(0, 16),
       active: recruitment.active,
@@ -103,10 +179,25 @@ export default function RecruitmentAdminClient({
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (year: number) => {
-    deleteRecruitment(year);
-    setRecruitmentsState((prev) => prev.filter((r) => r.year !== year));
-    toast("Recrutamento apagado");
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteRecruitment(id);
+      setRecruitmentsState((prev) => prev.filter((r) => r.id !== id));
+      toast("Recrutamento apagado");
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro ao apagar");
+    }
+  };
+
+  const handleDuplicatePhases = async (id: number) => {
+    try {
+      const count = await duplicatePhases(id);
+      toast(count > 0 ? "Fases copiadas" : "Não há fases para duplicar");
+    } catch (err) {
+      console.error(err);
+      toast("Ocorreu um erro ao duplicar as fases");
+    }
   };
 
   return (
@@ -116,8 +207,7 @@ export default function RecruitmentAdminClient({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              {" "}
-              Recrutamentos{" "}
+              Recrutamentos
             </h1>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -130,8 +220,7 @@ export default function RecruitmentAdminClient({
             <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">
-                  {" "}
-                  Adicionar recrutamento{" "}
+                  Adicionar recrutamento
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
                   Criar um novo período de recrutamento
@@ -141,19 +230,64 @@ export default function RecruitmentAdminClient({
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label
-                      htmlFor="year"
+                      htmlFor="lectiveYear"
                       className="text-right text-card-foreground"
                     >
-                      Ano
+                      Ano Letivo
                     </Label>
                     <Input
-                      id="year"
-                      type="number"
-                      value={formData.year}
+                      id="lectiveYear"
+                      type="text"
+                      placeholder="2026/2027"
+                      value={formData.lectiveYear}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          year: e.target.value,
+                          lectiveYear: e.target.value,
+                        }))
+                      }
+                      className="col-span-3 bg-input border-border text-foreground"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="semester"
+                      className="text-right text-card-foreground"
+                    >
+                      Semestre
+                    </Label>
+                    <Input
+                      id="semester"
+                      type="number"
+                      min={1}
+                      max={2}
+                      value={formData.semester}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          semester: Number(e.target.value),
+                        }))
+                      }
+                      className="col-span-3 bg-input border-border text-foreground"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="title"
+                      className="text-right text-card-foreground"
+                    >
+                      Título
+                    </Label>
+                    <Input
+                      id="title"
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          title: e.target.value,
                         }))
                       }
                       className="col-span-3 bg-input border-border text-foreground"
@@ -165,18 +299,19 @@ export default function RecruitmentAdminClient({
                       htmlFor="start"
                       className="text-right text-card-foreground"
                     >
-                      Inicio
+                      Início
                     </Label>
                     <Input
                       id="start"
                       type="datetime-local"
                       value={formData.start}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        applyDefaultsFromStart(e.target.value);
                         setFormData((prev) => ({
                           ...prev,
                           start: e.target.value,
-                        }))
-                      }
+                        }));
+                      }}
                       className="col-span-3 bg-input border-border text-foreground"
                       required
                     />
@@ -202,6 +337,26 @@ export default function RecruitmentAdminClient({
                       required
                     />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="add-active"
+                      className="text-right text-card-foreground"
+                    >
+                      Ativo
+                    </Label>
+                    <div className="col-span-3">
+                      <Switch
+                        id="add-active"
+                        checked={formData.active}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            active: checked,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -220,62 +375,63 @@ export default function RecruitmentAdminClient({
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-card-foreground">
-              {" "}
-              Períodos de recrutamento{" "}
+              Períodos de recrutamento
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              Gerir todos os períodos de recrutamento
+              Gerir todos os períodos de recrutamento por ano letivo
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow className="border-border">
-                  <TableHead className="text-muted-foreground"> Ano </TableHead>
                   <TableHead className="text-muted-foreground">
-                    {" "}
-                    Início{" "}
-                  </TableHead>
-                  <TableHead className="text-muted-foreground"> Fim </TableHead>
-                  <TableHead className="text-muted-foreground">
-                    {" "}
-                    Estado{" "}
+                    Ano Letivo
                   </TableHead>
                   <TableHead className="text-muted-foreground">
-                    {" "}
-                    Ações{" "}
+                    Semestre
                   </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    Título
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">
+                    Início
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">Fim</TableHead>
+                  <TableHead className="text-muted-foreground">
+                    Estado
+                  </TableHead>
+                  <TableHead className="text-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recruitmentsState.map((recruitment) => (
-                  <TableRow key={recruitment.year} className="border-border">
+                  <TableRow key={recruitment.id} className="border-border">
                     <TableCell className="font-medium text-card-foreground">
-                      {" "}
-                      {recruitment.year}{" "}
+                      {recruitment.lectiveYear}
                     </TableCell>
                     <TableCell className="text-card-foreground">
-                      {" "}
-                      {recruitment.start.toLocaleString("pt-PT")}
+                      {recruitment.semester}º
                     </TableCell>
                     <TableCell className="text-card-foreground">
-                      {" "}
-                      {recruitment.end.toLocaleString("pt-PT")}
+                      {recruitment.title}
+                    </TableCell>
+                    <TableCell className="text-card-foreground">
+                      {new Date(recruitment.start).toLocaleString("pt-PT")}
+                    </TableCell>
+                    <TableCell className="text-card-foreground">
+                      {new Date(recruitment.end).toLocaleString("pt-PT")}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          recruitment.active === "true"
-                            ? "default"
-                            : "secondary"
-                        }
+                        variant={recruitment.active ? "default" : "secondary"}
                         className={
-                          recruitment.active === "true"
+                          recruitment.active
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground"
                         }
                       >
-                        {recruitment.active === "true" ? "Active" : "Inactive"}
+                        {recruitment.active ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -288,10 +444,29 @@ export default function RecruitmentAdminClient({
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
+                        <Link
+                          href={`/admin/phases?recruitmentId=${recruitment.id}`}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-card-foreground"
+                          >
+                            Fases
+                          </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(recruitment.year)}
+                          onClick={() => handleDuplicatePhases(recruitment.id)}
+                          className="text-muted-foreground hover:text-card-foreground"
+                        >
+                          Duplicar fases
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(recruitment.id)}
                           className="text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -310,28 +485,74 @@ export default function RecruitmentAdminClient({
           <DialogContent className="bg-card border-border">
             <DialogHeader>
               <DialogTitle className="text-card-foreground">
-                {" "}
-                Edit Recruitment{" "}
+                Editar Recrutamento
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Update the recruitment period details.
+                Atualizar os detalhes do período de recrutamento
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label
-                    htmlFor="edit-year"
+                    htmlFor="edit-lectiveYear"
                     className="text-right text-card-foreground"
                   >
-                    Year
+                    Ano Letivo
                   </Label>
                   <Input
-                    id="edit-year"
-                    type="number"
-                    value={formData.year}
+                    id="edit-lectiveYear"
+                    type="text"
+                    value={formData.lectiveYear}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, year: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        lectiveYear: e.target.value,
+                      }))
+                    }
+                    className="col-span-3 bg-input border-border text-foreground"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor="edit-semester"
+                    className="text-right text-card-foreground"
+                  >
+                    Semestre
+                  </Label>
+                  <Input
+                    id="edit-semester"
+                    type="number"
+                    min={1}
+                    max={2}
+                    value={formData.semester}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        semester: Number(e.target.value),
+                      }))
+                    }
+                    className="col-span-3 bg-input border-border text-foreground"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor="edit-title"
+                    className="text-right text-card-foreground"
+                  >
+                    Título
+                  </Label>
+                  <Input
+                    id="edit-title"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
                     }
                     className="col-span-3 bg-input border-border text-foreground"
                     required
@@ -342,7 +563,7 @@ export default function RecruitmentAdminClient({
                     htmlFor="edit-start"
                     className="text-right text-card-foreground"
                   >
-                    Start Date
+                    Início
                   </Label>
                   <Input
                     id="edit-start"
@@ -363,7 +584,7 @@ export default function RecruitmentAdminClient({
                     htmlFor="edit-end"
                     className="text-right text-card-foreground"
                   >
-                    End Date
+                    Fim
                   </Label>
                   <Input
                     id="edit-end"
@@ -381,16 +602,16 @@ export default function RecruitmentAdminClient({
                     htmlFor="edit-active"
                     className="text-right text-card-foreground"
                   >
-                    Active
+                    Ativo
                   </Label>
                   <div className="col-span-3">
                     <Switch
                       id="edit-active"
-                      checked={formData.active === "true"}
+                      checked={formData.active}
                       onCheckedChange={(checked) =>
                         setFormData((prev) => ({
                           ...prev,
-                          active: checked ? "true" : "false",
+                          active: checked,
                         }))
                       }
                     />
@@ -402,7 +623,7 @@ export default function RecruitmentAdminClient({
                   type="submit"
                   className="bg-primary hover:bg-primary/90"
                 >
-                  Update Recruitment
+                  Atualizar Recrutamento
                 </Button>
               </DialogFooter>
             </form>

@@ -202,13 +202,6 @@ export default function Navbar({
                 >
                   Progresso
                 </a>
-                <a
-                  href="/agendamento"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Agendamento
-                </a>
               </>
             )}
 

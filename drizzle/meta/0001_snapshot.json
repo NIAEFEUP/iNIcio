@@ -1,6 +1,6 @@
 {
-  "id": "9ca8ad1b-c0e4-4630-9024-7c02c478e7e4",
-  "prevId": "7d86e671-f791-4d58-a83e-e99cf0550443",
+  "id": "b04ed2ac-4eb7-43ab-b47e-f2fb0a49a2e3",
+  "prevId": "434cb37a-ab65-4959-992a-31e9d2b91a64",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -12,6 +12,18 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidate_id": {
+          "name": "candidate_id",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
         },
         "submitted_at": {
@@ -129,28 +141,64 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "candidate_id": {
-          "name": "candidate_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "application_recruitment_id_idx": {
+          "name": "application_recruitment_id_idx",
+          "columns": [
+            {
+              "expression": "recruitment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
+        "application_recruitment_id_recruitment_id_fk": {
+          "name": "application_recruitment_id_recruitment_id_fk",
+          "tableFrom": "application",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "application_candidate_id_user_id_fk": {
           "name": "application_candidate_id_user_id_fk",
           "tableFrom": "application",
           "tableTo": "user",
-          "columnsFrom": ["candidate_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "candidate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "application_candidate_recruitment_unique": {
+          "name": "application_candidate_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "candidate_id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -173,8 +221,30 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "foreignKeys": {
+        "application_interests_application_id_application_id_fk": {
+          "name": "application_interests_application_id_application_id_fk",
+          "tableFrom": "application_interests",
+          "tableTo": "application",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "application_interests_application_id_interest_pk": {
+          "name": "application_interests_application_id_interest_pk",
+          "columns": [
+            "application_id",
+            "interest"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -215,8 +285,12 @@
           "name": "appreciation_application_id_application_id_fk",
           "tableFrom": "appreciation",
           "tableTo": "application",
-          "columnsFrom": ["application_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -224,8 +298,12 @@
           "name": "appreciation_recruiter_id_recruiter_user_id_fk",
           "tableFrom": "appreciation",
           "tableTo": "recruiter",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -262,6 +340,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'local:credential'"
         },
         "user_id": {
           "name": "user_id",
@@ -330,8 +415,12 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -401,8 +490,12 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -412,7 +505,9 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -479,7 +574,9 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -577,8 +674,12 @@
           "name": "application_comment_application_id_application_id_fk",
           "tableFrom": "application_comment",
           "tableTo": "application",
-          "columnsFrom": ["application_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -586,8 +687,12 @@
           "name": "application_comment_author_id_recruiter_user_id_fk",
           "tableFrom": "application_comment",
           "tableTo": "recruiter",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -640,8 +745,12 @@
           "name": "dynamic_comment_dynamic_id_dynamic_id_fk",
           "tableFrom": "dynamic_comment",
           "tableTo": "dynamic",
-          "columnsFrom": ["dynamic_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "dynamic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -649,8 +758,12 @@
           "name": "dynamic_comment_author_id_recruiter_user_id_fk",
           "tableFrom": "dynamic_comment",
           "tableTo": "recruiter",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -703,8 +816,12 @@
           "name": "interview_comment_interview_id_interview_id_fk",
           "tableFrom": "interview_comment",
           "tableTo": "interview",
-          "columnsFrom": ["interview_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "interview_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -712,8 +829,12 @@
           "name": "interview_comment_author_id_recruiter_user_id_fk",
           "tableFrom": "interview_comment",
           "tableTo": "recruiter",
-          "columnsFrom": ["author_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -739,31 +860,92 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "candidate_to_dynamic_candidate_id_candidate_user_id_fk": {
-          "name": "candidate_to_dynamic_candidate_id_candidate_user_id_fk",
-          "tableFrom": "candidate_to_dynamic",
-          "tableTo": "candidate",
-          "columnsFrom": ["candidate_id"],
-          "columnsTo": ["user_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "candidate_to_dynamic_dynamic_id_dynamic_id_fk": {
           "name": "candidate_to_dynamic_dynamic_id_dynamic_id_fk",
           "tableFrom": "candidate_to_dynamic",
           "tableTo": "dynamic",
-          "columnsFrom": ["dynamic_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "dynamic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_to_dynamic_recruitment_id_recruitment_id_fk": {
+          "name": "candidate_to_dynamic_recruitment_id_recruitment_id_fk",
+          "tableFrom": "candidate_to_dynamic",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_to_dynamic_candidate_fk": {
+          "name": "candidate_to_dynamic_candidate_fk",
+          "tableFrom": "candidate_to_dynamic",
+          "tableTo": "candidate",
+          "columnsFrom": [
+            "candidate_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "recruitment_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_to_dynamic_dynamic_fk": {
+          "name": "candidate_to_dynamic_dynamic_fk",
+          "tableFrom": "candidate_to_dynamic",
+          "tableTo": "dynamic",
+          "columnsFrom": [
+            "dynamic_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id",
+            "recruitment_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "candidate_to_dynamic_candidate_id_dynamic_id_pk": {
+          "name": "candidate_to_dynamic_candidate_id_dynamic_id_pk",
+          "columns": [
+            "candidate_id",
+            "dynamic_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "candidate_dynamic_recruitment_unique": {
+          "name": "candidate_dynamic_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "candidate_id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -776,6 +958,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
           "notNull": true
         },
         "content": {
@@ -791,20 +979,77 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "dynamic_recruitment_id_idx": {
+          "name": "dynamic_recruitment_id_idx",
+          "columns": [
+            {
+              "expression": "recruitment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "dynamic_slot_idx": {
+          "name": "dynamic_slot_idx",
+          "columns": [
+            {
+              "expression": "slot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
+        "dynamic_recruitment_id_recruitment_id_fk": {
+          "name": "dynamic_recruitment_id_recruitment_id_fk",
+          "tableFrom": "dynamic",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "dynamic_slot_id_slot_id_fk": {
           "name": "dynamic_slot_id_slot_id_fk",
           "tableFrom": "dynamic",
           "tableTo": "slot",
-          "columnsFrom": ["slot_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "slot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "dynamic_id_recruitment_unique": {
+          "name": "dynamic_id_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -858,8 +1103,12 @@
           "name": "recruiter_to_dynamic_recruiter_id_recruiter_user_id_fk",
           "tableFrom": "recruiter_to_dynamic",
           "tableTo": "recruiter",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -867,12 +1116,56 @@
           "name": "recruiter_to_dynamic_dynamic_id_dynamic_id_fk",
           "tableFrom": "recruiter_to_dynamic",
           "tableTo": "dynamic",
-          "columnsFrom": ["dynamic_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "dynamic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {
+        "recruiter_to_dynamic_recruiter_id_dynamic_id_pk": {
+          "name": "recruiter_to_dynamic_recruiter_id_dynamic_id_pk",
+          "columns": [
+            "recruiter_id",
+            "dynamic_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.final_message_template": {
+      "name": "final_message_template",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "decision": {
+          "name": "decision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -887,6 +1180,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
           "notNull": true
         },
         "content": {
@@ -907,31 +1206,103 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "locked": {
+          "name": "locked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "interview_recruitment_id_idx": {
+          "name": "interview_recruitment_id_idx",
+          "columns": [
+            {
+              "expression": "recruitment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interview_slot_idx": {
+          "name": "interview_slot_idx",
+          "columns": [
+            {
+              "expression": "slot",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "interview_candidate_id_candidate_user_id_fk": {
-          "name": "interview_candidate_id_candidate_user_id_fk",
+        "interview_recruitment_id_recruitment_id_fk": {
+          "name": "interview_recruitment_id_recruitment_id_fk",
           "tableFrom": "interview",
-          "tableTo": "candidate",
-          "columnsFrom": ["candidate_id"],
-          "columnsTo": ["user_id"],
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "interview_slot_slot_id_fk": {
-          "name": "interview_slot_slot_id_fk",
+        "interview_candidate_fk": {
+          "name": "interview_candidate_fk",
+          "tableFrom": "interview",
+          "tableTo": "candidate",
+          "columnsFrom": [
+            "candidate_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "recruitment_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "interview_slot_fk": {
+          "name": "interview_slot_fk",
           "tableFrom": "interview",
           "tableTo": "slot",
-          "columnsFrom": ["slot"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "slot",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id",
+            "recruitment_id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "interview_candidate_recruitment_unique": {
+          "name": "interview_candidate_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "candidate_id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -985,8 +1356,12 @@
           "name": "recruiter_to_interview_recruiter_id_recruiter_user_id_fk",
           "tableFrom": "recruiter_to_interview",
           "tableTo": "recruiter",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -994,13 +1369,25 @@
           "name": "recruiter_to_interview_interview_id_interview_id_fk",
           "tableFrom": "recruiter_to_interview",
           "tableTo": "interview",
-          "columnsFrom": ["interview_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "interview_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "recruiter_to_interview_recruiter_id_interview_id_pk": {
+          "name": "recruiter_to_interview_recruiter_id_interview_id_pk",
+          "columns": [
+            "recruiter_id",
+            "interview_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1010,11 +1397,31 @@
       "name": "recruitment",
       "schema": "",
       "columns": {
-        "year": {
-          "name": "year",
-          "type": "integer",
+        "id": {
+          "name": "id",
+          "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "lective_year": {
+          "name": "lective_year",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "semester": {
+          "name": "semester",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Recrutamento 1\u00ba Semestre'"
         },
         "start": {
           "name": "start",
@@ -1031,16 +1438,41 @@
         },
         "active": {
           "name": "active",
-          "type": "text",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": "'true'"
+          "default": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "recruitment_lective_year_idx": {
+          "name": "recruitment_lective_year_idx",
+          "columns": [
+            {
+              "expression": "lective_year",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "recruitment_lective_year_semester_unique": {
+          "name": "recruitment_lective_year_semester_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lective_year",
+            "semester"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1055,8 +1487,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "recruitment_year": {
-          "name": "recruitment_year",
+        "recruitment_id": {
+          "name": "recruitment_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1068,25 +1500,36 @@
           "name": "users_to_recruitments_user_id_user_id_fk",
           "tableFrom": "users_to_recruitments",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "users_to_recruitments_recruitment_year_recruitment_year_fk": {
-          "name": "users_to_recruitments_recruitment_year_recruitment_year_fk",
+        "users_to_recruitments_recruitment_id_recruitment_id_fk": {
+          "name": "users_to_recruitments_recruitment_id_recruitment_id_fk",
           "tableFrom": "users_to_recruitments",
           "tableTo": "recruitment",
-          "columnsFrom": ["recruitment_year"],
-          "columnsTo": ["year"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "users_to_recruitments_user_id_recruitment_year_pk": {
-          "name": "users_to_recruitments_user_id_recruitment_year_pk",
-          "columns": ["user_id", "recruitment_year"]
+        "users_to_recruitments_user_id_recruitment_id_pk": {
+          "name": "users_to_recruitments_user_id_recruitment_id_pk",
+          "columns": [
+            "user_id",
+            "recruitment_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1122,8 +1565,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "recruitment_year": {
-          "name": "recruitment_year",
+        "recruitment_id": {
+          "name": "recruitment_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1135,18 +1578,26 @@
           "name": "recruiter_availability_recruiter_id_user_id_fk",
           "tableFrom": "recruiter_availability",
           "tableTo": "user",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "recruiter_availability_recruitment_year_recruitment_year_fk": {
-          "name": "recruiter_availability_recruitment_year_recruitment_year_fk",
+        "recruiter_availability_recruitment_id_recruitment_id_fk": {
+          "name": "recruiter_availability_recruitment_id_recruitment_id_fk",
           "tableFrom": "recruiter_availability",
           "tableTo": "recruitment",
-          "columnsFrom": ["recruitment_year"],
-          "columnsTo": ["year"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1166,8 +1617,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "recruitment_year": {
-          "name": "recruitment_year",
+        "recruitment_id": {
+          "name": "recruitment_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1212,13 +1663,17 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "recruitment_phase_recruitment_year_recruitment_year_fk": {
-          "name": "recruitment_phase_recruitment_year_recruitment_year_fk",
+        "recruitment_phase_recruitment_id_recruitment_id_fk": {
+          "name": "recruitment_phase_recruitment_id_recruitment_id_fk",
           "tableFrom": "recruitment_phase",
           "tableTo": "recruitment",
-          "columnsFrom": ["recruitment_year"],
-          "columnsTo": ["year"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1262,8 +1717,12 @@
           "name": "recruitment_phase_status_user_id_user_id_fk",
           "tableFrom": "recruitment_phase_status",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1271,8 +1730,12 @@
           "name": "recruitment_phase_status_phase_id_recruitment_phase_id_fk",
           "tableFrom": "recruitment_phase_status",
           "tableTo": "recruitment_phase",
-          "columnsFrom": ["phase_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "phase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1280,7 +1743,10 @@
       "compositePrimaryKeys": {
         "recruitment_phase_status_user_id_phase_id_pk": {
           "name": "recruitment_phase_status_user_id_phase_id_pk",
-          "columns": ["user_id", "phase_id"]
+          "columns": [
+            "user_id",
+            "phase_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1324,8 +1790,8 @@
           "notNull": false,
           "default": "'interview-dynamic'"
         },
-        "recruitment_year": {
-          "name": "recruitment_year",
+        "recruitment_id": {
+          "name": "recruitment_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1333,18 +1799,31 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "slot_recruitment_year_recruitment_year_fk": {
-          "name": "slot_recruitment_year_recruitment_year_fk",
+        "slot_recruitment_id_recruitment_id_fk": {
+          "name": "slot_recruitment_id_recruitment_id_fk",
           "tableFrom": "slot",
           "tableTo": "recruitment",
-          "columnsFrom": ["recruitment_year"],
-          "columnsTo": ["year"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "slot_id_recruitment_unique": {
+          "name": "slot_id_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1372,8 +1851,12 @@
           "name": "application_to_tag_application_id_application_id_fk",
           "tableFrom": "application_to_tag",
           "tableTo": "application",
-          "columnsFrom": ["application_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1381,13 +1864,25 @@
           "name": "application_to_tag_tag_id_tag_id_fk",
           "tableFrom": "application_to_tag",
           "tableTo": "tag",
-          "columnsFrom": ["tag_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "application_to_tag_application_id_tag_id_pk": {
+          "name": "application_to_tag_application_id_tag_id_pk",
+          "columns": [
+            "application_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1417,7 +1912,9 @@
         "tag_name_unique": {
           "name": "tag_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["name"]
+          "columns": [
+            "name"
+          ]
         }
       },
       "policies": {},
@@ -1441,8 +1938,12 @@
           "name": "admin_user_id_user_id_fk",
           "tableFrom": "admin",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1460,7 +1961,13 @@
         "user_id": {
           "name": "user_id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
           "notNull": true
         },
         "interview_classification": {
@@ -1484,13 +1991,38 @@
           "name": "candidate_user_id_user_id_fk",
           "tableFrom": "candidate",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "candidate_recruitment_id_recruitment_id_fk": {
+          "name": "candidate_recruitment_id_recruitment_id_fk",
+          "tableFrom": "candidate",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "candidate_user_id_recruitment_id_pk": {
+          "name": "candidate_user_id_recruitment_id_pk",
+          "columns": [
+            "user_id",
+            "recruitment_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1513,8 +2045,12 @@
           "name": "recruiter_user_id_user_id_fk",
           "tableFrom": "recruiter",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1540,6 +2076,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -1548,22 +2090,54 @@
           "name": "recruiter_to_candidate_recruiter_id_recruiter_user_id_fk",
           "tableFrom": "recruiter_to_candidate",
           "tableTo": "recruiter",
-          "columnsFrom": ["recruiter_id"],
-          "columnsTo": ["user_id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "recruiter_to_candidate_candidate_id_candidate_user_id_fk": {
-          "name": "recruiter_to_candidate_candidate_id_candidate_user_id_fk",
+        "recruiter_to_candidate_recruitment_id_recruitment_id_fk": {
+          "name": "recruiter_to_candidate_recruitment_id_recruitment_id_fk",
+          "tableFrom": "recruiter_to_candidate",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "recruiter_to_candidate_candidate_fk": {
+          "name": "recruiter_to_candidate_candidate_fk",
           "tableFrom": "recruiter_to_candidate",
           "tableTo": "candidate",
-          "columnsFrom": ["candidate_id"],
-          "columnsTo": ["user_id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "candidate_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "recruitment_id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "recruiter_to_candidate_recruiter_id_candidate_id_recruitment_id_pk": {
+          "name": "recruiter_to_candidate_recruiter_id_candidate_id_recruitment_id_pk",
+          "columns": [
+            "recruiter_id",
+            "candidate_id",
+            "recruitment_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1618,8 +2192,12 @@
           "name": "notification_user_id_user_id_fk",
           "tableFrom": "notification",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1640,8 +2218,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "candidate_id": {
+          "name": "candidate_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1660,18 +2238,26 @@
           "name": "candidate_vote_voting_phase_id_voting_phase_id_fk",
           "tableFrom": "candidate_vote",
           "tableTo": "voting_phase",
-          "columnsFrom": ["voting_phase_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "voting_phase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "candidate_vote_user_id_user_id_fk": {
-          "name": "candidate_vote_user_id_user_id_fk",
+        "candidate_vote_candidate_id_user_id_fk": {
+          "name": "candidate_vote_candidate_id_user_id_fk",
           "tableFrom": "candidate_vote",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "candidate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1691,8 +2277,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "recruiter_id": {
+          "name": "recruiter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidate_id": {
+          "name": "candidate_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1704,18 +2296,39 @@
           "name": "recruiter_vote_voting_phase_id_voting_phase_id_fk",
           "tableFrom": "recruiter_vote",
           "tableTo": "voting_phase",
-          "columnsFrom": ["voting_phase_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "voting_phase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "recruiter_vote_user_id_user_id_fk": {
-          "name": "recruiter_vote_user_id_user_id_fk",
+        "recruiter_vote_recruiter_id_user_id_fk": {
+          "name": "recruiter_vote_recruiter_id_user_id_fk",
           "tableFrom": "recruiter_vote",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruiter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "recruiter_vote_candidate_id_user_id_fk": {
+          "name": "recruiter_vote_candidate_id_user_id_fk",
+          "tableFrom": "recruiter_vote",
+          "tableTo": "user",
+          "columnsFrom": [
+            "candidate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1735,27 +2348,47 @@
           "primaryKey": true,
           "notNull": true
         },
-        "recruitment_year": {
-          "name": "recruitment_year",
+        "recruitment_id": {
+          "name": "recruitment_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "voting_phase_recruitment_year_recruitment_year_fk": {
-          "name": "voting_phase_recruitment_year_recruitment_year_fk",
+        "voting_phase_recruitment_id_recruitment_id_fk": {
+          "name": "voting_phase_recruitment_id_recruitment_id_fk",
           "tableFrom": "voting_phase",
           "tableTo": "recruitment",
-          "columnsFrom": ["recruitment_year"],
-          "columnsTo": ["year"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "voting_phase_id_recruitment_unique": {
+          "name": "voting_phase_id_recruitment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "recruitment_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1770,35 +2403,81 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "candidate_id": {
+          "name": "candidate_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "recruitment_id": {
+          "name": "recruitment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vote_finished": {
+          "name": "vote_finished",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "voting_phase_candidate_voting_phase_id_voting_phase_id_fk": {
-          "name": "voting_phase_candidate_voting_phase_id_voting_phase_id_fk",
+        "voting_phase_candidate_recruitment_id_recruitment_id_fk": {
+          "name": "voting_phase_candidate_recruitment_id_recruitment_id_fk",
           "tableFrom": "voting_phase_candidate",
-          "tableTo": "voting_phase",
-          "columnsFrom": ["voting_phase_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "tableTo": "recruitment",
+          "columnsFrom": [
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "voting_phase_candidate_user_id_user_id_fk": {
-          "name": "voting_phase_candidate_user_id_user_id_fk",
+        "voting_phase_candidate_phase_fk": {
+          "name": "voting_phase_candidate_phase_fk",
           "tableFrom": "voting_phase_candidate",
-          "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "tableTo": "voting_phase",
+          "columnsFrom": [
+            "voting_phase_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "id",
+            "recruitment_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "voting_phase_candidate_candidate_fk": {
+          "name": "voting_phase_candidate_candidate_fk",
+          "tableFrom": "voting_phase_candidate",
+          "tableTo": "candidate",
+          "columnsFrom": [
+            "candidate_id",
+            "recruitment_id"
+          ],
+          "columnsTo": [
+            "user_id",
+            "recruitment_id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "voting_phase_candidate_voting_phase_id_candidate_id_pk": {
+          "name": "voting_phase_candidate_voting_phase_id_candidate_id_pk",
+          "columns": [
+            "voting_phase_id",
+            "candidate_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1841,17 +2520,25 @@
           "name": "voting_phase_status_voting_phase_id_voting_phase_id_fk",
           "tableFrom": "voting_phase_status",
           "tableTo": "voting_phase",
-          "columnsFrom": ["voting_phase_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
+          "columnsFrom": [
+            "voting_phase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "voting_phase_status_candidate_id_user_id_fk": {
           "name": "voting_phase_status_candidate_id_user_id_fk",
           "tableFrom": "voting_phase_status",
           "tableTo": "user",
-          "columnsFrom": ["candidate_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "candidate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

@@ -7,22 +7,29 @@ import {
   serial,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
 
-export const slot = pgTable("slot", {
-  id: serial("id").primaryKey(),
-  start: timestamp("start").notNull(),
-  duration: integer("duration").notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  type: text("type", {
-    enum: ["interview", "dynamic", "interview-dynamic"],
-  }).default("interview-dynamic"),
-  recruitmentYear: integer("recruitment_year")
-    .notNull()
-    .references(() => recruitment.year),
-});
+export const slot = pgTable(
+  "slot",
+  {
+    id: serial("id").primaryKey(),
+    start: timestamp("start").notNull(),
+    duration: integer("duration").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    type: text("type", {
+      enum: ["interview", "dynamic"],
+    }).default("interview"),
+    recruitmentId: integer("recruitment_id")
+      .notNull()
+      .references(() => recruitment.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("slot_id_recruitment_unique").on(table.id, table.recruitmentId),
+  ],
+);
 
 export const recruiterAvailability = pgTable("recruiter_availability", {
   id: serial("id").primaryKey(),
@@ -30,10 +37,10 @@ export const recruiterAvailability = pgTable("recruiter_availability", {
   duration: integer("duration").notNull(),
   recruiterId: text("recruiter_id")
     .notNull()
-    .references(() => user.id),
-  recruitmentYear: integer("recruitment_year")
+    .references(() => user.id, { onDelete: "cascade" }),
+  recruitmentId: integer("recruitment_id")
     .notNull()
-    .references(() => recruitment.year),
+    .references(() => recruitment.id, { onDelete: "cascade" }),
 });
 
 export const recruiterAvailabilityRelations = relations(
@@ -44,8 +51,8 @@ export const recruiterAvailabilityRelations = relations(
       references: [user.id],
     }),
     recruitment: one(recruitment, {
-      fields: [recruiterAvailability.recruitmentYear],
-      references: [recruitment.year],
+      fields: [recruiterAvailability.recruitmentId],
+      references: [recruitment.id],
     }),
   }),
 );
@@ -54,9 +61,9 @@ export const recruitmentPhase = pgTable(
   "recruitment_phase",
   {
     id: serial("id").primaryKey(),
-    recruitmentYear: integer("recruitment_year")
+    recruitmentId: integer("recruitment_id")
       .notNull()
-      .references(() => recruitment.year),
+      .references(() => recruitment.id, { onDelete: "cascade" }),
     role: text("role", { enum: ["recruiter", "candidate"] }).notNull(),
     start: timestamp("start"),
     end: timestamp("end"),
@@ -71,8 +78,8 @@ export const recruitmentPhaseRelations = relations(
   recruitmentPhase,
   ({ one, many }) => ({
     recruitment: one(recruitment, {
-      fields: [recruitmentPhase.recruitmentYear],
-      references: [recruitment.year],
+      fields: [recruitmentPhase.recruitmentId],
+      references: [recruitment.id],
     }),
     statuses: many(recruitmentPhaseStatus),
   }),

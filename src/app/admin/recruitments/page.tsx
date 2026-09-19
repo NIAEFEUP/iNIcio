@@ -3,6 +3,7 @@ import { Recruitment } from "@/lib/db";
 import {
   addRecruitment,
   deleteRecruitment,
+  duplicatePhasesFromPreviousRecruitment,
   editRecruitment,
   getRecruitments,
 } from "@/lib/recruitment";
@@ -13,7 +14,7 @@ export default async function RecruitmentAdmin() {
   const add = async (recruitment: Recruitment) => {
     "use server";
 
-    await addRecruitment(recruitment);
+    return addRecruitment(recruitment);
   };
 
   const edit = async (recruitment: Recruitment) => {
@@ -22,10 +23,16 @@ export default async function RecruitmentAdmin() {
     await editRecruitment(recruitment);
   };
 
-  const deleteRecruitmentAction = async (year: number) => {
+  const deleteRecruitmentAction = async (id: number) => {
     "use server";
 
-    await deleteRecruitment(year);
+    await deleteRecruitment(id);
+  };
+
+  const duplicatePhasesAction = async (id: number) => {
+    "use server";
+
+    return duplicatePhasesFromPreviousRecruitment(id);
   };
 
   return (
@@ -34,6 +41,7 @@ export default async function RecruitmentAdmin() {
       addRecruitment={add}
       editRecruitment={edit}
       deleteRecruitment={deleteRecruitmentAction}
+      duplicatePhases={duplicatePhasesAction}
     />
   );
 }

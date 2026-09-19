@@ -1,14 +1,26 @@
 import { application, applicationInterests } from "@/db/schema";
 import { Application, db } from "./db";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { addApplicationComment } from "./comment";
 import { getFilenameUrl } from "./file-upload";
 import { notification } from "@/db/schema/notification";
+import { getActiveRecruitment } from "./recruitment";
 
-export async function getApplication(id: string): Promise<Application | null> {
+export async function getApplication(
+  id: string,
+  recruitmentId?: number,
+): Promise<Application | null> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return null;
+
+  const whereClause = and(
+    eq(application.candidateId, id),
+    eq(application.recruitmentId, targetId),
+  );
+
   const app = await db.query.application.findFirst({
-    where: eq(application.candidateId, id),
+    where: whereClause,
   });
 
   if (!app) return null;
@@ -20,13 +32,21 @@ export async function getApplication(id: string): Promise<Application | null> {
   };
 }
 
-export async function hasApplication(userId: string | undefined) {
+export async function hasApplication(
+  userId: string | undefined,
+  recruitmentId?: number,
+) {
   if (!userId) return false;
 
-  const app = await db
-    .select()
-    .from(application)
-    .where(eq(application.candidateId, userId));
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  const whereClause = targetId
+    ? and(
+        eq(application.candidateId, userId),
+        eq(application.recruitmentId, targetId),
+      )
+    : eq(application.candidateId, userId);
+
+  const app = await db.select().from(application).where(whereClause);
 
   return app.length > 0;
 }
@@ -56,11 +76,17 @@ export async function submitApplicationComment(
   candidateId: string,
   content: Array<any>,
   authorId: string,
+  recruitmentId?: number,
 ): Promise<boolean> {
-  const app = await db
-    .select()
-    .from(application)
-    .where(eq(application.candidateId, candidateId));
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  const whereClause = targetId
+    ? and(
+        eq(application.candidateId, candidateId),
+        eq(application.recruitmentId, targetId),
+      )
+    : eq(application.candidateId, candidateId);
+
+  const app = await db.select().from(application).where(whereClause);
 
   if (app.length === 0) return false;
 
