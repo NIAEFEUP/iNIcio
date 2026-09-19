@@ -17,10 +17,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const recruitments = await getRecruitments();
 
   let recruitmentId = (await getActiveRecruitment())?.id;
-  if (params.recruitmentId !== undefined) {
-    const parsed = Number.parseInt(String(params.recruitmentId), 10);
+  if (typeof params.recruitmentId === "string") {
+    const parsed = Number(params.recruitmentId);
 
-    if (Number.isInteger(parsed) && parsed > 0) {
+    if (
+      Number.isInteger(parsed) &&
+      parsed > 0 &&
+      recruitments.some((recruitment) => recruitment.id === parsed)
+    ) {
       recruitmentId = parsed;
     }
   }
