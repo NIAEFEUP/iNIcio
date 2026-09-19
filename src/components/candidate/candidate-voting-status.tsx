@@ -1,6 +1,7 @@
-import { CheckCircle2, XCircle, Vote } from "lucide-react";
+import { CheckCircle2, Vote, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type VotingDecision = {
   votingPhaseId: number;
@@ -15,6 +16,21 @@ interface CandidateVotingStatusProps {
   votingDecision: VotingDecision | void | null;
 }
 
+function Stat({
+  icon,
+  value,
+}: {
+  icon: React.ReactNode;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 rounded-lg bg-muted/50 px-2 py-1.5">
+      {icon}
+      <span className="text-xs font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
 export default function CandidateVotingStatus({
   votingDecision,
 }: CandidateVotingStatusProps) {
@@ -26,52 +42,55 @@ export default function CandidateVotingStatus({
   const totalVotes = votingDecision.approveCount + votingDecision.rejectCount;
 
   return (
-    <Card className="border-0 bg-gradient-to-br from-card via-card to-accent/10 shadow-md overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={`p-2 rounded-full ${
-              isApproved
-                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                : "bg-red-500/10 text-red-600 dark:text-red-400"
-            }`}
-          >
-            {isApproved ? (
-              <CheckCircle2 className="h-5 w-5" />
-            ) : (
-              <XCircle className="h-5 w-5" />
-            )}
+    <Card className="shadow-xs">
+      <CardContent className="flex items-start gap-3 p-4">
+        <div
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/50",
+            isApproved
+              ? "text-green-600 dark:text-green-400"
+              : "text-red-600 dark:text-red-400",
+          )}
+        >
+          {isApproved ? (
+            <CheckCircle2 className="size-5" />
+          ) : (
+            <XCircle className="size-5" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-foreground">
+              Estado da Votação
+            </h3>
+            <Badge
+              variant={isApproved ? "default" : "destructive"}
+              className={cn(
+                isApproved && "bg-green-600 hover:bg-green-700 text-white",
+              )}
+            >
+              {isApproved ? "Aprovado" : "Rejeitado"}
+            </Badge>
           </div>
 
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-semibold text-foreground">
-                Estado da Votação
-              </h3>
-              <Badge
-                variant={isApproved ? "default" : "destructive"}
-                className={`text-xs ${
-                  isApproved ? "bg-green-600 hover:bg-green-700 text-white" : ""
-                }`}
-              >
-                {isApproved ? "Aprovado" : "Rejeitado"}
-              </Badge>
-            </div>
-
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
-                <span>{votingDecision.approveCount} aprovações</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <XCircle className="h-3 w-3 text-red-600 dark:text-red-400" />
-                <span>{votingDecision.rejectCount} rejeições</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Vote className="h-3 w-3" />
-                <span>{totalVotes} votos totais</span>
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Stat
+              icon={
+                <CheckCircle2 className="size-3 text-green-600 dark:text-green-400" />
+              }
+              value={`${votingDecision.approveCount} aprovações`}
+            />
+            <Stat
+              icon={
+                <XCircle className="size-3 text-red-600 dark:text-red-400" />
+              }
+              value={`${votingDecision.rejectCount} rejeições`}
+            />
+            <Stat
+              icon={<Vote className="size-3" />}
+              value={`${totalVotes} votos no total`}
+            />
           </div>
         </div>
       </CardContent>

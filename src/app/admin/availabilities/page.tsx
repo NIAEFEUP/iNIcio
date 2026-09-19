@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 
 import { CalendarProvider } from "@/calendar/contexts/calendar-context";
+import { PageHeader } from "@/components/layout/page-header";
 
 import { ChangeBadgeVariantInput } from "@/calendar/components/change-badge-variant-input";
 import { ChangeVisibleHoursInput } from "@/calendar/components/change-visible-hours-input";
@@ -21,15 +22,17 @@ import { headers } from "next/headers";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import { getRole } from "@/lib/role";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { ClientContainer } from "@/calendar/components/client-container";
 
 export default async function AdminAllocations() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!(await isAdmin(session?.user.id))) redirect("/");
 
+  const targetId = await getTargetRecruitmentId();
   const [events, users] = await Promise.all([
-    getEventAvailabilities(),
-    getUsersRecruiters(),
+    getEventAvailabilities(targetId),
+    getUsersRecruiters(targetId),
   ]);
 
   const role = await getRole(session?.user.id);
@@ -41,10 +44,11 @@ export default async function AdminAllocations() {
       authUserRole={role}
       urlId={""}
     >
-      <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 px-8 py-4">
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Disponibilidades" />
         <ClientContainer view="week" />
 
-        <Accordion type="single" collapsible>
+        <Accordion>
           <AccordionItem value="item-1" className="border-none">
             <AccordionTrigger className="flex-none gap-2 py-0 hover:no-underline">
               <div className="flex items-center gap-2">

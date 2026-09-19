@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,7 @@ import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
 import { Dynamic, Interview, RecruiterToCandidate, Slot, User } from "@/lib/db";
 import { getDateStringPT, getTimeString, overlap } from "@/lib/date";
 import { assignRecruiter, unassignRecruiter } from "@/app/actions";
+import { getInitials } from "@/lib/utils";
 import { SlotType } from "../admin/slot-admin-calendar";
 
 interface BookingPickerProps {
@@ -106,9 +107,12 @@ export function BookingPicker({
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
-                    src={candidate.image || "/placeholder.svg"}
+                    src={candidate.image || undefined}
                     alt={candidate.name}
                   />
+                  <AvatarFallback className="text-xs font-semibold">
+                    {getInitials(candidate.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium leading-none">

@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CandidateWithMetadata } from "@/lib/candidate";
+import { getInitials } from "@/lib/utils";
 import Link from "next/link";
 
 interface CandidateIdentityInfoProps {
@@ -21,7 +22,7 @@ export default function CandidateIdentityInfo({
             className="object-cover"
           />
           <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-semibold">
-            {candidate?.name?.charAt(0)}
+            {getInitials(candidate?.name)}
           </AvatarFallback>
         </Avatar>
       </div>

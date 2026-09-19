@@ -5,13 +5,13 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 import { FinalMessageTemplate } from "@/lib/db";
 import { useState } from "react";
-import { DialogTitle } from "@radix-ui/react-dialog";
 import AcceptedMessageTemplateEditor from "./accepted-message-template-editor";
 import RejectedMessageTemplateEditor from "./rejected-message-template-editor";
 
@@ -64,9 +64,7 @@ export default function AdminFinalMessageClient({
           open={acceptedMessageDialogOpen}
           onOpenChange={setAcceptedMessageDialogOpen}
         >
-          <DialogTrigger asChild>
-            <Button variant="secondary">Push</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button variant="secondary">Push</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tens a certeza que queres dar override?</DialogTitle>
@@ -97,9 +95,7 @@ export default function AdminFinalMessageClient({
           open={rejectedMessageDialogOpen}
           onOpenChange={setRejectedMessageDialogOpen}
         >
-          <DialogTrigger asChild>
-            <Button variant="secondary">Push</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button variant="secondary">Push</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tens a certeza que queres dar override?</DialogTitle>

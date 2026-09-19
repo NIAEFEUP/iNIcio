@@ -1,16 +1,22 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
+import { PageHeader } from "@/components/layout/page-header";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   getCurrentVotingPhase,
   getRecruiterVotes,
+  getVotingPhaseRecruitmentId,
   voteForCandidate,
 } from "@/lib/voting";
 import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
 import { deleteCandidateVotes } from "@/lib/voting";
 import { redirect } from "next/navigation";
+import {
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
 
 interface CandidateVotingPageProps {
   params: any;
@@ -30,10 +36,21 @@ export default async function CandidateVotingPage({
   ) {
     "use server";
 
-    const recruiterVotes = await getRecruiterVotes(id, recruiterId);
+    const recruitmentId = await getVotingPhaseRecruitmentId(id);
+    if (!recruitmentId) throw new Error("Voting phase not found");
+
+    const user = await requireRecruiterSession(recruitmentId);
+    const effectiveRecruiterId = user.id;
+
+    const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      return await voteForCandidate(id, recruiterId, candidateId, decision);
+      return await voteForCandidate(
+        id,
+        effectiveRecruiterId,
+        candidateId,
+        decision,
+      );
     }
 
     return false;
@@ -44,6 +61,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     return await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,
@@ -57,6 +75,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     return await makeCandidateVoteDefinitive(
       decision,
@@ -70,6 +89,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
   }
@@ -85,17 +105,20 @@ export default async function CandidateVotingPage({
   );
 
   return (
-    <CandidateVotingSlideshow
-      candidates={currentVotingPhase.candidates}
-      admin={admin ? true : false}
-      currentVotingPhase={currentVotingPhase}
-      submitVoteAction={submitVoteAction}
-      resetCandidateVotes={resetCandidateVotes}
-      changeCurrentVotingPhaseStatusCandidateAction={
-        changeCurrentVotingPhaseStatusCandidateAction
-      }
-      recruiterVotes={recruiterVotes}
-      makeVoteDefinitiveAction={makeVoteDefinitiveAction}
-    />
+    <>
+      <PageHeader title="Votação" backHref="/candidates/voting" />
+      <CandidateVotingSlideshow
+        candidates={currentVotingPhase.candidates}
+        admin={admin ? true : false}
+        currentVotingPhase={currentVotingPhase}
+        submitVoteAction={submitVoteAction}
+        resetCandidateVotes={resetCandidateVotes}
+        changeCurrentVotingPhaseStatusCandidateAction={
+          changeCurrentVotingPhaseStatusCandidateAction
+        }
+        recruiterVotes={recruiterVotes}
+        makeVoteDefinitiveAction={makeVoteDefinitiveAction}
+      />
+    </>
   );
 }

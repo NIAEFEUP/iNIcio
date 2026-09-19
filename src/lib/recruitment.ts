@@ -153,7 +153,13 @@ export async function duplicatePhasesFromPreviousRecruitment(
   const existing = await getAllRecruitmentPhases(recruitmentId);
   if (existing.length > 0) return 0;
 
-  const source = recruitments.find((r) => r.id !== recruitmentId);
+  const otherRecruitments = recruitments.filter((r) => r.id !== recruitmentId);
+  const targetStart = new Date(target.start).getTime();
+  const chronologicalPrevious = otherRecruitments
+    .filter((r) => new Date(r.start).getTime() <= targetStart)
+    .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
+
+  const source = chronologicalPrevious[0] ?? otherRecruitments[0];
   if (!source) return 0;
 
   const phases = await getAllRecruitmentPhases(source.id);

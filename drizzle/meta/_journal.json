@@ -29,6 +29,13 @@
       "when": 1789831684946,
       "tag": "0003_sturdy_silver_centurion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789837481909,
+      "tag": "0004_curvy_wonder_man",
+      "breakpoints": true
     }
   ]
 }

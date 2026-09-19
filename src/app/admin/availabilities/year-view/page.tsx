@@ -1,5 +1,5 @@
-import { ClientContainer } from "@/calendar/components/client-container";
+import AvailabilitiesCalendarShell from "../calendar-shell";
 
 export default function Page() {
-  return <ClientContainer view="year" />;
+  return <AvailabilitiesCalendarShell view="year" />;
 }
