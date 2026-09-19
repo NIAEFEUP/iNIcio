@@ -66,8 +66,7 @@ function DynamicCandidateItem({
   const interests = candidate.application?.interests ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
-  const picture =
-    candidate.application?.profilePicture || candidate.image || undefined;
+  const picture = candidate.image || undefined;
 
   return (
     <div className="relative flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs">

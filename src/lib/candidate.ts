@@ -21,9 +21,12 @@ export type CandidateWithMetadata = User & {
   dynamicClassification: string;
   interviewClassification: string;
   votingDecision?: {
-    decision: "approve" | "reject";
+    votingPhaseId: number;
+    voteFinished: boolean;
     approveCount: number;
     rejectCount: number;
+    decision: "approve" | "reject";
+    createdAt: Date | null;
   } | null;
 };
 

@@ -123,8 +123,7 @@ export default function CandidateProfileCard({
   const interests = candidate.application?.interests ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
-  const picture =
-    candidate.application?.profilePicture || candidate.image || undefined;
+  const picture = candidate.image || undefined;
   const metaLines = [
     candidate.application?.studentNumber
       ? `nº ${candidate.application.studentNumber}`
