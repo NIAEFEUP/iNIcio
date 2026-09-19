@@ -58,7 +58,7 @@ export function SidebarHeaderComponent({
   const [search, setSearch] = React.useState("");
 
   const recruitments: RecruitmentOption[] = React.useMemo(() => {
-    if (initialRecruitments && initialRecruitments.length > 0) {
+    if (initialRecruitments !== undefined) {
       return [...initialRecruitments].sort((a, b) => b.year - a.year);
     }
     const currentYear = new Date().getFullYear();

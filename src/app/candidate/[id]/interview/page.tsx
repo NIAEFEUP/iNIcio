@@ -84,12 +84,7 @@ export default async function InterviewPage({ params }: any) {
   const candidateWithMetadata = await getCandidateWithMetadata(
     id,
     recruitmentId,
-  ).catch((err) => {
-    console.error("Error fetching candidate interview metadata:", err);
-    return undefined;
-  });
-
-  if (!candidateWithMetadata) notFound();
+  );
 
   const interview = await getInterview(id, recruitmentId);
 

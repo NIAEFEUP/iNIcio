@@ -85,12 +85,39 @@ export default function CandidateProfileCard({
 
   const toggleKnown = async () => {
     setKnown((prev) => !prev);
-    const result = await fetch("/api/friends", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidateId: candidate.id }),
-    });
-    if (!result.ok) setKnown((prev) => !prev);
+    try {
+      const result = await fetch("/api/friends", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateId: candidate.id }),
+      });
+      if (!result.ok) setKnown((prev) => !prev);
+    } catch (err) {
+      console.error(err);
+      setKnown((prev) => !prev);
+    }
+  };
+
+  const handleInterviewClassification = async (value: string) => {
+    const previous = interviewClassification;
+    setInterviewClassification(value);
+    try {
+      await classifyInterview?.(candidate.id, value);
+    } catch (err) {
+      console.error(err);
+      setInterviewClassification(previous);
+    }
+  };
+
+  const handleDynamicClassification = async (value: string) => {
+    const previous = dynamicClassification;
+    setDynamicClassification(value);
+    try {
+      await classifyDynamic?.(candidate.id, value);
+    } catch (err) {
+      console.error(err);
+      setDynamicClassification(previous);
+    }
   };
 
   const interests = candidate.application?.interests ?? [];
@@ -189,8 +216,7 @@ export default function CandidateProfileCard({
                     : ""
                 }
                 onValueChange={(val) => {
-                  setDynamicClassification(val);
-                  classifyDynamic(candidate.id, val);
+                  handleDynamicClassification(val);
                 }}
               >
                 <SelectTrigger className="h-7 w-28 text-xs font-medium">
@@ -233,8 +259,7 @@ export default function CandidateProfileCard({
                 : ""
             }
             onValueChange={(val) => {
-              setInterviewClassification(val);
-              classifyInterview(candidate.id, val);
+              handleInterviewClassification(val);
             }}
           >
             <SelectTrigger className="h-8 w-32 text-xs font-medium">

@@ -11,7 +11,6 @@ import {
   votingPhaseCandidate,
   votingPhaseStatus,
 } from "@/db/schema";
-import { getFilenameUrl } from "./file-upload";
 import { getCandidateWithMetadata } from "./candidate";
 
 export async function getCurrentVotingPhase(id: number) {

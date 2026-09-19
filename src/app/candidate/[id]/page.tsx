@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
@@ -39,17 +39,13 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const { id } = await params;
 
-  const candidate = await getCandidateWithMetadata(id, targetId).catch(
-    (err) => {
-      console.error("Error fetching candidate metadata:", err);
-      return undefined;
-    },
+  const candidate = await getCandidateWithMetadata(id, targetId);
+
+  const comments = await getApplicationComments(id, targetId);
+  const votingDecision = await getLatestVotingDecisionForCandidate(
+    id,
+    targetId,
   );
-
-  if (!candidate) notFound();
-
-  const comments = await getApplicationComments(id);
-  const votingDecision = await getLatestVotingDecisionForCandidate(id);
   const recruiters = await getRecruiters(targetId);
   const answeredCount = applicationAnswerCount(candidate.application);
 

@@ -426,7 +426,11 @@ export default function PhaseAdminClient({
             />
             <Button
               type="button"
-              onClick={() => setIsAddOpen(true)}
+              onClick={() => {
+                setEditing(null);
+                resetForm();
+                setIsAddOpen(true);
+              }}
               disabled={!defaultRecruitmentId}
               className="h-8 px-3 text-xs gap-1.5"
             >
@@ -618,7 +622,16 @@ export default function PhaseAdminClient({
       </Dialog>
 
       {/* Edit phase dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) {
+            setEditing(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-card-foreground">

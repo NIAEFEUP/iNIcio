@@ -67,6 +67,14 @@ function serializeDate(value: Date | string): string {
   return typeof value === "string" ? value : value.toISOString();
 }
 
+/** Converts an ISO timestamp to a `datetime-local` value in the browser's timezone. */
+function toDateTimeLocal(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
 const isActive = (value: boolean | string) =>
   value === true || value === "true";
 
@@ -159,8 +167,8 @@ export function RecruitmentManagerDialog({
       lectiveYear: `${recruitment.year}/${recruitment.year + 1}`,
       semester: recruitment.semester,
       title: recruitment.title,
-      start: recruitment.start.slice(0, 16),
-      end: recruitment.end.slice(0, 16),
+      start: toDateTimeLocal(recruitment.start),
+      end: toDateTimeLocal(recruitment.end),
       active: recruitment.active,
     });
     setMode("edit");
@@ -190,8 +198,8 @@ export function RecruitmentManagerDialog({
       lectiveYear: form.lectiveYear,
       semester: Number(form.semester),
       title: form.title,
-      start: form.start,
-      end: form.end,
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
       active: form.active,
     };
 

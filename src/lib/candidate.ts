@@ -1,4 +1,4 @@
-import { candidate, recruiterToCandidate } from "@/db/schema";
+import { candidate } from "@/db/schema";
 import {
   Application,
   db,
