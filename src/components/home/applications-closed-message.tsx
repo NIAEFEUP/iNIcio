@@ -5,10 +5,13 @@ import type { RecruitmentPhase } from "@/lib/db";
 
 interface ApplicationsClosedMessageProps {
   phases: RecruitmentPhase[];
+  /** Phase details are only shown to authenticated users. */
+  isAuthenticated: boolean;
 }
 
 export default function ApplicationsClosedMessage({
   phases,
+  isAuthenticated,
 }: ApplicationsClosedMessageProps) {
   return (
     <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
@@ -25,11 +28,12 @@ export default function ApplicationsClosedMessage({
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-            O recrutamento continua! Acompanha abaixo as fases em curso para
-            saberes o que vem a seguir.
+            {isAuthenticated
+              ? "O recrutamento continua! Acompanha abaixo as fases em curso para saberes o que vem a seguir."
+              : "O recrutamento continua! Fica atento a novidades."}
           </p>
 
-          <RecruitmentPhaseTimeline phases={phases} />
+          {isAuthenticated && <RecruitmentPhaseTimeline phases={phases} />}
         </div>
       </div>
 

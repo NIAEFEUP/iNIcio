@@ -7,11 +7,14 @@ interface ApplicationsUnavailableMessageProps {
   phases: RecruitmentPhase[];
   /** When the application phase opens, if it is scheduled. */
   opensAt?: Date | null;
+  /** Phase details are only shown to authenticated users. */
+  isAuthenticated: boolean;
 }
 
 export default function ApplicationsUnavailableMessage({
   phases,
   opensAt = null,
+  isAuthenticated,
 }: ApplicationsUnavailableMessageProps) {
   return (
     <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
@@ -46,13 +49,14 @@ export default function ApplicationsUnavailableMessage({
               </h1>
 
               <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-                O período de candidaturas ainda não foi definido. Acompanha
-                abaixo as fases do recrutamento.
+                {isAuthenticated
+                  ? "O período de candidaturas ainda não foi definido. Acompanha abaixo as fases do recrutamento."
+                  : "O período de candidaturas ainda não foi definido. Fica atento!"}
               </p>
             </>
           )}
 
-          <RecruitmentPhaseTimeline phases={phases} />
+          {isAuthenticated && <RecruitmentPhaseTimeline phases={phases} />}
         </div>
       </div>
 

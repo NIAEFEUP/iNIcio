@@ -1,9 +1,11 @@
 name: Deploy WS
+run-name: Deploy WS to ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
 
 on:
   push:
     branches:
       - main
+      - develop
     paths:
       - "inicio-ws/**"
 
