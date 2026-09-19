@@ -7,7 +7,7 @@ RUN npm install -g corepack@latest
 # Dependencies stage
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-COPY package.json ./ 
+COPY package.json ./
 COPY package-lock.json ./
 RUN npm ci --include=dev
 
@@ -49,8 +49,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json ./package-lock.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 EXPOSE 3000
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD npx drizzle-kit migrate && HOSTNAME="0.0.0.0" node server.js
