@@ -1,7 +1,8 @@
-import { Clock } from "lucide-react";
+import { Clock, Calendar } from "lucide-react";
 
 import RecruitmentPhaseTimeline from "./recruitment-phase-timeline";
 import type { RecruitmentPhase } from "@/lib/db";
+import { Badge } from "@/components/ui/badge";
 
 interface ApplicationsUnavailableMessageProps {
   phases: RecruitmentPhase[];
@@ -17,52 +18,50 @@ export default function ApplicationsUnavailableMessage({
   isAuthenticated,
 }: ApplicationsUnavailableMessageProps) {
   return (
-    <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 w-full h-full">
-      <div className="container mx-auto px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          {/* Status indicator */}
-          <div className="inline-flex items-center gap-2 bg-muted/50 text-muted-foreground px-4 py-2 rounded-full text-sm mb-8">
-            <Clock className="h-4 w-4" />
-            Estado do Recrutamento
-          </div>
+    <div className="container mx-auto px-4 py-12 md:py-20 max-w-3xl text-center">
+      <div className="flex flex-col items-center space-y-4">
+        <Badge
+          variant="outline"
+          className="gap-1.5 py-1 px-3 text-xs font-medium"
+        >
+          <Clock className="size-3.5 text-primary" />
+          Estado do Recrutamento
+        </Badge>
 
-          {opensAt ? (
-            <>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
-                As candidaturas abrem{" "}
-                <span className="text-primary">em breve</span>
-              </h1>
+        {opensAt ? (
+          <>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground text-balance">
+              As candidaturas abrem{" "}
+              <span className="text-primary">em breve</span>
+            </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-                O período de candidaturas começa a{" "}
-                <span className="text-primary font-semibold">
+            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground pt-1">
+              <Calendar className="size-4 text-primary" />
+              <span>
+                Início a{" "}
+                <strong className="text-foreground font-semibold">
                   {new Date(opensAt).toLocaleString("pt-PT")}
-                </span>
+                </strong>
                 . Fica atento!
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
-                As candidaturas ainda{" "}
-                <span className="text-primary">não estão abertas</span>
-              </h1>
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground text-balance">
+              As candidaturas ainda não estão abertas
+            </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-                {isAuthenticated
-                  ? "O período de candidaturas ainda não foi definido. Acompanha abaixo as fases do recrutamento."
-                  : "O período de candidaturas ainda não foi definido. Fica atento!"}
-              </p>
-            </>
-          )}
+            <p className="text-base md:text-lg text-muted-foreground text-pretty max-w-xl mx-auto leading-relaxed">
+              {isAuthenticated
+                ? "O período de submissão de candidaturas ainda não começou. Consulta as fases abaixo para te manteres a par."
+                : "O período de candidaturas ainda não foi iniciado. Fica atento às nossas redes e novidades."}
+            </p>
+          </>
+        )}
 
-          {isAuthenticated && <RecruitmentPhaseTimeline phases={phases} />}
-        </div>
+        {isAuthenticated && <RecruitmentPhaseTimeline phases={phases} />}
       </div>
-
-      {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-20 right-10 w-32 h-32 bg-accent/10 rounded-full blur-xl"></div>
-    </section>
+    </div>
   );
 }

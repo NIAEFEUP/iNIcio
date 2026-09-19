@@ -12,6 +12,7 @@ import {
 } from "@/lib/recruitment-state";
 import { RecruitmentPhase } from "@/lib/db";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 const phaseCheckers: Partial<
   Record<
@@ -29,12 +30,16 @@ export default async function CandidateProgress() {
     headers: await headers(),
   });
 
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const progressPhases = await Promise.all(
     (await getRecruitmentPhases("candidate")).map(async (phase) => {
       const kind = getRecruitmentPhaseKind(phase);
 
       const checked = kind
-        ? ((await phaseCheckers[kind]?.(session?.user.id, phase)) ?? false)
+        ? ((await phaseCheckers[kind]?.(session.user.id, phase)) ?? false)
         : false;
 
       return {
@@ -45,15 +50,19 @@ export default async function CandidateProgress() {
   );
 
   const candidateWithInterviewAndDynamic =
-    await getCandidateWithInterviewAndDynamic(session?.user.id);
+    await getCandidateWithInterviewAndDynamic(session.user.id);
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="text-4xl text-center font-bold">Progresso</h1>
-      <p className="text-center">
-        Agora que completaste a tua candidatura, tens outras tarefas para
-        realizar!
-      </p>
+    <div className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
+      <div className="text-center space-y-2 mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+          O teu Progresso
+        </h1>
+        <p className="text-muted-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+          Acompanha aqui o estado de cada fase do teu recrutamento e realiza os
+          teus agendamentos à medida que abrem.
+        </p>
+      </div>
 
       <ProgressPhaseCardShowcase
         role="candidate"

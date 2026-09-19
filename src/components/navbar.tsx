@@ -1,17 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
-
-import { Menu, X } from "lucide-react";
-import LogoutButton from "./logout/logout-button";
-import { useSession } from "@/lib/use-session";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-
-import NotificationPopup from "./notifications/notification-popup";
-import { Notification } from "@/lib/db";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import {
+  Menu,
+  X,
+  User as UserIcon,
+  LogOut,
+  LayoutDashboard,
+  Sparkles,
+  ClipboardList,
+} from "lucide-react";
+
+import { useSession } from "@/lib/use-session";
+import { authClient } from "@/lib/auth-client";
+import { cn, getInitials } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import NotificationPopup from "./notifications/notification-popup";
+import { ThemeToggle } from "./theme-toggle";
+import { Notification } from "@/lib/db";
 
 type Props = {
   className?: string;
@@ -30,6 +48,7 @@ export default function Navbar({
 }: Props) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -59,222 +78,331 @@ export default function Navbar({
     return null;
   }
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const handleLogout = async () => {
+    await authClient.signOut({});
+    router.push("/");
+    router.refresh();
   };
 
+  const user = session?.user;
+  const userInitials = getInitials(user?.name, "U");
+
   return (
-    <nav
+    <header
       className={cn(
-        "mb-10 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-colors",
         className,
       )}
     >
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <a
+      <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        {/* Brand logo */}
+        <div className="flex items-center gap-6">
+          <Link
             href="/"
-            className="flex items-center space-x-2 transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 transition-opacity hover:opacity-85"
           >
             <Image
               src="/logo.svg"
-              alt="Logo"
-              className="h-4 w-auto"
+              alt="NIAEFEUP Logo"
+              className="h-5 w-auto"
               width={40}
               height={40}
+              priority
             />
-          </a>
+            <span className="font-semibold text-base tracking-tight text-foreground">
+              iNIcio
+            </span>
+          </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-8">
-            {session && !isRecruiter && !isAdmin && !isCandidate && (
-              <a
-                href="/application"
-                className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
-              >
-                Candidatar
-              </a>
-            )}
+          {/* Desktop Candidate Navigation Links */}
+          <nav className="hidden md:flex md:items-center md:gap-1">
+            <Button
+              variant={pathname === "/" ? "secondary" : "ghost"}
+              size="sm"
+              render={<Link href="/" />}
+            >
+              Início
+            </Button>
 
-            {session && (isRecruiter || isAdmin) && (
+            {user && isCandidate && (
               <>
-                <a
-                  href="/recruiter/availability"
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
+                <Button
+                  variant={
+                    pathname?.startsWith("/candidate/progress")
+                      ? "secondary"
+                      : "ghost"
+                  }
+                  size="sm"
+                  render={<Link href="/candidate/progress" />}
                 >
-                  Disponibilidades
-                </a>
-
-                <a
-                  href={`/calendar/${session?.user.id}`}
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
-                >
-                  Alocações
-                </a>
-                <a
-                  href="/candidates"
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
-                >
-                  Candidatos
-                </a>
-                <a
-                  href="/candidates/voting"
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
-                >
-                  Votações
-                </a>
-              </>
-            )}
-
-            {session && isCandidate && (
-              <>
-                <a
-                  href="/candidate/progress"
-                  className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline underline-offset-4 decoration-2"
-                >
+                  <ClipboardList className="size-4" />
                   Progresso
-                </a>
+                </Button>
+                <Button
+                  variant={
+                    pathname?.startsWith("/candidate/result")
+                      ? "secondary"
+                      : "ghost"
+                  }
+                  size="sm"
+                  render={<Link href="/candidate/result" />}
+                >
+                  <Sparkles className="size-4" />
+                  Resultado
+                </Button>
               </>
             )}
 
-            {!session ? (
-              <div className="flex items-center space-x-4">
-                <Button variant="default">
-                  <a href="/login">Login</a>
-                </Button>
-                <Button variant="secondary">
-                  <a href="/signup">Registo</a>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                {session && isAdmin && (
-                  <a
-                    href="/admin"
-                    className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-                  >
-                    AdminUI
-                  </a>
-                )}
-                <a
-                  href="/profile"
-                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-                >
-                  Perfil
-                </a>
-
-                <NotificationPopup notifications={notifications} />
-
-                <LogoutButton />
-              </div>
+            {user && !isRecruiter && !isAdmin && !isCandidate && (
+              <Button
+                variant={pathname === "/application" ? "secondary" : "ghost"}
+                size="sm"
+                render={<Link href="/application" />}
+              >
+                Candidatura
+              </Button>
             )}
-          </div>
 
-          {/* Mobile menu button */}
-          <button
-            className="inline-flex items-center justify-center rounded-md p-2 text-foreground/60 transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 md:hidden"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
+            {user && (isAdmin || isRecruiter) && (
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <Link href={isAdmin ? "/admin" : "/recruiter/progress"} />
+                }
+              >
+                <LayoutDashboard className="size-3.5" />
+                Painel
+              </Button>
+            )}
+          </nav>
+        </div>
+
+        {/* Right side controls */}
+        <div className="hidden md:flex md:items-center md:gap-3">
+          <ThemeToggle />
+
+          {user ? (
+            <>
+              <NotificationPopup notifications={notifications} />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button className="flex items-center gap-2 rounded-full p-1 text-sm transition-opacity hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <Avatar className="size-8 ring-1 ring-border">
+                        <AvatarImage
+                          src={user.image || undefined}
+                          alt={user.name || "User"}
+                        />
+                        <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                          {userInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  }
+                />
+                <DropdownMenuContent align="end" className="w-56 p-1.5">
+                  <DropdownMenuLabel className="p-2">
+                    <div className="flex flex-col space-y-0.5">
+                      <p className="text-sm font-medium leading-none text-foreground truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => router.push("/profile")}
+                    className="cursor-pointer"
+                  >
+                    <UserIcon className="size-4 mr-2" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                  {isCandidate && (
+                    <DropdownMenuItem
+                      onClick={() => router.push("/candidate/progress")}
+                      className="cursor-pointer"
+                    >
+                      <ClipboardList className="size-4 mr-2" />
+                      <span>O meu Progresso</span>
+                    </DropdownMenuItem>
+                  )}
+                  {(isAdmin || isRecruiter) && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(isAdmin ? "/admin" : "/recruiter/progress")
+                      }
+                      className="cursor-pointer"
+                    >
+                      <LayoutDashboard className="size-4 mr-2" />
+                      <span>Área de Recrutamento</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="size-4 mr-2" />
+                    <span>Terminar Sessão</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" render={<Link href="/login" />}>
+                Entrar
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                render={<Link href="/signup" />}
+              >
+                Criar Conta
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          {user && <NotificationPopup notifications={notifications} />}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Abrir menu"
           >
             {isMenuOpen ? (
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <Menu className="size-5" />
             )}
-          </button>
+          </Button>
         </div>
+      </div>
 
-        {/* Mobile Navigation */}
-        <div
-          className={cn(
-            "overflow-hidden transition-all duration-300 ease-in-out md:hidden",
-            isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0",
-          )}
-        >
-          <div className="space-y-1 pt-2">
-            <NotificationPopup notifications={notifications} />
+      {/* Mobile Drawer Menu */}
+      {isMenuOpen && (
+        <div className="border-b border-border bg-background px-4 py-4 md:hidden">
+          <div className="flex flex-col gap-2">
+            <Button
+              variant={pathname === "/" ? "secondary" : "ghost"}
+              className="justify-start w-full"
+              render={<Link href="/" />}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Início
+            </Button>
 
-            {session && (isRecruiter || isAdmin) && (
+            {user && isCandidate && (
               <>
-                <a
-                  href={`/calendar/${session?.user.id}/day-view`}
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                <Button
+                  variant={
+                    pathname?.startsWith("/candidate/progress")
+                      ? "secondary"
+                      : "ghost"
+                  }
+                  className="justify-start w-full"
+                  render={<Link href="/candidate/progress" />}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Alocações
-                </a>
-                <a
-                  href="/candidates"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Candidatos
-                </a>
-                <a
-                  href="/candidates/voting"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Votações
-                </a>
-              </>
-            )}
-
-            {session && isCandidate && (
-              <>
-                <a
-                  href="/candidate/progress"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+                  <ClipboardList className="size-4 mr-2" />
                   Progresso
-                </a>
+                </Button>
+                <Button
+                  variant={
+                    pathname?.startsWith("/candidate/result")
+                      ? "secondary"
+                      : "ghost"
+                  }
+                  className="justify-start w-full"
+                  render={<Link href="/candidate/result" />}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Sparkles className="size-4 mr-2" />
+                  Resultado
+                </Button>
               </>
             )}
 
-            {!session ? (
-              <div className="space-y-1 pt-2">
-                <a
-                  href="/login"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            {user && !isRecruiter && !isAdmin && !isCandidate && (
+              <Button
+                variant={pathname === "/application" ? "secondary" : "ghost"}
+                className="justify-start w-full"
+                render={<Link href="/application" />}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Candidatura
+              </Button>
+            )}
+
+            {user && (isAdmin || isRecruiter) && (
+              <Button
+                variant="outline"
+                className="justify-start w-full"
+                render={
+                  <Link href={isAdmin ? "/admin" : "/recruiter/progress"} />
+                }
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <LayoutDashboard className="size-4 mr-2" />
+                Área de Recrutamento
+              </Button>
+            )}
+
+            {user ? (
+              <div className="mt-3 border-t border-border pt-3 flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  className="justify-start w-full"
+                  render={<Link href="/profile" />}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Login
-                </a>
-                <a
-                  href="/signup"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
+                  <UserIcon className="size-4 mr-2" />
+                  Perfil ({user.name})
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="justify-start w-full"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleLogout();
+                  }}
                 >
-                  Registo
-                </a>
+                  <LogOut className="size-4 mr-2" />
+                  Terminar Sessão
+                </Button>
               </div>
             ) : (
-              <div className="space-y-1 pt-2">
-                {session && isAdmin && (
-                  <a
-                    href="/admin"
-                    className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    AdminUI
-                  </a>
-                )}
-                <a
-                  href="/profile"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-accent hover:text-foreground"
+              <div className="mt-3 border-t border-border pt-3 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  render={<Link href="/login" />}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Perfil
-                </a>
-                <div className="px-3 py-2">
-                  <LogoutButton />
-                </div>
+                  Entrar
+                </Button>
+                <Button
+                  variant="default"
+                  className="w-full"
+                  render={<Link href="/signup" />}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Criar Conta
+                </Button>
               </div>
             )}
           </div>
         </div>
-      </div>
-    </nav>
+      )}
+    </header>
   );
 }
