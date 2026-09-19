@@ -69,9 +69,7 @@ export default function CandidateGridCard({
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
   const picture =
-    candidate.application?.profilePicture ||
-    candidate.image ||
-    "/placeholder.svg";
+    candidate.application?.profilePicture || candidate.image || undefined;
 
   return (
     <GridCard
@@ -101,7 +99,7 @@ export default function CandidateGridCard({
       subtitle={
         candidate.application?.studentNumber
           ? `nº ${candidate.application.studentNumber}`
-          : candidate.email
+          : undefined
       }
       actions={
         <div className="flex w-full items-center justify-between gap-2">
@@ -121,13 +119,25 @@ export default function CandidateGridCard({
         <span className="font-medium uppercase">{course || "-"}</span>
       </InfoRow>
       <InfoRow icon={<Calendar className="size-3.5" />} label="Ano">
-        <span className="font-medium">{year || "-"}</span>
+        <span className="font-medium">
+          {year
+            ? /^\d+$/.test(String(year))
+              ? `${year}º ano`
+              : String(year)
+            : "-"}
+        </span>
       </InfoRow>
       <InfoRow
         icon={<SlidersHorizontal className="size-3.5" />}
-        label="Classificação"
+        label="Entrevista"
       >
         <ClassificationText level={candidate.interviewClassification} />
+      </InfoRow>
+      <InfoRow
+        icon={<SlidersHorizontal className="size-3.5" />}
+        label="Dinâmica"
+      >
+        <ClassificationText level={candidate.dynamicClassification} />
       </InfoRow>
       {interests.length > 0 && (
         <InfoRow icon={<Network className="size-3.5" />} label="Departamentos">

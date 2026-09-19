@@ -171,6 +171,12 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
         dynamic: c.candidate.dynamic,
         interview: c.candidate.interview,
         knownRecruiters: c.candidate.knownRecruiters,
+        votingDecision: recruitmentId
+          ? await getLatestVotingDecisionForCandidate(
+              c.candidate.userId,
+              recruitmentId,
+            )
+          : await getLatestVotingDecisionForCandidate(c.candidate.userId),
       })),
     ),
   };

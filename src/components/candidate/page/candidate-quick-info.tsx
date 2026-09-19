@@ -1,12 +1,6 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,6 +22,7 @@ import Link from "next/link";
 import CandidateQuickInfoSelect from "./candidate-quick-info-select";
 import { ClassificationBadge } from "../candidate-classification-badge";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateWithMetadata;
@@ -114,21 +109,10 @@ export default function CandidateQuickInfo({
   const displayDynamicButton = candidate?.dynamic && !hideDynamicButton;
   const displayAnyButton = displayInterviewButton || displayDynamicButton;
 
-  const getBorderClass = () => {
-    if (!candidate.votingDecision) return "";
-    return candidate.votingDecision.decision === "approve"
-      ? "border-2 border-green-500/50 shadow-green-500/20"
-      : "border-2 border-red-500/50 shadow-red-500/20";
-  };
-
   return (
-    <Card
-      className={`group relative overflow-hidden bg-gradient-to-br from-card via-card to-accent/20 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 ${getBorderClass()}`}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
+    <div className="relative flex flex-col rounded-xl border bg-card p-4 shadow-xs">
       {candidate.votingDecision && (
-        <div className="absolute top-2 right-2 z-20">
+        <div className="absolute top-4 right-4 z-10">
           <Badge
             variant={
               candidate.votingDecision.decision === "approve"
@@ -148,130 +132,143 @@ export default function CandidateQuickInfo({
         </div>
       )}
 
-      <CardHeader className="relative z-10">
-        {friendCheckboxActive && (
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Checkbox
-                id={`knows-candidate-${candidate.id}`}
-                className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
-                checked={checked}
-                onCheckedChange={addFriend}
-              />
+      {(friendCheckboxActive || selectActionActive) && (
+        <div className="mb-4 flex items-center gap-3">
+          {friendCheckboxActive && (
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Checkbox
+                  id={`knows-candidate-${candidate.id}`}
+                  className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
+                  checked={checked}
+                  onCheckedChange={addFriend}
+                />
+              </div>
+              <Label
+                htmlFor={`knows-candidate-${candidate.id}`}
+                className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
+              >
+                Conheço
+              </Label>
             </div>
-            <Label
-              htmlFor={`knows-candidate-${candidate.id}`}
-              className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
-            >
-              Conheço
-            </Label>
-          </div>
-        )}
+          )}
 
-        {selectActionActive && (
-          <CandidateQuickInfoSelect
-            candidate={candidate}
-            selectActionHandler={selectActionHandler}
-            candidateSelected={candidateSelected}
-          />
-        )}
-      </CardHeader>
-
-      <CardContent className="relative z-10">
-        <div className="flex flex-row justify-between">
-          <CandidateIdentityInfo
-            candidate={candidate}
-            fullDetails={fullDetails}
-          />
-
-          {showClassificationBadges && (
+          {selectActionActive && (
             <div className="flex flex-col gap-2">
-              <ClassificationBadge
-                label="Entrevista"
-                level={candidate.interviewClassification}
-              />
-              <ClassificationBadge
-                label="Dinâmica"
-                level={candidate.dynamicClassification}
+              <CandidateQuickInfoSelect
+                candidate={candidate}
+                selectActionHandler={selectActionHandler}
+                candidateSelected={candidateSelected}
               />
             </div>
           )}
         </div>
-
-        <Separator className="bg-gradient-to-r from-transparent via-border to-transparent my-4" />
-
-        <div className="space-y-4">
-          <CandidateAcademicInfo candidate={candidate} />
-
-          <CandidateDepartmentInterestInfo candidate={candidate} />
-
-          <SocialLinks
-            githubUrl={candidate?.application?.github || null}
-            linkedinUrl={candidate?.application?.linkedIn || null}
-            websiteUrl={candidate?.application?.personalWebsite || null}
-          />
-
-          {(showClassifyInterview || showClassifyDynamic) && (
-            <div className="flex flex-col gap-1">
-              <h3 className="font-bold">Classificação</h3>
-              <Select
-                onValueChange={(value) => {
-                  if (showClassifyInterview) {
-                    addInterviewClassification(candidate.id, String(value));
-                  }
-                  if (showClassifyDynamic) {
-                    addDynamicClassification(candidate.id, String(value));
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={`${getClassificationPlaceholder()}`}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="muito fraco">Muito fraco</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="muito forte">Muito forte</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      {displayAnyButton && (
-        <CardFooter className="z-10 bg-gradient-to-r from-accent/20 to-accent/30 border-t border-border/50 p-6">
-          <div className="flex flex-col items-center justify-center gap-1 w-full">
-            {displayDynamicButton && (
-              <Link
-                href={`/dynamic/${candidate.dynamic?.dynamicId}`}
-                target="_blank"
-                className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
-              >
-                <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
-                  Dinâmica
-                </span>
-                <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </Link>
-            )}
-
-            <div className="h-4 w-px bg-border" />
-
-            {displayInterviewButton && (
-              <Link
-                href={`/candidate/${candidate?.id}/interview`}
-                className="group/footer flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 hover:bg-background transition-all duration-200 hover:shadow-md"
-                target="_blank"
-              >
-                <span className="text-sm font-semibold text-foreground group-hover/footer:text-primary transition-colors">
-                  Entrevista
-                </span>
-                <ExternalLink className="h-3 w-3 text-muted-foreground group-hover/footer:text-primary transition-colors" />
-              </Link>
-            )}
-          </div>
-        </CardFooter>
       )}
-    </Card>
+
+      <div className="flex flex-row justify-between gap-4">
+        <CandidateIdentityInfo
+          candidate={candidate}
+          fullDetails={fullDetails}
+        />
+
+        {showClassificationBadges && (
+          <div className="flex flex-col gap-2">
+            <ClassificationBadge
+              label="Entrevista"
+              level={candidate.interviewClassification}
+            />
+            <ClassificationBadge
+              label="Dinâmica"
+              level={candidate.dynamicClassification}
+            />
+          </div>
+        )}
+      </div>
+
+      <Separator className="my-4" />
+
+      <div className="flex flex-col gap-4">
+        <CandidateAcademicInfo candidate={candidate} />
+
+        <CandidateDepartmentInterestInfo candidate={candidate} />
+
+        <SocialLinks
+          githubUrl={candidate?.application?.github || null}
+          linkedinUrl={candidate?.application?.linkedIn || null}
+          websiteUrl={candidate?.application?.personalWebsite || null}
+        />
+
+        {(showClassifyInterview || showClassifyDynamic) && (
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-xs font-semibold text-muted-foreground">
+              Classificação
+            </h3>
+            <Select
+              onValueChange={(value) => {
+                if (showClassifyInterview) {
+                  addInterviewClassification(candidate.id, String(value));
+                }
+                if (showClassifyDynamic) {
+                  addDynamicClassification(candidate.id, String(value));
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={`${getClassificationPlaceholder()}`}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="muito fraco">Muito fraco</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="muito forte">Muito forte</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {displayAnyButton && (
+        <div className="mt-4 flex flex-col items-center gap-2 border-t pt-4">
+          {displayDynamicButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              render={
+                <Link
+                  href={`/dynamic/${candidate.dynamic?.dynamicId}`}
+                  target="_blank"
+                />
+              }
+            >
+              <ExternalLink />
+              Dinâmica
+            </Button>
+          )}
+
+          {displayDynamicButton && displayInterviewButton && (
+            <div className="h-px w-full bg-border" />
+          )}
+
+          {displayInterviewButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              render={
+                <Link
+                  href={`/candidate/${candidate?.id}/interview`}
+                  target="_blank"
+                />
+              }
+            >
+              <ExternalLink />
+              Entrevista
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

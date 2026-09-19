@@ -15,11 +15,13 @@ import {
 interface DataTableColumnToggleProps<TData> {
   table: Table<TData>;
   columnLabels?: Record<string, string>;
+  buttonLabel?: string;
 }
 
 export function DataTableColumnToggle<TData>({
   table,
   columnLabels = {},
+  buttonLabel = "Colunas",
 }: DataTableColumnToggleProps<TData>) {
   return (
     <DropdownMenu>
@@ -31,13 +33,13 @@ export function DataTableColumnToggle<TData>({
             className="h-8 gap-1.5 text-xs font-normal border-input"
           >
             <EyeOff className="size-3.5" />
-            Hide Columns
+            {buttonLabel}
           </Button>
         }
       />
       <DropdownMenuContent align="end" className="w-40 rounded-lg">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+          <DropdownMenuLabel>Colunas</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {table
             .getAllColumns()

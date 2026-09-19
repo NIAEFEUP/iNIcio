@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import Link from "next/link";
@@ -77,6 +78,9 @@ export default function CandidatesClient({
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    email: false,
+  });
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -142,11 +146,18 @@ export default function CandidatesClient({
         header: ({ column }) => (
           <DataTableSortableHeader column={column} title="Ano" />
         ),
-        cell: ({ row }) => (
-          <span className="text-sm text-foreground">
-            {row.original.application?.curricularYear || "-"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const year = row.original.application?.curricularYear;
+          return (
+            <span className="text-sm text-foreground">
+              {year
+                ? /^\d+$/.test(String(year))
+                  ? `${year}º ano`
+                  : String(year)
+                : "-"}
+            </span>
+          );
+        },
         filterFn: (row, _id, value: string[]) =>
           multiIncludes(row, value, (c) =>
             c.application?.curricularYear ? [c.application.curricularYear] : [],
@@ -180,10 +191,10 @@ export default function CandidatesClient({
           ),
       },
       {
-        id: "classification",
+        id: "interviewClassification",
         accessorFn: (c) => c.interviewClassification ?? "",
         header: ({ column }) => (
-          <DataTableSortableHeader column={column} title="Classificação" />
+          <DataTableSortableHeader column={column} title="Entrevista" />
         ),
         cell: ({ row }) => (
           <ClassificationText level={row.original.interviewClassification} />
@@ -191,6 +202,20 @@ export default function CandidatesClient({
         filterFn: (row, _id, value: string[]) =>
           multiIncludes(row, value, (c) =>
             c.interviewClassification ? [c.interviewClassification] : [],
+          ),
+      },
+      {
+        id: "dynamicClassification",
+        accessorFn: (c) => c.dynamicClassification ?? "",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Dinâmica" />
+        ),
+        cell: ({ row }) => (
+          <ClassificationText level={row.original.dynamicClassification} />
+        ),
+        filterFn: (row, _id, value: string[]) =>
+          multiIncludes(row, value, (c) =>
+            c.dynamicClassification ? [c.dynamicClassification] : [],
           ),
       },
       {
@@ -229,9 +254,16 @@ export default function CandidatesClient({
   const table = useReactTable({
     data: candidates,
     columns,
-    state: { sorting, columnFilters, globalFilter, pagination },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+      pagination,
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
@@ -261,8 +293,11 @@ export default function CandidatesClient({
   const selectedDepartments =
     (columnFilters.find((f) => f.id === "departments")?.value as
       string[] | undefined) ?? [];
-  const selectedClassifications =
-    (columnFilters.find((f) => f.id === "classification")?.value as
+  const selectedInterviewClassifications =
+    (columnFilters.find((f) => f.id === "interviewClassification")?.value as
+      string[] | undefined) ?? [];
+  const selectedDynamicClassifications =
+    (columnFilters.find((f) => f.id === "dynamicClassification")?.value as
       string[] | undefined) ?? [];
   const selectedDecisions =
     (columnFilters.find((f) => f.id === "decision")?.value as
@@ -309,7 +344,8 @@ export default function CandidatesClient({
               course: "Curso",
               year: "Ano",
               departments: "Departamentos",
-              classification: "Classificação",
+              interviewClassification: "Entrevista",
+              dynamicClassification: "Dinâmica",
               decision: "Decisão",
             }}
           />
@@ -352,8 +388,8 @@ export default function CandidatesClient({
               }
             />
             <DataTableFilter
-              title="Classificação"
-              pluralTitle="Classificações"
+              title="Entrevista"
+              pluralTitle="Classificações de Entrevista"
               allLabel="Todas as classificações"
               options={availableClassifications.map((c) => ({
                 value: c,
@@ -366,9 +402,29 @@ export default function CandidatesClient({
                         ? "Normal"
                         : c,
               }))}
-              selectedValues={selectedClassifications}
+              selectedValues={selectedInterviewClassifications}
               onSelectedValuesChange={(values) =>
-                setFilter("classification", values)
+                setFilter("interviewClassification", values)
+              }
+            />
+            <DataTableFilter
+              title="Dinâmica"
+              pluralTitle="Classificações de Dinâmica"
+              allLabel="Todas as classificações"
+              options={availableClassifications.map((c) => ({
+                value: c,
+                label:
+                  c === "muito fraco"
+                    ? "Muito fraco"
+                    : c === "muito forte"
+                      ? "Muito forte"
+                      : c === "normal"
+                        ? "Normal"
+                        : c,
+              }))}
+              selectedValues={selectedDynamicClassifications}
+              onSelectedValuesChange={(values) =>
+                setFilter("dynamicClassification", values)
               }
             />
             <DataTableFilter

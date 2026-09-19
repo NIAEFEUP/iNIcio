@@ -128,3 +128,22 @@
     @apply font-sans;
   }
 }
+
+.bn-container.bn-root {
+  --bn-colors-editor-background: var(--color-background);
+  --bn-colors-editor-text: var(--color-foreground);
+  --bn-colors-hovered-background: var(--color-muted);
+  --bn-colors-hovered-text: var(--color-foreground);
+  --bn-colors-menu-background: var(--color-popover);
+  --bn-colors-menu-text: var(--color-popover-foreground);
+  --bn-colors-border: var(--color-border);
+  --bn-border-radius: 0.75rem;
+  --bn-border-radius-medium: 0.75rem;
+  --bn-border-radius-large: 0.75rem;
+}
+
+.bn-container .bn-editor {
+  background-color: transparent;
+  border-radius: 0;
+  padding-inline: 0.75rem;
+}

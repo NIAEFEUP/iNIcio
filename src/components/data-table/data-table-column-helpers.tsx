@@ -146,18 +146,22 @@ export function DataTableEntityCell({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 font-medium text-foreground text-sm py-2",
+        "flex items-center gap-3 font-medium text-foreground text-sm py-1.5",
         className,
       )}
     >
       {initials && <InitialsAvatar initials={initials} size="sm" />}
-      <div className="flex items-center gap-2">
-        <span>{name}</span>
-        {badge}
+      <div className="flex flex-col min-w-0">
+        <div className="flex items-center gap-2">
+          <span>{name}</span>
+          {badge}
+        </div>
+        {subtitle && (
+          <span className="text-xs font-normal text-muted-foreground">
+            {subtitle}
+          </span>
+        )}
       </div>
-      {subtitle && (
-        <span className="text-xs text-muted-foreground">{subtitle}</span>
-      )}
     </div>
   );
 }

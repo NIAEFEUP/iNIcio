@@ -29,6 +29,7 @@ interface RealTimeEditorProps {
   mentionItems?: Array<User>;
   onChange?: (e: any) => void;
   collab?: boolean;
+  boxed?: boolean;
 }
 
 export default function RealTimeEditor({
@@ -42,6 +43,7 @@ export default function RealTimeEditor({
   onChange = () => {},
   mentionItems = [],
   collab = true,
+  boxed = true,
 }: RealTimeEditorProps) {
   const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
   const fragment = useMemo(
@@ -157,9 +159,11 @@ export default function RealTimeEditor({
 
   return (
     <BlockNoteView
-      className="w-full min-h-32 rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md
-        transition-all duration-200 p-4 focus-within:ring-2 focus-within:ring-blue-500 overflow-y-auto break-words whitespace-pre-wrap
-      "
+      className={
+        boxed
+          ? "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+          : "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+      }
       editor={editor}
       editable={true}
       data-color-scheme="light"

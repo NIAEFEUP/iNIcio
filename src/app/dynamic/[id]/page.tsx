@@ -1,27 +1,35 @@
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { and, eq } from "drizzle-orm";
+
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
+import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
 import CommentFrame from "@/components/comments/comment-frame";
-import EditorFrame from "@/components/editor/editor-frame";
+import DynamicCandidatesCard from "@/components/dynamic/dynamic-candidates-card";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/layout/page-header";
+import {
+  EvaluationLayout,
+  EvaluationPanel,
+} from "@/components/layout/evaluation-layout";
+import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
+import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+
+import { candidate } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import { db } from "@/lib/db";
 import {
   createDynamicComment,
   getDynamic,
-  updateDynamic,
   getDynamicInterviewers,
+  updateDynamic,
 } from "@/lib/dynamic";
-import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
 import { getDynamicComments } from "@/lib/comment";
-import { getTargetRecruitment } from "@/lib/selected-recruitment";
-import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 import { generateJWT } from "@/lib/jwt";
+import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { getRole } from "@/lib/role";
-import { db } from "@/lib/db";
-import { candidate } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -33,6 +41,8 @@ export default async function DynamicPage({ params }: any) {
   const targetRecruitment = await getTargetRecruitment();
   const recruitmentId = targetRecruitment?.id;
   if (!recruitmentId) notFound();
+
+  if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
 
   async function handleContentSave(content: any) {
     "use server";
@@ -78,9 +88,7 @@ export default async function DynamicPage({ params }: any) {
   if (!dynamic) notFound();
 
   const recruiters = await getRecruiters(recruitmentId);
-
   const interviewers = await getDynamicInterviewers(dynamic.id);
-
   const comments = await getDynamicComments(dynamic.id);
 
   const jwt = await generateJWT(
@@ -89,50 +97,82 @@ export default async function DynamicPage({ params }: any) {
   );
 
   return (
-    <div className="mx-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 mx-16">
-        {dynamic.candidates.map((candidate: CandidateWithMetadata) => (
-          <CandidateQuickInfo
-            key={candidate.id}
-            candidate={candidate}
-            hideDynamicButton={true}
-            showClassifyDynamic={true}
+    <EvaluationLayout
+      header={
+        <PageHeader
+          title={
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                Dinâmica
+              </h1>
+              <Badge variant="secondary">
+                {dynamic.candidates.length}{" "}
+                {dynamic.candidates.length === 1 ? "candidato" : "candidatos"}
+              </Badge>
+            </div>
+          }
+          actions={
+            <CandidateHeaderActions
+              currentPage="dynamic"
+              backHref="/candidates"
+            />
+          }
+        />
+      }
+      sidebar={
+        <>
+          <DynamicCandidatesCard
+            candidates={dynamic.candidates}
             addDynamicClassification={addDynamicClassification}
           />
-        ))}
-      </div>
 
-      <div className="flex flex-col md:flex-row w-full gap-4">
-        <div className="w-full md:w-1/3">
-          <div className="flex flex-col gap-4">
-            <RecruiterAssignedInfo interviewers={interviewers} />
-            <CommentFrame>
-              <>
+          <RecruiterAssignedInfo
+            interviewers={interviewers}
+            title="Recrutadores"
+          />
+        </>
+      }
+    >
+      <EvaluationTabs
+        defaultValue="dynamic"
+        tabs={[
+          {
+            id: "dynamic",
+            label: "Dinâmica",
+            content: (
+              <EvaluationPanel>
+                <RealTimeEditor
+                  token={jwt}
+                  key={`dynamic-editor-${id}`}
+                  roomId={`dynamic-${id}`}
+                  docId={`dynamic-${id}`}
+                  userName={session ? session.user.name : "Anonymous"}
+                  saveHandler={handleContentSave}
+                  entity={dynamic}
+                  mentionItems={recruiters}
+                  saveHandlerTimeout={250}
+                />
+              </EvaluationPanel>
+            ),
+          },
+          {
+            id: "comments",
+            label: "Comentários",
+            count: comments.length,
+            content: (
+              <CommentFrame>
                 <CandidateComments
                   candidate={dynamic.candidates}
+                  type="dynamic"
                   comments={comments}
                   saveToDatabase={handleCommentSave}
-                  type="dynamic"
+                  recruiters={recruiters}
                 />
-              </>
-            </CommentFrame>
-          </div>
-        </div>
-        <div className="w-full md:w-2/3">
-          <EditorFrame>
-            <RealTimeEditor
-              token={jwt}
-              roomId={`dynamic-${id}`}
-              docId={`dynamic-${id}`}
-              userName={session?.user.name}
-              saveHandler={handleContentSave}
-              entity={dynamic}
-              mentionItems={recruiters}
-              saveHandlerTimeout={250}
-            />
-          </EditorFrame>
-        </div>
-      </div>
-    </div>
+              </CommentFrame>
+            ),
+          },
+        ]}
+      />
+    </EvaluationLayout>
   );
 }

@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CandidateWithMetadata } from "@/lib/candidate";
+import { getInitials } from "@/lib/utils";
 import Link from "next/link";
 
 interface CandidateIdentityInfoProps {
@@ -16,12 +17,12 @@ export default function CandidateIdentityInfo({
       <div className="relative">
         <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
           <AvatarImage
-            src={candidate?.application?.profilePicture || "/placeholder.svg"}
+            src={candidate?.application?.profilePicture || undefined}
             alt={candidate?.name}
             className="object-cover"
           />
           <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-semibold">
-            {candidate?.name?.charAt(0)}
+            {getInitials(candidate?.name)}
           </AvatarFallback>
         </Avatar>
       </div>
