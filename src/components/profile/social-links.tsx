@@ -38,6 +38,7 @@ export function SocialLinks({
             key={social.name}
             variant="outline"
             size="icon"
+            nativeButton={false}
             render={
               <a
                 href={social.url}

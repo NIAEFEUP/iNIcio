@@ -33,6 +33,7 @@ export function CalendarHeader({ view, events }: IProps) {
         <div className="flex w-full items-center gap-1.5">
           <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
             <Button
+              nativeButton={false}
               render={<Link href={`/calendar/${id}/day-view`} />}
               aria-label="View by day"
               size="icon"
@@ -43,6 +44,7 @@ export function CalendarHeader({ view, events }: IProps) {
             </Button>
 
             <Button
+              nativeButton={false}
               render={<Link href={`/calendar/${id}/week-view`} />}
               aria-label="View by week"
               size="icon"
@@ -53,6 +55,7 @@ export function CalendarHeader({ view, events }: IProps) {
             </Button>
 
             <Button
+              nativeButton={false}
               render={<Link href={`/calendar/${id}/agenda-view`} />}
               aria-label="View by agenda"
               size="icon"
