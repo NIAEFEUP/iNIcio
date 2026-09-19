@@ -9,13 +9,16 @@ import { db } from "@/lib/db";
 import {
   addAvailability,
   getAvailabilities,
+  isRecruiter,
   removeAvailability,
 } from "@/lib/recruiter";
 import { and, eq } from "drizzle-orm";
 import { Calendar } from "lucide-react";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
+import { requireRecruiterSession } from "@/lib/action-guard";
 
 export default async function RecruiterAvailabilityPage() {
   const session = await auth.api.getSession({
@@ -24,37 +27,57 @@ export default async function RecruiterAvailabilityPage() {
 
   const targetRecruitment = await getTargetRecruitment();
 
+  if (
+    targetRecruitment &&
+    !(await isRecruiter(session?.user.id, targetRecruitment.id))
+  ) {
+    redirect("/");
+  }
+
   async function confirm(availabilityOperations: AvailabilityOperation[]) {
     "use server";
 
+    const targetRecruitment = await getTargetRecruitment();
+    if (!targetRecruitment?.id) {
+      throw new Error("No recruitment selected");
+    }
+
+    const user = await requireRecruiterSession(targetRecruitment.id);
+
     await db.transaction(async (tx) => {
       for (const operation of availabilityOperations) {
+        const sanitizedAvailability = {
+          ...operation.availability,
+          recruiterId: user.id,
+          recruitmentId: targetRecruitment.id,
+        };
+
         if (operation.type === "add") {
           const existing = await tx
             .select()
             .from(recruiterAvailability)
             .where(
               and(
-                eq(recruiterAvailability.start, operation.availability.start),
+                eq(recruiterAvailability.start, sanitizedAvailability.start),
                 eq(
                   recruiterAvailability.recruitmentId,
-                  operation.availability.recruitmentId,
+                  sanitizedAvailability.recruitmentId,
                 ),
                 eq(
                   recruiterAvailability.duration,
-                  operation.availability.duration,
+                  sanitizedAvailability.duration,
                 ),
                 eq(
                   recruiterAvailability.recruiterId,
-                  operation.availability.recruiterId,
+                  sanitizedAvailability.recruiterId,
                 ),
               ),
             );
 
           if (existing.length === 0)
-            await addAvailability(operation.availability);
+            await addAvailability(sanitizedAvailability);
         } else {
-          await removeAvailability(operation.availability);
+          await removeAvailability(sanitizedAvailability);
         }
       }
     });

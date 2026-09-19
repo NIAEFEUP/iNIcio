@@ -12,6 +12,7 @@ import { and, eq } from "drizzle-orm";
 import getExistingSlots from "@/lib/slot";
 import { getBookings } from "@/lib/booking";
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
+import { requireAdminSession } from "@/lib/action-guard";
 
 export type SlotOperation = {
   type: "add" | "remove";
@@ -46,6 +47,7 @@ const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
 export default async function SlotsPage() {
   const saveSlots = async (slots: SlotOperation[]) => {
     "use server";
+    await requireAdminSession();
 
     const reconciled = reconcileOperations(slots);
 

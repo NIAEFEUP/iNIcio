@@ -1,16 +1,27 @@
-import { getFilenameUrl } from "@/lib/file-upload";
+import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { EditProfileImage } from "./edit-profile-image";
 import { ResetPassword } from "./reset-password";
+import { getSessionUser } from "@/lib/action-guard";
 
 interface EditProfileProps {
   pictureUrl: string | null;
 }
 
 export default async function EditProfile({ pictureUrl }: EditProfileProps) {
-  const getSignedPictureUrl = async (pictureUrl: string) => {
+  const getSignedPictureUrl = async (targetPictureUrl: string) => {
     "use server";
 
-    return await getFilenameUrl(pictureUrl);
+    const user = await getSessionUser();
+    const cleanPath = fromFullUrlToPath(targetPictureUrl);
+
+    if (
+      !cleanPath.startsWith(`profiles/${user.id}/`) &&
+      targetPictureUrl !== user.image
+    ) {
+      throw new Error("Unauthorized access to image file");
+    }
+
+    return await getFilenameUrl(targetPictureUrl);
   };
 
   return (

@@ -8,6 +8,7 @@ import {
   editRecruitment,
   getRecruitmentById,
 } from "./recruitment";
+import { requireAdminSession } from "./action-guard";
 
 export interface RecruitmentInput {
   lectiveYear: string;
@@ -43,6 +44,7 @@ function parseRecruitment(input: RecruitmentInput): Omit<Recruitment, "id"> {
 export async function createRecruitment(
   input: RecruitmentInput,
 ): Promise<Recruitment> {
+  await requireAdminSession();
   const recruitment = parseRecruitment(input);
   const created = await addRecruitment(recruitment);
 
@@ -56,14 +58,17 @@ export async function updateRecruitment(
   id: number,
   input: RecruitmentInput,
 ): Promise<void> {
+  await requireAdminSession();
   const recruitment = parseRecruitment(input);
   await editRecruitment({ id, ...recruitment });
 }
 
 export async function removeRecruitment(id: number): Promise<void> {
+  await requireAdminSession();
   await deleteRecruitment(id);
 }
 
 export async function duplicateRecruitmentPhases(id: number): Promise<number> {
+  await requireAdminSession();
   return duplicatePhasesFromPreviousRecruitment(id);
 }

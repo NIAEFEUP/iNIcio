@@ -9,6 +9,7 @@ import { createVotingPhase } from "@/lib/voting";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { PageHeader } from "@/components/layout/page-header";
 import { CandidateFilterRestriction } from "@/lib/candidate";
+import { requireAdminSession } from "@/lib/action-guard";
 
 export default async function CandidateVotingCreatePage() {
   const targetId = await getTargetRecruitmentId();
@@ -20,10 +21,34 @@ export default async function CandidateVotingCreatePage() {
     headers: await headers(),
   });
 
-  async function handleCandidateSelection(candidates: Array<string>) {
+  async function handleCandidateSelection(selectedCandidates: Array<string>) {
     "use server";
 
-    return await createVotingPhase(candidates, targetId);
+    await requireAdminSession();
+    const resolvedTargetId = await getTargetRecruitmentId();
+
+    if (
+      !selectedCandidates ||
+      !Array.isArray(selectedCandidates) ||
+      selectedCandidates.length === 0
+    ) {
+      throw new Error("Nenhum candidato selecionado");
+    }
+
+    const validCandidates = await getAllCandidatesWithDynamic(
+      resolvedTargetId,
+      [CandidateFilterRestriction.ONLY_WITH_INTERVIEW_AND_DYNAMIC],
+    );
+    const validCandidateIds = new Set(validCandidates.map((c) => c.id));
+    const filtered = selectedCandidates.filter(
+      (id) => typeof id === "string" && validCandidateIds.has(id),
+    );
+
+    if (filtered.length === 0) {
+      throw new Error("Nenhum candidato válido selecionado");
+    }
+
+    return await createVotingPhase(filtered, resolvedTargetId);
   }
 
   return (

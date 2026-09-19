@@ -12,6 +12,10 @@ import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
 import { deleteCandidateVotes } from "@/lib/voting";
 import { redirect } from "next/navigation";
+import {
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
 
 interface CandidateVotingPageProps {
   params: any;
@@ -31,10 +35,18 @@ export default async function CandidateVotingPage({
   ) {
     "use server";
 
-    const recruiterVotes = await getRecruiterVotes(id, recruiterId);
+    const user = await requireRecruiterSession();
+    const effectiveRecruiterId = user.id;
+
+    const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      return await voteForCandidate(id, recruiterId, candidateId, decision);
+      return await voteForCandidate(
+        id,
+        effectiveRecruiterId,
+        candidateId,
+        decision,
+      );
     }
 
     return false;
@@ -45,6 +57,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireRecruiterSession();
 
     return await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,
@@ -58,6 +71,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     return await makeCandidateVoteDefinitive(
       decision,
@@ -71,6 +85,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
   }

@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
 import { dynamic, interview } from "@/db/schema";
+import { requireAdminSession } from "@/lib/action-guard";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -18,6 +19,7 @@ export default async function AdminTemplates() {
 
   const addInterviewTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addInterviewTemplate(update);
@@ -29,6 +31,7 @@ export default async function AdminTemplates() {
 
   const addDynamicTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addDynamicTemplate(update);
@@ -40,6 +43,7 @@ export default async function AdminTemplates() {
 
   const interviewOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await db.update(interview).set({ content: update });
@@ -51,6 +55,7 @@ export default async function AdminTemplates() {
 
   const dynamicOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await db.update(dynamic).set({ content: update });

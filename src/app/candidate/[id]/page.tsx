@@ -24,6 +24,7 @@ import { getApplicationComments } from "@/lib/comment";
 import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
+import { requireRecruiterSession } from "@/lib/action-guard";
 
 type CandidatePageProps = {
   params: any;
@@ -32,14 +33,17 @@ type CandidatePageProps = {
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!(await isRecruiter(session?.user.id))) redirect("/");
+  const targetId = await getTargetRecruitmentId();
+
+  if (!(await isRecruiter(session?.user.id, targetId))) redirect("/");
 
   const { id } = await params;
 
-  const targetId = await getTargetRecruitmentId();
-
   const candidate = await getCandidateWithMetadata(id, targetId).catch(
-    () => undefined,
+    (err) => {
+      console.error("Error fetching candidate metadata:", err);
+      return undefined;
+    },
   );
 
   if (!candidate) notFound();
@@ -51,8 +55,8 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
 
   const saveToDatabase = async (content: Array<any>) => {
     "use server";
-
-    return await submitApplicationComment(id, content, session?.user.id);
+    const user = await requireRecruiterSession(targetId);
+    return await submitApplicationComment(id, content, user.id);
   };
 
   return (
@@ -105,7 +109,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
             count: answeredCount,
             content: (
               <CandidateAnswers
-                key={crypto.randomUUID()}
+                key={candidate.id}
                 application={candidate.application}
               />
             ),

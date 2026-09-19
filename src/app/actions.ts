@@ -9,25 +9,33 @@ import {
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
 import { and, eq, gte, lt } from "drizzle-orm";
+import {
+  getSessionUser,
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
+import { getActiveRecruitment } from "@/lib/recruitment";
 
 export async function markNotificationAsRead(id: number) {
+  const user = await getSessionUser();
+
   return await db.transaction(async (tx) => {
     await tx
       .update(notification)
       .set({
         isRead: true,
       })
-      .where(eq(notification.id, id));
+      .where(and(eq(notification.id, id), eq(notification.userId, user.id)));
   });
 }
-
-import { getActiveRecruitment } from "@/lib/recruitment";
 
 export async function getAvailableRecruiters(
   start: Date,
   end: Date,
   recruitmentId?: number,
 ): Promise<User[]> {
+  await requireRecruiterSession(recruitmentId);
+
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];
   const startUtc = new Date(start.toISOString());
@@ -84,6 +92,8 @@ export async function assignRecruiter(
   userId: string,
   slotType: SlotType,
 ) {
+  await requireAdminSession();
+
   if (slotType === "interview") {
     await db.insert(recruiterToInterview).values({
       recruiterId: userId,
@@ -102,6 +112,8 @@ export async function unassignRecruiter(
   userId: string,
   slotType: SlotType,
 ) {
+  await requireAdminSession();
+
   if (slotType === "interview") {
     await db
       .delete(recruiterToInterview)

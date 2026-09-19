@@ -14,6 +14,7 @@ import {
 } from "@/lib/final-messages";
 import AdminFinalMessageClient from "@/components/admin/admin-final-message-client";
 import { eq } from "drizzle-orm";
+import { requireAdminSession } from "@/lib/action-guard";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -23,6 +24,7 @@ export default async function AdminTemplates() {
 
   const addAcceptedMessageTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addAcceptedMessageTemplate(update);
@@ -32,8 +34,9 @@ export default async function AdminTemplates() {
     }
   };
 
-  const addRejectedTemplateAction = async (update: any) => {
+  const addRejectedMessageTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addRejectedMessageTemplate(update);
@@ -45,6 +48,7 @@ export default async function AdminTemplates() {
 
   const acceptedMessageOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await db
@@ -59,6 +63,7 @@ export default async function AdminTemplates() {
 
   const rejectedMessageOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await db
@@ -83,7 +88,7 @@ export default async function AdminTemplates() {
         acceptedMessageOverrideAction={acceptedMessageOverrideAction}
         rejectedMessageOverrideAction={rejectedMessageOverrideAction}
         addAcceptedMessageTemplateAction={addAcceptedMessageTemplateAction}
-        addRejectedMessageTemplateAction={addRejectedTemplateAction}
+        addRejectedMessageTemplateAction={addRejectedMessageTemplateAction}
         session={session}
         jwt={jwt}
         acceptedMessageTemplate={acceptedTemplate}

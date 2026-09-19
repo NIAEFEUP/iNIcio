@@ -29,6 +29,7 @@ import { generateJWT } from "@/lib/jwt";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { getRole } from "@/lib/role";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
+import { requireRecruiterSession } from "@/lib/action-guard";
 
 export default async function DynamicPage({ params }: any) {
   const { id } = await params;
@@ -45,21 +46,14 @@ export default async function DynamicPage({ params }: any) {
 
   async function handleContentSave(content: any) {
     "use server";
-
-    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
-      redirect("/");
-
+    await requireRecruiterSession(recruitmentId);
     await updateDynamic(id, content);
   }
 
   async function handleCommentSave(content: Array<any>) {
     "use server";
-
-    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
-      redirect("/");
-
-    await createDynamicComment(id, content, session?.user.id);
-
+    const user = await requireRecruiterSession(recruitmentId);
+    await createDynamicComment(id, content, user.id);
     return true;
   }
 
@@ -68,9 +62,7 @@ export default async function DynamicPage({ params }: any) {
     classification: string,
   ) {
     "use server";
-
-    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
-      redirect("/");
+    await requireRecruiterSession(recruitmentId);
 
     await db
       .update(candidate)

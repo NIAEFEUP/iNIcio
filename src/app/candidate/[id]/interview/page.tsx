@@ -34,6 +34,7 @@ import { generateJWT } from "@/lib/jwt";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { getRole } from "@/lib/role";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
+import { requireRecruiterSession } from "@/lib/action-guard";
 
 export default async function InterviewPage({ params }: any) {
   const { id } = await params;
@@ -50,30 +51,14 @@ export default async function InterviewPage({ params }: any) {
 
   async function handleContentSave(content: any) {
     "use server";
-
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
-
+    await requireRecruiterSession(recruitmentId);
     await updateInterview(id, content);
   }
 
   async function handleCommentSave(content: Array<any>) {
     "use server";
-
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
-
-    return await addInterviewComment(
-      session ? session.user.id : "",
-      content,
-      id,
-    );
+    const user = await requireRecruiterSession(recruitmentId);
+    return await addInterviewComment(user.id, content, id);
   }
 
   async function addInterviewClassification(
@@ -81,9 +66,7 @@ export default async function InterviewPage({ params }: any) {
     classification: string,
   ) {
     "use server";
-
-    if (!session || !(await isRecruiter(session.user.id, recruitmentId)))
-      redirect("/");
+    await requireRecruiterSession(recruitmentId);
 
     if (!recruitmentId) return;
 
@@ -101,7 +84,10 @@ export default async function InterviewPage({ params }: any) {
   const candidateWithMetadata = await getCandidateWithMetadata(
     id,
     recruitmentId,
-  ).catch(() => undefined);
+  ).catch((err) => {
+    console.error("Error fetching candidate interview metadata:", err);
+    return undefined;
+  });
 
   if (!candidateWithMetadata) notFound();
 
@@ -190,7 +176,7 @@ export default async function InterviewPage({ params }: any) {
             count: answeredCount,
             content: (
               <CandidateAnswers
-                key={crypto.randomUUID()}
+                key={candidateWithMetadata.id}
                 application={candidateWithMetadata.application}
               />
             ),

@@ -8,6 +8,7 @@ import {
   markDynamicRecruitmentPhaseAsDone,
 } from "@/lib/recruitment";
 import { headers } from "next/headers";
+import { getSessionUser } from "@/lib/action-guard";
 
 export default async function CandidateDynamicSchedule() {
   const session = await auth.api.getSession({
@@ -17,12 +18,14 @@ export default async function CandidateDynamicSchedule() {
   async function confirm(slots: Array<Slot>) {
     "use server";
 
-    if (!session?.user.id) return false;
+    const user = await getSessionUser();
+
+    if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
 
     try {
-      for (const slot of slots) {
-        await tryToAddCandidateToDynamic(session?.user.id, slot);
-        await markDynamicRecruitmentPhaseAsDone(session?.user.id);
+      for (const slot of slots.slice(0, 1)) {
+        await tryToAddCandidateToDynamic(user.id, slot);
+        await markDynamicRecruitmentPhaseAsDone(user.id);
       }
 
       return true;
