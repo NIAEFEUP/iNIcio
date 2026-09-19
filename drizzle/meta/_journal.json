@@ -22,13 +22,6 @@
       "when": 1789823363461,
       "tag": "0002_slot_type_interview",
       "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1789836202994,
-      "tag": "0003_certain_stardust",
-      "breakpoints": true
     }
   ]
 }

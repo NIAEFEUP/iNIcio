@@ -1,1 +1,0 @@
-ALTER TABLE "recruiter_vote" ADD CONSTRAINT "recruiter_vote_unique" UNIQUE("voting_phase_id","recruiter_id","candidate_id");
