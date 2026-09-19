@@ -1,14 +1,38 @@
 import AdminResources from "@/components/admin/admin-resources";
-import { recruiter } from "@/db/schema";
-import { db, getAllCandidateUsers } from "@/lib/db";
+import RecruitmentSelector from "@/components/admin/recruitment-selector";
+import { getAllCandidateUsers } from "@/lib/db";
+import { getAllRecruiters } from "@/lib/recruiter";
+import { getActiveRecruitment, getRecruitments } from "@/lib/recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export default async function AdminPage() {
-  const recruiters = await db.select().from(recruiter);
-  const candidates = await getAllCandidateUsers();
+interface AdminPageProps {
+  searchParams: Promise<{ recruitmentId?: string | string[] }>;
+}
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const params = await searchParams;
+  const recruitments = await getRecruitments();
+
+  let recruitmentId = (await getActiveRecruitment())?.id;
+  if (typeof params.recruitmentId === "string") {
+    const parsed = Number(params.recruitmentId);
+
+    if (
+      Number.isInteger(parsed) &&
+      parsed > 0 &&
+      recruitments.some((recruitment) => recruitment.id === parsed)
+    ) {
+      recruitmentId = parsed;
+    }
+  }
+
+  const recruiters = recruitmentId ? await getAllRecruiters(recruitmentId) : [];
+  const candidates = recruitmentId
+    ? await getAllCandidateUsers(recruitmentId)
+    : [];
 
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -17,11 +41,17 @@ export default async function AdminPage() {
       <h1 className="text-center text-4xl font-bold">AdminUI - Recrutamento</h1>
 
       <div className="mx-16 md:mx-64 flex flex-col gap-4">
-        <div className="flex flex-row w-full justify-between">
+        <div className="flex flex-row flex-wrap items-center w-full justify-between gap-2">
           <h2 className="font-bold">Gestão</h2>
-          <CandidatesMailTo
-            emails={candidates.map((candidate) => candidate.email)}
-          />
+          <div className="flex flex-row flex-wrap items-center gap-2">
+            <RecruitmentSelector
+              recruitments={recruitments}
+              selectedId={recruitmentId}
+            />
+            <CandidatesMailTo
+              emails={candidates.map((candidate) => candidate.email)}
+            />
+          </div>
         </div>
 
         <AdminResources
