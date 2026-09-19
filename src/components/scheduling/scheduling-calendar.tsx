@@ -1,18 +1,21 @@
 "use client";
 
-import { Slot } from "@/lib/db";
-import { Calendar, CheckCircle, Clock } from "lucide-react";
 import { useState } from "react";
-
-import { cn } from "@/lib/utils";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "../ui/button";
-
-import { getDateString, getDateStringPT, getTimeString } from "@/lib/date";
-
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Calendar, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+
+import { Slot } from "@/lib/db";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getDateStringPT, getTimeString } from "@/lib/date";
 
 interface SchedulingCalendarProps {
   slots: Array<Slot>;
@@ -32,203 +35,219 @@ export default function SchedulingCalendar({
   const router = useRouter();
 
   const [selectedSlots, setSelectedSlots] = useState<Array<Slot>>([]);
-  const [isConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getUniqueTimeSlots = () => {
-    return [
-      ...new Set(
-        slots.map((slot) =>
-          slot.start.toLocaleTimeString("pt-PT", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }),
-        ),
-      ),
-    ].sort();
-  };
+  // Group slots by date key YYYY-MM-DD
+  const slotsByDate = slots.reduce<Record<string, Slot[]>>((acc, slot) => {
+    const dateKey = slot.start.toISOString().split("T")[0];
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(slot);
+    return acc;
+  }, {});
 
-  const getUniqueDates = () => {
-    return [
-      ...new Set(
-        slots.map(
-          (slot) =>
-            `${slot.start.getFullYear()}-${slot.start.getMonth() + 1}-${slot.start.getDate()}`,
-        ),
-      ),
-    ].sort();
-  };
+  // Sort dates
+  const sortedDates = Object.keys(slotsByDate).sort();
 
-  const getSlotForDateTime = (date: string, time: string) => {
-    return slots.find(
-      (slot) =>
-        getDateString(slot.start) === date &&
-        getTimeString(slot.start) === time,
-    );
-  };
-
-  const formatDateHeader = (dateString: string) => {
-    const date = new Date(dateString);
-    return {
-      dayName: date.toLocaleDateString("pt-PT", { weekday: "short" }),
-      dayNumber: date.getDate(),
-      month: date.toLocaleDateString("pt-PT", { month: "short" }),
-    };
-  };
+  // Sort slots within each date
+  for (const dateKey of sortedDates) {
+    slotsByDate[dateKey].sort((a, b) => a.start.getTime() - b.start.getTime());
+  }
 
   const handleSlotSelect = (slot: Slot) => {
     if (multipleSlots) {
-      setSelectedSlots((prevSlots) => [...prevSlots, slot]);
+      if (selectedSlots.some((s) => s.id === slot.id)) {
+        setSelectedSlots(selectedSlots.filter((s) => s.id !== slot.id));
+      } else {
+        setSelectedSlots([...selectedSlots, slot]);
+      }
     } else {
       setSelectedSlots([slot]);
     }
   };
 
   const isSlotSelected = (slot: Slot) => {
-    return selectedSlots.filter((s) => s.id === slot.id).length > 0;
+    return selectedSlots.some((s) => s.id === slot.id);
   };
 
   const handleConfirm = async () => {
-    if (await confirmAction(selectedSlots)) {
-      router.push(confirmUrl);
-    } else {
-      toast("Ocorreu um erro ao tentar confirmar a tua escolha");
+    if (selectedSlots.length === 0) return;
+    setIsSubmitting(true);
+
+    try {
+      const ok = await confirmAction(selectedSlots);
+      if (ok) {
+        toast.success("Horário agendado com sucesso!");
+        router.push(confirmUrl);
+        router.refresh();
+      } else {
+        toast.error("Ocorreu um erro ao tentar agendar o horário.");
+      }
+    } catch {
+      toast.error("Erro ao comunicar com o servidor.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const timeSlots = getUniqueTimeSlots();
-  const dates = getUniqueDates();
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl flex flex-col gap-y-4">
-      <>
-        {selectedSlots.length > 0 && !isConfirmed && (
-          <Card className="p-4">
-            <div className="flex flex-row items-center">
-              <CardHeader className="w-full">
-                <CardTitle className="flex items-center gap-2">
-                  Confirma a tua escolha
-                </CardTitle>
-              </CardHeader>
-              <Button onClick={handleConfirm}>Confirmar</Button>
+    <div className="space-y-6">
+      {/* Current booking card if candidate already booked */}
+      {chosenSlot && (
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-5 text-primary" />
+              <CardTitle className="text-base">Horário Atual Marcado</CardTitle>
             </div>
-          </Card>
-        )}
-
-        {selectedSlots.length === 0 && chosenSlot && (
-          <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-green-800 dark:text-green-200">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50">
-                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-lg font-semibold">Agendado</div>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-green-700 dark:text-green-300">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{getDateStringPT(chosenSlot.start)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{getTimeString(chosenSlot.start)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        )}
-
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                </CardTitle>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Outubro</span>
-              </div>
-            </div>
+            <CardDescription>
+              Já tens um horário reservado. Se desejares alterar, escolhe um
+              novo horário abaixo e confirma a seleção.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="text-left p-3 border-b font-medium text-muted-foreground min-w-[100px]">
-                      Horas
-                    </th>
-                    {dates.map((date) => {
-                      const dateInfo = formatDateHeader(date);
-                      return (
-                        <th
-                          key={date}
-                          className="text-center p-3 border-b font-medium min-w-[120px]"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm text-muted-foreground">
-                              {dateInfo.dayName}
-                            </span>
-                            <span className="text-lg font-semibold">
-                              {dateInfo.dayNumber}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {dateInfo.month}
-                            </span>
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {timeSlots.map((time) => (
-                    <tr key={time} className="border-b">
-                      <td className="p-3 font-medium text-sm">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          {time}
-                        </div>
-                      </td>
-                      {dates.map((date) => {
-                        const slot = getSlotForDateTime(date, time);
-
-                        return (
-                          <td key={`${date}-${time}`} className="p-2">
-                            {slot && (
-                              <Button
-                                key={slot.id}
-                                variant={
-                                  isSlotSelected(slot) ? "default" : "outline"
-                                }
-                                size="sm"
-                                className={cn(
-                                  "w-full h-auto p-2 text-xs hover:bg-gray-400",
-                                  isSlotSelected(slot) ? "bg-gray-200" : "",
-                                )}
-                                onClick={() => handleSlotSelect(slot)}
-                              >
-                                <div className="flex flex-col items-center gap-1">
-                                  <span className="text-xs text-muted-foreground">
-                                    {slot.duration} min
-                                  </span>
-                                </div>
-                              </Button>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <CardContent className="pt-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="secondary" className="gap-1.5 py-1 px-3 text-xs">
+                <Calendar className="size-3.5" />
+                {getDateStringPT(chosenSlot.start)}
+              </Badge>
+              <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs">
+                <Clock className="size-3.5" />
+                {getTimeString(chosenSlot.start)}
+                {chosenSlot.duration ? ` (${chosenSlot.duration} min)` : ""}
+              </Badge>
             </div>
           </CardContent>
         </Card>
-      </>
+      )}
+
+      {/* Selected slot pending confirmation */}
+      {selectedSlots.length > 0 && (
+        <Card className="border-primary/50 bg-primary/5 shadow-sm">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                Horário Selecionado
+              </p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {selectedSlots.map((s) => (
+                  <Badge key={s.id} variant="default" className="text-xs">
+                    {getDateStringPT(s.start)} às {getTimeString(s.start)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedSlots([])}
+                disabled={isSubmitting}
+              >
+                Limpar
+              </Button>
+              <Button size="sm" onClick={handleConfirm} disabled={isSubmitting}>
+                {isSubmitting ? "A confirmar..." : "Confirmar Agendamento"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Available slots list grouped by day */}
+      {sortedDates.length === 0 ? (
+        <Card className="text-center p-8">
+          <CardHeader>
+            <div className="mx-auto size-10 rounded-full bg-muted flex items-center justify-center mb-2">
+              <AlertCircle className="size-5 text-muted-foreground" />
+            </div>
+            <CardTitle className="text-base">
+              Sem horários disponíveis
+            </CardTitle>
+            <CardDescription className="max-w-md mx-auto">
+              Não existem horários vagos de momento. Por favor aguarda que a
+              equipa disponibilize novas vagas ou entra em contacto se tiveres
+              dúvidas.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              Dias & Vagas Disponíveis
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {slots.length} {slots.length === 1 ? "vaga" : "vagas"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sortedDates.map((dateKey) => {
+              const daySlots = slotsByDate[dateKey];
+              const firstSlotDate = daySlots[0].start;
+              const dayName = firstSlotDate.toLocaleDateString("pt-PT", {
+                weekday: "long",
+              });
+              const formattedDate = firstSlotDate.toLocaleDateString("pt-PT", {
+                day: "numeric",
+                month: "long",
+              });
+
+              return (
+                <Card key={dateKey} className="overflow-hidden">
+                  <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <CardTitle className="text-sm font-semibold capitalize text-foreground">
+                          {dayName}
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          {formattedDate}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {daySlots.length}{" "}
+                        {daySlots.length === 1 ? "horário" : "horários"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {daySlots.map((slot) => {
+                        const selected = isSlotSelected(slot);
+                        const isChosen = chosenSlot?.id === slot.id;
+
+                        return (
+                          <Button
+                            key={slot.id}
+                            type="button"
+                            variant={selected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSlotSelect(slot)}
+                            className={`flex flex-col items-center justify-center h-auto py-2.5 px-2 ${
+                              isChosen && !selected
+                                ? "border-primary/50 text-primary"
+                                : ""
+                            }`}
+                          >
+                            <span className="text-xs font-medium">
+                              {getTimeString(slot.start)}
+                            </span>
+                            <span className="text-[10px] opacity-75">
+                              {slot.duration ? `${slot.duration} min` : ""}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
