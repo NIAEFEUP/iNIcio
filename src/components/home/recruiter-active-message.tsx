@@ -1,104 +1,84 @@
-import { Calendar } from "lucide-react";
-
 import Link from "next/link";
+import { Users, Calendar, ArrowRight, ShieldCheck } from "lucide-react";
+
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
-import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function RecruiterActiveMessage() {
   return (
-    <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 h-full w-full">
-      <div className="container mx-auto px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
-            Fazes parte da equipa de{" "}
-            <span className="text-red-600 relative inline-block">
-              Recrutamento
-              <svg
-                className="absolute -bottom-2 left-0 w-full"
-                height="8"
-                viewBox="0 0 200 8"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M1 5.5C50 1.5 150 1.5 199 5.5"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  className="text-red-600"
-                />
-              </svg>
-            </span>
-          </h1>
+    <div className="container mx-auto px-4 py-12 md:py-16 max-w-4xl text-center">
+      <div className="flex flex-col items-center space-y-4 max-w-2xl mx-auto">
+        <Badge
+          variant="secondary"
+          className="gap-1.5 py-1 px-3 text-xs font-medium"
+        >
+          <ShieldCheck className="size-3.5 text-primary" />
+          Área de Recrutador
+        </Badge>
 
-          <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-            Podes ver os candidatos e comentar nas suas candidaturas.
-          </p>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground text-balance">
+          Bem-vindo à Gestão do Recrutamento
+        </h1>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-            <Link href="/candidates" className="group">
-              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
-                    <Users className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
-                  </div>
-                  <CardTitle className="text-2xl text-left">
-                    Ver Candidatos
-                  </CardTitle>
-                  <CardDescription className="text-base text-left">
-                    Acede à lista completa de candidatos e revê as suas
-                    candidaturas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
-                    Explorar candidatos
-                    <span className="inline-block transition-transform group-hover:translate-x-1">
-                      →
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/recruiter/availability" className="group">
-              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
-                    <Calendar className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
-                  </div>
-                  <CardTitle className="text-2xl text-left">
-                    Marcar disponibilidades
-                  </CardTitle>
-                  <CardDescription className="text-base text-left">
-                    Define os teus horários disponíveis para entrevistas e
-                    reuniões
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
-                    Gerir calendário
-                    <span className="inline-block transition-transform group-hover:translate-x-1">
-                      →
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"></div>
-        </div>
+        <p className="text-base md:text-lg text-muted-foreground text-pretty max-w-xl mx-auto leading-relaxed">
+          Podes consultar os candidatos inscritos, avaliar submissões e gerir os
+          teus horários de disponibilidade.
+        </p>
       </div>
 
-      <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-20 right-10 w-32 h-32 bg-accent/10 rounded-full blur-xl"></div>
-    </section>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12 text-left">
+        <Card className="flex flex-col justify-between">
+          <CardHeader>
+            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+              <Users className="size-5 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Candidatos</CardTitle>
+            <CardDescription className="text-sm">
+              Consulta todas as candidaturas submetidas, CVs e comentários de
+              avaliação da equipa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Button
+              className="w-full gap-2"
+              render={<Link href="/candidates" />}
+            >
+              Ver Candidatos
+              <ArrowRight className="size-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col justify-between">
+          <CardHeader>
+            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+              <Calendar className="size-5 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Disponibilidades</CardTitle>
+            <CardDescription className="text-sm">
+              Define os teus horários disponíveis para entrevistas individuais e
+              dinâmicas de grupo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              render={<Link href="/recruiter/availability" />}
+            >
+              Definir Horários
+              <ArrowRight className="size-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
