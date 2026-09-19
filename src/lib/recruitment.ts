@@ -9,7 +9,7 @@ import {
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
 import {
   getRecruitmentState,
   RECRUITMENT_PHASE_IDENTIFIERS,
@@ -250,7 +250,7 @@ export async function getInterviewSlots(recruitmentId?: number) {
       .from(slot)
       .where(
         and(
-          or(eq(slot.type, "interview-dynamic"), eq(slot.type, "interview")),
+          eq(slot.type, "interview"),
           eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),
@@ -271,7 +271,7 @@ export async function getDynamicSlots(recruitmentId?: number) {
       .from(slot)
       .where(
         and(
-          or(eq(slot.type, "dynamic"), eq(slot.type, "interview-dynamic")),
+          eq(slot.type, "dynamic"),
           eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),

@@ -25,7 +25,7 @@ Start a y-websocket server:
 HOST=localhost PORT=1234 npx y-websocket
 ```
 
-### Client Code:
+### Client Code
 
 ```js
 import * as Y from "yjs";
