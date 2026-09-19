@@ -15,7 +15,7 @@ export const Mention = createReactInlineContentSpec(
   },
   {
     render: (props) => (
-      <span style={{ backgroundColor: "#8400ff33" }}>
+      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
         @{props.inlineContent.props.userName}
       </span>
     ),

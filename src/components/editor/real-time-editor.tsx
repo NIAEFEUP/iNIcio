@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -17,6 +23,9 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
+import { useTheme } from "next-themes";
+
+const emptySubscribe = () => () => {};
 
 interface RealTimeEditorProps {
   token?: string;
@@ -45,6 +54,14 @@ export default function RealTimeEditor({
   collab = true,
   boxed = true,
 }: RealTimeEditorProps) {
+  const { resolvedTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+  const editorTheme = mounted && resolvedTheme === "dark" ? "dark" : "light";
+
   const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
   const fragment = useMemo(
     () => (doc ? doc.getXmlFragment(`document-store-${docId}`) : null),
@@ -159,6 +176,7 @@ export default function RealTimeEditor({
 
   return (
     <BlockNoteView
+      theme={editorTheme}
       className={
         boxed
           ? "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
@@ -166,20 +184,17 @@ export default function RealTimeEditor({
       }
       editor={editor}
       editable={true}
-      data-color-scheme="light"
       onChange={onChange}
     >
-      <>
-        <SuggestionMenuController
-          triggerCharacter={"@"}
-          getItems={async (query) =>
-            filterSuggestionItems(
-              getMentionMenuItems(mentionItems, editor),
-              query,
-            )
-          }
-        />
-      </>
+      <SuggestionMenuController
+        triggerCharacter={"@"}
+        getItems={async (query) =>
+          filterSuggestionItems(
+            getMentionMenuItems(mentionItems, editor),
+            query,
+          )
+        }
+      />
     </BlockNoteView>
   );
 }

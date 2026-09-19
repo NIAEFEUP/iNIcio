@@ -129,21 +129,74 @@
   }
 }
 
+/* BlockNote editor container & theme variables */
 .bn-container.bn-root {
-  --bn-colors-editor-background: var(--color-background);
-  --bn-colors-editor-text: var(--color-foreground);
-  --bn-colors-hovered-background: var(--color-muted);
-  --bn-colors-hovered-text: var(--color-foreground);
-  --bn-colors-menu-background: var(--color-popover);
-  --bn-colors-menu-text: var(--color-popover-foreground);
-  --bn-colors-border: var(--color-border);
+  --bn-colors-editor-background: transparent;
+  --bn-colors-editor-text: var(--foreground);
+  --bn-colors-hovered-background: var(--muted);
+  --bn-colors-hovered-text: var(--foreground);
+  --bn-colors-menu-background: var(--popover);
+  --bn-colors-menu-text: var(--popover-foreground);
+  --bn-colors-border: var(--border);
+  --bn-colors-side-menu: var(--muted-foreground);
   --bn-border-radius: 0.75rem;
   --bn-border-radius-medium: 0.75rem;
   --bn-border-radius-large: 0.75rem;
 }
 
+/* BlockNote editor core styles */
 .bn-container .bn-editor {
-  background-color: transparent;
+  background-color: transparent !important;
+  color: var(--foreground) !important;
   border-radius: 0;
   padding-inline: 0.75rem;
+}
+
+/* Placeholder styling: match theme muted-foreground */
+.bn-container
+  .bn-block-content:has(.ProseMirror-trailingBreak:only-child)::after {
+  color: var(--muted-foreground) !important;
+}
+
+/* BlockNote portal element fix:
+   @blocknote/react mounts editor.portalElement inside .bn-container and copies className onto it.
+   This caused the portal element to render as a duplicate "inner box" with background, border, and min-height.
+   Resetting these ensures the portal remains an invisible wrapper for popovers and suggestion menus. */
+.bn-container > .bn-root:not(.bn-container),
+.bn-root:not(.bn-container) {
+  min-height: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  pointer-events: none;
+}
+
+.bn-container > .bn-root:not(.bn-container) > *,
+.bn-root:not(.bn-container) > * {
+  pointer-events: auto;
+}
+
+/* Suggestion menu & floating popover styling */
+.bn-mantine .bn-menu-dropdown,
+.bn-suggestion-menu {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: var(--radius) !important;
+}
+
+.bn-mantine .mantine-Menu-item {
+  color: var(--popover-foreground) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+}
+
+.bn-mantine .mantine-Menu-item[aria-selected="true"],
+.bn-mantine .mantine-Menu-item:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
 }
