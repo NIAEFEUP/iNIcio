@@ -1,9 +1,11 @@
 name: Deploy
+run-name: Deploy to ${{ github.ref_name == 'main' && 'Production' || 'Staging' }}
 
 on:
   push:
     branches:
       - main
+      - develop
 
 jobs:
   build:

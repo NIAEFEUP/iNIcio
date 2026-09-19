@@ -20,8 +20,8 @@ export const slot = pgTable(
     duration: integer("duration").notNull(),
     quantity: integer("quantity").notNull().default(1),
     type: text("type", {
-      enum: ["interview", "dynamic", "interview-dynamic"],
-    }).default("interview-dynamic"),
+      enum: ["interview", "dynamic"],
+    }).default("interview"),
     recruitmentId: integer("recruitment_id")
       .notNull()
       .references(() => recruitment.id, { onDelete: "cascade" }),
