@@ -286,7 +286,7 @@ async function main() {
     recruitmentId: number,
     start: string,
     duration: number,
-    type: "interview" | "dynamic" | "interview-dynamic",
+    type: "interview" | "dynamic",
     quantity = 1,
   ) {
     const [row] = await db
@@ -463,7 +463,7 @@ async function main() {
       lectiveYear: pastLectiveYear,
       semester: 1,
       title: `Recrutamento ${pastLectiveYear} - 1º Semestre`,
-      active: "false",
+      active: false,
       start: new Date("2025-09-01T00:00:00.000Z"),
       end: new Date("2025-10-01T00:00:00.000Z"),
     })
@@ -516,7 +516,7 @@ async function main() {
     pastRecruitment.id,
     "2025-09-21T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const pastInterviewSlot3 = await seedSlot(
     pastRecruitment.id,
@@ -727,7 +727,7 @@ async function main() {
       lectiveYear: currentLectiveYear,
       semester: 1,
       title: `Recrutamento ${currentLectiveYear} - 1º Semestre`,
-      active: "true",
+      active: true,
       start: new Date("2026-09-01T00:00:00.000Z"),
       end: new Date("2026-09-30T16:00:00.000Z"),
     })
@@ -841,7 +841,7 @@ async function main() {
     currentRecruitment.id,
     "2026-09-17T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const slotDynamic1 = await seedSlot(
     currentRecruitment.id,

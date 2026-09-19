@@ -6,18 +6,22 @@ import {
   getRecruitmentPhases,
   isRecruitmentPhaseDone,
 } from "@/lib/recruitment";
+import {
+  getRecruitmentPhaseKind,
+  type RecruitmentPhaseKind,
+} from "@/lib/recruitment-state";
 import { RecruitmentPhase } from "@/lib/db";
 import { headers } from "next/headers";
 
-const checkedVerifiers: {
-  [key: string]: (
-    userId: string | undefined,
-    phase: RecruitmentPhase,
-  ) => Promise<boolean>;
-} = {
-  candidatura: (userId, phase) => hasApplication(userId, phase.recruitmentId),
-  entrevista: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
-  dinâmica: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
+const phaseCheckers: Partial<
+  Record<
+    RecruitmentPhaseKind,
+    (userId: string | undefined, phase: RecruitmentPhase) => Promise<boolean>
+  >
+> = {
+  application: (userId, phase) => hasApplication(userId, phase.recruitmentId),
+  interview: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
+  dynamic: (userId, phase) => isRecruitmentPhaseDone(userId, phase.id),
 };
 
 export default async function CandidateProgress() {
@@ -27,18 +31,15 @@ export default async function CandidateProgress() {
 
   const progressPhases = await Promise.all(
     (await getRecruitmentPhases("candidate")).map(async (phase) => {
-      const isDone = checkedVerifiers[
-        phase.clientIdentifier.trim().toLowerCase()
-      ]
-        ? await checkedVerifiers[phase.clientIdentifier.trim().toLowerCase()](
-            session?.user.id,
-            phase,
-          )
+      const kind = getRecruitmentPhaseKind(phase);
+
+      const checked = kind
+        ? ((await phaseCheckers[kind]?.(session?.user.id, phase)) ?? false)
         : false;
 
       return {
         ...phase,
-        checked: isDone,
+        checked,
       };
     }),
   );

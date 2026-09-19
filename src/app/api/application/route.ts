@@ -8,14 +8,16 @@ import {
   application,
   applicationInterests,
   candidate,
+  recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
   user,
 } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
 import { getActiveRecruitment } from "@/lib/recruitment";
+import { getRecruitmentState } from "@/lib/recruitment-state";
 import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
@@ -83,74 +85,97 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
 
-  try {
-    await db.transaction(async (tx) => {
-      const app = await tx
-        .insert(application)
-        .values({
-          submittedAt: new Date(),
-          studentNumber: Number(data.student_number),
-          linkedIn: data.linkedin,
-          github: data.github,
-          personalWebsite: data.website,
-          interestJustification: data.interest_justification,
-          phone: data.phone,
-          degree: data.degree,
-          curricularYear: data.curricular_year,
-          curriculum: fromFullUrlToPath(data.curriculum),
-          experience: data.experience,
-          motivation: data.motivation,
-          selfPromotion: data.self_promotion,
-          suggestions: data.suggestions,
-          accepted: false,
-          candidateId: session.user.id,
-          recruitmentId: activeRecruitment.id,
-        })
-        .returning({ id: application.id });
+  const result = await db.transaction(async (tx) => {
+    // Lock the target recruitment so eligibility cannot change between the
+    // check and the writes, even if an admin switches/closes it concurrently.
+    const [target] = await tx
+      .select()
+      .from(recruitment)
+      .where(eq(recruitment.id, activeRecruitment.id))
+      .for("update");
 
-      for (const interest of data.interests) {
-        await tx.insert(applicationInterests).values({
-          applicationId: app[0].id,
-          interest,
-        });
-      }
+    if (!target) {
+      return {
+        ok: false as const,
+        status: 400,
+        error: "Não existe nenhum recrutamento ativo",
+      };
+    }
+
+    const phases = await tx
+      .select()
+      .from(recruitmentPhase)
+      .where(eq(recruitmentPhase.recruitmentId, target.id))
+      .for("update");
+
+    if (!getRecruitmentState(target, phases).canApply) {
+      return {
+        ok: false as const,
+        status: 403,
+        error: "As candidaturas não estão abertas",
+      };
+    }
+
+    const app = await tx
+      .insert(application)
+      .values({
+        submittedAt: new Date(),
+        studentNumber: Number(data.student_number),
+        linkedIn: data.linkedin,
+        github: data.github,
+        personalWebsite: data.website,
+        interestJustification: data.interest_justification,
+        phone: data.phone,
+        degree: data.degree,
+        curricularYear: data.curricular_year,
+        curriculum: fromFullUrlToPath(data.curriculum),
+        experience: data.experience,
+        motivation: data.motivation,
+        selfPromotion: data.self_promotion,
+        suggestions: data.suggestions,
+        accepted: false,
+        candidateId: session.user.id,
+        recruitmentId: target.id,
+      })
+      .returning({ id: application.id });
+
+    for (const interest of data.interests) {
+      await tx.insert(applicationInterests).values({
+        applicationId: app[0].id,
+        interest,
+      });
+    }
+
+    await tx
+      .insert(candidate)
+      .values({
+        userId: session.user.id,
+        recruitmentId: target.id,
+      })
+      .onConflictDoNothing();
+
+    for (const phase of phases) {
+      if (phase.role !== "candidate") continue;
 
       await tx
-        .insert(candidate)
+        .insert(recruitmentPhaseStatus)
         .values({
           userId: session.user.id,
-          recruitmentId: activeRecruitment.id,
+          phaseId: phase.id,
+          status: "todo",
         })
         .onConflictDoNothing();
+    }
 
-      const phases = await tx
-        .select()
-        .from(recruitmentPhase)
-        .where(
-          and(
-            eq(recruitmentPhase.recruitmentId, activeRecruitment.id),
-            eq(recruitmentPhase.role, "candidate"),
-          ),
-        );
+    return { ok: true as const };
+  });
 
-      for (const phase of phases) {
-        await tx
-          .insert(recruitmentPhaseStatus)
-          .values({
-            userId: session.user.id,
-            phaseId: phase.id,
-            status: "todo",
-          })
-          .onConflictDoNothing();
-      }
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Failed to submit application:", error);
+  if (!result.ok) {
     return NextResponse.json(
-      { message: "Erro interno no servidor ao submeter a candidatura." },
-      { status: 500 },
+      { error: result.error },
+      { status: result.status },
     );
   }
+
+  return NextResponse.json({ success: true });
 }
