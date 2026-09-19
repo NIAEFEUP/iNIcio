@@ -125,13 +125,13 @@ export default async function InterviewPage({ params }: any) {
     <EvaluationLayout
       header={
         <PageHeader
+          backHref={`/candidate/${id}`}
           title={candidateWithMetadata.name}
           actions={
             <CandidateHeaderActions
               candidateId={candidateWithMetadata.id}
               currentPage="interview"
               dynamicId={candidateWithMetadata.dynamic?.dynamicId}
-              backHref={`/candidate/${id}`}
             />
           }
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -86,6 +86,11 @@ export default function CandidatesClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const isMountedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+  }, []);
 
   const columns = useMemo<ColumnDef<CandidateWithMetadata>[]>(
     () => [
@@ -261,11 +266,22 @@ export default function CandidatesClient({
       globalFilter,
       pagination,
     },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
+    autoResetPageIndex: false,
+    onSortingChange: (updater) => {
+      if (isMountedRef.current) setSorting(updater);
+    },
+    onColumnFiltersChange: (updater) => {
+      if (isMountedRef.current) setColumnFilters(updater);
+    },
+    onColumnVisibilityChange: (updater) => {
+      if (isMountedRef.current) setColumnVisibility(updater);
+    },
+    onGlobalFilterChange: (updater) => {
+      if (isMountedRef.current) setGlobalFilter(updater);
+    },
+    onPaginationChange: (updater) => {
+      if (isMountedRef.current) setPagination(updater);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),

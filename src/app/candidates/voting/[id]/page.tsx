@@ -87,7 +87,7 @@ export default async function CandidateVotingPage({
 
   return (
     <>
-      <PageHeader title="Votação" />
+      <PageHeader title="Votação" backHref="/candidates/voting" />
       <CandidateVotingSlideshow
         candidates={currentVotingPhase.candidates}
         admin={admin ? true : false}

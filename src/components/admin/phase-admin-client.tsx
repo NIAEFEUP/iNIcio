@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -112,6 +112,10 @@ export default function PhaseAdminClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const isMountedRef = useRef(false);
+  useEffect(() => {
+    isMountedRef.current = true;
+  }, []);
 
   // Keep phase badges fresh while the page stays open.
   useEffect(() => {
@@ -314,10 +318,19 @@ export default function PhaseAdminClient({
     data: phasesState,
     columns,
     state: { sorting, columnFilters, globalFilter, pagination },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
+    autoResetPageIndex: false,
+    onSortingChange: (u) => {
+      if (isMountedRef.current) setSorting(u);
+    },
+    onColumnFiltersChange: (u) => {
+      if (isMountedRef.current) setColumnFilters(u);
+    },
+    onGlobalFilterChange: (u) => {
+      if (isMountedRef.current) setGlobalFilter(u);
+    },
+    onPaginationChange: (u) => {
+      if (isMountedRef.current) setPagination(u);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),

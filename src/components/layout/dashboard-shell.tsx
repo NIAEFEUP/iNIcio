@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cookies, headers } from "next/headers";
 import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import type { RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { isAdmin } from "@/lib/admin";
@@ -6,9 +7,11 @@ import { auth } from "@/lib/auth";
 import { getRecruitments } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 import { getSelectedRecruitmentId } from "@/lib/selected-recruitment";
-import { headers } from "next/headers";
 
 export async function DashboardShell({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -52,6 +55,7 @@ export async function DashboardShell({ children }: { children: ReactNode }) {
       isRecruiter={Boolean(userIsRecruiter)}
       recruitments={recruitments}
       selectedRecruitmentId={selectedRecruitmentId ?? undefined}
+      defaultOpen={defaultOpen}
     >
       {children}
     </SidebarLayout>

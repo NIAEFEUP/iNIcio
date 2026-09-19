@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
 import CommentFrame from "@/components/comments/comment-frame";
 import DynamicCandidatesCard from "@/components/dynamic/dynamic-candidates-card";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
@@ -100,6 +99,7 @@ export default async function DynamicPage({ params }: any) {
     <EvaluationLayout
       header={
         <PageHeader
+          backHref="/candidates"
           title={
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -110,12 +110,6 @@ export default async function DynamicPage({ params }: any) {
                 {dynamic.candidates.length === 1 ? "candidato" : "candidatos"}
               </Badge>
             </div>
-          }
-          actions={
-            <CandidateHeaderActions
-              currentPage="dynamic"
-              backHref="/candidates"
-            />
           }
         />
       }

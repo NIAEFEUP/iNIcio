@@ -85,6 +85,10 @@ export default function RecruiterAdminClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const isMountedRef = useRef(false);
+  useEffect(() => {
+    isMountedRef.current = true;
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -198,9 +202,16 @@ export default function RecruiterAdminClient({
     data: list,
     columns,
     state: { sorting, globalFilter, pagination },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
+    autoResetPageIndex: false,
+    onSortingChange: (u) => {
+      if (isMountedRef.current) setSorting(u);
+    },
+    onGlobalFilterChange: (u) => {
+      if (isMountedRef.current) setGlobalFilter(u);
+    },
+    onPaginationChange: (u) => {
+      if (isMountedRef.current) setPagination(u);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),

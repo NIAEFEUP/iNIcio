@@ -7,6 +7,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import type { User as UserType } from "@/hooks/use-auth";
 import { SidebarContentComponent } from "./sidebar-content";
@@ -76,6 +77,7 @@ export function AppSidebar({
             onLogout={onLogout}
           />
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
 
       <RecruitmentManagerDialog

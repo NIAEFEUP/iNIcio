@@ -28,7 +28,7 @@ export default async function CandidateVotingCreatePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Criar votação" />
+      <PageHeader title="Criar votação" backHref="/candidates/voting" />
       <CandidateVotingChoiceClient
         candidates={candidates}
         authUser={

@@ -59,6 +59,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
     <EvaluationLayout
       header={
         <PageHeader
+          backHref="/candidates"
           title={candidate.name}
           actions={
             <CandidateHeaderActions

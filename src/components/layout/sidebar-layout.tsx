@@ -3,11 +3,7 @@
 import * as React from "react";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { type RecruitmentOption } from "@/components/sidebar/sidebar-header";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toast";
 import { setSelectedRecruitment } from "@/cookies/set";
 import type { User as UserType } from "@/hooks/use-auth";
@@ -25,6 +21,7 @@ export interface SidebarLayoutProps {
   recruitments?: RecruitmentOption[];
   selectedRecruitmentId?: number;
   onSelectRecruitment?: (id: number) => void;
+  defaultOpen?: boolean;
 }
 
 export function SidebarLayout({
@@ -38,6 +35,7 @@ export function SidebarLayout({
   recruitments,
   selectedRecruitmentId,
   onSelectRecruitment,
+  defaultOpen = true,
 }: SidebarLayoutProps) {
   const auth = useAuth();
   const pathname = usePathname();
@@ -59,7 +57,7 @@ export function SidebarLayout({
     });
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <Toaster />
       <AppSidebar
         user={activeUser}
@@ -73,9 +71,6 @@ export function SidebarLayout({
         onSelectRecruitment={activeSelectRecruitment}
       />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
-          <SidebarTrigger className="-ml-1" />
-        </header>
         <div className="flex-1 p-6 py-4">{children}</div>
       </SidebarInset>
     </SidebarProvider>
