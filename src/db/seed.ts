@@ -288,7 +288,7 @@ async function main() {
     recruitmentId: number,
     start: string,
     duration: number,
-    type: "interview" | "dynamic" | "interview-dynamic",
+    type: "interview" | "dynamic",
     quantity = 1,
   ) {
     const [row] = await db
@@ -518,7 +518,7 @@ async function main() {
     pastRecruitment.id,
     "2025-09-21T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const pastInterviewSlot3 = await seedSlot(
     pastRecruitment.id,
@@ -846,7 +846,7 @@ async function main() {
     currentRecruitment.id,
     "2026-09-17T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const slotDynamic1 = await seedSlot(
     currentRecruitment.id,
