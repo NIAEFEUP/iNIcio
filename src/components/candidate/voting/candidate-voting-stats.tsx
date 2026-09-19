@@ -97,6 +97,8 @@ export default function CandidateVotingStats({
           </div>
 
           <Button
+            title="Resetar votos deste candidato"
+            aria-label="Resetar votos deste candidato"
             onClick={async () => {
               await resetCandidateVotes(
                 currentVotingPhase?.id,
@@ -105,7 +107,8 @@ export default function CandidateVotingStats({
               setCurrentCandidateFinished(false);
             }}
           >
-            <RefreshCcw className="h-5 w-5" />
+            <RefreshCcw className="h-4 w-4" />
+            Refazer votação
           </Button>
         </section>
       </div>

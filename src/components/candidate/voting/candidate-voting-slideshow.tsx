@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
@@ -9,10 +9,11 @@ import { RecruiterVote, VotingPhase } from "@/lib/db";
 import CandidateVotingStartButton from "./candidate-voting-start-button";
 import { CandidateVotingProvider } from "@/lib/contexts/CandidateVotingContext";
 import CandidateVotingStats from "./candidate-voting-stats";
-import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
 import CandidateVotingShowResults from "./candidate-voting-show-results";
 import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list";
-import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
+import { useVotingWebSocket } from "@/lib/hooks/use-voting-websocket";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
 interface CandidateVotingSlideshowProps {
   candidates: Array<CandidateWithMetadata & { isFinished: boolean }>;
@@ -37,6 +38,13 @@ interface CandidateVotingSlideshowProps {
     votingPhaseId: number,
     candidateId: string,
   ) => Promise<boolean>;
+  token: string;
+  initialCandidateId: string | null;
+  initialApprovedCount: number;
+  initialRejectedCount: number;
+  initialVotedCount: number;
+  initialTotalToVote: number;
+  initialFinishedCandidates: number;
 }
 
 export function CandidateVotingSlideshow({
@@ -48,108 +56,82 @@ export function CandidateVotingSlideshow({
   changeCurrentVotingPhaseStatusCandidateAction,
   recruiterVotes,
   makeVoteDefinitiveAction,
+  token,
+  initialCandidateId,
+  initialApprovedCount,
+  initialRejectedCount,
+  initialVotedCount,
+  initialTotalToVote,
+  initialFinishedCandidates,
 }: CandidateVotingSlideshowProps) {
-  const [currentIndex, setCurrentIndex] = useState(
-    candidates.findIndex(
-      (c) => c.id === currentVotingPhase?.status.candidateId,
-    ),
+  const initialIndex = Math.max(
+    0,
+    candidates.findIndex((c) => c.id === initialCandidateId),
+  );
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  const currentCandidate = candidates[currentIndex];
+  const [candidateFinished, setCandidateFinished] = useState(
+    currentCandidate?.isFinished || false,
   );
 
-  const [approvedCount, setApprovedCount] = useState<number>(
-    currentVotingPhase?.status.accepted_candidates || 0,
+  const handleStatusChanged = useCallback(
+    (candidateId: string) => {
+      const nextIndex = candidates.findIndex((c) => c.id === candidateId);
+      if (nextIndex !== -1) {
+        setCurrentIndex(nextIndex);
+        setCandidateFinished(candidates[nextIndex]?.isFinished || false);
+      }
+    },
+    [candidates],
   );
-  const [rejectedCount, setRejectedCount] = useState<number>(
-    currentVotingPhase?.status.rejected_candidates || 0,
-  );
-  const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
 
-  const [, setDirection] = useState<"next" | "prev">("next");
+  const {
+    connected,
+    connecting,
+    error,
+    approvedCount,
+    rejectedCount,
+    votedCount,
+    totalToVote,
+    finishedCandidates,
+    reconnect,
+  } = useVotingWebSocket({
+    votingPhaseId: currentVotingPhase?.id ?? 0,
+    token,
+    initialCandidateId,
+    initialApprovedCount,
+    initialRejectedCount,
+    initialVotedCount,
+    initialTotalToVote,
+    initialFinishedCandidates,
+    onStatusChanged: handleStatusChanged,
+  });
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);
 
-  const [currentCandidate, setCurrentCandidate] = useState<
-    CandidateWithMetadata & { isFinished: boolean }
-  >(candidates[currentIndex]);
-
-  const [candidateFinished, setCandidateFinished] = useState<boolean>(
-    currentCandidate?.isFinished || false,
-  );
-
-  const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
-    currentVotingPhase?.id,
-  );
-
-  const { votes } = useCurrentCandidateVotes(
-    currentVotingPhase.id,
-    currentCandidate?.id,
-  );
-
   const handleNext = () => {
     if (currentIndex < candidates.length - 1) {
-      setDirection("next");
       setCurrentIndex(currentIndex + 1);
-      setCurrentCandidate(candidates[currentIndex + 1]);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setDirection("prev");
       setCurrentIndex(currentIndex - 1);
-      setCurrentCandidate(candidates[currentIndex - 1]);
     }
   };
 
-  const votedCount = finishedCandidates;
-
-  const phaseCandidateId = votingPhaseStatus?.candidateId;
-  const [prevPhaseCandidateId, setPrevPhaseCandidateId] = useState<
-    string | undefined
-  >(phaseCandidateId);
-  if (
-    phaseCandidateId !== undefined &&
-    prevPhaseCandidateId !== phaseCandidateId
-  ) {
-    setPrevPhaseCandidateId(phaseCandidateId);
-    const newIndex = candidates.findIndex((c) => c.id === phaseCandidateId);
-    if (newIndex !== -1) {
-      setCurrentIndex(newIndex);
-      setCurrentCandidate(candidates[newIndex]);
-    }
-  }
-
   async function makeVoteDefinitive(decision: "accept" | "reject") {
-    const ok = await makeVoteDefinitiveAction(
+    return await makeVoteDefinitiveAction(
       decision,
       currentVotingPhase?.id,
       currentCandidate?.id,
     );
-
-    if (ok) {
-      if (decision === "accept") {
-        setApprovedCount(approvedCount + 1);
-      } else {
-        setRejectedCount(rejectedCount + 1);
-      }
-
-      setFinishedCandidates((prev) => prev + 1);
-      setCandidateFinished(true);
-    }
-
-    return ok;
   }
 
-  const votesLength = votes?.length;
-  const [prevVotesLength, setPrevVotesLength] = useState<number | undefined>(
-    votesLength,
-  );
-  if (votesLength !== prevVotesLength) {
-    if (votesLength === 0 && prevVotesLength !== 0) {
-      setAlreadyVotedForCurrentCandidate(false);
-    }
-    setPrevVotesLength(votesLength);
-  }
+  const showConnectionBanner = !connected && !connecting;
 
   return (
     <CandidateVotingProvider
@@ -166,17 +148,42 @@ export function CandidateVotingSlideshow({
       }
       recruiterVotes={recruiterVotes}
       currentCandidate={currentCandidate}
-      setCurrentCandidate={setCurrentCandidate}
+      setCurrentCandidate={() => {}}
+      approvedCount={approvedCount}
+      rejectedCount={rejectedCount}
+      votedCount={votedCount}
     >
       {currentVotingPhase ? (
         <div className="flex flex-col bg-background">
+          {showConnectionBanner && (
+            <div className="border-b border-border bg-destructive/10 p-3">
+              <div className="container mx-auto flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>
+                    {error ?? "Ligação perdida com o servidor de votação."}
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={reconnect}
+                  className="gap-1"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Reconectar
+                </Button>
+              </div>
+            </div>
+          )}
+
           {admin && (
             <header className="border-b border-border bg-card">
               <CandidateVotingStats
-                currentCandidateVotes={votes?.length}
+                currentCandidateVotes={votedCount}
                 currentCandidateFinished={candidateFinished}
                 setCurrentCandidateFinished={setCandidateFinished}
-                votedCount={votedCount}
+                votedCount={finishedCandidates}
                 totalToVote={candidates.length}
                 resetCandidateVotes={resetCandidateVotes}
                 approvedCount={approvedCount}
@@ -185,6 +192,12 @@ export function CandidateVotingSlideshow({
               />
             </header>
           )}
+
+          <div className="border-b border-border bg-card py-3">
+            <div className="container mx-auto text-center text-sm text-muted-foreground">
+              {votedCount} de {totalToVote} recrutadores votaram
+            </div>
+          </div>
 
           {!admin && <CandidateVotingOptions />}
 
