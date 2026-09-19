@@ -6,6 +6,7 @@ import {
   changeCurrentVotingPhaseStatusCandidate,
   getCurrentVotingPhase,
   getRecruiterVotes,
+  getVotingPhaseRecruitmentId,
   voteForCandidate,
 } from "@/lib/voting";
 import { headers } from "next/headers";
@@ -35,7 +36,10 @@ export default async function CandidateVotingPage({
   ) {
     "use server";
 
-    const user = await requireRecruiterSession();
+    const recruitmentId = await getVotingPhaseRecruitmentId(id);
+    if (!recruitmentId) throw new Error("Voting phase not found");
+
+    const user = await requireRecruiterSession(recruitmentId);
     const effectiveRecruiterId = user.id;
 
     const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
@@ -57,7 +61,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
-    await requireRecruiterSession();
+    await requireAdminSession();
 
     return await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,

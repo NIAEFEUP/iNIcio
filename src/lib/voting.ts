@@ -112,6 +112,15 @@ export async function createVotingPhase(
   }
 }
 
+export async function getVotingPhaseRecruitmentId(votingPhaseId: number) {
+  const phase = await db.query.votingPhase.findFirst({
+    where: eq(votingPhase.id, votingPhaseId),
+    columns: { recruitmentId: true },
+  });
+
+  return phase?.recruitmentId ?? null;
+}
+
 export async function voteForCandidate(
   votingPhaseId: number,
   recruiterId: string,
@@ -119,6 +128,16 @@ export async function voteForCandidate(
   decision: "approve" | "reject",
 ) {
   try {
+    const phaseCandidate = await db.query.votingPhaseCandidate.findFirst({
+      where: and(
+        eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+        eq(votingPhaseCandidate.candidateId, candidateId),
+      ),
+    });
+
+    // Do not accept votes once the candidate's result has been finalized.
+    if (!phaseCandidate || phaseCandidate.voteFinished) return false;
+
     await db.transaction(async (tx) => {
       await tx.insert(candidateVote).values({
         votingPhaseId,
