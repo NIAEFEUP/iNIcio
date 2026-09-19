@@ -159,13 +159,18 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
     candidates: await Promise.all(
       res.candidates.map(async (c) => ({
         ...c.candidate.user,
-        application: {
-          ...c.candidate.application,
-          profilePicture: await getFilenameUrl(
-            c.candidate.application?.profilePicture,
-          ),
-          interests: c.candidate.application?.interests.map((i) => i.interest),
-        },
+        image: await getFilenameUrl(c.candidate.user?.image),
+        application: c.candidate.application
+          ? {
+              ...c.candidate.application,
+              curriculum: await getFilenameUrl(
+                c.candidate.application?.curriculum,
+              ),
+              interests: c.candidate.application?.interests.map(
+                (i) => i.interest,
+              ),
+            }
+          : null,
         interviewClassification: c.candidate.interviewClassification,
         dynamicClassification: c.candidate.dynamicClassification,
         dynamic: c.candidate.dynamic,
@@ -326,6 +331,7 @@ export async function getAllCandidatesWithDynamic(
 
       return {
         ...c.user,
+        image: await getFilenameUrl(c.user?.image),
         dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
         interview: c.interview as CandidateWithMetadata["interview"],
         interviewClassification: c.interviewClassification ?? "none",
@@ -333,9 +339,7 @@ export async function getAllCandidatesWithDynamic(
         application: c.application
           ? {
               ...c.application,
-              profilePicture: await getFilenameUrl(
-                c.application?.profilePicture,
-              ),
+              curriculum: await getFilenameUrl(c.application?.curriculum),
               interests: c.application?.interests.map((i) => i.interest),
             }
           : null,

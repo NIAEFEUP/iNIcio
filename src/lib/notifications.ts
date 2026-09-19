@@ -27,7 +27,11 @@ export async function getNotifications(userId: string) {
           with: {
             application: {
               with: {
-                candidate: true,
+                candidate: {
+                  with: {
+                    user: true,
+                  },
+                },
               },
             },
             author: true,
