@@ -17,7 +17,7 @@ export default function CandidateIdentityInfo({
       <div className="relative">
         <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
           <AvatarImage
-            src={candidate?.application?.profilePicture || undefined}
+            src={candidate?.image || "/placeholder.svg"}
             alt={candidate?.name}
             className="object-cover"
           />

@@ -21,7 +21,6 @@ import { getRecruitmentState } from "@/lib/recruitment-state";
 import { isRecruiter } from "@/lib/recruiter";
 
 const applicationSchema = z.object({
-  fullname: z.string().min(1),
   student_number: z
     .union([z.string(), z.number()])
     .refine((value) => value !== "" && !Number.isNaN(Number(value)), {
@@ -30,7 +29,6 @@ const applicationSchema = z.object({
   phone: z.string().optional(),
   degree: z.string().optional(),
   curricular_year: z.string().optional(),
-  profile_picture: z.string().default(""),
   curriculum: z.string().default(""),
   interests: z.array(z.string()).default([]),
   linkedin: z.string().optional(),
@@ -49,6 +47,15 @@ export async function POST(req: Request) {
   });
 
   if (!session) return new Response("Unauthorized", { status: 401 });
+
+  if (!session.user.image) {
+    return NextResponse.json(
+      {
+        error: "É necessário ter uma fotografia de perfil para se candidatar.",
+      },
+      { status: 403 },
+    );
+  }
 
   if (await isRecruiter(session.user.id))
     return new Response("Forbidden", { status: 403 });
@@ -112,7 +119,6 @@ export async function POST(req: Request) {
     const app = await tx
       .insert(application)
       .values({
-        fullName: data.fullname,
         submittedAt: new Date(),
         studentNumber: Number(data.student_number),
         linkedIn: data.linkedin,
@@ -122,7 +128,6 @@ export async function POST(req: Request) {
         phone: data.phone,
         degree: data.degree,
         curricularYear: data.curricular_year,
-        profilePicture: fromFullUrlToPath(data.profile_picture),
         curriculum: fromFullUrlToPath(data.curriculum),
         experience: data.experience,
         motivation: data.motivation,
@@ -133,16 +138,6 @@ export async function POST(req: Request) {
         recruitmentId: target.id,
       })
       .returning({ id: application.id });
-
-    if (data.profile_picture) {
-      await tx
-        .update(user)
-        .set({
-          image: data.profile_picture,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, session.user.id));
-    }
 
     for (const interest of data.interests) {
       await tx.insert(applicationInterests).values({
@@ -182,5 +177,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return new Response();
+  return NextResponse.json({ success: true });
 }

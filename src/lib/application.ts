@@ -27,7 +27,6 @@ export async function getApplication(
 
   return {
     ...app,
-    profilePicture: await getFilenameUrl(app?.profilePicture),
     curriculum: await getFilenameUrl(app?.curriculum),
   };
 }
