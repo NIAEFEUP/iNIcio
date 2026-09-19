@@ -7,7 +7,6 @@ import {
   User,
   Phone,
   GraduationCap,
-  Calendar,
   FileText,
   Globe,
   Heart,
@@ -16,7 +15,6 @@ import {
   Send,
   Info,
   AlertCircle,
-  HelpCircle,
 } from "lucide-react";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 
