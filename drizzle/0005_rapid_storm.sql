@@ -1,0 +1,1 @@
+ALTER TABLE "recruiter_availability" ADD CONSTRAINT "recruiter_availability_unique" UNIQUE("start","duration","recruiter_id","recruitment_id");
