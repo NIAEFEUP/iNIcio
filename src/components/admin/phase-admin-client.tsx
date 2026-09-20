@@ -1,18 +1,25 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type PaginationState,
+  type SortingState,
+} from "@tanstack/react-table";
+import { CalendarDays, Plus, Search } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,16 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -37,10 +35,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { DataTableView } from "@/components/data-table/data-table-view";
+import { DataTableColumnToggle } from "@/components/data-table/data-table-column-toggle";
+import { DataTableFilter } from "@/components/data-table/data-table-filter";
+import {
+  DataTableSortableHeader,
+  DataTableEntityCell,
+  getActionsColumn,
+} from "@/components/data-table/data-table-column-helpers";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/data-table/view-mode-toggle";
+import { GridView } from "@/components/data-table/grid-view";
+import { GridCard } from "@/components/data-table/grid-card";
 import { toast } from "sonner";
 import { RecruitmentPhase } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
 
 const PHASE_STATE_LABELS: Record<PhaseState, string> = {
@@ -54,6 +65,13 @@ const PHASE_STATE_BADGE_CLASSES: Record<PhaseState, string> = {
   upcoming: "bg-secondary text-secondary-foreground",
   closed: "bg-secondary text-secondary-foreground",
 };
+
+const ROLE_LABELS: Record<string, string> = {
+  candidate: "Candidato",
+  recruiter: "Recrutador",
+};
+
+const PAGE_SIZE = 6;
 
 interface PhaseAdminClientProps {
   phases: RecruitmentPhase[];
@@ -85,6 +103,19 @@ export default function PhaseAdminClient({
     role: "candidate",
     recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
+
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  });
+  const isMountedRef = useRef(false);
+  useEffect(() => {
+    isMountedRef.current = true;
+  }, []);
 
   // Keep phase badges fresh while the page stays open.
   useEffect(() => {
@@ -134,11 +165,7 @@ export default function PhaseAdminClient({
         setIsEditOpen(false);
       } catch (err) {
         console.error(err);
-        try {
-          (toast as any).error("Ocorreu um erro na submissão");
-        } catch {
-          toast("Ocorreu um erro na submissao");
-        }
+        toast("Ocorreu um erro na submissão");
         return;
       }
     } else {
@@ -149,11 +176,7 @@ export default function PhaseAdminClient({
         setIsAddOpen(false);
       } catch (err) {
         console.error(err);
-        try {
-          (toast as any).error("Ocorreu um erro na submissão");
-        } catch {
-          toast("Ocorreu um erro na submissao");
-        }
+        toast("Ocorreu um erro na submissão");
         return;
       }
     }
@@ -162,7 +185,7 @@ export default function PhaseAdminClient({
     resetForm();
   };
 
-  const handleEdit = (p: RecruitmentPhase) => {
+  const handleEdit = useCallback((p: RecruitmentPhase) => {
     setEditing(p);
     setForm({
       id: p.id?.toString() ?? "",
@@ -175,414 +198,577 @@ export default function PhaseAdminClient({
       recruitmentId: p.recruitmentId?.toString() ?? "",
     });
     setIsEditOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(
+    async (id: number) => {
+      try {
+        await deletePhase(id);
+        setPhasesState((prev) => prev.filter((p) => p.id !== id));
+        toast("Fase apagada");
+      } catch (err) {
+        console.error(err);
+        toast("Ocorreu um erro na submissao");
+        return;
+      }
+    },
+    [deletePhase],
+  );
+
+  const columns = useMemo<ColumnDef<RecruitmentPhase>[]>(() => {
+    const symlessDate = (value: Date | null) =>
+      value
+        ? new Date(value).toLocaleString("pt-PT", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+        : "-";
+
+    return [
+      {
+        accessorKey: "title",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Título" />
+        ),
+        cell: ({ row }) => <DataTableEntityCell name={row.original.title} />,
+      },
+      {
+        id: "description",
+        accessorFn: (p) => p.description,
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Descrição" />
+        ),
+        cell: ({ row }) => (
+          <span className="max-w-xl text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap break-words">
+            {row.original.description}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "start",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Início" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm whitespace-nowrap">
+            {symlessDate(row.original.start)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "end",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Fim" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm whitespace-nowrap">
+            {symlessDate(row.original.end)}
+          </span>
+        ),
+      },
+      {
+        id: "state",
+        accessorFn: (p) => getPhaseState(p, now),
+        header: "Estado",
+        cell: ({ row }) => {
+          const state = getPhaseState(row.original, now);
+          return (
+            <div className="flex flex-col items-start gap-1">
+              <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
+                {PHASE_STATE_LABELS[state]}
+              </Badge>
+              {state === "open" && row.original.end && (
+                <span className="text-xs text-muted-foreground">
+                  termina {new Date(row.original.end).toLocaleString("pt-PT")}
+                </span>
+              )}
+            </div>
+          );
+        },
+        filterFn: (row, _id, value: string[]) => {
+          if (!value || value.length === 0) return true;
+          const state = getPhaseState(row.original, now);
+          return value.includes(state);
+        },
+      },
+      {
+        accessorKey: "role",
+        header: "Papel",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {ROLE_LABELS[row.original.role] ?? row.original.role}
+          </span>
+        ),
+        filterFn: (row, _id, value: string[]) => {
+          if (!value || value.length === 0) return true;
+          return value.includes(row.original.role);
+        },
+      },
+      getActionsColumn<RecruitmentPhase>({
+        onEdit: (p) => handleEdit(p),
+        onDelete: (p) => {
+          if (p.id != null) handleDelete(p.id);
+        },
+      }),
+    ];
+    // `now` is intentionally a dependency so the Estado filter stays fresh.
+  }, [now, handleEdit, handleDelete]);
+
+  const table = useReactTable({
+    data: phasesState,
+    columns,
+    state: { sorting, columnFilters, globalFilter, pagination },
+    autoResetPageIndex: false,
+    onSortingChange: (u) => {
+      if (isMountedRef.current) setSorting(u);
+    },
+    onColumnFiltersChange: (u) => {
+      if (isMountedRef.current) setColumnFilters(u);
+    },
+    onGlobalFilterChange: (u) => {
+      if (isMountedRef.current) setGlobalFilter(u);
+    },
+    onPaginationChange: (u) => {
+      if (isMountedRef.current) setPagination(u);
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
+  const selectedStates =
+    (columnFilters.find((f) => f.id === "state")?.value as
+      string[] | undefined) ?? [];
+  const selectedRoles =
+    (columnFilters.find((f) => f.id === "role")?.value as
+      string[] | undefined) ?? [];
+
+  const setStateFilter = (values: string[]) => {
+    setColumnFilters((prev) => [
+      ...prev.filter((f) => f.id !== "state"),
+      ...(values.length > 0 ? [{ id: "state", value: values }] : []),
+    ]);
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deletePhase(id);
-      setPhasesState((prev) => prev.filter((p) => p.id !== id));
-      toast("Fase apagada");
-    } catch (err) {
-      console.error(err);
-      try {
-        (toast as any).error("Ocorreu um erro na submissao");
-      } catch {
-        toast("Ocorreu um erro na submissao");
-      }
-      return;
-    }
+  const setRoleFilter = (values: string[]) => {
+    setColumnFilters((prev) => [
+      ...prev.filter((f) => f.id !== "role"),
+      ...(values.length > 0 ? [{ id: "role", value: values }] : []),
+    ]);
+  };
+
+  const renderCard = (p: RecruitmentPhase) => {
+    const state = getPhaseState(p, now);
+    return (
+      <GridCard
+        title={p.title}
+        subtitle={p.clientIdentifier}
+        badge={
+          <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
+            {PHASE_STATE_LABELS[state]}
+          </Badge>
+        }
+        onEdit={() => handleEdit(p)}
+        onDelete={() => {
+          if (p.id != null) handleDelete(p.id);
+        }}
+      >
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <CalendarDays className="size-3.5" />
+          <span>
+            {p.start ? new Date(p.start).toLocaleString("pt-PT") : "Sem início"}{" "}
+            — {p.end ? new Date(p.end).toLocaleString("pt-PT") : "sem fim"}
+          </span>
+        </div>
+        <div className="text-muted-foreground">
+          {ROLE_LABELS[p.role] ?? p.role}
+        </div>
+      </GridCard>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Fases</h1>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="bg-primary hover:bg-primary/90"
-                disabled={!defaultRecruitmentId}
-              >
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="text-card-foreground">
-                  Adicionar Fase
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Criar uma nova fase de recrutamento
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="title"
-                      className="text-right text-card-foreground"
-                    >
-                      Título
-                    </Label>
-                    <Input
-                      id="title"
-                      value={form.title}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, title: e.target.value }))
-                      }
-                      className="col-span-3 bg-input border-border text-foreground"
-                      required
-                    />
-                  </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Fases"
+        viewModeToggle={
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            listLabel="Lista"
+            gridLabel="Grelha"
+          />
+        }
+        search={
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Procurar fase..."
+              className="h-8 w-56 pl-8 text-xs"
+            />
+          </div>
+        }
+        actions={
+          <>
+            <DataTableColumnToggle
+              table={table}
+              columnLabels={{
+                title: "Título",
+                description: "Descrição",
+                start: "Início",
+                end: "Fim",
+                state: "Estado",
+                role: "Papel",
+              }}
+            />
+            <Button
+              type="button"
+              onClick={() => {
+                setEditing(null);
+                resetForm();
+                setIsAddOpen(true);
+              }}
+              disabled={!defaultRecruitmentId}
+              className="h-8 px-3 text-xs gap-1.5"
+            >
+              <Plus className="size-3.5" />
+              Adicionar
+            </Button>
+          </>
+        }
+        filters={
+          <>
+            <DataTableFilter
+              title="Estado"
+              pluralTitle="Estados"
+              allLabel="Todos os estados"
+              options={[
+                { value: "upcoming", label: "Futura" },
+                { value: "open", label: "A decorrer" },
+                { value: "closed", label: "Terminada" },
+              ]}
+              selectedValues={selectedStates}
+              onSelectedValuesChange={setStateFilter}
+            />
+            <DataTableFilter
+              title="Papel"
+              pluralTitle="Papéis"
+              allLabel="Todos os papéis"
+              options={[
+                { value: "candidate", label: "Candidato" },
+                { value: "recruiter", label: "Recrutador" },
+              ]}
+              selectedValues={selectedRoles}
+              onSelectedValuesChange={setRoleFilter}
+            />
+          </>
+        }
+      />
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="clientIdentifier"
-                      className="text-right text-card-foreground"
-                    >
-                      Identificador
-                    </Label>
-                    <Input
-                      id="clientIdentifier"
-                      value={form.clientIdentifier}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          clientIdentifier: e.target.value,
-                        }))
-                      }
-                      className="col-span-3 bg-input border-border text-foreground"
-                      required
-                    />
-                  </div>
+      <DataTableView
+        table={table}
+        viewMode={viewMode}
+        emptyTitle="Sem fases"
+        emptyDescription="Adiciona fases para este período de recrutamento."
+        renderGrid={(t) => (
+          <GridView
+            table={t}
+            getItemKey={(p) => String(p.id)}
+            renderCard={renderCard}
+          />
+        )}
+      />
 
-                  <div className="grid grid-cols-4 items-start gap-4">
-                    <Label
-                      htmlFor="description"
-                      className="text-right text-card-foreground"
-                    >
-                      Descrição
-                    </Label>
-                    <Textarea
-                      id="description"
-                      value={form.description}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, description: e.target.value }))
-                      }
-                      className="col-span-3 bg-input border-border text-foreground"
-                      required
-                    />
-                  </div>
+      {/* Add phase dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-card-foreground">
+              Adicionar Fase
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Criar uma nova fase de recrutamento
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="phase-title"
+                  className="text-right text-card-foreground"
+                >
+                  Título
+                </Label>
+                <Input
+                  id="phase-title"
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="start"
-                      className="text-right text-card-foreground"
-                    >
-                      Início
-                    </Label>
-                    <Input
-                      id="start"
-                      type="datetime-local"
-                      value={form.start}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, start: e.target.value }))
-                      }
-                      className="col-span-3 bg-input border-border text-foreground"
-                    />
-                  </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="phase-clientIdentifier"
+                  className="text-right text-card-foreground"
+                >
+                  Identificador
+                </Label>
+                <Input
+                  id="phase-clientIdentifier"
+                  value={form.clientIdentifier}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      clientIdentifier: e.target.value,
+                    }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="end"
-                      className="text-right text-card-foreground"
-                    >
-                      Fim
-                    </Label>
-                    <Input
-                      id="end"
-                      type="datetime-local"
-                      value={form.end}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, end: e.target.value }))
-                      }
-                      className="col-span-3 bg-input border-border text-foreground"
-                    />
-                  </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label
+                  htmlFor="phase-description"
+                  className="text-right text-card-foreground"
+                >
+                  Descrição
+                </Label>
+                <Textarea
+                  id="phase-description"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="role"
-                      className="text-right text-card-foreground"
-                    >
-                      Papel
-                    </Label>
-                    <div className="col-span-3">
-                      <Select
-                        onValueChange={(val) =>
-                          setForm((f) => ({ ...f, role: val }))
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seleccionar" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="candidate">Candidate</SelectItem>
-                          <SelectItem value="recruiter">Recruiter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Adicionar
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="phase-start"
+                  className="text-right text-card-foreground"
+                >
+                  Início
+                </Label>
+                <Input
+                  id="phase-start"
+                  type="datetime-local"
+                  value={form.start}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, start: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                />
+              </div>
 
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-card-foreground">
-              Fases de Recrutamento
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Gerir todas as fases para o ano corrente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border">
-                  <TableHead className="text-muted-foreground">
-                    Título
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">
-                    Descrição
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">
-                    Início
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">Fim</TableHead>
-                  <TableHead className="text-muted-foreground">
-                    Estado
-                  </TableHead>
-                  <TableHead className="text-muted-foreground">Papel</TableHead>
-                  <TableHead className="text-muted-foreground">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {phasesState.map((p) => {
-                  const state = getPhaseState(p, now);
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="phase-end"
+                  className="text-right text-card-foreground"
+                >
+                  Fim
+                </Label>
+                <Input
+                  id="phase-end"
+                  type="datetime-local"
+                  value={form.end}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, end: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                />
+              </div>
 
-                  return (
-                    <TableRow key={p.id} className="border-border align-top">
-                      <TableCell className="font-medium text-card-foreground">
-                        {p.title}
-                      </TableCell>
-                      <TableCell className="text-card-foreground max-w-xl break-words whitespace-pre-wrap">
-                        {p.description}
-                      </TableCell>
-                      <TableCell className="text-card-foreground">
-                        {p.start
-                          ? new Date(p.start).toLocaleString("pt-PT")
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="text-card-foreground">
-                        {p.end ? new Date(p.end).toLocaleString("pt-PT") : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col items-start gap-1">
-                          <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
-                            {PHASE_STATE_LABELS[state]}
-                          </Badge>
-                          {state === "open" && p.end && (
-                            <span className="text-xs text-muted-foreground">
-                              termina {new Date(p.end).toLocaleString("pt-PT")}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-card-foreground">
-                        {p.role}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(p)}
-                            className="text-muted-foreground hover:text-card-foreground"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(p.id!)}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className="text-card-foreground">
-                Editar Fase
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Atualizar os detalhes da fase
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-title"
-                    className="text-right text-card-foreground"
-                  >
-                    Título
-                  </Label>
-                  <Input
-                    id="edit-title"
-                    value={form.title}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, title: e.target.value }))
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="phase-role"
+                  className="text-right text-card-foreground"
+                >
+                  Papel
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    onValueChange={(val) =>
+                      setForm((f) => ({ ...f, role: val as string }))
                     }
-                    className="col-span-3 bg-input border-border text-foreground"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-clientIdentifier"
-                    className="text-right text-card-foreground"
                   >
-                    Identificador
-                  </Label>
-                  <Input
-                    id="edit-clientIdentifier"
-                    value={form.clientIdentifier}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        clientIdentifier: e.target.value,
-                      }))
-                    }
-                    className="col-span-3 bg-input border-border text-foreground"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label
-                    htmlFor="edit-description"
-                    className="text-right text-card-foreground"
-                  >
-                    Descrição
-                  </Label>
-                  <Textarea
-                    id="edit-description"
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, description: e.target.value }))
-                    }
-                    className="col-span-3 bg-input border-border text-foreground"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-start"
-                    className="text-right text-card-foreground"
-                  >
-                    Início
-                  </Label>
-                  <Input
-                    id="edit-start"
-                    type="datetime-local"
-                    value={form.start}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, start: e.target.value }))
-                    }
-                    className="col-span-3 bg-input border-border text-foreground"
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-end"
-                    className="text-right text-card-foreground"
-                  >
-                    Fim
-                  </Label>
-                  <Input
-                    id="edit-end"
-                    type="datetime-local"
-                    value={form.end}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, end: e.target.value }))
-                    }
-                    className="col-span-3 bg-input border-border text-foreground"
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="edit-role"
-                    className="text-right text-card-foreground"
-                  >
-                    Papel
-                  </Label>
-                  <div className="col-span-3">
-                    <Select
-                      onValueChange={(val) =>
-                        setForm((f) => ({ ...f, role: val }))
-                      }
-                      value={form.role}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="candidate">Candidate</SelectItem>
-                        <SelectItem value="recruiter">Recruiter</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <SelectTrigger id="phase-role" className="w-full">
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="candidate">Candidato</SelectItem>
+                      <SelectItem value="recruiter">Recrutador</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90"
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="bg-primary hover:bg-primary/90">
+                Adicionar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit phase dialog */}
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) {
+            setEditing(null);
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-card-foreground">
+              Editar Fase
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Atualizar os detalhes da fase
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="edit-phase-title"
+                  className="text-right text-card-foreground"
                 >
-                  Atualizar
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                  Título
+                </Label>
+                <Input
+                  id="edit-phase-title"
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="edit-phase-clientIdentifier"
+                  className="text-right text-card-foreground"
+                >
+                  Identificador
+                </Label>
+                <Input
+                  id="edit-phase-clientIdentifier"
+                  value={form.clientIdentifier}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      clientIdentifier: e.target.value,
+                    }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label
+                  htmlFor="edit-phase-description"
+                  className="text-right text-card-foreground"
+                >
+                  Descrição
+                </Label>
+                <Textarea
+                  id="edit-phase-description"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="edit-phase-start"
+                  className="text-right text-card-foreground"
+                >
+                  Início
+                </Label>
+                <Input
+                  id="edit-phase-start"
+                  type="datetime-local"
+                  value={form.start}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, start: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="edit-phase-end"
+                  className="text-right text-card-foreground"
+                >
+                  Fim
+                </Label>
+                <Input
+                  id="edit-phase-end"
+                  type="datetime-local"
+                  value={form.end}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, end: e.target.value }))
+                  }
+                  className="col-span-3 bg-input border-border text-foreground"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label
+                  htmlFor="edit-phase-role"
+                  className="text-right text-card-foreground"
+                >
+                  Papel
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    onValueChange={(val) =>
+                      setForm((f) => ({ ...f, role: val as string }))
+                    }
+                    value={form.role}
+                  >
+                    <SelectTrigger id="edit-phase-role" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="candidate">Candidato</SelectItem>
+                      <SelectItem value="recruiter">Recrutador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="bg-primary hover:bg-primary/90">
+                Atualizar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

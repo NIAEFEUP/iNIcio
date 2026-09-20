@@ -225,17 +225,19 @@ export default function CandidateFiltering({
           </Select>
 
           <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-transparent">
-                <Filter className="h-4 w-4" />
-                Departamentos
-                {filters.departments.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {filters.departments.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
+            <PopoverTrigger
+              render={
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <Filter className="h-4 w-4" />
+                  Departamentos
+                  {filters.departments.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {filters.departments.length}
+                    </Badge>
+                  )}
+                </Button>
+              }
+            />
             <PopoverContent className="w-64" align="start">
               <div className="space-y-3">
                 <h4 className="font-medium text-sm">
@@ -268,17 +270,19 @@ export default function CandidateFiltering({
           </Popover>
 
           <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-transparent">
-                <Filter className="h-4 w-4" />
-                Classificações
-                {filters.classifications.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {filters.classifications.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
+            <PopoverTrigger
+              render={
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <Filter className="h-4 w-4" />
+                  Classificações
+                  {filters.classifications.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {filters.classifications.length}
+                    </Badge>
+                  )}
+                </Button>
+              }
+            />
             <PopoverContent className="w-64" align="start">
               <div className="space-y-3">
                 <h4 className="font-medium text-sm">

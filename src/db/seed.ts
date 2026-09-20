@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { hashPassword } from "better-auth/crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   user,
   candidate,
@@ -235,7 +235,6 @@ async function main() {
     candidateId: string;
     recruitmentId: number;
     studentNumber: number;
-    fullName: string;
     degree: string;
     curricularYear: string;
     phone?: string;
@@ -256,7 +255,6 @@ async function main() {
         candidateId: params.candidateId,
         recruitmentId: params.recruitmentId,
         studentNumber: params.studentNumber,
-        fullName: params.fullName,
         linkedIn: params.linkedIn,
         github: params.github,
         phone: params.phone,
@@ -288,7 +286,7 @@ async function main() {
     recruitmentId: number,
     start: string,
     duration: number,
-    type: "interview" | "dynamic" | "interview-dynamic",
+    type: "interview" | "dynamic",
     quantity = 1,
   ) {
     const [row] = await db
@@ -327,6 +325,10 @@ async function main() {
         .insert(recruiterToInterview)
         .values({ recruiterId, interviewId: row.id });
     }
+    await db
+      .update(slot)
+      .set({ quantity: sql`${slot.quantity} - 1` })
+      .where(eq(slot.id, params.slotId));
     return row.id;
   }
 
@@ -357,6 +359,12 @@ async function main() {
         .insert(recruiterToDynamic)
         .values({ recruiterId, dynamicId: row.id });
     }
+    await db
+      .update(slot)
+      .set({
+        quantity: sql`${slot.quantity} - ${params.candidateIds.length}`,
+      })
+      .where(eq(slot.id, params.slotId));
     return row.id;
   }
 
@@ -518,7 +526,7 @@ async function main() {
     pastRecruitment.id,
     "2025-09-21T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const pastInterviewSlot3 = await seedSlot(
     pastRecruitment.id,
@@ -531,13 +539,13 @@ async function main() {
     "2025-09-20T14:00:00.000Z",
     60,
     "dynamic",
+    3,
   );
 
   const pastApp1 = await seedApplication({
     candidateId: "1",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100001,
-    fullName: "Candidato 1",
     linkedIn: "https://linkedin.com/in/candidato1",
     github: "https://github.com/candidato1",
     phone: "910000001",
@@ -556,7 +564,6 @@ async function main() {
     candidateId: "2",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100002,
-    fullName: "Candidato 2",
     linkedIn: "https://linkedin.com/in/candidato2",
     github: "https://github.com/candidato2",
     phone: "910000002",
@@ -575,7 +582,6 @@ async function main() {
     candidateId: "10",
     recruitmentId: pastRecruitment.id,
     studentNumber: 202100008,
-    fullName: "Candidato 8",
     degree: "leic",
     curricularYear: "1bsc",
     phone: "910000008",
@@ -846,7 +852,7 @@ async function main() {
     currentRecruitment.id,
     "2026-09-17T10:00:00.000Z",
     45,
-    "interview-dynamic",
+    "interview",
   );
   const slotDynamic1 = await seedSlot(
     currentRecruitment.id,
@@ -859,6 +865,7 @@ async function main() {
     "2026-09-17T14:00:00.000Z",
     60,
     "dynamic",
+    2,
   );
 
   // Current applications
@@ -866,7 +873,6 @@ async function main() {
     candidateId: "1",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100001,
-    fullName: "Candidato 1",
     linkedIn: "https://linkedin.com/in/candidato1",
     github: "https://github.com/candidato1",
     phone: "910000001",
@@ -886,7 +892,6 @@ async function main() {
     candidateId: "6",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100004,
-    fullName: "Candidato 4",
     phone: "910000004",
     degree: "leic",
     curricularYear: "1bsc",
@@ -902,7 +907,6 @@ async function main() {
     candidateId: "7",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100005,
-    fullName: "Candidato 5",
     phone: "910000005",
     degree: "leic",
     curricularYear: "2bsc",
@@ -918,7 +922,6 @@ async function main() {
     candidateId: "8",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100006,
-    fullName: "Candidato 6",
     phone: "910000006",
     degree: "meic",
     curricularYear: "1msc",
@@ -935,7 +938,6 @@ async function main() {
     candidateId: "9",
     recruitmentId: currentRecruitment.id,
     studentNumber: 202100007,
-    fullName: "Candidato 7",
     phone: "910000007",
     degree: "leic",
     curricularYear: "1bsc",

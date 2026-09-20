@@ -9,7 +9,7 @@ import {
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
 import {
   getRecruitmentState,
   RECRUITMENT_PHASE_IDENTIFIERS,
@@ -153,7 +153,13 @@ export async function duplicatePhasesFromPreviousRecruitment(
   const existing = await getAllRecruitmentPhases(recruitmentId);
   if (existing.length > 0) return 0;
 
-  const source = recruitments.find((r) => r.id !== recruitmentId);
+  const otherRecruitments = recruitments.filter((r) => r.id !== recruitmentId);
+  const targetStart = new Date(target.start).getTime();
+  const chronologicalPrevious = otherRecruitments
+    .filter((r) => new Date(r.start).getTime() <= targetStart)
+    .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
+
+  const source = chronologicalPrevious[0] ?? otherRecruitments[0];
   if (!source) return 0;
 
   const phases = await getAllRecruitmentPhases(source.id);
@@ -250,7 +256,7 @@ export async function getInterviewSlots(recruitmentId?: number) {
       .from(slot)
       .where(
         and(
-          or(eq(slot.type, "interview-dynamic"), eq(slot.type, "interview")),
+          eq(slot.type, "interview"),
           eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),
@@ -271,7 +277,7 @@ export async function getDynamicSlots(recruitmentId?: number) {
       .from(slot)
       .where(
         and(
-          or(eq(slot.type, "dynamic"), eq(slot.type, "interview-dynamic")),
+          eq(slot.type, "dynamic"),
           eq(slot.recruitmentId, targetId),
           gt(slot.quantity, 0),
         ),

@@ -33,39 +33,36 @@ export function CalendarHeader({ view, events }: IProps) {
         <div className="flex w-full items-center gap-1.5">
           <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
             <Button
-              asChild
+              nativeButton={false}
+              render={<Link href={`/calendar/${id}/day-view`} />}
               aria-label="View by day"
               size="icon"
               variant={view === "day" ? "default" : "outline"}
               className="rounded-r-none [&_svg]:size-5"
             >
-              <Link href={`/calendar/${id}/day-view`}>
-                <List strokeWidth={1.8} />
-              </Link>
+              <List strokeWidth={1.8} />
             </Button>
 
             <Button
-              asChild
+              nativeButton={false}
+              render={<Link href={`/calendar/${id}/week-view`} />}
               aria-label="View by week"
               size="icon"
               variant={view === "week" ? "default" : "outline"}
               className="-ml-px rounded-none [&_svg]:size-5"
             >
-              <Link href={`/calendar/${id}/week-view`}>
-                <Columns strokeWidth={1.8} />
-              </Link>
+              <Columns strokeWidth={1.8} />
             </Button>
 
             <Button
-              asChild
+              nativeButton={false}
+              render={<Link href={`/calendar/${id}/agenda-view`} />}
               aria-label="View by agenda"
               size="icon"
               variant={view === "agenda" ? "default" : "outline"}
               className="-ml-px rounded-l-none [&_svg]:size-5"
             >
-              <Link href={`/calendar/${id}/agenda-view`}>
-                <CalendarRange strokeWidth={1.8} />
-              </Link>
+              <CalendarRange strokeWidth={1.8} />
             </Button>
           </div>
 

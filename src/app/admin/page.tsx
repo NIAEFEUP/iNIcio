@@ -1,59 +1,41 @@
 import AdminResources from "@/components/admin/admin-resources";
-import RecruitmentSelector from "@/components/admin/recruitment-selector";
+import { isAdmin } from "@/lib/admin";
 import { getAllCandidateUsers } from "@/lib/db";
-import { getAllRecruiters } from "@/lib/recruiter";
-import { getActiveRecruitment, getRecruitments } from "@/lib/recruitment";
+import { getRecruiters } from "@/lib/recruitment";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
+import { PageHeader } from "@/components/layout/page-header";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-interface AdminPageProps {
-  searchParams: Promise<{ recruitmentId?: string | string[] }>;
-}
-
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const params = await searchParams;
-  const recruitments = await getRecruitments();
-
-  let recruitmentId = (await getActiveRecruitment())?.id;
-  if (typeof params.recruitmentId === "string") {
-    const parsed = Number(params.recruitmentId);
-
-    if (
-      Number.isInteger(parsed) &&
-      parsed > 0 &&
-      recruitments.some((recruitment) => recruitment.id === parsed)
-    ) {
-      recruitmentId = parsed;
-    }
-  }
-
-  const recruiters = recruitmentId ? await getAllRecruiters(recruitmentId) : [];
-  const candidates = recruitmentId
-    ? await getAllCandidateUsers(recruitmentId)
-    : [];
-
+export default async function AdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
+  if (!(await isAdmin(session?.user.id))) {
+    redirect("/");
+  }
+
+  const targetId = await getTargetRecruitmentId();
+  const recruiters = await getRecruiters(targetId);
+  const candidates = await getAllCandidateUsers(targetId);
+
   return (
-    <div className="flex flex-col gap-y-16">
-      <h1 className="text-center text-4xl font-bold">AdminUI - Recrutamento</h1>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Painel de Administração"
+        actions={
+          <CandidatesMailTo
+            emails={candidates.map((candidate) => candidate.email)}
+          />
+        }
+      />
 
-      <div className="mx-16 md:mx-64 flex flex-col gap-4">
-        <div className="flex flex-row flex-wrap items-center w-full justify-between gap-2">
-          <h2 className="font-bold">Gestão</h2>
-          <div className="flex flex-row flex-wrap items-center gap-2">
-            <RecruitmentSelector
-              recruitments={recruitments}
-              selectedId={recruitmentId}
-            />
-            <CandidatesMailTo
-              emails={candidates.map((candidate) => candidate.email)}
-            />
-          </div>
-        </div>
-
+      <div className="flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-foreground">
+          Recursos de Gestão
+        </h2>
         <AdminResources
           recruiters={recruiters}
           candidates={candidates}

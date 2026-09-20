@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ import { DynamicTemplate, InterviewTemplate } from "@/lib/db";
 import InterviewTemplateEditor from "./interview-template-editor";
 import { useState } from "react";
 import DynamicTemplateEditor from "./dynamic-template-editor";
-import { DialogTitle } from "@radix-ui/react-dialog";
 
 interface AdminTemplateClientProps {
   interviewOverrideAction: (update: Array<any>) => Promise<void>;
@@ -60,9 +60,7 @@ export default function AdminTemplateClient({
           open={interviewDialogOpen}
           onOpenChange={setInterviewDialogOpen}
         >
-          <DialogTrigger asChild>
-            <Button variant="secondary">Push</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button variant="secondary">Push</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tens a certeza que queres dar override?</DialogTitle>
@@ -90,9 +88,7 @@ export default function AdminTemplateClient({
       </TabsContent>
       <TabsContent value="dynamic" className="flex flex-col gap-2">
         <Dialog open={dynamicDialogOpen} onOpenChange={setDynamicDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="secondary">Push</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button variant="secondary">Push</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tens a certeza que queres dar override?</DialogTitle>

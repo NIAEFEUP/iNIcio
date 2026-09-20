@@ -176,7 +176,7 @@ export async function fileExists(fileName: string): Promise<boolean> {
 }
 
 export function fromFullUrlToPath(url: string) {
-  if (url.startsWith("https")) {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
     return url.split("/").splice(4).join("/");
   }
 

@@ -7,6 +7,7 @@ import {
   ApplicationComment,
   Candidate,
   Notification,
+  User,
 } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { MessageSquare } from "lucide-react";
@@ -20,7 +21,7 @@ export type CommentMentionNotification = Omit<Notification, "data"> & {
     commentId: number;
   };
   comment: ApplicationComment & {
-    application: Application & { candidate: Candidate };
+    application: Application & { candidate: Candidate & { user: User } };
   };
 };
 
@@ -61,7 +62,7 @@ export default function CommentMentionNotification({
               <span className="font-semibold">
                 {
                   (notification as CommentMentionNotification).comment
-                    .application.fullName
+                    .application.candidate.user.name
                 }
               </span>
             </p>

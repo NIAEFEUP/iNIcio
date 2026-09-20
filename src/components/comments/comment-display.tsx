@@ -1,4 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { getInitials } from "@/lib/utils";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
 import { Comment } from "../candidate/page/candidate-comments";
@@ -19,30 +22,33 @@ export function CommentDisplay({ candidate, comment }: CommentDisplayProps) {
       );
 
   return (
-    <div className="group bg-card border border-border rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/20">
-      <div className="flex flex-col md:flex-row items-start items-center justify-center mx-auto gap-6 md:gap-0">
-        <div className="flex flex-col justify-center items-center">
-          <Avatar className="w-10 h-10 ring-2 ring-border transition-all group-hover:ring-primary/30">
-            <AvatarImage
-              src={comment.user?.image || "/placeholder.svg"}
-              alt={comment.user?.name}
-              className="object-cover"
+    <div className="rounded-xl border border-border bg-card p-4 shadow-xs transition-colors">
+      <div className="flex items-start gap-3">
+        <Avatar size="lg" className="ring-2 ring-border/60">
+          <AvatarImage
+            src={comment.user?.image || undefined}
+            alt={comment.user?.name}
+          />
+          <AvatarFallback>
+            <InitialsAvatar
+              className="size-full rounded-full text-sm font-bold"
+              initials={getInitials(comment.user?.name)}
             />
-            <AvatarFallback className="bg-gradient-to-br from-muted to-muted/60 text-muted-foreground font-semibold">
-              {comment?.user?.name?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <p className="text-sm font-medium text-foreground flex flex-col gap-1 justify-center items-center">
-            <span>{comment.user?.name}</span>
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              {comment.user?.name}
+            </p>
             {authorCandidateFriend && (
-              <span className="italic text-muted-foreground">
-                Conheçe a pessoa
-              </span>
+              <Badge variant="secondary" className="h-5 text-xs">
+                Conhece a pessoa
+              </Badge>
             )}
-          </p>
-          <p className="text-sm flex flex-row gap-1">
             {comment.comment.createdAt && (
-              <span className="text-xs text-muted-foreground">
+              <time className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
                 {new Date(comment.comment.createdAt).toLocaleDateString(
                   "pt-BR",
                   {
@@ -52,13 +58,11 @@ export function CommentDisplay({ candidate, comment }: CommentDisplayProps) {
                     minute: "2-digit",
                   },
                 )}
-              </span>
+              </time>
             )}
-          </p>
-        </div>
+          </div>
 
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="text-sm text-foreground">
             <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
           </div>
         </div>

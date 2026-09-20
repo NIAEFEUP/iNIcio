@@ -14,10 +14,11 @@ import { NewRecruiterAvailability, RecruiterAvailability } from "@/lib/db";
 
 import { toast } from "sonner";
 import { Save } from "lucide-react";
+import { RecruiterAvailabilityStats } from "./recruiter-availability-stats";
 
 export type AvailabilityOperation = {
   type: "add" | "remove";
-  availability: RecruiterAvailability;
+  availability: RecruiterAvailability | NewRecruiterAvailability;
 };
 
 interface RecruiterAvailabilityClientProps {
@@ -39,7 +40,9 @@ export default function RecruiterAvailabilityClient({
     NewRecruiterAvailability[]
   >(currentAvailabilities);
 
-  const [availabilityOperations, setAvailabilityOperations] = useState([]);
+  const [availabilityOperations, setAvailabilityOperations] = useState<
+    AvailabilityOperation[]
+  >([]);
 
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -94,20 +97,8 @@ export default function RecruiterAvailabilityClient({
   };
 
   return (
-    <div className="flex flex-col gap-4 mx-4">
-      <div className="w-fit mx-auto mt-4">
-        <Button
-          className="mx-auto flex justify-center items-center"
-          onClick={async () => {
-            const ok = await saveAvailabilities(availabilityOperations);
-
-            if (ok) toast("Guardado com sucesso");
-          }}
-        >
-          <Save className="h-5 w-5" />
-          Guardar
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <RecruiterAvailabilityStats availabilities={availabilities} />
 
       <ChooseCustomSlot
         slots={availabilities}
@@ -118,8 +109,32 @@ export default function RecruiterAvailabilityClient({
         getCellKey={getCellKey}
         selectedSlot={null}
         handleCellClick={handleCellClick}
-        getTypeColor={() => "bg-blue-500"}
+        getTypeColor={() => "bg-primary"}
         formatDateHeader={formatDateHeader}
+        headerAction={
+          <Button
+            onClick={async () => {
+              const ok = await saveAvailabilities(availabilityOperations);
+
+              if (ok) toast("Guardado com sucesso");
+            }}
+          >
+            <Save className="h-4 w-4" />
+            Guardar
+          </Button>
+        }
+        legend={
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 bg-primary rounded"></div>
+              <span>Disponível</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 border-2 border-dashed border-gray-200 rounded"></div>
+              <span>Indisponível</span>
+            </div>
+          </div>
+        }
       />
     </div>
   );

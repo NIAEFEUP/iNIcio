@@ -8,38 +8,44 @@ import {
   recruiterToInterview,
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
+import {
+  getSessionUser,
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
+import { getActiveRecruitment } from "@/lib/recruitment";
 
 export async function markNotificationAsRead(id: number) {
+  const user = await getSessionUser();
+
   return await db.transaction(async (tx) => {
     await tx
       .update(notification)
       .set({
         isRead: true,
       })
-      .where(eq(notification.id, id));
+      .where(and(eq(notification.id, id), eq(notification.userId, user.id)));
   });
 }
-
-import { getActiveRecruitment } from "@/lib/recruitment";
 
 export async function getAvailableRecruiters(
   start: Date,
   end: Date,
   recruitmentId?: number,
 ): Promise<User[]> {
+  await requireRecruiterSession(recruitmentId);
+
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];
   const startUtc = new Date(start.toISOString());
   const endUtc = new Date(end.toISOString());
 
   const conditions = [
-    gte(recruiterAvailability.start, startUtc),
     lt(recruiterAvailability.start, endUtc),
+    sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${sql.param(startUtc, recruiterAvailability.start)}`,
+    eq(recruiterAvailability.recruitmentId, targetId),
   ];
-  if (targetId) {
-    conditions.push(eq(recruiterAvailability.recruitmentId, targetId));
-  }
 
   const results = await db.query.recruiterAvailability.findMany({
     where: and(...conditions),
@@ -84,6 +90,8 @@ export async function assignRecruiter(
   userId: string,
   slotType: SlotType,
 ) {
+  await requireAdminSession();
+
   if (slotType === "interview") {
     await db.insert(recruiterToInterview).values({
       recruiterId: userId,
@@ -102,6 +110,8 @@ export async function unassignRecruiter(
   userId: string,
   slotType: SlotType,
 ) {
+  await requireAdminSession();
+
   if (slotType === "interview") {
     await db
       .delete(recruiterToInterview)

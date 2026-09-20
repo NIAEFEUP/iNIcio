@@ -3,33 +3,11 @@
 import { Application } from "@/lib/db";
 import CandidateAnswer from "./candidate-answer";
 import { useState } from "react";
+import { applicationAnswers } from "@/lib/candidate-answers";
 
 export interface CandidateAnswersProps {
   application: Application | null;
 }
-
-const answers = [
-  {
-    title: "Interesse nas escolhas",
-    attribute: "interestJustification",
-  },
-  {
-    title: "Porquê o NI?",
-    attribute: "motivation",
-  },
-  {
-    title: "O que poderíamos ganhar contigo?",
-    attribute: "selfPromotion",
-  },
-  {
-    title: "Tens alguma sugestão?",
-    attribute: "suggestions",
-  },
-  {
-    title: "Com que tecnologias/ferramentas já trabalhaste?",
-    attribute: "experience",
-  },
-];
 
 export default function CandidateAnswers({
   application,
@@ -44,7 +22,7 @@ export default function CandidateAnswers({
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      {answers.map((answer, idx) => (
+      {applicationAnswers.map((answer, idx) => (
         <CandidateAnswer
           id={idx}
           key={answer.attribute}

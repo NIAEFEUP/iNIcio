@@ -1,22 +1,30 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
+import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
+import { CandidateLinksCard } from "@/components/candidate/candidate-links-card";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
+import CandidateProfileCard from "@/components/candidate/page/candidate-profile-card";
 import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
 import CommentFrame from "@/components/comments/comment-frame";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/layout/page-header";
+import {
+  EvaluationLayout,
+  EvaluationPanel,
+} from "@/components/layout/evaluation-layout";
+import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
 
 import { submitApplicationComment } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getCandidateWithMetadata } from "@/lib/candidate";
+import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { getApplicationComments } from "@/lib/comment";
 import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
-
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
+import { requireRecruiterSession } from "@/lib/action-guard";
 
 type CandidatePageProps = {
   params: any;
@@ -25,64 +33,111 @@ type CandidatePageProps = {
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!(await isRecruiter(session?.user.id))) redirect("/");
+  const targetId = await getTargetRecruitmentId();
+
+  if (!(await isRecruiter(session?.user.id, targetId))) redirect("/");
 
   const { id } = await params;
 
-  const candidate = await getCandidateWithMetadata(id);
-  const comments = await getApplicationComments(id);
-  const votingDecision = await getLatestVotingDecisionForCandidate(id);
+  const candidate = await getCandidateWithMetadata(id, targetId);
 
-  const recruiters = await getRecruiters();
+  const comments = await getApplicationComments(id, targetId);
+  const votingDecision = await getLatestVotingDecisionForCandidate(
+    id,
+    targetId,
+  );
+  const recruiters = await getRecruiters(targetId);
+  const answeredCount = applicationAnswerCount(candidate.application);
 
   const saveToDatabase = async (content: Array<any>) => {
     "use server";
-
-    return await submitApplicationComment(id, content, session?.user.id);
+    const user = await requireRecruiterSession(targetId);
+    return await submitApplicationComment(id, content, user.id);
   };
 
   return (
-    <div className="h-screen mx-4 md:mx-16">
-      <section className="flex flex-col md:flex-row gap-4 h-full">
-        <div className="space-y-4">
-          <CandidateQuickInfo candidate={candidate} fullDetails={true} />
-          <CandidateVotingStatus votingDecision={votingDecision} />
-        </div>
-
-        <Tabs defaultValue="answers" className="w-full h-3/4">
-          <TabsList className="w-full">
-            <TabsTrigger value="answers">Respostas</TabsTrigger>
-            {candidate.application.curriculum && (
-              <TabsTrigger value="curriculum">Currículo</TabsTrigger>
-            )}
-            <TabsTrigger value="comments">
-              Comentários ({comments.length})
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="answers" className="w-full">
-            <CandidateAnswers
-              key={crypto.randomUUID()}
-              application={candidate.application}
+    <EvaluationLayout
+      header={
+        <PageHeader
+          backHref="/candidates"
+          title={candidate.name}
+          actions={
+            <CandidateHeaderActions
+              candidateId={candidate.id}
+              currentPage="candidate"
+              dynamicId={candidate.dynamic?.dynamicId}
+              hasInterview={Boolean(candidate.interview)}
             />
-          </TabsContent>
-          {candidate.application.curriculum && (
-            <TabsContent value="curriculum">
-              <CandidateCurriculum application={candidate.application} />
-            </TabsContent>
-          )}
-          <TabsContent value="comments">
-            <CommentFrame>
-              <CandidateComments
-                candidate={candidate}
-                type="application"
-                comments={comments}
-                saveToDatabase={saveToDatabase}
-                recruiters={recruiters}
+          }
+        />
+      }
+      sidebar={
+        <>
+          <CandidateProfileCard
+            candidate={candidate}
+            friends={candidate.knownRecruiters}
+            authUser={
+              session
+                ? {
+                    ...session.user,
+                    image: session.user.image ?? "",
+                    role: session.user.role as
+                      "recruiter" | "candidate" | "admin",
+                  }
+                : null
+            }
+          />
+          <CandidateLinksCard
+            githubUrl={candidate.application?.github}
+            linkedinUrl={candidate.application?.linkedIn}
+            websiteUrl={candidate.application?.personalWebsite}
+          />
+          <CandidateVotingStatus votingDecision={votingDecision} />
+        </>
+      }
+    >
+      <EvaluationTabs
+        defaultValue="answers"
+        tabs={[
+          {
+            id: "answers",
+            label: "Respostas",
+            count: answeredCount,
+            content: (
+              <CandidateAnswers
+                key={candidate.id}
+                application={candidate.application}
               />
-            </CommentFrame>
-          </TabsContent>
-        </Tabs>
-      </section>
-    </div>
+            ),
+          },
+          {
+            id: "curriculum",
+            label: "Currículo",
+            hidden: !candidate.application?.curriculum,
+            content: (
+              <EvaluationPanel>
+                <CandidateCurriculum application={candidate.application} />
+              </EvaluationPanel>
+            ),
+          },
+          {
+            id: "comments",
+            label: "Comentários",
+            count: comments.length,
+            content: (
+              <CommentFrame>
+                <CandidateComments
+                  candidate={candidate}
+                  type="application"
+                  comments={comments}
+                  saveToDatabase={saveToDatabase}
+                  recruiters={recruiters}
+                />
+              </CommentFrame>
+            ),
+          },
+        ]}
+      />
+    </EvaluationLayout>
   );
 }

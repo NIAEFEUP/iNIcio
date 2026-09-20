@@ -5,14 +5,15 @@ import {
   editRecruitmentPhase,
   deleteRecruitmentPhase,
   getAllRecruitmentPhases,
-  getActiveRecruitment,
 } from "@/lib/recruitment";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
+import { requireAdminSession } from "@/lib/action-guard";
 
 export default async function RecruitmentAdmin({ searchParams }: any) {
   const params = await searchParams;
-  const activeRecruitment = await getActiveRecruitment();
+  const targetRecruitment = await getTargetRecruitment();
 
-  let recruitmentId = activeRecruitment?.id;
+  let recruitmentId = targetRecruitment?.id;
   if (params.recruitmentId !== undefined && params.recruitmentId !== null) {
     const parsed = Number.parseInt(String(params.recruitmentId), 10);
 
@@ -25,6 +26,7 @@ export default async function RecruitmentAdmin({ searchParams }: any) {
 
   const add = async (phase: RecruitmentPhase) => {
     "use server";
+    await requireAdminSession();
 
     if (!phase.recruitmentId) {
       throw new Error("No recruitment selected");
@@ -35,12 +37,14 @@ export default async function RecruitmentAdmin({ searchParams }: any) {
 
   const edit = async (phase: RecruitmentPhase) => {
     "use server";
+    await requireAdminSession();
 
     await editRecruitmentPhase(phase);
   };
 
   const remove = async (id: number) => {
     "use server";
+    await requireAdminSession();
 
     await deleteRecruitmentPhase(id);
   };
