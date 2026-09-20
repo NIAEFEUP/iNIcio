@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { FaInstagram, FaGithub, FaLinkedin } from "react-icons/fa";
 import { Mail, MapPin } from "lucide-react";
 
 export function Footer() {
@@ -49,6 +48,14 @@ export function Footer() {
                 alt="NI Logo"
                 width={36}
                 height={36}
+                className="dark:hidden"
+              />
+              <Image
+                src="/ni_logo_dark.svg"
+                alt="NI Logo"
+                width={36}
+                height={36}
+                className="hidden dark:block"
               />
             </Link>
             <p className="hover:text-foreground text-muted-foreground transition-colors">

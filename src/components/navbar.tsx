@@ -108,39 +108,30 @@ export default function Navbar({
         )}
       >
         <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          {/* Brand logo */}
           <div className="flex items-center gap-6">
             <Link
               href="/"
               className="flex items-center gap-2.5 transition-opacity hover:opacity-85"
             >
               <Image
-                src="/logo.svg"
-                alt="NIAEFEUP Logo"
-                className="h-5 w-auto"
-                width={40}
-                height={40}
+                src="/inicio_logo_light.svg"
+                alt="INICIO Logo"
+                className="h-5 w-auto dark:hidden"
+                width={88}
+                height={20}
                 priority
               />
-              <span className="font-semibold text-base tracking-tight text-foreground">
-                iNIcio
-              </span>
+              <Image
+                src="/inicio_logo_dark.svg"
+                alt="INICIO Logo"
+                className="hidden h-5 w-auto dark:block"
+                width={88}
+                height={20}
+                priority
+              />
             </Link>
 
-            {/* Desktop Candidate Navigation Links */}
             <nav className="hidden md:flex md:items-center md:gap-1">
-              <Link
-                href="/"
-                className={cn(
-                  buttonVariants({
-                    variant: pathname === "/" ? "secondary" : "ghost",
-                    size: "sm",
-                  }),
-                )}
-              >
-                Início
-              </Link>
-
               {user && isCandidate && (
                 <>
                   <Link
@@ -214,7 +205,6 @@ export default function Navbar({
             {user ? (
               <>
                 <NotificationPopup notifications={notifications} />
-
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
