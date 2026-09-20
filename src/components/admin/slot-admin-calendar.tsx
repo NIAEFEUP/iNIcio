@@ -32,7 +32,9 @@ interface SlotAdminCalendarProps {
     interview: Interview[];
     dynamic: Dynamic[];
   };
-  saveSlots: (slots: SlotOperation[]) => Promise<void>;
+  saveSlots: (
+    slots: SlotOperation[],
+  ) => Promise<{ interview: Slot[]; dynamic: Slot[] }>;
 }
 
 export enum SlotType {
@@ -145,7 +147,9 @@ export default function SlotAdminCalendar({
 
   const handleSaveSlots = async () => {
     try {
-      saveSlots(slotOperations);
+      const updated = await saveSlots(slotOperations);
+      setSlots(updated);
+      setSlotOperations([]);
       toast("Slots guardados");
     } catch (error) {
       toast("Erro ao guardar slots: " + error);
