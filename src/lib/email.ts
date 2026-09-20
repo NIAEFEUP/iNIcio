@@ -25,6 +25,11 @@ export async function sendPasswordResetEmail({
     throw new Error("RESEND_API_KEY e EMAIL_FROM têm de estar configurados");
   }
 
+  const appUrl = process.env.BETTER_AUTH_URL;
+  const logoUrl = "https://niaefeup.pt/images/logo_2018_watermark.svg";
+  const safeAppUrl = escapeHtml(appUrl ?? "");
+  const safeLogoUrl = escapeHtml(logoUrl);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -34,9 +39,28 @@ export async function sendPasswordResetEmail({
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Recuperação da palavra-passe",
-      text: `Olá ${name},\n\nRecebemos um pedido para alterar a tua palavra-passe. Abre esta ligação para continuar:\n${url}\n\nA ligação expira dentro de uma hora. Se não fizeste este pedido, podes ignorar este email.`,
-      html: `<p>Olá ${escapeHtml(name)},</p><p>Recebemos um pedido para alterar a tua palavra-passe.</p><p><a href="${escapeHtml(url)}">Alterar palavra-passe</a></p><p>Esta ligação expira dentro de uma hora. Se não fizeste este pedido, podes ignorar este email.</p>`,
+      subject: "iNicio | Recuperação da palavra-passe",
+      html: `
+        <div style="background-color:#f8f7f5;margin:0;padding:32px 16px;font-family:Arial,sans-serif;color:#242424;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;background-color:#ffffff;border:1px solid #eeeeee;border-radius:12px;">
+            <tr>
+              <td style="padding:24px 32px;border-bottom:1px solid #eeeeee;">
+                <a href="${safeAppUrl}" style="display:inline-flex;align-items:center;text-decoration:none;">
+                  <img src="${safeLogoUrl}" width="80" alt="NIAEFEUP" style="display:block;width:80px;height:auto;border:0;" />
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <p style="margin:0 0 16px;">Olá ${escapeHtml(name)},</p>
+                <p style="margin:0 0 24px;">Recebemos um pedido para alterar a tua palavra-passe.</p>
+                <a href="${escapeHtml(url)}" style="display:inline-block;background-color:#b33636;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">Alterar palavra-passe</a>
+                <p style="margin:24px 0 0;color:#666666;font-size:14px;">Este link expira dentro de uma hora. Se não fizeste este pedido, podes ignorar este email.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `,
     }),
   });
 
