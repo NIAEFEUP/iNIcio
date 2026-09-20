@@ -26,6 +26,10 @@ export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(
+    null,
+  );
 
   const formSchema = z.object({
     email: z
@@ -42,6 +46,17 @@ export default function SignIn() {
       password: "",
       rememberMe: false,
     },
+  });
+
+  const resetFormSchema = z.object({
+    email: z
+      .email({ error: "O email é inválido" })
+      .min(1, { message: "O email é obrigatório" }),
+  });
+
+  const resetForm = useForm<z.infer<typeof resetFormSchema>>({
+    resolver: zodResolver(resetFormSchema),
+    defaultValues: { email: "" },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -70,7 +85,35 @@ export default function SignIn() {
     );
   }
 
-  function onReset() {
+  async function onResetSubmit(
+    values: z.infer<typeof resetFormSchema>,
+  ): Promise<void> {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setResetSuccessMessage(null);
+
+    try {
+      const { error } = await authClient.requestPasswordReset({
+        email: values.email,
+        redirectTo: "/reset-password",
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
+      setResetSuccessMessage(
+        "Se existir uma conta associada a este email, receberás uma ligação de recuperação em breve.",
+      );
+    } catch {
+      setErrorMessage("Não foi possível pedir a recuperação da palavra-passe");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function onLoginReset() {
     form.reset();
     form.clearErrors();
   }
@@ -89,116 +132,209 @@ export default function SignIn() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              onReset={onReset}
-              className="space-y-6"
-            >
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Email
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="email@email.com"
-                          type="email"
-                          className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Palavra-Passe
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Mínimo 8 caracteres"
-                          type={showPassword ? "text" : "password"}
-                          className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="rememberMe"
-                render={({}) => (
-                  <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
-                    <div className="w-full flex flex-row gap-x-2">
-                      <FormControl>
-                        <Checkbox
-                          onCheckedChange={(value) => {
-                            form.setValue(
-                              "rememberMe",
-                              Boolean(value.valueOf()),
-                            );
-                          }}
-                          key="remember-me-input-0"
-                          id="remember-me-input-0"
-                          className=" "
-                        />
-                      </FormControl>
-
-                      <FormLabel className="flex shrink-0">
-                        Lembrar-me
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {errorMessage && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-red-600 text-sm">{errorMessage}</p>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={isLoading}
-                className="w-full"
+          {isResetMode ? (
+            <Form {...resetForm}>
+              <form
+                onSubmit={resetForm.handleSubmit(onResetSubmit)}
+                className="space-y-6"
               >
-                {isLoading ? "A entrar..." : "Entrar"}
-              </Button>
-            </form>
-          </Form>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Recuperar palavra-passe
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Introduz o email da tua conta para receberes um email de
+                    recuperação.
+                  </p>
+                </div>
+
+                <FormField
+                  control={resetForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        Email
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                          <Input
+                            placeholder="email@email.com"
+                            type="email"
+                            className="h-12 rounded-lg border-gray-200 pl-10 transition-all duration-200 focus:border-primary focus:ring-primary/20"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                {errorMessage && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-sm text-red-600">{errorMessage}</p>
+                  </div>
+                )}
+
+                {resetSuccessMessage && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                    <p className="text-sm text-green-700">
+                      {resetSuccessMessage}
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? "A enviar..." : "Enviar email de recuperação"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full"
+                  onClick={() => {
+                    setIsResetMode(false);
+                    setErrorMessage(null);
+                    setResetSuccessMessage(null);
+                  }}
+                >
+                  Voltar ao login
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                onReset={onLoginReset}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        Email
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Input
+                            placeholder="email@email.com"
+                            type="email"
+                            className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        Palavra-Passe
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Input
+                            placeholder="Mínimo 8 caracteres"
+                            type={showPassword ? "text" : "password"}
+                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rememberMe"
+                  render={({}) => (
+                    <FormItem className="col-span-12 col-start-auto flex flex-row items-center justify-center align-middle">
+                      <div className="w-full flex flex-row gap-x-2">
+                        <FormControl>
+                          <Checkbox
+                            onCheckedChange={(value) => {
+                              form.setValue(
+                                "rememberMe",
+                                Boolean(value.valueOf()),
+                              );
+                            }}
+                            key="remember-me-input-0"
+                            id="remember-me-input-0"
+                            className=" "
+                          />
+                        </FormControl>
+
+                        <FormLabel className="flex shrink-0">
+                          Lembrar-me
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {errorMessage && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-600 text-sm">{errorMessage}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? "A entrar..." : "Entrar"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full"
+                  onClick={() => {
+                    setIsResetMode(true);
+                    setErrorMessage(null);
+                    setResetSuccessMessage(null);
+                    resetForm.reset({ email: form.getValues("email") });
+                  }}
+                >
+                  Esqueci-me da palavra-passe
+                </Button>
+              </form>
+            </Form>
+          )}
         </div>
       </div>
     </div>
