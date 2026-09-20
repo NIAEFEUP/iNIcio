@@ -5,7 +5,9 @@ import { Slot } from "@/lib/db";
 import addInterviewWithSlot from "@/lib/interview";
 import {
   getInterviewSlots,
+  isRecruitmentPhaseOpen,
   markInterviewRecruitmentPhaseAsDone,
+  RECRUITMENT_PHASE_IDENTIFIERS,
 } from "@/lib/recruitment";
 import { headers } from "next/headers";
 import { getSessionUser } from "@/lib/action-guard";
@@ -19,6 +21,11 @@ export default async function CandidateInterviewSchedule() {
     "use server";
 
     const user = await getSessionUser();
+
+    if (
+      !(await isRecruitmentPhaseOpen(RECRUITMENT_PHASE_IDENTIFIERS.interview))
+    )
+      return false;
 
     if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
 

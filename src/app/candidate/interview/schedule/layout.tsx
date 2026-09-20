@@ -3,7 +3,11 @@ import { db } from "@/lib/db";
 import { isNotNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getActiveRecruitment } from "@/lib/recruitment";
+import {
+  getActiveRecruitment,
+  isRecruitmentPhaseOpen,
+  RECRUITMENT_PHASE_IDENTIFIERS,
+} from "@/lib/recruitment";
 
 export default async function InterviewLayout({
   children,
@@ -20,6 +24,12 @@ export default async function InterviewLayout({
 
   const activeRecruitment = await getActiveRecruitment();
   if (!activeRecruitment) {
+    redirect("/candidate/progress");
+  }
+
+  if (
+    !(await isRecruitmentPhaseOpen(RECRUITMENT_PHASE_IDENTIFIERS.interview))
+  ) {
     redirect("/candidate/progress");
   }
 

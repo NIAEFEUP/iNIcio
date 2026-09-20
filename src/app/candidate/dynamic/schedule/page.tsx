@@ -5,7 +5,9 @@ import { Slot } from "@/lib/db";
 import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
 import {
   getDynamicSlots,
+  isRecruitmentPhaseOpen,
   markDynamicRecruitmentPhaseAsDone,
+  RECRUITMENT_PHASE_IDENTIFIERS,
 } from "@/lib/recruitment";
 import { headers } from "next/headers";
 import { getSessionUser } from "@/lib/action-guard";
@@ -19,6 +21,9 @@ export default async function CandidateDynamicSchedule() {
     "use server";
 
     const user = await getSessionUser();
+
+    if (!(await isRecruitmentPhaseOpen(RECRUITMENT_PHASE_IDENTIFIERS.dynamic)))
+      return false;
 
     if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
 
