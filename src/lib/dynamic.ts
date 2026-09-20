@@ -7,7 +7,7 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/db/schema";
 import {
@@ -66,7 +66,7 @@ export async function tryToAddCandidateToDynamic(
     const s = await trx
       .select()
       .from(slot)
-      .where(eq(slot.id, slotParam.id))
+      .where(and(eq(slot.id, slotParam.id), gt(slot.quantity, 0)))
       .for("update");
 
     if (s.length > 0) {
@@ -106,7 +106,7 @@ export async function tryToAddCandidateToDynamic(
         });
       }
     } else {
-      throw new Error("Slot not found");
+      throw new Error("Slot not found or full");
     }
   });
 }
