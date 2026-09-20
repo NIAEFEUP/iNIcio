@@ -155,7 +155,16 @@ export async function POST(req: Request) {
         candidateId: session.user.id,
         recruitmentId: target.id,
       })
+      .onConflictDoNothing()
       .returning({ id: application.id });
+
+    if (app.length === 0) {
+      return {
+        ok: false as const,
+        status: 409,
+        error: "Já existe uma candidatura para este recrutamento",
+      };
+    }
 
     for (const interest of data.interests) {
       await tx.insert(applicationInterests).values({
