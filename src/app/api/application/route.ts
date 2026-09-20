@@ -29,8 +29,12 @@ const requiredText = z.string().min(1);
 const applicationSchema = z.object({
   student_number: z
     .union([z.string(), z.number()])
-    .refine((value) => value !== "" && !Number.isNaN(Number(value)), {
-      message: "student_number must be numeric",
+    .refine((value) => /^\d+$/.test(String(value).trim()), {
+      message: "student_number must be a positive integer",
+    })
+    .transform((value) => Number(String(value).trim()))
+    .refine((value) => value > 0 && value <= 2147483647, {
+      message: "student_number is out of range",
     }),
   phone: requiredText,
   degree: z.string().refine((value) => availableCourses.includes(value), {
