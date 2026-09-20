@@ -127,24 +127,6 @@ export default function Navbar({
                 priority
               />
             </Link>
-
-            <nav className="hidden md:flex md:items-center md:gap-1">
-              {user && (isAdmin || isRecruiter) && (
-                <Link
-                  href={isAdmin ? "/admin" : "/recruiter/progress"}
-                  className={cn(
-                    buttonVariants({
-                      variant: "outline",
-                      size: "sm",
-                    }),
-                    "gap-1.5",
-                  )}
-                >
-                  <LayoutDashboard className="size-3.5" />
-                  Painel
-                </Link>
-              )}
-            </nav>
           </div>
 
           <div className="hidden md:flex md:items-center md:gap-3">
