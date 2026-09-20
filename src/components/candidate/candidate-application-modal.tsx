@@ -57,23 +57,24 @@ export function CandidateApplicationModal({
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto p-6 sm:p-8">
         <DialogHeader className="space-y-2 pb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-              {recruitmentName}
-            </span>
             {termInfo && (
-              <span className="text-xs text-muted-foreground">{termInfo}</span>
+              <>
+                <span className="text-xs text-muted-foreground">
+                  {termInfo}
+                </span>
+                <span className="text-xs text-muted-foreground">·</span>
+              </>
             )}
+            <span className="text-xs text-muted-foreground">
+              Submetida a {formattedDate}
+            </span>
           </div>
           <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             A tua Candidatura
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-            Submetida a {formattedDate}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 pt-2">
-          {/* Informações Pessoais */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Informações Pessoais
@@ -112,14 +113,13 @@ export function CandidateApplicationModal({
                 <p className="text-sm font-medium text-foreground">
                   {application.degree || "Não indicado"}
                   {application.curricularYear
-                    ? ` · ${application.curricularYear}º ano`
+                    ? ` · ${application.curricularYear}`
                     : ""}
                 </p>
               </div>
             </div>
           </section>
 
-          {/* Presença Online & CV */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Presença Online & CV
@@ -196,7 +196,6 @@ export function CandidateApplicationModal({
             </div>
           </section>
 
-          {/* Áreas de Interesse */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Áreas de Interesse
@@ -220,7 +219,6 @@ export function CandidateApplicationModal({
             )}
           </section>
 
-          {/* Respostas Submetidas */}
           <section className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Respostas Submetidas
