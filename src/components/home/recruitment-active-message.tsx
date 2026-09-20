@@ -37,7 +37,7 @@ export default function RecruitmentActiveMessage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-16 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 md:py-16 max-w-7xl">
       {/* Hero section */}
       <div className="flex flex-col items-center text-center space-y-4 max-w-3xl mx-auto">
         <Badge

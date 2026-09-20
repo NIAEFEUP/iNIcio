@@ -15,7 +15,7 @@ export default function ApplicationsClosedMessage({
   isAuthenticated,
 }: ApplicationsClosedMessageProps) {
   return (
-    <div className="container mx-auto px-4 py-12 md:py-20 max-w-3xl text-center">
+    <div className="container mx-auto px-4 py-12 md:py-20 max-w-7xl text-center">
       <div className="flex flex-col items-center space-y-4">
         <Badge
           variant="secondary"

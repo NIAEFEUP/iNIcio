@@ -70,7 +70,7 @@ export default function LandingPage({
 
   return (
     <div className="flex flex-col bg-background">
-      <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 text-center max-w-4xl mx-auto px-4 sm:px-6">
+      <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 text-center max-w-7xl mx-auto px-4 sm:px-6">
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.1] mb-6">
           Queres fazer parte do NI?
         </h1>
@@ -133,36 +133,7 @@ export default function LandingPage({
               Painel de Recrutamento
               <ArrowRight className="size-4" />
             </Link>
-          ) : hasApplied ? (
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/candidate/progress"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "text-base px-6 h-12 gap-2",
-                )}
-              >
-                Acompanhar o meu Progresso
-                <ArrowRight className="size-4" />
-              </Link>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => {
-                  if (currentApplication) {
-                    setSelectedApplication(currentApplication);
-                    setIsAppModalOpen(true);
-                  } else if (userApplications.length > 0) {
-                    setSelectedApplication(userApplications[0]);
-                    setIsAppModalOpen(true);
-                  }
-                }}
-                className="text-base px-6 h-12 cursor-pointer"
-              >
-                Ver a Minha Candidatura
-              </Button>
-            </div>
-          ) : isApplicationOpen ? (
+          ) : hasApplied ? null : isApplicationOpen ? (
             <div className="flex flex-col items-center gap-3">
               <Link
                 href="/application"
@@ -193,7 +164,7 @@ export default function LandingPage({
       {user && userApplications.length > 0 && (
         <section
           id="candidaturas"
-          className="py-8 max-w-4xl mx-auto px-4 sm:px-6 w-full"
+          className="py-8 max-w-7xl mx-auto px-4 sm:px-6 w-full"
         >
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-4">
@@ -206,10 +177,6 @@ export default function LandingPage({
                   recrutamento do NIAEFEUP.
                 </p>
               </div>
-              <Badge variant="secondary" className="w-fit text-xs">
-                {userApplications.length}{" "}
-                {userApplications.length === 1 ? "candidatura" : "candidaturas"}
-              </Badge>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
@@ -248,14 +215,8 @@ export default function LandingPage({
                           {recruitmentName}
                         </span>
                         {isCurrent ? (
-                          <Badge variant="default" className="text-xs">
-                            Recrutamento Atual
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Anterior
-                          </Badge>
-                        )}
+                          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                         {termInfo && <span>{termInfo}</span>}
@@ -269,16 +230,14 @@ export default function LandingPage({
                         <Link
                           href="/candidate/progress"
                           className={cn(
-                            buttonVariants({ variant: "outline", size: "sm" }),
+                            buttonVariants({ size: "sm" }),
                             "text-xs gap-1.5",
                           )}
                         >
                           Ver Progresso
-                          <ArrowRight className="size-3" />
                         </Link>
                       ) : hasResult ? (
                         <Button
-                          variant="outline"
                           size="sm"
                           className="text-xs gap-1.5 cursor-pointer"
                           onClick={() => {
@@ -291,7 +250,7 @@ export default function LandingPage({
                       ) : null}
 
                       <Button
-                        variant={isCurrent ? "ghost" : "outline"}
+                        variant="outline"
                         size="sm"
                         className="text-xs cursor-pointer"
                         onClick={() => {
@@ -310,7 +269,7 @@ export default function LandingPage({
         </section>
       )}
 
-      <section className="py-8 sm:py-12 max-w-6xl mx-auto px-4 sm:px-6 w-full">
+      <section className="py-8 sm:py-12 max-w-7xl mx-auto px-4 sm:px-6 w-full">
         <div className="text-center mb-10">
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
             O que fazemos!
@@ -393,7 +352,7 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="py-12 sm:py-16 max-w-4xl mx-auto px-4 sm:px-6 w-full">
+      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 w-full">
         <div className="text-center mb-10">
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
             Como funciona o recrutamento?
@@ -441,12 +400,12 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="py-12 sm:py-16 max-w-2xl mx-auto px-4 sm:px-6 w-full">
+      <section className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 w-full">
         <h3 className="text-2xl font-bold text-foreground text-center mb-8">
           Perguntas Frequentes
         </h3>
 
-        <Accordion className="space-y-2">
+        <Accordion className="max-w-2xl mx-auto space-y-2">
           <AccordionItem value="faq-1" className="border-none py-1">
             <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline py-2">
               Alunos do 1.º ano podem candidatar-se?

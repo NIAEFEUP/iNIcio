@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CandidateApplicationModal } from "./candidate-application-modal";
 import { CandidateResultModal } from "./candidate-result-modal";
@@ -99,12 +100,6 @@ export function CandidateProgressView({
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [isDynamicModalOpen, setIsDynamicModalOpen] = useState(false);
 
-  const completedPhasesCount = phases.filter((p) => p.checked).length;
-  const progressPercent =
-    phases.length > 0
-      ? Math.round((completedPhasesCount / phases.length) * 100)
-      : 0;
-
   const now = new Date();
   const isResultReady = Boolean(
     result &&
@@ -132,314 +127,339 @@ export function CandidateProgressView({
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-8 py-10 sm:py-14 space-y-10">
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {recruitment.title}
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
+      <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-start">
+        <div className="space-y-5 md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-7rem)] md:overflow-y-auto">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
             Progresso da Candidatura
           </h1>
+
+          <div className="grid grid-cols-2 gap-3">
+            {recruitment.lectiveYear && (
+              <Card className="rounded-2xl">
+                <CardContent className="py-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Ano letivo
+                  </p>
+                  <p className="mt-0.5 text-lg font-bold text-foreground">
+                    {recruitment.lectiveYear}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {typeof recruitment.semester === "number" && (
+              <Card className="rounded-2xl">
+                <CardContent className="py-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Semestre
+                  </p>
+                  <p className="mt-0.5 text-lg font-bold text-foreground">
+                    {recruitment.semester}º
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        {phases.map((rawPhase, idx) => {
-          const kind = rawPhase.clientIdentifier.trim().toLowerCase();
-          const isCompleted = rawPhase.checked;
-          const start = rawPhase.start ? new Date(rawPhase.start) : null;
-          const end = rawPhase.end ? new Date(rawPhase.end) : null;
-          const isOngoing =
-            start && end ? now >= start && now <= end && !isCompleted : false;
-          const isUpcoming = start ? now < start : false;
-          const isPhaseOpen = (!start || now >= start) && (!end || now <= end);
+        <div className="space-y-4">
+          {phases.map((rawPhase, idx) => {
+            const kind = rawPhase.clientIdentifier.trim().toLowerCase();
+            const isCompleted = rawPhase.checked;
+            const start = rawPhase.start ? new Date(rawPhase.start) : null;
+            const end = rawPhase.end ? new Date(rawPhase.end) : null;
+            const isOngoing =
+              start && end ? now >= start && now <= end && !isCompleted : false;
+            const isUpcoming = start ? now < start : false;
 
-          let statusLabel = "Pendente";
-          let dotColor = "bg-muted-foreground/30";
-          let textColor = "text-muted-foreground";
+            let statusLabel = "Pendente";
+            let dotColor = "bg-muted-foreground/30";
+            let textColor = "text-muted-foreground";
 
-          if (isCompleted) {
-            statusLabel = "Concluído";
-            dotColor = "bg-emerald-500";
-            textColor = "text-emerald-600 dark:text-emerald-400";
-          } else if (isOngoing) {
-            statusLabel = "A decorrer";
-            dotColor = "bg-primary animate-pulse";
-            textColor = "text-primary";
-          } else if (isUpcoming) {
-            statusLabel = "Futura";
-            dotColor = "bg-muted-foreground/40";
-            textColor = "text-muted-foreground";
-          }
+            if (isCompleted) {
+              statusLabel = "Concluído";
+              dotColor = "bg-emerald-500";
+              textColor = "text-emerald-600 dark:text-emerald-400";
+            } else if (isOngoing) {
+              statusLabel = "A decorrer";
+              dotColor = "bg-primary";
+              textColor = "text-primary";
+            } else if (isUpcoming) {
+              statusLabel = "Futura";
+              dotColor = "bg-muted-foreground/40";
+              textColor = "text-muted-foreground";
+            }
 
-          const isActionRequired = isOngoing && !isCompleted;
-          const dateRange = formatDateRange(rawPhase.start, rawPhase.end);
+            const dateRange = formatDateRange(rawPhase.start, rawPhase.end);
 
-          const phase = {
-            ...rawPhase,
-            kind,
-            statusLabel,
-            dateRange,
-          };
+            const phase = {
+              ...rawPhase,
+              kind,
+              statusLabel,
+              dateRange,
+            };
 
-          return (
-            <div
-              key={phase.id}
-              className={cn(
-                "rounded-2xl border p-6 sm:p-7 transition-all duration-200",
-                isCompleted
-                  ? "bg-card border-border/80"
-                  : isOngoing
-                    ? "bg-card border-primary/50 ring-1 ring-primary/20 shadow-xs"
-                    : "bg-muted/10 border-border/40 opacity-70",
-              )}
-            >
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-xs font-mono font-semibold text-muted-foreground">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-foreground">
-                        {phase.title}
-                      </h3>
-                      {phase.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                          {phase.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0 pl-7 sm:pl-0">
-                    <div className="flex items-center gap-1.5 text-xs font-medium">
-                      <span
-                        className={cn("size-2 rounded-full shrink-0", dotColor)}
-                      />
-                      <span className={textColor}>{phase.statusLabel}</span>
-                    </div>
-                    {phase.dateRange && (
-                      <span className="text-xs text-muted-foreground">
-                        {phase.dateRange}
+            return (
+              <div
+                key={phase.id}
+                className={cn(
+                  "rounded-2xl border p-6 sm:p-7 transition-all duration-200",
+                  isCompleted
+                    ? "bg-card border-border/80"
+                    : isOngoing
+                      ? "bg-card border-border/80"
+                      : "bg-muted/10 border-border/40 opacity-70",
+                )}
+              >
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-xs font-mono font-semibold text-muted-foreground">
+                        {String(idx + 1).padStart(2, "0")}
                       </span>
-                    )}
-                  </div>
-                </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-foreground">
+                          {phase.title}
+                        </h3>
+                        {phase.description && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            {phase.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-                {phase.kind === "candidatura" && application && (
-                  <div className="mt-4 pt-4 border-t border-border/40 pl-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {application.submittedAt
-                        ? `Submetida em ${new Date(application.submittedAt).toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}`
-                        : "Candidatura submetida"}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsAppModalOpen(true)}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "text-xs cursor-pointer font-medium w-fit",
+                    <div className="flex items-center gap-3 shrink-0 pl-7 sm:pl-0">
+                      <div className="flex items-center gap-1.5 text-xs font-medium">
+                        <span
+                          className={cn(
+                            "size-2 rounded-full shrink-0",
+                            dotColor,
+                          )}
+                        />
+                        <span className={textColor}>{phase.statusLabel}</span>
+                      </div>
+                      {phase.dateRange && (
+                        <span className="text-xs text-muted-foreground">
+                          {phase.dateRange}
+                        </span>
                       )}
-                    >
-                      Ver detalhes da candidatura
-                    </button>
+                    </div>
                   </div>
-                )}
 
-                {phase.kind === "entrevista" && (
-                  <div className="mt-4 pt-4 border-t border-border/40 pl-6">
-                    {interviewSlot ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="text-xs sm:text-sm">
-                          <span className="text-muted-foreground">
-                            Horário marcado:{" "}
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {formatAppointmentDate(
-                              interviewSlot.start,
-                              interviewSlot.duration,
-                            )}
-                          </span>
-                        </div>
+                  {phase.kind === "candidatura" && application && (
+                    <div className="mt-4 pt-4 border-t border-border/40 pl-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {application.submittedAt
+                          ? `Submetida em ${new Date(application.submittedAt).toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}`
+                          : "Candidatura submetida"}
+                      </span>
 
-                        {isInterviewPhaseOpen ? (
-                          <button
-                            type="button"
-                            onClick={() => setIsInterviewModalOpen(true)}
-                            className={cn(
-                              buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                              }),
-                              "text-xs font-medium w-fit cursor-pointer",
-                            )}
-                          >
-                            Alterar horário
-                          </button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/70 italic">
-                            Período de agendamento encerrado
-                          </span>
-                        )}
-                      </div>
-                    ) : isInterviewPhaseOpen ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <span className="text-xs text-muted-foreground">
-                          O período de agendamento de entrevistas está ativo.
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsInterviewModalOpen(true)}
-                          className={cn(
-                            buttonVariants({ size: "sm" }),
-                            "text-xs font-medium w-fit cursor-pointer",
-                          )}
-                        >
-                          Agendar horário
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <span>
-                          {isUpcoming
-                            ? "O agendamento de entrevistas estará disponível durante o período desta fase."
-                            : "O período de agendamento de entrevistas terminou."}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {phase.kind === "dinâmica" && (
-                  <div className="mt-4 pt-4 border-t border-border/40 pl-6">
-                    {dynamicSlot ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="text-xs sm:text-sm">
-                          <span className="text-muted-foreground">
-                            Sessão marcada:{" "}
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {formatAppointmentDate(
-                              dynamicSlot.start,
-                              dynamicSlot.duration,
-                            )}
-                          </span>
-                        </div>
-
-                        {isDynamicPhaseOpen ? (
-                          <button
-                            type="button"
-                            onClick={() => setIsDynamicModalOpen(true)}
-                            className={cn(
-                              buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                              }),
-                              "text-xs font-medium w-fit cursor-pointer",
-                            )}
-                          >
-                            Alterar sessão
-                          </button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/70 italic">
-                            Período de inscrições encerrado
-                          </span>
-                        )}
-                      </div>
-                    ) : isDynamicPhaseOpen ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <span className="text-xs text-muted-foreground">
-                          As inscrições para a dinâmica de grupo encontram-se
-                          abertas.
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsDynamicModalOpen(true)}
-                          className={cn(
-                            buttonVariants({ size: "sm" }),
-                            "text-xs font-medium w-fit cursor-pointer",
-                          )}
-                        >
-                          Agendar sessão
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <span>
-                          {isUpcoming
-                            ? "A inscrição na dinâmica de grupo estará disponível durante o período desta fase."
-                            : "O período de inscrições para a dinâmica de grupo terminou."}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(phase.kind === "votacao" || phase.kind === "resultado") && (
-                  <div className="mt-4 pt-4 border-t border-border/40 pl-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {isResultReady
-                        ? "A decisão final já se encontra disponível."
-                        : "A decisão final será publicada após a conclusão de todas as fases."}
-                    </span>
-
-                    {isResultReady && (
                       <button
                         type="button"
-                        onClick={() => setIsResultModalOpen(true)}
+                        onClick={() => setIsAppModalOpen(true)}
                         className={cn(
                           buttonVariants({ variant: "outline", size: "sm" }),
                           "text-xs cursor-pointer font-medium w-fit",
                         )}
                       >
-                        Ver resultado
+                        Ver detalhes da candidatura
                       </button>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+
+                  {phase.kind === "entrevista" && (
+                    <div className="mt-4 pt-4 border-t border-border/40 pl-6">
+                      {interviewSlot ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="text-xs sm:text-sm">
+                            <span className="text-muted-foreground">
+                              Horário marcado:{" "}
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {formatAppointmentDate(
+                                interviewSlot.start,
+                                interviewSlot.duration,
+                              )}
+                            </span>
+                          </div>
+
+                          {isInterviewPhaseOpen ? (
+                            <button
+                              type="button"
+                              onClick={() => setIsInterviewModalOpen(true)}
+                              className={cn(
+                                buttonVariants({
+                                  variant: "outline",
+                                  size: "sm",
+                                }),
+                                "text-xs font-medium w-fit cursor-pointer",
+                              )}
+                            >
+                              Alterar horário
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/70 italic">
+                              Período de agendamento encerrado
+                            </span>
+                          )}
+                        </div>
+                      ) : isInterviewPhaseOpen ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            O período de agendamento de entrevistas está ativo.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsInterviewModalOpen(true)}
+                            className={cn(
+                              buttonVariants({ size: "sm" }),
+                              "text-xs font-medium w-fit cursor-pointer",
+                            )}
+                          >
+                            Agendar horário
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <span>
+                            {isUpcoming
+                              ? "O agendamento de entrevistas estará disponível durante o período desta fase."
+                              : "O período de agendamento de entrevistas terminou."}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {phase.kind === "dinâmica" && (
+                    <div className="mt-4 pt-4 border-t border-border/40 pl-6">
+                      {dynamicSlot ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="text-xs sm:text-sm">
+                            <span className="text-muted-foreground">
+                              Sessão marcada:{" "}
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {formatAppointmentDate(
+                                dynamicSlot.start,
+                                dynamicSlot.duration,
+                              )}
+                            </span>
+                          </div>
+
+                          {isDynamicPhaseOpen ? (
+                            <button
+                              type="button"
+                              onClick={() => setIsDynamicModalOpen(true)}
+                              className={cn(
+                                buttonVariants({
+                                  variant: "outline",
+                                  size: "sm",
+                                }),
+                                "text-xs font-medium w-fit cursor-pointer",
+                              )}
+                            >
+                              Alterar sessão
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/70 italic">
+                              Período de inscrições encerrado
+                            </span>
+                          )}
+                        </div>
+                      ) : isDynamicPhaseOpen ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            As inscrições para a dinâmica de grupo encontram-se
+                            abertas.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsDynamicModalOpen(true)}
+                            className={cn(
+                              buttonVariants({ size: "sm" }),
+                              "text-xs font-medium w-fit cursor-pointer",
+                            )}
+                          >
+                            Agendar sessão
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <span>
+                            {isUpcoming
+                              ? "A inscrição na dinâmica de grupo estará disponível durante o período desta fase."
+                              : "O período de inscrições para a dinâmica de grupo terminou."}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {(phase.kind === "votacao" || phase.kind === "resultado") && (
+                    <div className="mt-4 pt-4 border-t border-border/40 pl-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {isResultReady
+                          ? "A decisão final já se encontra disponível."
+                          : "A decisão final será publicada após a conclusão de todas as fases."}
+                      </span>
+
+                      {isResultReady && (
+                        <button
+                          type="button"
+                          onClick={() => setIsResultModalOpen(true)}
+                          className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            "text-xs cursor-pointer font-medium w-fit",
+                          )}
+                        >
+                          Ver resultado
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        <CandidateApplicationModal
+          open={isAppModalOpen}
+          onOpenChange={setIsAppModalOpen}
+          application={application}
+          user={user}
+        />
+
+        <CandidateResultModal
+          open={isResultModalOpen}
+          onOpenChange={setIsResultModalOpen}
+          result={result}
+        />
+
+        <CandidateScheduleModal
+          open={isInterviewModalOpen}
+          onOpenChange={setIsInterviewModalOpen}
+          type="interview"
+          title="Agendamento de Entrevista"
+          description="Seleciona um dos horários disponíveis para realizares a tua entrevista individual."
+          slots={interviewSlots}
+          currentSlot={interviewSlot}
+          isPhaseOpen={isInterviewPhaseOpen}
+        />
+
+        <CandidateScheduleModal
+          open={isDynamicModalOpen}
+          onOpenChange={setIsDynamicModalOpen}
+          type="dynamic"
+          title="Inscrição na Dinâmica de Grupo"
+          description="Escolhe uma sessão para participares na dinâmica de grupo com a equipa."
+          slots={dynamicSlots}
+          currentSlot={dynamicSlot}
+          isPhaseOpen={isDynamicPhaseOpen}
+        />
       </div>
-
-      <CandidateApplicationModal
-        open={isAppModalOpen}
-        onOpenChange={setIsAppModalOpen}
-        application={application}
-        user={user}
-      />
-
-      <CandidateResultModal
-        open={isResultModalOpen}
-        onOpenChange={setIsResultModalOpen}
-        result={result}
-      />
-
-      <CandidateScheduleModal
-        open={isInterviewModalOpen}
-        onOpenChange={setIsInterviewModalOpen}
-        type="interview"
-        title="Agendamento de Entrevista"
-        description="Seleciona um dos horários disponíveis para realizares a tua entrevista individual."
-        slots={interviewSlots}
-        currentSlot={interviewSlot}
-        isPhaseOpen={isInterviewPhaseOpen}
-      />
-
-      <CandidateScheduleModal
-        open={isDynamicModalOpen}
-        onOpenChange={setIsDynamicModalOpen}
-        type="dynamic"
-        title="Inscrição na Dinâmica de Grupo"
-        description="Escolhe uma sessão para participares na dinâmica de grupo com a equipa."
-        slots={dynamicSlots}
-        currentSlot={dynamicSlot}
-        isPhaseOpen={isDynamicPhaseOpen}
-      />
     </div>
   );
 }

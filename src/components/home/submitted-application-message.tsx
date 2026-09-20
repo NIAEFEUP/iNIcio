@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 export default function SubmittedApplicationMessage() {
   return (
-    <div className="container mx-auto px-4 py-12 md:py-20 max-w-2xl text-center">
+    <div className="container mx-auto px-4 py-12 md:py-20 max-w-7xl text-center">
       <div className="flex flex-col items-center space-y-6">
         <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
           <CheckCircle2 className="size-8 text-primary" />

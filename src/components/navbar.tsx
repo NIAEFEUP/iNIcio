@@ -104,7 +104,6 @@ export default function Navbar({
         )}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left side: Brand + Nav Links */}
           <div className="flex items-center gap-8">
             <Link
               href="/"
@@ -130,23 +129,6 @@ export default function Navbar({
             </Link>
 
             <nav className="hidden md:flex md:items-center md:gap-1">
-              {user && showProgress ? (
-                <Link
-                  href="/candidate/progress"
-                  className={cn(
-                    buttonVariants({
-                      variant: pathname?.startsWith("/candidate/progress")
-                        ? "secondary"
-                        : "ghost",
-                      size: "sm",
-                    }),
-                    "gap-1.5",
-                  )}
-                >
-                  Progresso
-                </Link>
-              ) : null}
-
               {user && (isAdmin || isRecruiter) && (
                 <Link
                   href={isAdmin ? "/admin" : "/recruiter/progress"}

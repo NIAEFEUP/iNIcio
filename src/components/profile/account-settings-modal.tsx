@@ -159,7 +159,6 @@ export function AccountSettingsModal({
             </TabsTrigger>
           </TabsList>
 
-          {/* Account Tab */}
           <TabsContent value="account" className="space-y-4 pt-1">
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
               <Avatar className="size-12 border border-border">
@@ -206,9 +205,6 @@ export function AccountSettingsModal({
                   disabled
                   className="h-9 text-sm bg-muted/40 text-muted-foreground cursor-not-allowed"
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  O email institucional não pode ser alterado.
-                </p>
               </div>
 
               <div className="pt-2 flex justify-end">
@@ -223,7 +219,6 @@ export function AccountSettingsModal({
             </form>
           </TabsContent>
 
-          {/* Photo Tab */}
           <TabsContent value="photo" className="space-y-4 pt-1">
             <div className="flex flex-col items-center gap-4 py-2">
               <Avatar className="size-20 border border-border">
@@ -252,10 +247,6 @@ export function AccountSettingsModal({
                   onError={(err) => toast.error(err)}
                 />
               </div>
-
-              <p className="text-xs text-muted-foreground text-center max-w-xs">
-                Formatos suportados: JPG, PNG ou WebP (máximo 5MB).
-              </p>
             </div>
           </TabsContent>
 

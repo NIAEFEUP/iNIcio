@@ -49,7 +49,7 @@ export default async function CandidateInterviewSchedule() {
   const slots = await getInterviewSlots();
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl space-y-6">
+    <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl space-y-6">
       <div className="flex items-center gap-2">
         <Link
           href="/candidate/progress"
