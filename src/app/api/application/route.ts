@@ -11,14 +11,20 @@ import {
   recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
-  user,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
+import {
+  availableCourses,
+  availableCurricularYears,
+  availableInterests,
+} from "@/lib/constants";
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { getRecruitmentState } from "@/lib/recruitment-state";
 import { isRecruiter } from "@/lib/recruiter";
+
+const requiredText = z.string().min(1);
 
 const applicationSchema = z.object({
   student_number: z
@@ -26,18 +32,30 @@ const applicationSchema = z.object({
     .refine((value) => value !== "" && !Number.isNaN(Number(value)), {
       message: "student_number must be numeric",
     }),
-  phone: z.string().optional(),
-  degree: z.string().optional(),
-  curricular_year: z.string().optional(),
+  phone: requiredText,
+  degree: z.string().refine((value) => availableCourses.includes(value), {
+    message: "Invalid degree",
+  }),
+  curricular_year: z
+    .string()
+    .refine((value) => availableCurricularYears.includes(value), {
+      message: "Invalid curricular year",
+    }),
   curriculum: z.string().default(""),
-  interests: z.array(z.string()).default([]),
+  interests: z
+    .array(
+      z.string().refine((value) => availableInterests.includes(value), {
+        message: "Invalid interest",
+      }),
+    )
+    .default([]),
   linkedin: z.string().optional(),
   github: z.string().optional(),
   website: z.string().optional(),
-  interest_justification: z.string().optional(),
+  interest_justification: requiredText,
   experience: z.string().optional(),
-  motivation: z.string().optional(),
-  self_promotion: z.string().optional(),
+  motivation: requiredText,
+  self_promotion: requiredText,
   suggestions: z.string().optional(),
 });
 
