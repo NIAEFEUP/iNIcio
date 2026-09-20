@@ -6,7 +6,7 @@ import { getCurrentRecruitmentState } from "@/lib/recruitment";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
+export default async function ApplicationLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -20,15 +20,12 @@ export default async function AdminLayout({
   if (await isAdmin(session.user.id)) redirect("/admin");
   if (await isRecruiter(session.user.id)) redirect("/recruiter/progress");
 
-  if (session?.user) {
-    const application = await getApplication(session?.user.id);
+  const application = await getApplication(session.user.id);
 
-    if (application) {
-      redirect("/candidate/progress");
-    }
+  // If the candidate has not submitted an application yet and applications are closed, redirect home
+  if (!application && !(await getCurrentRecruitmentState()).canApply) {
+    redirect("/");
   }
-
-  if (!(await getCurrentRecruitmentState()).canApply) redirect("/");
 
   return <>{children}</>;
 }

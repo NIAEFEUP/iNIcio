@@ -103,7 +103,7 @@ export default function Navbar({
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-colors",
+          "sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md transition-colors",
           className,
         )}
       >
@@ -394,7 +394,7 @@ export default function Navbar({
 
         {/* Mobile Drawer Menu */}
         {isMenuOpen && (
-          <div className="border-b border-border bg-background px-4 py-4 md:hidden">
+          <div className="bg-background px-4 py-4 md:hidden">
             <div className="flex flex-col gap-2">
               <Link
                 href="/"
@@ -477,7 +477,7 @@ export default function Navbar({
               )}
 
               {user ? (
-                <div className="mt-3 border-t border-border pt-3 flex flex-col gap-2">
+                <div className="mt-3 pt-3 flex flex-col gap-2">
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -516,7 +516,7 @@ export default function Navbar({
                   </Button>
                 </div>
               ) : (
-                <div className="mt-3 border-t border-border pt-3 flex flex-col gap-2">
+                <div className="mt-3 pt-3 flex flex-col gap-2">
                   <Link
                     href="/login"
                     className={cn(

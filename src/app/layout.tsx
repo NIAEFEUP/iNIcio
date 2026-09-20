@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 import NavbarController from "@/components/navbar-controller";
+import { Footer } from "@/components/footer";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -34,6 +35,7 @@ export default function RootLayout({
         >
           <NavbarController />
           <main className="grow flex flex-col">{children}</main>
+          <Footer />
           <Toaster />
         </ThemeProvider>
       </body>
