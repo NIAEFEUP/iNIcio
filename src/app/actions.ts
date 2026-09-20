@@ -43,7 +43,7 @@ export async function getAvailableRecruiters(
 
   const conditions = [
     lt(recruiterAvailability.start, endUtc),
-    sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${startUtc}`,
+    sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${sql.param(startUtc, recruiterAvailability.start)}`,
     eq(recruiterAvailability.recruitmentId, targetId),
   ];
 
