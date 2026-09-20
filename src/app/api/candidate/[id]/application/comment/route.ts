@@ -1,11 +1,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-import { db } from "@/lib/db";
-
-import { addApplicationComment } from "@/lib/comment";
-import { application } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { submitApplicationComment } from "@/lib/application";
+import { getActiveRecruitment } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 
 export async function POST(req: Request, context: any) {
@@ -15,24 +12,35 @@ export async function POST(req: Request, context: any) {
 
   const { id: candidateId } = await context.params;
 
-  if (!session || !(await isRecruiter(session.user.id)))
+  if (!session) return new Response("Unauthorized", { status: 401 });
+
+  const activeRecruitment = await getActiveRecruitment();
+  if (!activeRecruitment) {
+    return new Response("No active recruitment", { status: 400 });
+  }
+
+  if (!(await isRecruiter(session.user.id, activeRecruitment.id)))
     return new Response("Unauthorized", { status: 401 });
 
-  const json = await req.json();
+  let json: any;
+  try {
+    json = await req.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
 
-  const app = await db
-    .select()
-    .from(application)
-    .where(eq(application.candidateId, candidateId));
+  if (!Array.isArray(json?.content)) {
+    return new Response("Invalid content", { status: 400 });
+  }
 
-  if (app.length === 0)
-    return new Response("Application not found", { status: 404 });
-
-  await addApplicationComment(
-    app[0].id,
+  const ok = await submitApplicationComment(
+    candidateId,
     json.content,
-    session ? session.user.id : "",
+    session.user.id,
+    activeRecruitment.id,
   );
+
+  if (!ok) return new Response("Application not found", { status: 404 });
 
   return new Response();
 }
