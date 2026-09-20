@@ -16,18 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileUpload } from "@/components/ui/file-upload";
+import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 
 const formSchema = z
@@ -136,82 +129,80 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              {step === 1 ? "Criar Conta" : "Fotografia de Perfil"}
-            </CardTitle>
-            <CardDescription>
-              {step === 1
-                ? "Preenche os teus dados para iniciar a tua candidatura"
-                : "Adiciona uma fotografia de rosto clara para concluir o teu perfil de candidato"}
-            </CardDescription>
-          </CardHeader>
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-10 sm:py-12">
+      <div className="grid w-full max-w-4xl items-center gap-12 sm:gap-16 md:grid-cols-2 lg:gap-24">
+        <div className="space-y-3 text-center md:text-left">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+            {step === 1 ? "Criar Conta" : "Fotografia de Perfil"}
+          </h1>
+          <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">
+            {step === 1
+              ? "Preenche os teus dados para iniciar a tua candidatura"
+              : "Adiciona uma fotografia de rosto clara para concluir o teu perfil de candidato"}
+          </p>
+        </div>
 
-          <CardContent>
-            {step === 1 ? (
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  onReset={handleReset}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                              <Input
-                                placeholder="Nome"
-                                type="text"
-                                className="pl-9"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="surname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Apelido</FormLabel>
-                          <FormControl>
+        <div className="space-y-6">
+          <div
+            className="flex w-full max-w-[12rem] items-center gap-2"
+            aria-hidden
+          >
+            <span
+              className={cn(
+                "h-1.5 flex-1 rounded-full",
+                step >= 1 ? "bg-primary" : "bg-muted",
+              )}
+            />
+            <span
+              className={cn(
+                "h-1.5 flex-1 rounded-full",
+                step >= 2 ? "bg-primary" : "bg-muted",
+              )}
+            />
+          </div>
+
+          {step === 1 ? (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                onReset={handleReset}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Nome"
+                              type="text"
+                              className="h-11 pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="surname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Apelido</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <Input
                               placeholder="Apelido"
                               type="text"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input
-                              placeholder="utilizador@exemplo.com"
-                              type="email"
-                              className="pl-9"
+                              className="h-11 pl-9"
                               {...field}
                             />
                           </div>
@@ -220,108 +211,98 @@ export default function SignUp() {
                       </FormItem>
                     )}
                   />
+                </div>
 
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Palavra-Passe</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Mínimo 8 caracteres"
-                              type={showPassword ? "text" : "password"}
-                              className="pl-9 pr-9"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              tabIndex={-1}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="size-4" />
-                              ) : (
-                                <Eye className="size-4" />
-                              )}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirm-password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirmar Palavra-Passe</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Confirma a tua palavra-passe"
-                              type={showConfirmPassword ? "text" : "password"}
-                              className="pl-9 pr-9"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                              }
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              tabIndex={-1}
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="size-4" />
-                              ) : (
-                                <Eye className="size-4" />
-                              )}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {errorMessage && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="size-4" />
-                      <AlertDescription>{errorMessage}</AlertDescription>
-                    </Alert>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder="utilizador@exemplo.com"
+                            type="email"
+                            className="h-11 pl-9"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
 
-                  <p className="text-center text-xs text-muted-foreground pt-1">
-                    Ao registares-te, concordas com a nossa{" "}
-                    <Link
-                      className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
-                      href="/privacy-policy"
-                    >
-                      política de privacidade
-                    </Link>
-                    .
-                  </p>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Palavra-Passe</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Mínimo 8 caracteres"
+                            type={showPassword ? "text" : "password"}
+                            className="h-11 pl-9 pr-9"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <Button type="submit" className="w-full">
-                    Continuar
-                  </Button>
-                </form>
-              </Form>
-            ) : (
-              <div className="space-y-4">
-                <FileUpload
-                  type="image"
-                  onFileSelect={(file) => setSelectedImage(file)}
-                  onFileRemove={() => setSelectedImage(null)}
-                  currentFileName={selectedImage?.name}
-                  required
+                <FormField
+                  control={form.control}
+                  name="confirm-password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirmar Palavra-Passe</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Confirma a tua palavra-passe"
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="h-11 pl-9 pr-9"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 {errorMessage && (
@@ -331,39 +312,60 @@ export default function SignUp() {
                   </Alert>
                 )}
 
-                <div className="space-y-2 pt-2">
-                  <Button
-                    onClick={handleCompleteSignup}
-                    disabled={!selectedImage || isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? "A concluir..." : "Concluir Registo"}
-                  </Button>
-                  <Button
-                    onClick={() => setStep(1)}
-                    variant="ghost"
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    Voltar aos dados
-                  </Button>
-                </div>
+                <Button type="submit" className="w-full">
+                  Continuar
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <div className="space-y-5">
+              <FileUpload
+                type="image"
+                onFileSelect={(file) => setSelectedImage(file)}
+                onFileRemove={() => setSelectedImage(null)}
+                currentFileName={selectedImage?.name}
+                required
+              />
+
+              {errorMessage && (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={handleCompleteSignup}
+                  disabled={!selectedImage || isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? "A concluir..." : "Concluir Registo"}
+                </Button>
+                <Button
+                  onClick={() => setStep(1)}
+                  variant="ghost"
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  Voltar aos dados
+                </Button>
               </div>
-            )}
-          </CardContent>
+            </div>
+          )}
 
           {step === 1 && (
-            <CardFooter className="flex justify-center border-t py-4 text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               Já tens conta?{" "}
               <Link
                 href="/login"
-                className="ml-1 font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
               >
                 Entrar
               </Link>
-            </CardFooter>
+            </p>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );
