@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, CheckCircle2, Clock, Lock, ArrowRight } from "lucide-react";
+import { Calendar, CheckCircle2, Lock, ArrowRight } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ProgressPhaseCardProps {
   number: number;
@@ -33,40 +33,36 @@ export default function ProgressPhaseCard({
   );
   const isEnded = Boolean(phaseEnd && new Date() > phaseEnd);
 
-  function getStatusBadge() {
+  function renderStatus() {
     if (checked) {
       return (
-        <Badge variant="default" className="gap-1.5 text-xs font-normal">
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="size-3.5" />
           Concluído
-        </Badge>
+        </span>
       );
     }
     if (isAvailable && !isEnded) {
       return (
-        <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
-          <Clock className="size-3.5" />A decorrer
-        </Badge>
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+          <span className="size-2 rounded-full bg-primary animate-pulse" />A
+          decorrer
+        </span>
       );
     }
     if (isEnded) {
       return (
-        <Badge
-          variant="outline"
-          className="text-xs font-normal text-muted-foreground"
-        >
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-muted-foreground/60" />
           Terminado
-        </Badge>
+        </span>
       );
     }
     return (
-      <Badge
-        variant="outline"
-        className="gap-1.5 text-xs font-normal text-muted-foreground"
-      >
-        <Lock className="size-3 text-muted-foreground" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Lock className="size-3" />
         Brevemente
-      </Badge>
+      </span>
     );
   }
 
@@ -93,37 +89,39 @@ export default function ProgressPhaseCard({
 
   return (
     <Card
-      className={`transition-colors ${
+      className={cn(
+        "transition-all duration-200 border",
         checked
-          ? "border-border bg-card"
-          : isAvailable
-            ? "border-primary/40 bg-card shadow-sm"
-            : "border-border/60 bg-muted/20 opacity-80"
-      }`}
+          ? "border-border/70 bg-card/60"
+          : isAvailable && !isEnded
+            ? "border-primary/50 bg-card shadow-sm ring-1 ring-primary/20"
+            : "border-border/50 bg-muted/20 opacity-85",
+      )}
     >
       <CardContent className="p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
             <div
-              className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+              className={cn(
+                "size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors",
                 checked
-                  ? "bg-primary text-primary-foreground"
-                  : isAvailable
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "bg-muted text-muted-foreground"
-              }`}
+                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                  : isAvailable && !isEnded
+                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                    : "bg-muted text-muted-foreground border border-border/60",
+              )}
             >
               {checked ? <CheckCircle2 className="size-4" /> : number}
             </div>
 
             <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <h3 className="text-base font-semibold text-foreground">
                   {title}
                 </h3>
-                {getStatusBadge()}
+                {renderStatus()}
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xl">
                 {description}
               </p>
 
@@ -139,24 +137,32 @@ export default function ProgressPhaseCard({
           {/* Action button if actionable */}
           <div className="sm:self-center shrink-0">
             {isAvailable && !checked && redirectUrl && (
-              <Button
-                size="sm"
-                className="w-full sm:w-auto gap-1.5"
-                render={<Link href={redirectUrl} />}
+              <Link
+                href={redirectUrl}
+                className={cn(
+                  buttonVariants({
+                    size: "sm",
+                  }),
+                  "w-full sm:w-auto gap-1.5 text-xs",
+                )}
               >
                 Aceder
                 <ArrowRight className="size-3.5" />
-              </Button>
+              </Link>
             )}
             {checked && redirectUrl && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full sm:w-auto text-xs text-muted-foreground"
-                render={<Link href={redirectUrl} />}
+              <Link
+                href={redirectUrl}
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    size: "sm",
+                  }),
+                  "w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground",
+                )}
               >
-                Ver detalhes
-              </Button>
+                Ver Detalhes
+              </Link>
             )}
           </div>
         </div>

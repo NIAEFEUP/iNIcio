@@ -45,6 +45,7 @@ export default function SubmittedApplicationMessage() {
           </CardHeader>
           <CardContent>
             <Button
+              nativeButton={false}
               size="lg"
               className="w-full gap-2"
               render={<Link href="/candidate/progress" />}

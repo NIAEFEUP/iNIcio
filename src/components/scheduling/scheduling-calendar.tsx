@@ -14,7 +14,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { getDateStringPT, getTimeString } from "@/lib/date";
 
 interface SchedulingCalendarProps {
@@ -96,7 +95,7 @@ export default function SchedulingCalendar({
         <Card className="border-border bg-card">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-5 text-primary" />
+              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
               <CardTitle className="text-base">Horário Atual Marcado</CardTitle>
             </div>
             <CardDescription>
@@ -105,16 +104,16 @@ export default function SchedulingCalendar({
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="secondary" className="gap-1.5 py-1 px-3 text-xs">
-                <Calendar className="size-3.5" />
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-muted/60 border border-border/70 text-foreground">
+                <Calendar className="size-3.5 text-primary" />
                 {getDateStringPT(chosenSlot.start)}
-              </Badge>
-              <Badge variant="outline" className="gap-1.5 py-1 px-3 text-xs">
-                <Clock className="size-3.5" />
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-muted/60 border border-border/70 text-foreground">
+                <Clock className="size-3.5 text-primary" />
                 {getTimeString(chosenSlot.start)}
                 {chosenSlot.duration ? ` (${chosenSlot.duration} min)` : ""}
-              </Badge>
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -122,17 +121,20 @@ export default function SchedulingCalendar({
 
       {/* Selected slot pending confirmation */}
       {selectedSlots.length > 0 && (
-        <Card className="border-primary/50 bg-primary/5 shadow-sm">
+        <Card className="border-primary/40 bg-card shadow-xs">
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">
                 Horário Selecionado
               </p>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 {selectedSlots.map((s) => (
-                  <Badge key={s.id} variant="default" className="text-xs">
+                  <span
+                    key={s.id}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground"
+                  >
                     {getDateStringPT(s.start)} às {getTimeString(s.start)}
-                  </Badge>
+                  </span>
                 ))}
               </div>
             </div>
@@ -173,7 +175,7 @@ export default function SchedulingCalendar({
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Dias & Vagas Disponíveis
             </h2>
             <span className="text-xs text-muted-foreground">
@@ -194,7 +196,10 @@ export default function SchedulingCalendar({
               });
 
               return (
-                <Card key={dateKey} className="overflow-hidden">
+                <Card
+                  key={dateKey}
+                  className="overflow-hidden border border-border"
+                >
                   <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
@@ -205,10 +210,10 @@ export default function SchedulingCalendar({
                           {formattedDate}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <span className="text-xs text-muted-foreground">
                         {daySlots.length}{" "}
                         {daySlots.length === 1 ? "horário" : "horários"}
-                      </Badge>
+                      </span>
                     </div>
                   </CardHeader>
 
@@ -227,7 +232,7 @@ export default function SchedulingCalendar({
                             onClick={() => handleSlotSelect(slot)}
                             className={`flex flex-col items-center justify-center h-auto py-2.5 px-2 ${
                               isChosen && !selected
-                                ? "border-primary/50 text-primary"
+                                ? "border-primary/50 text-primary font-medium"
                                 : ""
                             }`}
                           >

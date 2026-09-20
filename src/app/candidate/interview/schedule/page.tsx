@@ -13,7 +13,8 @@ import {
   markInterviewRecruitmentPhaseAsDone,
 } from "@/lib/recruitment";
 import { getSessionUser } from "@/lib/action-guard";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function CandidateInterviewSchedule() {
   const session = await auth.api.getSession({
@@ -50,37 +51,38 @@ export default async function CandidateInterviewSchedule() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl space-y-6">
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          render={<Link href="/candidate/progress" />}
-          className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+        <Link
+          href="/candidate/progress"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "gap-1.5 -ml-2 text-muted-foreground hover:text-foreground",
+          )}
         >
           <ArrowLeft className="size-4" />
           Voltar ao Progresso
-        </Button>
+        </Link>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-md bg-primary/10 flex items-center justify-center">
-            <UserCheck className="size-4 text-primary" />
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Marcação de Entrevista
-          </h1>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+          <UserCheck className="size-4" />
+          Entrevista Individual
         </div>
-        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-          Escolhe o horário que melhor se adapta à tua disponibilidade para a
-          conversa individual com a nossa equipa.
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Agendamento de Entrevista
+        </h1>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          Seleciona um dos horários disponíveis para realizares a tua entrevista
+          com membros do NIAEFEUP. Se já tiveres um horário reservado, podes
+          alterá-lo a qualquer momento.
         </p>
       </div>
 
       <SchedulingCalendar
-        confirmAction={confirm}
         slots={slots}
+        confirmAction={confirm}
         confirmUrl="/candidate/progress"
-        chosenSlot={candidate?.interview?.slot}
+        chosenSlot={candidate?.interview?.slot ?? null}
       />
     </div>
   );

@@ -13,7 +13,8 @@ import {
   markDynamicRecruitmentPhaseAsDone,
 } from "@/lib/recruitment";
 import { getSessionUser } from "@/lib/action-guard";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function CandidateDynamicSchedule() {
   const session = await auth.api.getSession({
@@ -50,37 +51,38 @@ export default async function CandidateDynamicSchedule() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl space-y-6">
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          render={<Link href="/candidate/progress" />}
-          className="gap-1.5 -ml-2 text-muted-foreground hover:text-foreground"
+        <Link
+          href="/candidate/progress"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "gap-1.5 -ml-2 text-muted-foreground hover:text-foreground",
+          )}
         >
           <ArrowLeft className="size-4" />
           Voltar ao Progresso
-        </Button>
+        </Link>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="size-8 rounded-md bg-primary/10 flex items-center justify-center">
-            <Users className="size-4 text-primary" />
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Marcação de Dinâmica de Grupo
-          </h1>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+          <Users className="size-4" />
+          Dinâmica de Grupo
         </div>
-        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-          Escolhe uma sessão para participares na dinâmica de grupo com outros
-          candidatos e membros do NIAEFEUP.
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Agendamento de Dinâmica
+        </h1>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          Escolhe um dos horários para participares na dinâmica de grupo com a
+          equipa. É um momento de trabalho colaborativo e descontração para nos
+          conhecermos.
         </p>
       </div>
 
       <SchedulingCalendar
-        confirmAction={confirm}
         slots={slots}
+        confirmAction={confirm}
         confirmUrl="/candidate/progress"
-        chosenSlot={candidate?.dynamic?.dynamic?.slot}
+        chosenSlot={candidate?.dynamic?.dynamic?.slot ?? null}
       />
     </div>
   );

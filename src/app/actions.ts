@@ -15,6 +15,7 @@ import {
   requireRecruiterSession,
 } from "@/lib/action-guard";
 import { getActiveRecruitment } from "@/lib/recruitment";
+import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 
 export async function markNotificationAsRead(id: number) {
   const user = await getSessionUser();
@@ -133,4 +134,18 @@ export async function unassignRecruiter(
         ),
       );
   }
+}
+
+export async function getSignedProfilePictureUrl(targetPictureUrl: string) {
+  const user = await getSessionUser();
+  const cleanPath = fromFullUrlToPath(targetPictureUrl);
+
+  if (
+    !cleanPath.startsWith(`profiles/${user.id}/`) &&
+    targetPictureUrl !== user.image
+  ) {
+    throw new Error("Unauthorized access to image file");
+  }
+
+  return await getFilenameUrl(targetPictureUrl);
 }

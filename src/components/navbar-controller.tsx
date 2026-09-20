@@ -13,11 +13,11 @@ export default async function NavbarController() {
     headers: await headers(),
   });
 
-  const admin = await isAdmin(session?.user.id);
-  const recruiter = await isRecruiter(session?.user.id);
-  const candidate = await isCandidate(session?.user.id);
+  const admin = await isAdmin(session?.user?.id);
+  const recruiter = await isRecruiter(session?.user?.id);
+  const candidate = await isCandidate(session?.user?.id);
 
-  const notifications = await getNotifications(session?.user.id);
+  const notifications = await getNotifications(session?.user?.id);
 
   return (
     <Navbar
