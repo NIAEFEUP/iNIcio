@@ -26,7 +26,12 @@ export default async function InterviewLayout({
     redirect("/candidate/progress");
   }
 
-  if (!(await isRecruitmentPhaseOpen(RECRUITMENT_PHASE_IDENTIFIERS.dynamic))) {
+  if (
+    !(await isRecruitmentPhaseOpen(
+      RECRUITMENT_PHASE_IDENTIFIERS.dynamic,
+      activeRecruitment.id,
+    ))
+  ) {
     redirect("/candidate/progress");
   }
 

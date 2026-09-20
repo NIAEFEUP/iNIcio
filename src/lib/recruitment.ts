@@ -202,13 +202,17 @@ export async function isRecruitmentPhaseOpen(
   identifier: string,
   recruitmentId?: number,
 ): Promise<boolean> {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return false;
+  const activeRecruitment = await getActiveRecruitment();
+  const targetId = recruitmentId ?? activeRecruitment?.id;
+  if (!targetId || !activeRecruitment || targetId !== activeRecruitment.id)
+    return false;
 
   const phases = await getAllRecruitmentPhases(targetId);
   const normalized = normalizePhaseIdentifier(identifier);
   const phase = phases.find(
-    (p) => normalizePhaseIdentifier(p.clientIdentifier) === normalized,
+    (p) =>
+      p.role === "candidate" &&
+      normalizePhaseIdentifier(p.clientIdentifier) === normalized,
   );
 
   return phase ? getPhaseState(phase) === "open" : false;

@@ -4,6 +4,7 @@ import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import { Slot } from "@/lib/db";
 import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
 import {
+  getActiveRecruitment,
   getDynamicSlots,
   isRecruitmentPhaseOpen,
   markDynamicRecruitmentPhaseAsDone,
@@ -21,15 +22,24 @@ export default async function CandidateDynamicSchedule() {
     "use server";
 
     const user = await getSessionUser();
+    if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
 
-    if (!(await isRecruitmentPhaseOpen(RECRUITMENT_PHASE_IDENTIFIERS.dynamic)))
+    const activeRecruitment = await getActiveRecruitment();
+
+    if (!activeRecruitment || slots[0]?.recruitmentId !== activeRecruitment.id)
       return false;
 
-    if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
+    if (
+      !(await isRecruitmentPhaseOpen(
+        RECRUITMENT_PHASE_IDENTIFIERS.dynamic,
+        activeRecruitment.id,
+      ))
+    )
+      return false;
 
     try {
       for (const slot of slots.slice(0, 1)) {
-        await tryToAddCandidateToDynamic(user.id, slot);
+        await tryToAddCandidateToDynamic(user.id, slot, activeRecruitment.id);
         await markDynamicRecruitmentPhaseAsDone(user.id);
       }
 
