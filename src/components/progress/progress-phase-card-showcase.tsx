@@ -10,7 +10,7 @@ const progressPhaseActions: Record<string, string> = {
   recruiter_availability: "/recruiter/availability",
   profile: "/profile",
   who_knows: "/candidates",
-  resultado: "/candidate/result",
+  resultado: "/#candidaturas",
 };
 
 interface CandidateEventInfo {

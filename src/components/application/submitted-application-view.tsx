@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { FileText, ExternalLink, Globe, ArrowLeft } from "lucide-react";
+import {
+  FileText,
+  ExternalLink,
+  Globe,
+  ArrowLeft,
+  Sparkles,
+} from "lucide-react";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Application } from "@/lib/db";
+import type { UserApplicationWithRecruitment } from "@/lib/application";
 
 interface SubmittedApplicationViewProps {
   application: Application;
@@ -12,12 +20,16 @@ interface SubmittedApplicationViewProps {
     name: string;
     email: string;
   };
+  isCurrent?: boolean;
+  userApplications?: UserApplicationWithRecruitment[];
+  recruitmentTitle?: string;
 }
 
 export default function SubmittedApplicationView({
   application,
   interests,
   user,
+  recruitmentTitle,
 }: SubmittedApplicationViewProps) {
   const formattedDate = application.submittedAt
     ? new Date(application.submittedAt).toLocaleDateString("pt-PT", {
@@ -30,22 +42,40 @@ export default function SubmittedApplicationView({
     : "Data indisponível";
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
-      {/* Navigation & Header */}
-      <div className="space-y-4 text-center">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-10">
+      <div className="flex items-center justify-between">
         <Link
-          href="/candidate/progress"
+          href="/application"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "gap-1.5 text-muted-foreground hover:text-foreground text-xs mx-auto",
+            "gap-1.5 text-muted-foreground hover:text-foreground text-xs",
           )}
         >
           <ArrowLeft className="size-3.5" />
-          Voltar ao Progresso
+          Todas as Candidaturas
         </Link>
 
+        <Link
+          href={`/candidate/result?recruitmentId=${application.recruitmentId}`}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "gap-1.5 text-muted-foreground hover:text-foreground text-xs",
+          )}
+        >
+          <Sparkles className="size-3.5 text-primary" />
+          Ver Resultado
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="space-y-3 text-center">
+        {recruitmentTitle && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+            {recruitmentTitle}
+          </div>
+        )}
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Submetido a {formattedDate}
           </p>
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
@@ -58,104 +88,93 @@ export default function SubmittedApplicationView({
         </div>
       </div>
 
-      {/* Structured Details */}
-      <div className="space-y-10">
-        {/* Personal info */}
+      {/* Main card */}
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-10 space-y-8 shadow-xs">
+        {/* Personal Details */}
         <section className="space-y-4">
-          <h2 className="text-lg font-bold text-foreground">
-            Identificação e Contactos
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Informações Pessoais
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-xs text-muted-foreground block">Nome</span>
-              <span className="font-semibold text-foreground">{user.name}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1 p-3.5 rounded-xl bg-muted/40">
+              <span className="text-xs text-muted-foreground">Nome</span>
+              <p className="text-sm font-medium text-foreground">{user.name}</p>
             </div>
-            <div>
-              <span className="text-xs text-muted-foreground block">Email</span>
-              <span className="font-semibold text-foreground">
+            <div className="space-y-1 p-3.5 rounded-xl bg-muted/40">
+              <span className="text-xs text-muted-foreground">Email</span>
+              <p className="text-sm font-medium text-foreground">
                 {user.email}
-              </span>
+              </p>
             </div>
-            <div>
-              <span className="text-xs text-muted-foreground block">
+            <div className="space-y-1 p-3.5 rounded-xl bg-muted/40">
+              <span className="text-xs text-muted-foreground">
                 Número de Estudante
               </span>
-              <span className="font-semibold text-foreground">
+              <p className="text-sm font-medium text-foreground">
                 {application.studentNumber}
-              </span>
+              </p>
             </div>
-            <div>
-              <span className="text-xs text-muted-foreground block">Curso</span>
-              <span className="font-semibold text-foreground">
-                {application.degree || "Não indicado"}
-              </span>
-            </div>
-            <div>
-              <span className="text-xs text-muted-foreground block">
-                Ano Curricular
-              </span>
-              <span className="font-semibold text-foreground">
-                {application.curricularYear
-                  ? `${application.curricularYear}º Ano`
-                  : "Não indicado"}
-              </span>
-            </div>
-            <div>
-              <span className="text-xs text-muted-foreground block">
-                Telemóvel
-              </span>
-              <span className="font-semibold text-foreground">
+            <div className="space-y-1 p-3.5 rounded-xl bg-muted/40">
+              <span className="text-xs text-muted-foreground">Telefone</span>
+              <p className="text-sm font-medium text-foreground">
                 {application.phone || "Não indicado"}
-              </span>
+              </p>
+            </div>
+            <div className="space-y-1 p-3.5 rounded-xl bg-muted/40">
+              <span className="text-xs text-muted-foreground">Curso e Ano</span>
+              <p className="text-sm font-medium text-foreground">
+                {application.degree || "Não indicado"}{" "}
+                {application.curricularYear
+                  ? `· ${application.curricularYear}º ano`
+                  : ""}
+              </p>
             </div>
           </div>
         </section>
 
-        {/* CV and Profiles */}
+        {/* Links */}
         <section className="space-y-4">
-          <h2 className="text-lg font-bold text-foreground">
-            Documentos e Ligações
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Presença Online & CV
           </h2>
-          <div className="flex flex-wrap gap-4 items-center">
-            {application.curriculum ? (
+          <div className="flex flex-wrap gap-2.5">
+            {application.curriculum && (
               <a
                 href={application.curriculum}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
                   "gap-2 text-xs",
                 )}
               >
-                <FileText className="size-3.5" />
-                Ver Currículo (PDF)
+                <FileText className="size-3.5 text-primary" />
+                Ver Currículo (CV)
                 <ExternalLink className="size-3 text-muted-foreground" />
               </a>
-            ) : null}
-
+            )}
             {application.linkedIn && (
               <a
                 href={application.linkedIn}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  buttonVariants({ variant: "outline", size: "sm" }),
                   "gap-2 text-xs",
                 )}
               >
-                <FaLinkedin className="size-3.5" />
+                <FaLinkedin className="size-3.5 text-blue-600" />
                 LinkedIn
                 <ExternalLink className="size-3 text-muted-foreground" />
               </a>
             )}
-
             {application.github && (
               <a
                 href={application.github}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  buttonVariants({ variant: "outline", size: "sm" }),
                   "gap-2 text-xs",
                 )}
               >
@@ -164,60 +183,68 @@ export default function SubmittedApplicationView({
                 <ExternalLink className="size-3 text-muted-foreground" />
               </a>
             )}
-
             {application.personalWebsite && (
               <a
                 href={application.personalWebsite}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  buttonVariants({ variant: "outline", size: "sm" }),
                   "gap-2 text-xs",
                 )}
               >
-                <Globe className="size-3.5" />
+                <Globe className="size-3.5 text-muted-foreground" />
                 Website Pessoal
                 <ExternalLink className="size-3 text-muted-foreground" />
               </a>
             )}
+            {!application.curriculum &&
+              !application.linkedIn &&
+              !application.github &&
+              !application.personalWebsite && (
+                <p className="text-sm text-muted-foreground italic">
+                  Nenhum link ou CV fornecido.
+                </p>
+              )}
           </div>
         </section>
 
         {/* Interests */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-bold text-foreground">
-            Departamentos de Interesse
+        <section className="space-y-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Áreas de Interesse
           </h2>
           {interests.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {interests.map((interest) => (
-                <span
+                <Badge
                   key={interest}
-                  className="px-3 py-1 rounded-full text-xs font-semibold bg-muted text-foreground"
+                  variant="secondary"
+                  className="px-3 py-1 text-xs font-medium"
                 >
                   {interest}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Nenhum departamento selecionado.
+            <p className="text-sm text-muted-foreground italic">
+              Nenhuma área de interesse selecionada.
             </p>
           )}
         </section>
 
-        {/* Answers */}
+        {/* Written Answers */}
         <section className="space-y-6">
-          <h2 className="text-lg font-bold text-foreground">
-            Respostas ao Questionário
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Respostas Submetidas
           </h2>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {application.interestJustification && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2 p-4 rounded-xl bg-muted/20 border border-border/60">
+                <span className="text-xs font-medium text-muted-foreground">
                   Por que razão escolheste estes departamentos?
-                </p>
+                </span>
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                   {application.interestJustification}
                 </p>
@@ -225,10 +252,10 @@ export default function SubmittedApplicationView({
             )}
 
             {application.experience && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2 p-4 rounded-xl bg-muted/20 border border-border/60">
+                <span className="text-xs font-medium text-muted-foreground">
                   Experiência prévia em projetos ou atividades
-                </p>
+                </span>
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                   {application.experience}
                 </p>
@@ -236,10 +263,10 @@ export default function SubmittedApplicationView({
             )}
 
             {application.motivation && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2 p-4 rounded-xl bg-muted/20 border border-border/60">
+                <span className="text-xs font-medium text-muted-foreground">
                   O que te motivou a candidatar ao NIAEFEUP?
-                </p>
+                </span>
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                   {application.motivation}
                 </p>
@@ -247,10 +274,10 @@ export default function SubmittedApplicationView({
             )}
 
             {application.suggestions && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2 p-4 rounded-xl bg-muted/20 border border-border/60">
+                <span className="text-xs font-medium text-muted-foreground">
                   Sugestões ou ideias para o NIAEFEUP
-                </p>
+                </span>
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                   {application.suggestions}
                 </p>
@@ -258,6 +285,19 @@ export default function SubmittedApplicationView({
             )}
           </div>
         </section>
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-3">
+        <Link
+          href="/application"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "gap-2",
+          )}
+        >
+          <ArrowLeft className="size-4" />
+          Ver Todas as Candidaturas
+        </Link>
       </div>
     </div>
   );

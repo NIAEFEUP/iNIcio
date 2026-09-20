@@ -2,17 +2,84 @@ import { finalMessageTemplate } from "@/db/schema";
 import { db, FinalMessageTemplate } from "./db";
 import { eq } from "drizzle-orm";
 import { getLatestVotingDecisionForCandidate } from "./voting";
+import { getUserApplications } from "./application";
+import { getActiveRecruitment } from "./recruitment";
 
-export async function getMessage(candidateId: string) {
-  const result = await getLatestVotingDecisionForCandidate(candidateId);
+export type CandidateRecruitmentResult = {
+  recruitmentId: number;
+  recruitmentTitle: string;
+  lectiveYear: string | null;
+  semester: number | null;
+  isCurrent: boolean;
+  decision: "approved" | "rejected" | "pending";
+  content: Array<unknown>;
+};
+
+export async function getMessage(candidateId: string, recruitmentId?: number) {
+  const result = await getLatestVotingDecisionForCandidate(
+    candidateId,
+    recruitmentId,
+  );
 
   if (!result) return null;
 
   if (result.decision === "reject") {
-    return { decision: "rejected", message: await getRejectedMessage() };
+    return {
+      decision: "rejected" as const,
+      message: await getRejectedMessage(),
+    };
   } else {
-    return { decision: "approved", message: await getAcceptedMessage() };
+    return {
+      decision: "approved" as const,
+      message: await getAcceptedMessage(),
+    };
   }
+}
+
+export async function getAllCandidateResults(
+  candidateId: string,
+): Promise<CandidateRecruitmentResult[]> {
+  const userApps = await getUserApplications(candidateId);
+  const activeRec = await getActiveRecruitment();
+
+  const results: CandidateRecruitmentResult[] = [];
+
+  for (const app of userApps) {
+    const isCurrent =
+      activeRec?.id != null && app.recruitmentId === activeRec.id;
+    const votingDecision = await getLatestVotingDecisionForCandidate(
+      candidateId,
+      app.recruitmentId,
+    );
+
+    let decision: "approved" | "rejected" | "pending" = "pending";
+    let messageContent: Array<unknown> = [];
+
+    if (votingDecision) {
+      if (votingDecision.decision === "reject") {
+        decision = "rejected";
+        const msg = await getRejectedMessage();
+        messageContent = (msg?.content ?? []) as Array<unknown>;
+      } else {
+        decision = "approved";
+        const msg = await getAcceptedMessage();
+        messageContent = (msg?.content ?? []) as Array<unknown>;
+      }
+    }
+
+    results.push({
+      recruitmentId: app.recruitmentId,
+      recruitmentTitle:
+        app.recruitment?.title ?? `Recrutamento #${app.recruitmentId}`,
+      lectiveYear: app.recruitment?.lectiveYear ?? null,
+      semester: app.recruitment?.semester ?? null,
+      isCurrent,
+      decision,
+      content: messageContent,
+    });
+  }
+
+  return results;
 }
 
 export async function getAcceptedMessage() {

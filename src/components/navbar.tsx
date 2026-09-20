@@ -10,8 +10,6 @@ import {
   User as UserIcon,
   LogOut,
   LayoutDashboard,
-  Sparkles,
-  ClipboardList,
   Sun,
   Moon,
   Monitor,
@@ -45,7 +43,8 @@ type Props = {
   className?: string;
   isAdmin: boolean;
   isRecruiter: boolean;
-  isCandidate: boolean;
+  showProgress?: boolean;
+  hasResultsToShow?: boolean;
   notifications: Notification[];
 };
 
@@ -53,7 +52,8 @@ export default function Navbar({
   className,
   isAdmin,
   isRecruiter,
-  isCandidate,
+  showProgress = false,
+  hasResultsToShow = false,
   notifications,
 }: Props) {
   const { data: session } = useSession();
@@ -72,46 +72,44 @@ export default function Navbar({
     "/dynamic",
   ];
 
-  const candidateCountdownPrefixes = [
-    "/candidate/progress",
-    "/candidate/result",
-    "/candidate/interview",
-    "/candidate/dynamic",
-  ];
-
-  const isDashboardRoute =
-    dashboardPrefixes.some((prefix) => pathname?.startsWith(prefix)) ||
-    (pathname?.startsWith("/candidate/") &&
-      !candidateCountdownPrefixes.some((prefix) =>
-        pathname.startsWith(prefix),
-      ));
-
-  if (isDashboardRoute) {
-    return null;
-  }
-
-  const handleLogout = async () => {
-    await authClient.signOut({});
-    router.push("/");
-    router.refresh();
-  };
+  const isInDashboard = dashboardPrefixes.some((prefix) =>
+    pathname?.startsWith(prefix),
+  );
 
   const user = session?.user;
-  const userInitials = getInitials(user?.name, "U");
+  const userInitials = getInitials(user?.name);
+
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut({});
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  if (isInDashboard) {
+    return null;
+  }
 
   return (
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md transition-colors",
+          "sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-all",
+          isInDashboard &&
+            "border-transparent bg-transparent backdrop-blur-none",
           className,
         )}
       >
-        <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Left side: Brand + Nav Links */}
+          <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-85"
+              className="flex items-center gap-2 transition-opacity hover:opacity-90"
+              aria-label="Página Inicial"
             >
               <Image
                 src="/inicio_logo_light.svg"
@@ -132,55 +130,22 @@ export default function Navbar({
             </Link>
 
             <nav className="hidden md:flex md:items-center md:gap-1">
-              {user && isCandidate && (
-                <>
-                  <Link
-                    href="/candidate/progress"
-                    className={cn(
-                      buttonVariants({
-                        variant: pathname?.startsWith("/candidate/progress")
-                          ? "secondary"
-                          : "ghost",
-                        size: "sm",
-                      }),
-                      "gap-1.5",
-                    )}
-                  >
-                    <ClipboardList className="size-4" />
-                    Progresso
-                  </Link>
-                  <Link
-                    href="/candidate/result"
-                    className={cn(
-                      buttonVariants({
-                        variant: pathname?.startsWith("/candidate/result")
-                          ? "secondary"
-                          : "ghost",
-                        size: "sm",
-                      }),
-                      "gap-1.5",
-                    )}
-                  >
-                    <Sparkles className="size-4" />
-                    Resultado
-                  </Link>
-                </>
-              )}
-
-              {user && !isRecruiter && !isAdmin && (
+              {user && showProgress ? (
                 <Link
-                  href="/application"
+                  href="/candidate/progress"
                   className={cn(
                     buttonVariants({
-                      variant:
-                        pathname === "/application" ? "secondary" : "ghost",
+                      variant: pathname?.startsWith("/candidate/progress")
+                        ? "secondary"
+                        : "ghost",
                       size: "sm",
                     }),
+                    "gap-1.5",
                   )}
                 >
-                  Candidatura
+                  Progresso
                 </Link>
-              )}
+              ) : null}
 
               {user && (isAdmin || isRecruiter) && (
                 <Link
@@ -200,11 +165,11 @@ export default function Navbar({
             </nav>
           </div>
 
-          {/* Right side controls */}
           <div className="hidden md:flex md:items-center md:gap-3">
             {user ? (
               <>
                 <NotificationPopup notifications={notifications} />
+
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
@@ -364,7 +329,6 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
             {user && <NotificationPopup notifications={notifications} />}
             <Button
@@ -382,73 +346,25 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Mobile Drawer Menu */}
         {isMenuOpen && (
           <div className="bg-background px-4 py-4 md:hidden">
             <div className="flex flex-col gap-2">
-              <Link
-                href="/"
-                className={cn(
-                  buttonVariants({
-                    variant: pathname === "/" ? "secondary" : "ghost",
-                  }),
-                  "justify-start w-full",
-                )}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Início
-              </Link>
-
-              {user && isCandidate && (
-                <>
-                  <Link
-                    href="/candidate/progress"
-                    className={cn(
-                      buttonVariants({
-                        variant: pathname?.startsWith("/candidate/progress")
-                          ? "secondary"
-                          : "ghost",
-                      }),
-                      "justify-start w-full gap-2",
-                    )}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <ClipboardList className="size-4 mr-2" />
-                    Progresso
-                  </Link>
-                  <Link
-                    href="/candidate/result"
-                    className={cn(
-                      buttonVariants({
-                        variant: pathname?.startsWith("/candidate/result")
-                          ? "secondary"
-                          : "ghost",
-                      }),
-                      "justify-start w-full gap-2",
-                    )}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Sparkles className="size-4 mr-2" />
-                    Resultado
-                  </Link>
-                </>
-              )}
-
-              {user && !isRecruiter && !isAdmin && (
+              {user && showProgress ? (
                 <Link
-                  href="/application"
+                  href="/candidate/progress"
                   className={cn(
                     buttonVariants({
-                      variant:
-                        pathname === "/application" ? "secondary" : "ghost",
+                      variant: pathname?.startsWith("/candidate/progress")
+                        ? "secondary"
+                        : "ghost",
                     }),
-                    "justify-start w-full",
+                    "justify-start w-full gap-2",
                   )}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Candidatura
+                  Progresso
                 </Link>
-              )}
+              ) : null}
 
               {user && (isAdmin || isRecruiter) && (
                 <Link
@@ -538,7 +454,6 @@ export default function Navbar({
         )}
       </header>
 
-      {/* Account Settings Modal */}
       <AccountSettingsModal
         open={isProfileModalOpen}
         onOpenChange={setIsProfileModalOpen}

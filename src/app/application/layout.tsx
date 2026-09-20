@@ -1,4 +1,4 @@
-import { getApplication } from "@/lib/application";
+import { hasAnyApplication } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { isRecruiter } from "@/lib/recruiter";
@@ -20,10 +20,10 @@ export default async function ApplicationLayout({
   if (await isAdmin(session.user.id)) redirect("/admin");
   if (await isRecruiter(session.user.id)) redirect("/recruiter/progress");
 
-  const application = await getApplication(session.user.id);
+  const userHasAnyApp = await hasAnyApplication(session.user.id);
+  const currentRecruitment = await getCurrentRecruitmentState();
 
-  // If the candidate has not submitted an application yet and applications are closed, redirect home
-  if (!application && !(await getCurrentRecruitmentState()).canApply) {
+  if (!userHasAnyApp && !currentRecruitment.canApply) {
     redirect("/");
   }
 

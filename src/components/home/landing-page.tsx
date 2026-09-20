@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -10,10 +14,14 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import type { RecruitmentPhase } from "@/lib/db";
+import type { UserApplicationWithDetails } from "@/lib/application";
+import type { CandidateRecruitmentResult } from "@/lib/final-messages";
 import type {
   RecruitmentStatus,
   ApplicationStatus,
 } from "@/lib/recruitment-state";
+import { CandidateApplicationModal } from "@/components/candidate/candidate-application-modal";
+import { CandidateResultModal } from "@/components/candidate/candidate-result-modal";
 
 interface LandingPageProps {
   user: {
@@ -26,6 +34,8 @@ interface LandingPageProps {
   isRecruiter: boolean;
   isAdmin: boolean;
   hasApplied: boolean;
+  userApplications?: UserApplicationWithDetails[];
+  currentRecruitmentId?: number | null;
   recruitmentStatus: RecruitmentStatus;
   applicationStatus: ApplicationStatus;
   applicationDeadline?: string | null;
@@ -37,12 +47,26 @@ export default function LandingPage({
   isRecruiter,
   isAdmin,
   hasApplied,
+  userApplications = [],
+  currentRecruitmentId,
   recruitmentStatus,
   applicationStatus,
   applicationDeadline,
 }: LandingPageProps) {
+  const [selectedApplication, setSelectedApplication] =
+    useState<UserApplicationWithDetails | null>(null);
+  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
+
+  const [selectedResult, setSelectedResult] =
+    useState<CandidateRecruitmentResult | null>(null);
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+
   const isApplicationOpen =
     recruitmentStatus === "open" && applicationStatus === "open";
+
+  const currentApplication = currentRecruitmentId
+    ? userApplications.find((app) => app.recruitmentId === currentRecruitmentId)
+    : null;
 
   return (
     <div className="flex flex-col bg-background">
@@ -58,50 +82,45 @@ export default function LandingPage({
           comunidade académica!
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-col items-center justify-center gap-4">
           {!user ? (
             <>
-              <Link
-                href={isApplicationOpen ? "/signup" : "/login"}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "text-base px-6 h-12 gap-2",
-                )}
-              >
-                {isApplicationOpen ? "Candidatar Agora" : "Entrar"}
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href="/login"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "lg" }),
-                  "text-base px-6 h-12",
-                )}
-              >
-                Já tens conta? Entrar
-              </Link>
-            </>
-          ) : hasApplied ? (
-            <>
-              <Link
-                href="/candidate/progress"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "text-base px-6 h-12 gap-2",
-                )}
-              >
-                Acompanhar o meu Progresso
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href="/application"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "lg" }),
-                  "text-base px-6 h-12",
-                )}
-              >
-                Ver a Minha Candidatura
-              </Link>
+              {isApplicationOpen ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Link
+                      href="/signup"
+                      className={cn(
+                        buttonVariants({ size: "lg" }),
+                        "text-base px-6 h-12 gap-2",
+                      )}
+                    >
+                      Candidatar Agora
+                      <ArrowRight className="size-4" />
+                    </Link>
+                    <Link
+                      href="/login"
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "lg" }),
+                        "text-base px-6 h-12",
+                      )}
+                    >
+                      Já tens conta? Entrar
+                    </Link>
+                  </div>
+                  {applicationDeadline && (
+                    <p className="text-xs text-muted-foreground">
+                      Candidaturas abertas até {applicationDeadline}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  {recruitmentStatus === "upcoming"
+                    ? "Um novo ciclo de recrutamento está a ser preparado. Fica atento às próximas novidades!"
+                    : "Não existem candidaturas abertas de momento. Fica atento às próximas novidades!"}
+                </span>
+              )}
             </>
           ) : isRecruiter || isAdmin ? (
             <Link
@@ -114,25 +133,182 @@ export default function LandingPage({
               Painel de Recrutamento
               <ArrowRight className="size-4" />
             </Link>
+          ) : hasApplied ? (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/candidate/progress"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "text-base px-6 h-12 gap-2",
+                )}
+              >
+                Acompanhar o meu Progresso
+                <ArrowRight className="size-4" />
+              </Link>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => {
+                  if (currentApplication) {
+                    setSelectedApplication(currentApplication);
+                    setIsAppModalOpen(true);
+                  } else if (userApplications.length > 0) {
+                    setSelectedApplication(userApplications[0]);
+                    setIsAppModalOpen(true);
+                  }
+                }}
+                className="text-base px-6 h-12 cursor-pointer"
+              >
+                Ver a Minha Candidatura
+              </Button>
+            </div>
           ) : isApplicationOpen ? (
-            <Link
-              href="/application"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "text-base px-6 h-12 gap-2",
+            <div className="flex flex-col items-center gap-3">
+              <Link
+                href="/application"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "text-base px-6 h-12 gap-2",
+                )}
+              >
+                Preencher Candidatura
+                <ArrowRight className="size-4" />
+              </Link>
+              {applicationDeadline && (
+                <p className="text-xs text-muted-foreground">
+                  Candidaturas abertas até {applicationDeadline}
+                </p>
               )}
-            >
-              Preencher Candidatura
-              <ArrowRight className="size-4" />
-            </Link>
+            </div>
           ) : (
             <span className="text-sm text-muted-foreground">
-              As candidaturas estão encerradas de momento. Fica atento às
-              próximas novidades!
+              {recruitmentStatus === "upcoming"
+                ? "Um novo ciclo de recrutamento está a ser preparado. Fica atento às próximas novidades!"
+                : "Não existem candidaturas abertas de momento. Fica atento às próximas novidades!"}
             </span>
           )}
         </div>
       </section>
+
+      {user && userApplications.length > 0 && (
+        <section
+          id="candidaturas"
+          className="py-8 max-w-4xl mx-auto px-4 sm:px-6 w-full"
+        >
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-4">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-foreground">
+                  As tuas Candidaturas
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  Histórico de candidaturas submetidas nos processos de
+                  recrutamento do NIAEFEUP.
+                </p>
+              </div>
+              <Badge variant="secondary" className="w-fit text-xs">
+                {userApplications.length}{" "}
+                {userApplications.length === 1 ? "candidatura" : "candidaturas"}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {userApplications.map((app) => {
+                const isCurrent =
+                  currentRecruitmentId != null &&
+                  app.recruitmentId === currentRecruitmentId;
+                const formattedDate = app.submittedAt
+                  ? new Date(app.submittedAt).toLocaleDateString("pt-PT", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Data indisponível";
+                const recruitmentName =
+                  app.recruitment?.title ??
+                  `Recrutamento #${app.recruitmentId}`;
+                const termInfo =
+                  app.recruitment?.lectiveYear && app.recruitment?.semester
+                    ? `${app.recruitment.lectiveYear} · ${app.recruitment.semester}º Semestre`
+                    : null;
+
+                const hasResult =
+                  app.result != null &&
+                  (app.result.decision === "approved" ||
+                    app.result.decision === "rejected");
+
+                return (
+                  <div
+                    key={app.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-foreground text-base">
+                          {recruitmentName}
+                        </span>
+                        {isCurrent ? (
+                          <Badge variant="default" className="text-xs">
+                            Recrutamento Atual
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Anterior
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                        {termInfo && <span>{termInfo}</span>}
+                        {termInfo && <span>•</span>}
+                        <span>Submetida em {formattedDate}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                      {isCurrent ? (
+                        <Link
+                          href="/candidate/progress"
+                          className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            "text-xs gap-1.5",
+                          )}
+                        >
+                          Ver Progresso
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      ) : hasResult ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs gap-1.5 cursor-pointer"
+                          onClick={() => {
+                            setSelectedResult(app.result ?? null);
+                            setIsResultModalOpen(true);
+                          }}
+                        >
+                          Ver Resultado
+                        </Button>
+                      ) : null}
+
+                      <Button
+                        variant={isCurrent ? "ghost" : "outline"}
+                        size="sm"
+                        className="text-xs cursor-pointer"
+                        onClick={() => {
+                          setSelectedApplication(app);
+                          setIsAppModalOpen(true);
+                        }}
+                      >
+                        Ver Candidatura
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="py-8 sm:py-12 max-w-6xl mx-auto px-4 sm:px-6 w-full">
         <div className="text-center mb-10">
@@ -146,6 +322,7 @@ export default function LandingPage({
               src="/images/sinf.jpg"
               alt="SINF na FEUP"
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
@@ -164,6 +341,7 @@ export default function LandingPage({
               src="/images/eventos.jpg"
               alt="Equipa a desenvolver software"
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
@@ -182,6 +360,7 @@ export default function LandingPage({
               src="/images/projetos.jpg"
               alt="Workshop e partilha de conhecimento"
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
@@ -200,6 +379,7 @@ export default function LandingPage({
               src="/images/ni.jpg"
               alt="Membros do NIAEFEUP juntos"
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
@@ -354,6 +534,19 @@ export default function LandingPage({
           </AccordionItem>
         </Accordion>
       </section>
+
+      <CandidateApplicationModal
+        open={isAppModalOpen}
+        onOpenChange={setIsAppModalOpen}
+        application={selectedApplication}
+        user={user}
+      />
+
+      <CandidateResultModal
+        open={isResultModalOpen}
+        onOpenChange={setIsResultModalOpen}
+        result={selectedResult}
+      />
     </div>
   );
 }
