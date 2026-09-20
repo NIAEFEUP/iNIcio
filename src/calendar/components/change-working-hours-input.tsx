@@ -83,7 +83,7 @@ export function ChangeWorkingHoursInput() {
       <div className="flex items-center gap-2">
         <p className="text-sm font-semibold">Change working hours</p>
 
-        <TooltipProvider delayDuration={100}>
+        <TooltipProvider delay={100}>
           <Tooltip>
             <TooltipTrigger>
               <Info className="size-3" />

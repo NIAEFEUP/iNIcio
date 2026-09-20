@@ -12,12 +12,14 @@ import { addClient, broadcast } from "./voting-rooms.js";
 const wss = new WebSocket.Server({ noServer: true });
 const host = process.env.HOST || "localhost";
 const port = number.parseInt(process.env.PORT || "1234");
-const jwtSecret = process.env.JWT_SECRET || "inicio";
+const jwtSecret = process.env.JWT_SECRET;
 
-if (!process.env.JWT_SECRET) {
-  console.warn(
-    "[ws] JWT_SECRET is not set, falling back to the default value. Tokens signed with a different secret will be rejected.",
+// Fail closed: without a strong secret, forged tokens would be accepted.
+if (!jwtSecret) {
+  console.error(
+    "[ws] JWT_SECRET is not set. Refusing to start without a secret.",
   );
+  process.exit(1);
 }
 
 function writeJson(response, statusCode, body) {
@@ -36,7 +38,7 @@ function verifyToken(token) {
 
 function getTokenFromRequest(request) {
   const params = new URLSearchParams(request.url?.replace(/^.*\?/, ""));
-  const queryToken = params.get("token")?.split("/")[0];
+  const queryToken = params.get("token");
   if (queryToken) return queryToken;
 
   const authHeader = request.headers.authorization || "";
@@ -83,33 +85,50 @@ const server = http.createServer((request, response) => {
 wss.on("connection", setupWSConnection);
 
 server.on("upgrade", (request, socket, head) => {
-  const token = getTokenFromRequest(request);
-
-  if (!token) {
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+  const reject = (status, reason) => {
+    socket.write(`HTTP/1.1 ${status} ${reason}\r\n\r\n`);
     socket.destroy();
+  };
+
+  let url;
+  try {
+    url = new URL(request.url || "/", "http://localhost");
+  } catch {
+    reject("400 Bad Request");
     return;
   }
 
-  const payload = verifyToken(token);
+  const token = getTokenFromRequest(request);
+  const room = decodeURIComponent(url.pathname.slice(1));
 
+  if (!token || !room) {
+    reject("401 Unauthorized");
+    return;
+  }
+
+  // Authenticate before upgrading: once handleUpgrade runs the 101 response is
+  // already on the wire, so writing a 401 afterwards would corrupt the stream.
+  const payload = verifyToken(token);
   if (!payload) {
     console.error("[ws] authentication failed");
-    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-    socket.destroy();
+    reject("401 Unauthorized");
     return;
   }
 
-  const path = (request.url || "").split("?")[0];
+  if (payload.role !== "recruiter" && payload.role !== "admin") {
+    reject("403 Forbidden");
+    return;
+  }
 
-  if (path.startsWith("/voting/")) {
-    if (payload.role !== "recruiter" && payload.role !== "admin") {
-      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
-      socket.destroy();
-      return;
-    }
+  // The token is bound to the rooms it was minted for. Reject any other room so
+  // a token cannot be replayed against a document the user was never granted.
+  if (!Array.isArray(payload.rooms) || !payload.rooms.includes(room)) {
+    console.error(`[ws] room access denied room=${room}`);
+    reject("403 Forbidden");
+    return;
+  }
 
-    const room = path.slice(1);
+  if (room.startsWith("voting/")) {
     const votingPhaseId = room.replace("voting/", "");
 
     wss.handleUpgrade(request, socket, head, (ws) => {
@@ -123,14 +142,7 @@ server.on("upgrade", (request, socket, head) => {
     return;
   }
 
-  if (payload.role !== "recruiter" && payload.role !== "admin") {
-    socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
-    socket.destroy();
-    return;
-  }
-
   wss.handleUpgrade(request, socket, head, (ws) => {
-    const room = path.slice(1);
     console.log(`[ws] connected room=${room}`);
     wss.emit("connection", ws, request);
     ws.once("close", () => console.log(`[ws] disconnected room=${room}`));

@@ -28,7 +28,7 @@ export default function ResourceCard({
           alt="Logo"
           width={40}
           height={40}
-          className="rounded-full"
+          className="size-10 rounded-full"
         />
         <div>
           <CardTitle>{title}</CardTitle>

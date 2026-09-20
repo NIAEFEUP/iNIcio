@@ -1,29 +1,41 @@
 import AdminResources from "@/components/admin/admin-resources";
 import { recruiter } from "@/db/schema";
+import { isAdmin } from "@/lib/admin";
 import { db, getAllCandidateUsers } from "@/lib/db";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
+import { PageHeader } from "@/components/layout/page-header";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
-  const recruiters = await db.select().from(recruiter);
-  const candidates = await getAllCandidateUsers();
-
   const session = await auth.api.getSession({ headers: await headers() });
 
-  return (
-    <div className="flex flex-col gap-y-16">
-      <h1 className="text-center text-4xl font-bold">AdminUI - Recrutamento</h1>
+  if (!(await isAdmin(session?.user.id))) {
+    redirect("/");
+  }
 
-      <div className="mx-16 md:mx-64 flex flex-col gap-4">
-        <div className="flex flex-row w-full justify-between">
-          <h2 className="font-bold">Gestão</h2>
+  const recruiters = await db.select().from(recruiter);
+  const targetId = await getTargetRecruitmentId();
+  const candidates = await getAllCandidateUsers(targetId);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Painel de Administração"
+        actions={
           <CandidatesMailTo
             emails={candidates.map((candidate) => candidate.email)}
           />
-        </div>
+        }
+      />
 
+      <div className="flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-foreground">
+          Recursos de Gestão
+        </h2>
         <AdminResources
           recruiters={recruiters}
           candidates={candidates}

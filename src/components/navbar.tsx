@@ -1,21 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { Menu, X } from "lucide-react";
 import LogoutButton from "./logout/logout-button";
+import { useSession } from "@/lib/use-session";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
 import NotificationPopup from "./notifications/notification-popup";
 import { Notification } from "@/lib/db";
 import Image from "next/image";
-import type { Session } from "better-auth";
-import type { User } from "@/lib/auth";
 
 type Props = {
   className?: string;
-  session: { session: Session; user: User } | null;
   isAdmin: boolean;
   isRecruiter: boolean;
   isCandidate: boolean;
@@ -24,13 +23,41 @@ type Props = {
 
 export default function Navbar({
   className,
-  session,
   isAdmin,
   isRecruiter,
   isCandidate,
   notifications,
 }: Props) {
+  const { data: session } = useSession();
+  const pathname = usePathname();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const dashboardPrefixes = [
+    "/admin",
+    "/recruiter",
+    "/calendar",
+    "/candidates",
+    "/dynamic",
+  ];
+
+  const candidateCountdownPrefixes = [
+    "/candidate/progress",
+    "/candidate/result",
+    "/candidate/interview",
+    "/candidate/dynamic",
+  ];
+
+  const isDashboardRoute =
+    dashboardPrefixes.some((prefix) => pathname?.startsWith(prefix)) ||
+    (pathname?.startsWith("/candidate/") &&
+      !candidateCountdownPrefixes.some((prefix) =>
+        pathname.startsWith(prefix),
+      ));
+
+  if (isDashboardRoute) {
+    return null;
+  }
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -17,6 +23,9 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
+import { useTheme } from "next-themes";
+
+const emptySubscribe = () => () => {};
 
 interface RealTimeEditorProps {
   token?: string;
@@ -29,6 +38,7 @@ interface RealTimeEditorProps {
   mentionItems?: Array<User>;
   onChange?: (e: any) => void;
   collab?: boolean;
+  boxed?: boolean;
 }
 
 export default function RealTimeEditor({
@@ -42,7 +52,16 @@ export default function RealTimeEditor({
   onChange = () => {},
   mentionItems = [],
   collab = true,
+  boxed = true,
 }: RealTimeEditorProps) {
+  const { resolvedTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+  const editorTheme = mounted && resolvedTheme === "dark" ? "dark" : "light";
+
   const doc = useMemo(() => (collab ? new Y.Doc() : null), [collab]);
   const fragment = useMemo(
     () => (doc ? doc.getXmlFragment(`document-store-${docId}`) : null),
@@ -57,9 +76,10 @@ export default function RealTimeEditor({
     () =>
       collab
         ? new WebsocketProvider(
-            `${process.env.NEXT_PUBLIC_WEBSOCKET_URL}?token=${encodeURIComponent(token)}`,
+            process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? "",
             roomId,
             doc,
+            { params: { token } },
           )
         : null,
     [doc, roomId, token, collab],
@@ -157,25 +177,25 @@ export default function RealTimeEditor({
 
   return (
     <BlockNoteView
-      className="w-full min-h-32 rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md
-        transition-all duration-200 p-4 focus-within:ring-2 focus-within:ring-blue-500 overflow-y-auto break-words whitespace-pre-wrap
-      "
+      theme={editorTheme}
+      className={
+        boxed
+          ? "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+          : "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+      }
       editor={editor}
       editable={true}
-      data-color-scheme="light"
       onChange={onChange}
     >
-      <>
-        <SuggestionMenuController
-          triggerCharacter={"@"}
-          getItems={async (query) =>
-            filterSuggestionItems(
-              getMentionMenuItems(mentionItems, editor),
-              query,
-            )
-          }
-        />
-      </>
+      <SuggestionMenuController
+        triggerCharacter={"@"}
+        getItems={async (query) =>
+          filterSuggestionItems(
+            getMentionMenuItems(mentionItems, editor),
+            query,
+          )
+        }
+      />
     </BlockNoteView>
   );
 }

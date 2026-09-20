@@ -15,9 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Camera } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { FileUpload } from "@/components/ui/file-upload";
 
 const formSchema = z
   .object({
@@ -45,6 +46,9 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [signupData, setSignupData] = useState<FormData | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -57,28 +61,60 @@ export default function SignUp() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const {} = await authClient.signUp.email(
-      {
-        email: values.email,
-        password: values.password,
-        name: `${values.name} ${values.surname}`,
-      },
-      {
-        onRequest: () => {
-          setIsLoading(true);
-        },
-        onSuccess: () => {
-          setIsLoading(false);
-          router.push("/application");
-        },
-        onError: (ctx) => {
-          setIsLoading(false);
-          setErrorMessage(ctx.error.message);
-        },
-      },
-    );
+  async function onSubmit(values: FormData) {
+    setSignupData(values);
+    setErrorMessage(null);
+    setStep(2);
   }
+
+  const handleCompleteSignup = async () => {
+    if (!signupData || !selectedImage) return;
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const { data: session } = await authClient.getSession({ query: {} });
+
+      if (!session) {
+        const { error: signUpError } = await authClient.signUp.email({
+          email: signupData.email,
+          password: signupData.password,
+          name: `${signupData.name} ${signupData.surname}`,
+        });
+
+        if (signUpError) {
+          setErrorMessage(signUpError.message);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+      formData.append("type", "profile");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao enviar a fotografia de perfil");
+      }
+
+      const uploadData = await res.json();
+
+      await authClient.updateUser({
+        image: uploadData.fileName,
+      });
+
+      window.location.href = "/application";
+    } catch (err: any) {
+      setErrorMessage(err.message || "Erro durante a criação de conta");
+      setIsLoading(false);
+    }
+  };
 
   const handleReset = () => {
     form.reset();
@@ -91,36 +127,93 @@ export default function SignUp() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <User className="w-8 h-8 text-primary" />
+            {step === 1 ? (
+              <User className="w-8 h-8 text-primary" />
+            ) : (
+              <Camera className="w-8 h-8 text-primary" />
+            )}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Registo</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {step === 1 ? "Registo" : "Fotografia de Perfil"}
+          </h1>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Após o registo, serás redirecionado para o formulário de candidatura
+            {step === 1
+              ? "Após o registo, serás redirecionado para o formulário de candidatura"
+              : "Adiciona uma fotografia para concluir o teu perfil. Esta foto será usada nas tuas candidaturas."}
           </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              onReset={handleReset}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-2 gap-4">
+          {step === 1 ? (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                onReset={handleReset}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Nome
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              placeholder="Nome"
+                              type="text"
+                              className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="surname"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Apelido
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              placeholder="Apelido"
+                              type="text"
+                              className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium text-gray-700">
-                        Nome
+                        Email
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
-                            placeholder="Nome"
-                            type="text"
+                            placeholder="email@email.com"
+                            type="email"
                             className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                             {...field}
                           />
@@ -130,125 +223,109 @@ export default function SignUp() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name="surname"
+                  name="password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium text-gray-700">
-                        Apelido
+                        Palavra-Passe
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
-                            placeholder="Apelido"
-                            type="text"
-                            className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                            placeholder="Mínimo 8 caracteres"
+                            type={showPassword ? "text" : "password"}
+                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
                             {...field}
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Email
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="email@email.com"
-                          type="email"
-                          className="pl-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="confirm-password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        Confirmar Palavra-Passe
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Input
+                            placeholder="Confirme a palavra-passe"
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Palavra-Passe
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Mínimo 8 caracteres"
-                          type={showPassword ? "text" : "password"}
-                          className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
+                {errorMessage && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-600 text-sm">{errorMessage}</p>
+                  </div>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="confirm-password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Confirmar Palavra-Passe
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Confirme a palavra-passe"
-                          type={showConfirmPassword ? "text" : "password"}
-                          className="pl-10 pr-10 h-12 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg transition-all duration-200"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
+                <p className="text-center text-xs text-gray-500 mt-6">
+                  Ao registares-te, concordas com a nossa{" "}
+                  <Link
+                    className="font-bold hover:underline hover:cursor-pointer"
+                    href="/privacy-policy"
+                  >
+                    política de privacidade
+                  </Link>
+                  .
+                </p>
+
+                <Button type="submit" variant="secondary" className="w-full">
+                  Continuar
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <div className="space-y-6">
+              <FileUpload
+                type="image"
+                onFileSelect={(file) => setSelectedImage(file)}
+                onFileRemove={() => setSelectedImage(null)}
+                currentFileName={selectedImage?.name}
+                required
               />
 
               {errorMessage && (
@@ -257,27 +334,24 @@ export default function SignUp() {
                 </div>
               )}
 
-              <p className="text-center text-xs text-gray-500 mt-6">
-                Ao registares-te, concordas com a nossa{" "}
-                <Link
-                  className="font-bold hover:underline hover:cursor-pointer"
-                  href="/privacy-policy"
-                >
-                  política de privacidade
-                </Link>
-                .
-              </p>
-
               <Button
-                type="submit"
+                onClick={handleCompleteSignup}
                 variant="secondary"
+                disabled={!selectedImage || isLoading}
+                className="w-full"
+              >
+                {isLoading ? "A concluir..." : "Concluir Registo"}
+              </Button>
+              <Button
+                onClick={() => setStep(1)}
+                variant="ghost"
                 disabled={isLoading}
                 className="w-full"
               >
-                {isLoading ? "Registando..." : "Registar"}
+                Voltar
               </Button>
-            </form>
-          </Form>
+            </div>
+          )}
         </div>
       </div>
     </div>

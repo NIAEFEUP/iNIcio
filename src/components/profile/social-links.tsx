@@ -34,15 +34,21 @@ export function SocialLinks({
       {socials
         .filter((social) => social.url)
         .map((social) => (
-          <Button key={social.name} variant="outline" size="icon" asChild>
-            <a
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={social.name}
-            >
-              {social.icon}
-            </a>
+          <Button
+            key={social.name}
+            variant="outline"
+            size="icon"
+            nativeButton={false}
+            render={
+              <a
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.name}
+              />
+            }
+          >
+            {social.icon}
           </Button>
         ))}
     </div>

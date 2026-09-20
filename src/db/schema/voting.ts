@@ -106,14 +106,24 @@ export const candidateVote = pgTable("candidate_vote", {
 // Registers if recruiter voted for a candidate
 // but it does not store the value of the vote itself
 // This perserves anonymity
-export const recruiterVote = pgTable("recruiter_vote", {
-  votingPhaseId: integer("voting_phase_id")
-    .notNull()
-    .references(() => votingPhase.id, { onDelete: "cascade" }),
-  recruiterId: text("recruiter_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  candidateId: text("candidate_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-});
+export const recruiterVote = pgTable(
+  "recruiter_vote",
+  {
+    votingPhaseId: integer("voting_phase_id")
+      .notNull()
+      .references(() => votingPhase.id, { onDelete: "cascade" }),
+    recruiterId: text("recruiter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    candidateId: text("candidate_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("recruiter_vote_unique").on(
+      table.votingPhaseId,
+      table.recruiterId,
+      table.candidateId,
+    ),
+  ],
+);

@@ -1,4 +1,5 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
+import { PageHeader } from "@/components/layout/page-header";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import {
@@ -6,12 +7,17 @@ import {
   getCandidateVotes,
   getCurrentVotingPhase,
   getRecruiterVotes,
+  getVotingPhaseRecruitmentId,
   voteForCandidate,
 } from "@/lib/voting";
 import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
 import { deleteCandidateVotes } from "@/lib/voting";
 import { redirect } from "next/navigation";
+import {
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
 import {
   broadcastCandidateFinished,
   broadcastStatusChanged,
@@ -38,10 +44,21 @@ export default async function CandidateVotingPage({
   ) {
     "use server";
 
-    const recruiterVotes = await getRecruiterVotes(id, recruiterId);
+    const recruitmentId = await getVotingPhaseRecruitmentId(id);
+    if (!recruitmentId) throw new Error("Voting phase not found");
+
+    const user = await requireRecruiterSession(recruitmentId);
+    const effectiveRecruiterId = user.id;
+
+    const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      const ok = await voteForCandidate(id, recruiterId, candidateId, decision);
+      const ok = await voteForCandidate(
+        id,
+        effectiveRecruiterId,
+        candidateId,
+        decision,
+      );
       if (ok) {
         await broadcastVoteUpdated(id, candidateId);
       }
@@ -56,6 +73,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     const ok = await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,
@@ -74,6 +92,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     const ok = await makeCandidateVoteDefinitive(
       decision,
@@ -91,6 +110,7 @@ export default async function CandidateVotingPage({
     candidateId: string,
   ) {
     "use server";
+    await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
     await broadcastVotesReset(votingPhaseId, candidateId);
@@ -126,27 +146,30 @@ export default async function CandidateVotingPage({
     (c) => c.isFinished,
   ).length;
 
-  const token = await generateJWT(session?.user.id, userRole);
+  const token = await generateJWT(session?.user.id, userRole, [`voting/${id}`]);
 
   return (
-    <CandidateVotingSlideshow
-      candidates={currentVotingPhase.candidates}
-      admin={admin ? true : false}
-      currentVotingPhase={currentVotingPhase}
-      submitVoteAction={submitVoteAction}
-      resetCandidateVotes={resetCandidateVotes}
-      changeCurrentVotingPhaseStatusCandidateAction={
-        changeCurrentVotingPhaseStatusCandidateAction
-      }
-      recruiterVotes={recruiterVotes}
-      makeVoteDefinitiveAction={makeVoteDefinitiveAction}
-      token={token}
-      initialCandidateId={initialCandidateId}
-      initialApprovedCount={initialApprovedCount}
-      initialRejectedCount={initialRejectedCount}
-      initialVotedCount={initialVotedCount}
-      initialTotalToVote={initialTotalToVote}
-      initialFinishedCandidates={initialFinishedCandidates}
-    />
+    <>
+      <PageHeader title="Votação" backHref="/candidates/voting" />
+      <CandidateVotingSlideshow
+        candidates={currentVotingPhase.candidates}
+        admin={admin ? true : false}
+        currentVotingPhase={currentVotingPhase}
+        submitVoteAction={submitVoteAction}
+        resetCandidateVotes={resetCandidateVotes}
+        changeCurrentVotingPhaseStatusCandidateAction={
+          changeCurrentVotingPhaseStatusCandidateAction
+        }
+        recruiterVotes={recruiterVotes}
+        makeVoteDefinitiveAction={makeVoteDefinitiveAction}
+        token={token}
+        initialCandidateId={initialCandidateId}
+        initialApprovedCount={initialApprovedCount}
+        initialRejectedCount={initialRejectedCount}
+        initialVotedCount={initialVotedCount}
+        initialTotalToVote={initialTotalToVote}
+        initialFinishedCandidates={initialFinishedCandidates}
+      />
+    </>
   );
 }
