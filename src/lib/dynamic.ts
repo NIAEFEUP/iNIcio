@@ -24,9 +24,7 @@ export async function tryToAddCandidateToDynamic(
   recruitmentId?: number,
 ) {
   const targetRecruitmentId =
-    recruitmentId ??
-    slotParam.recruitmentId ??
-    (await getActiveRecruitment())?.id;
+    recruitmentId ?? (await getActiveRecruitment())?.id;
 
   if (!targetRecruitmentId) {
     throw new Error("No recruitment specified or active");
@@ -66,7 +64,14 @@ export async function tryToAddCandidateToDynamic(
     const s = await trx
       .select()
       .from(slot)
-      .where(and(eq(slot.id, slotParam.id), gt(slot.quantity, 0)))
+      .where(
+        and(
+          eq(slot.id, slotParam.id),
+          eq(slot.recruitmentId, targetRecruitmentId),
+          eq(slot.type, "dynamic"),
+          gt(slot.quantity, 0),
+        ),
+      )
       .for("update");
 
     if (s.length > 0) {
