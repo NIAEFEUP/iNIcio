@@ -20,7 +20,6 @@ export function Footer() {
 
   const candidateCountdownPrefixes = [
     "/candidate/progress",
-    "/candidate/result",
     "/candidate/interview",
     "/candidate/dynamic",
   ];

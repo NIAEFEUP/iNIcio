@@ -4,11 +4,8 @@ import { RecruitmentPhase } from "@/lib/db";
 import ProgressPhaseCard from "./progress-phase-card";
 
 const progressPhaseActions: Record<string, string> = {
-  entrevista: "/candidate/interview/schedule",
-  dinâmica: "/candidate/dynamic/schedule",
   candidatura: "/application",
   recruiter_availability: "/recruiter/availability",
-  profile: "/profile",
   who_knows: "/candidates",
   resultado: "/#candidaturas",
 };
