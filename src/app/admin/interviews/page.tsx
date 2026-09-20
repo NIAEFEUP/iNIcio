@@ -45,6 +45,9 @@ const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
 };
 
 export default async function SlotsPage() {
+  const currentRecruitment =
+    (await getTargetRecruitment()) ?? (await getLatestRecruitment());
+
   const saveSlots = async (slots: SlotOperation[]) => {
     "use server";
     await requireAdminSession();
@@ -72,10 +75,10 @@ export default async function SlotsPage() {
         }
       }
     });
+
+    return getExistingSlots(currentRecruitment?.id);
   };
 
-  const currentRecruitment =
-    (await getTargetRecruitment()) ?? (await getLatestRecruitment());
   const existingSlots = await getExistingSlots(currentRecruitment?.id);
   const bookings = await getBookings(currentRecruitment?.id);
   const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);

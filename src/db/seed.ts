@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { hashPassword } from "better-auth/crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   user,
   candidate,
@@ -325,6 +325,10 @@ async function main() {
         .insert(recruiterToInterview)
         .values({ recruiterId, interviewId: row.id });
     }
+    await db
+      .update(slot)
+      .set({ quantity: sql`${slot.quantity} - 1` })
+      .where(eq(slot.id, params.slotId));
     return row.id;
   }
 
@@ -355,6 +359,12 @@ async function main() {
         .insert(recruiterToDynamic)
         .values({ recruiterId, dynamicId: row.id });
     }
+    await db
+      .update(slot)
+      .set({
+        quantity: sql`${slot.quantity} - ${params.candidateIds.length}`,
+      })
+      .where(eq(slot.id, params.slotId));
     return row.id;
   }
 
@@ -529,6 +539,7 @@ async function main() {
     "2025-09-20T14:00:00.000Z",
     60,
     "dynamic",
+    3,
   );
 
   const pastApp1 = await seedApplication({
@@ -854,6 +865,7 @@ async function main() {
     "2026-09-17T14:00:00.000Z",
     60,
     "dynamic",
+    2,
   );
 
   // Current applications
