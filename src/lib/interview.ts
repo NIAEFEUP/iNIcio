@@ -16,20 +16,28 @@ export default async function addInterviewWithSlot(
   slotParam: Slot,
   recruitmentId?: number,
 ) {
+  const targetRecruitmentId =
+    recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (!targetRecruitmentId) {
+    throw new Error("No recruitment specified or active");
+  }
+
   await db.transaction(async (trx) => {
     const s = await trx
       .select()
       .from(slot)
-      .where(and(eq(slot.id, slotParam.id), gt(slot.quantity, 0)))
+      .where(
+        and(
+          eq(slot.id, slotParam.id),
+          eq(slot.recruitmentId, targetRecruitmentId),
+          eq(slot.type, "interview"),
+          gt(slot.quantity, 0),
+        ),
+      )
       .for("update");
 
     if (s.length > 0) {
-      const targetRecruitmentId = recruitmentId ?? s[0].recruitmentId;
-
-      if (targetRecruitmentId !== s[0].recruitmentId) {
-        throw new Error("Slot belongs to a different recruitment");
-      }
-
       await trx
         .update(slot)
         .set({ quantity: s[0].quantity - 1 })

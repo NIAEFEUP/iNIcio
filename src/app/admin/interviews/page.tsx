@@ -92,6 +92,8 @@ export default async function SlotsPage() {
         }
       });
     }
+
+    return getExistingSlots(currentRecruitment?.id);
   };
 
   const existingSlots = await getExistingSlots(currentRecruitment?.id);
