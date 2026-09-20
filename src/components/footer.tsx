@@ -18,11 +18,7 @@ export function Footer() {
     "/dynamic",
   ];
 
-  const candidateCountdownPrefixes = [
-    "/candidate/progress",
-    "/candidate/interview",
-    "/candidate/dynamic",
-  ];
+  const candidateCountdownPrefixes = ["/candidate/progress"];
 
   const isDashboardRoute =
     dashboardPrefixes.some((prefix) => pathname?.startsWith(prefix)) ||

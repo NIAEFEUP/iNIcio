@@ -72,9 +72,12 @@ export default function Navbar({
     "/dynamic",
   ];
 
-  const isInDashboard = dashboardPrefixes.some((prefix) =>
-    pathname?.startsWith(prefix),
-  );
+  const candidateFacingPrefixes = ["/candidate/progress"];
+
+  const isInDashboard =
+    dashboardPrefixes.some((prefix) => pathname?.startsWith(prefix)) ||
+    (pathname?.startsWith("/candidate/") &&
+      !candidateFacingPrefixes.some((prefix) => pathname.startsWith(prefix)));
 
   const user = session?.user;
   const userInitials = getInitials(user?.name);
