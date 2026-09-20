@@ -46,23 +46,16 @@ export default function LandingPage({
 
   return (
     <div className="flex flex-col bg-background">
-      {/* Hero Section */}
       <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 text-center max-w-4xl mx-auto px-4 sm:px-6">
-        <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest text-primary mb-4">
-          Recrutamento NIAEFEUP{" "}
-          {isApplicationOpen && applicationDeadline
-            ? `· Até ${applicationDeadline}`
-            : ""}
-        </p>
-
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.1] mb-6">
-          Constrói tecnologia com impacto real.
+          Queres fazer parte do NI?
         </h1>
 
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-          Somos o Núcleo de Informática da FEUP. Desenvolvemos o Uni e
-          ferramentas usadas diariamente por milhares de estudantes, organizamos
-          a SINF e aprendemos juntos todos os dias.
+          Somos o Núcleo de Informática da Faculdade de Engenharia da
+          Universidade do Porto. Apoiamos todos os estudantes de informática na
+          sua adaptação na universidade e desenvolvemos produtos para toda a
+          comunidade académica!
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -75,7 +68,7 @@ export default function LandingPage({
                   "text-base px-6 h-12 gap-2",
                 )}
               >
-                {isApplicationOpen ? "Candidatar Agora" : "Entrar no iNIcio"}
+                {isApplicationOpen ? "Candidatar Agora" : "Entrar"}
                 <ArrowRight className="size-4" />
               </Link>
               <Link
@@ -141,120 +134,89 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Photography Showcase: Life at NIAEFEUP */}
       <section className="py-8 sm:py-12 max-w-6xl mx-auto px-4 sm:px-6 w-full">
+        <div className="text-center mb-10">
+          <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
+            O que fazemos!
+          </h3>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Photo 1: SINF */}
-          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-[4/3] sm:aspect-[3/4]">
+          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 sm:aspect-3/4">
             <Image
-              src="/images/sinf-auditorium.jpg"
-              alt="Auditório da SINF na FEUP"
+              src="/images/sinf.jpg"
+              alt="SINF na FEUP"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
-                Eventos & Conferências
-              </span>
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
               <p className="text-base font-bold leading-tight mt-0.5">
-                Organização da SINF
+                Semana de Informática
               </p>
               <p className="text-xs text-white/80 mt-1 leading-snug">
-                A maior conferência de tecnologia organizada por estudantes no
-                país.
+                O nosso maior evento, pensado para adquirir conhecimento e fazer
+                networking com diversas empresas.
               </p>
             </div>
           </div>
 
-          {/* Photo 2: Development & Hackathons */}
-          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-[4/3] sm:aspect-[3/4]">
+          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 sm:aspect-3/4">
             <Image
-              src="/images/hackathon.jpg"
+              src="/images/eventos.jpg"
               alt="Equipa a desenvolver software"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
-                Desenvolvimento
-              </span>
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
               <p className="text-base font-bold leading-tight mt-0.5">
-                Projetos com Impacto
+                Eventos
               </p>
               <p className="text-xs text-white/80 mt-1 leading-snug">
-                Código real em produção: app Uni, TTS, e ferramentas para a
-                UPorto.
+                Dinamização entre os estudantes com vários workshops, jantares
+                de curso e apoios na vida académica.
               </p>
             </div>
           </div>
 
-          {/* Photo 3: Workshops & Mentorship */}
-          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-[4/3] sm:aspect-[3/4]">
+          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 sm:aspect-3/4">
             <Image
-              src="/images/workshop.jpg"
+              src="/images/projetos.jpg"
               alt="Workshop e partilha de conhecimento"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
-                Aprendizagem
-              </span>
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
               <p className="text-base font-bold leading-tight mt-0.5">
-                Workshops & Mentoria
+                Projetos
               </p>
               <p className="text-xs text-white/80 mt-1 leading-snug">
-                Aprende tecnologias modernas com o apoio de quem já cá está.
+                Desenvolvimento de produtos que ajudam toda a comunidade durante
+                o seu percurso na universidade.
               </p>
             </div>
           </div>
 
-          {/* Photo 4: Team & Community */}
-          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-[4/3] sm:aspect-[3/4]">
+          <div className="group relative overflow-hidden rounded-2xl bg-muted/40 aspect-4/3 sm:aspect-3/4">
             <Image
-              src="/images/team-social.jpg"
+              src="/images/ni.jpg"
               alt="Membros do NIAEFEUP juntos"
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
-                Comunidade
-              </span>
-              <p className="text-base font-bold leading-tight mt-0.5">
-                Família NIAEFEUP
-              </p>
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
+              <p className="text-base font-bold leading-tight mt-0.5">O NI</p>
               <p className="text-xs text-white/80 mt-1 leading-snug">
-                Sala B315 de portas abertas, convívios, jantares e amizades para
-                a vida.
+                Desde a nossa sala, a vários jantares e eventos internos e até
+                viagens inesquecíveis.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Narrative Section - Honest & Direct */}
-      <section className="py-16 sm:py-20 max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-6">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-          Não precisas de ser um génio da programação.
-        </h2>
-        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-          Esta é a maior hesitação de quem pensa em candidatar-se: achar que não
-          sabe o suficiente. No NIAEFEUP valorizamos a tua vontade de aprender,
-          curiosidade e dedicação. A vasta maioria dos membros entrou no
-          primeiro ano sem saber nada de desenvolvimento Web ou Mobile, e hoje
-          constroem software de topo mundial.
-        </p>
-      </section>
-
-      {/* Process Section - Straightforward */}
       <section className="py-12 sm:py-16 max-w-4xl mx-auto px-4 sm:px-6 w-full">
         <div className="text-center mb-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">
-            Como funciona
-          </p>
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
-            O processo em 4 passos simples
+            Como funciona o recrutamento?
           </h3>
         </div>
 
@@ -270,21 +232,21 @@ export default function LandingPage({
 
           <div className="space-y-2">
             <span className="text-3xl font-black text-primary/80">02</span>
-            <h4 className="font-bold text-foreground text-base">
-              Dinâmica de Grupo
-            </h4>
+            <h4 className="font-bold text-foreground text-base">Entrevista</h4>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Uma sessão prática e descontraída em equipa para resolvermos
-              desafios em conjunto.
+              Uma conversa individual para te conhecermos melhor, alinhar
+              expectativas e objetivos.
             </p>
           </div>
 
           <div className="space-y-2">
             <span className="text-3xl font-black text-primary/80">03</span>
-            <h4 className="font-bold text-foreground text-base">Entrevista</h4>
+            <h4 className="font-bold text-foreground text-base">
+              Dinâmica de Grupo
+            </h4>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Uma conversa individual para te conhecermos melhor, alinhar
-              expectativas e objetivos.
+              Uma sessão prática e descontraída em equipa para resolveres
+              desafios em conjunto.
             </p>
           </div>
 
@@ -299,7 +261,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="py-12 sm:py-16 max-w-2xl mx-auto px-4 sm:px-6 w-full">
         <h3 className="text-2xl font-bold text-foreground text-center mb-8">
           Perguntas Frequentes
@@ -312,8 +273,8 @@ export default function LandingPage({
             </AccordionTrigger>
             <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               Sim! Grande parte da nossa equipa entrou precisamente no primeiro
-              ano da faculdade. É a melhor maneira de aprender a programar a
-              sério e fazer amigos para o resto do curso.
+              ano da faculdade. É uma ótima maneira de desenvolver novas
+              capacidades e fazer amigos para o resto do curso.
             </AccordionContent>
           </AccordionItem>
 
@@ -322,68 +283,76 @@ export default function LandingPage({
               Quanto tempo por semana é necessário dedicar?
             </AccordionTrigger>
             <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              A faculdade e os teus estudos estão sempre em primeiro lugar. A
-              dedicação habitual é de 3 a 5 horas por semana, com total
-              flexibilidade durante épocas de exames e entregas de trabalhos.
+              Os teus estudos estão sempre em primeiro lugar. A dedicação fica
+              ao teu critério, com total flexibilidade durante épocas de exames
+              e entregas de trabalhos.
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="faq-3" className="border-none py-1">
             <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline py-2">
-              Estudantes de outros cursos além de Informática podem entrar?
+              Preciso de experiência para me conseguir integrar na equipa?
             </AccordionTrigger>
             <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Sim, absolutamente. Se tens gosto por programação, design,
-              comunicação, fotografia ou organização de eventos, és mais do que
-              bem-vindo/a.
+              Não! O objetivo do núcleo é maioritariamente ensinar todos os
+              membros com qualquer questão que possam ter. Desde que tenhas
+              vontade de aprender, estás no sítio certo.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="faq-4" className="border-none py-1">
+            <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline py-2">
+              Posso estar em mais do que um departamento ao mesmo tempo?
+            </AccordionTrigger>
+            <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Tens toda a flexibilidade e liberdade para experimentar novos
+              departamentos quando quiseres. Se achas que não estás a gostar do
+              departamento atual, podes simplesmente começar a aparecer nas
+              reuniões de qualquer outro.
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="faq-5" className="border-none py-1">
+            <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline py-2">
+              Em que departamentos posso entrar?
+            </AccordionTrigger>
+            <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              <ul className="list-disc pl-4 space-y-1">
+                <li>
+                  <strong>Imagem:</strong> Criação dos elementos visuais do
+                  núcleo, contribuição para a identidade gráfica e design de
+                  interfaces (UI/UX) dos nossos projetos.
+                </li>
+                <li>
+                  <strong>Comunicação e Relações Externas:</strong> Divulgação
+                  de iniciativas junto da comunidade académica e gestão de
+                  parcerias externas.
+                </li>
+                <li>
+                  <strong>Eventos:</strong> Organização e dinamização de
+                  iniciativas como workshops, palestras, hackathons e convívios.
+                </li>
+                <li>
+                  <strong>Projetos:</strong> Desenvolvimento de software e
+                  soluções com impacto real para a comunidade académica.
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="faq-6" className="border-none py-1">
+            <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline py-2">
+              O que ganho ao entrar no NI?
+            </AccordionTrigger>
+            <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Trabalho prático em projetos reais, aprendizagem contínua com
+              membros mais experientes, uma rede de contactos sólida na
+              faculdade e no mercado de trabalho, e um currículo diferenciador.
+              Tudo isto enquanto fazes parte de uma comunidade ativa e
+              acolhedora.
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </section>
-
-      {/* Bottom Direct CTA */}
-      <section className="py-16 text-center max-w-2xl mx-auto px-4 sm:px-6 space-y-6">
-        <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
-          Queres construir coisas fixes connosco?
-        </h2>
-        <div>
-          {!user ? (
-            <Link
-              href={isApplicationOpen ? "/signup" : "/login"}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "text-base px-8 h-12 gap-2",
-              )}
-            >
-              {isApplicationOpen
-                ? "Começar a Candidatura"
-                : "Entrar na Plataforma"}
-              <ArrowRight className="size-4" />
-            </Link>
-          ) : hasApplied ? (
-            <Link
-              href="/candidate/progress"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "text-base px-8 h-12 gap-2",
-              )}
-            >
-              Acompanhar o meu Progresso
-              <ArrowRight className="size-4" />
-            </Link>
-          ) : isApplicationOpen ? (
-            <Link
-              href="/application"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "text-base px-8 h-12 gap-2",
-              )}
-            >
-              Preencher Candidatura
-              <ArrowRight className="size-4" />
-            </Link>
-          ) : null}
-        </div>
       </section>
     </div>
   );
