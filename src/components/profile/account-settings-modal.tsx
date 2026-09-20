@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { User as UserIcon, KeyRound, Image as ImageIcon } from "lucide-react";
 
 import {
@@ -65,11 +65,11 @@ export function AccountSettingsModal({
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("O nome não pode estar vazio.");
+      toast.add({ type: "error", title: "O nome não pode estar vazio." });
       return;
     }
     if (name === session?.user?.name) {
-      toast.info("O nome inserido é igual ao atual.");
+      toast.add({ type: "info", title: "O nome inserido é igual ao atual." });
       return;
     }
 
@@ -79,12 +79,18 @@ export function AccountSettingsModal({
         name: name.trim(),
       });
       if (res.error) {
-        toast.error(res.error.message || "Erro ao atualizar nome.");
+        toast.add({
+          type: "error",
+          title: res.error.message || "Erro ao atualizar nome.",
+        });
       } else {
-        toast.success("Nome atualizado com sucesso!");
+        toast.add({ type: "success", title: "Nome atualizado com sucesso!" });
       }
     } catch {
-      toast.error("Ocorreu um erro ao atualizar os dados.");
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao atualizar os dados.",
+      });
     } finally {
       setIsUpdatingName(false);
     }
@@ -93,15 +99,21 @@ export function AccountSettingsModal({
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
-      toast.error("Introduz a tua palavra-passe atual.");
+      toast.add({
+        type: "error",
+        title: "Introduz a tua palavra-passe atual.",
+      });
       return;
     }
     if (newPassword.length < 8) {
-      toast.error("A nova palavra-passe deve ter pelo menos 8 caracteres.");
+      toast.add({
+        type: "error",
+        title: "A nova palavra-passe deve ter pelo menos 8 caracteres.",
+      });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("As palavras-passe não coincidem.");
+      toast.add({ type: "error", title: "As palavras-passe não coincidem." });
       return;
     }
 
@@ -114,15 +126,24 @@ export function AccountSettingsModal({
       });
 
       if (res.error) {
-        toast.error(res.error.message || "Erro ao alterar palavra-passe.");
+        toast.add({
+          type: "error",
+          title: res.error.message || "Erro ao alterar palavra-passe.",
+        });
       } else {
-        toast.success("Palavra-passe alterada com sucesso!");
+        toast.add({
+          type: "success",
+          title: "Palavra-passe alterada com sucesso!",
+        });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       }
     } catch {
-      toast.error("Ocorreu um erro ao tentar alterar a palavra-passe.");
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao tentar alterar a palavra-passe.",
+      });
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -239,12 +260,18 @@ export function AccountSettingsModal({
                         image: result.fileName,
                       });
                       setSignedImageUrl(result.url);
-                      toast.success("Foto de perfil atualizada!");
+                      toast.add({
+                        type: "success",
+                        title: "Foto de perfil atualizada!",
+                      });
                     } catch {
-                      toast.error("Erro ao associar foto ao perfil.");
+                      toast.add({
+                        type: "error",
+                        title: "Erro ao associar foto ao perfil.",
+                      });
                     }
                   }}
-                  onError={(err) => toast.error(err)}
+                  onError={(err) => toast.add({ type: "error", title: err })}
                 />
               </div>
             </div>

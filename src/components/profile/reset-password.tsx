@@ -14,7 +14,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 const passwordSchema = z
   .object({
@@ -52,7 +52,10 @@ export function ResetPassword() {
     });
 
     if (!error) {
-      toast("Palavra-passe alterada com sucesso");
+      toast.add({
+        type: "success",
+        title: "Palavra-passe alterada com sucesso",
+      });
       reset();
     }
   };

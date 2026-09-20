@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import type { RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { Badge } from "@/components/ui/badge";
@@ -190,7 +190,10 @@ export function RecruitmentManagerDialog({
       Number.isNaN(endDate.getTime()) ||
       startDate >= endDate
     ) {
-      toast.error("A data de fim tem de ser posterior à data de início");
+      toast.add({
+        type: "error",
+        title: "A data de fim tem de ser posterior à data de início",
+      });
       return;
     }
 
@@ -213,22 +216,24 @@ export function RecruitmentManagerDialog({
             toOptionFromEditable({ id: editId, ...editable }),
           ),
         );
-        toast.success("Recrutamento atualizado");
+        toast.add({ type: "success", title: "Recrutamento atualizado" });
         setMode("overview");
       } else {
         const created = await createRecruitment(editable);
         setList((prev) => upsertRecruitment(prev, toOption(created)));
         setSelectedRecruitment(created.id);
-        toast.success("Recrutamento criado");
+        toast.add({ type: "success", title: "Recrutamento criado" });
         setMode("overview");
       }
       resetForm();
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error(
-        err instanceof Error ? err.message : "Ocorreu um erro na submissão",
-      );
+      toast.add({
+        type: "error",
+        title:
+          err instanceof Error ? err.message : "Ocorreu um erro na submissão",
+      });
       return;
     } finally {
       setIsSubmitting(false);
@@ -251,28 +256,39 @@ export function RecruitmentManagerDialog({
           active: !recruitment.active,
         }),
       );
-      toast.success(
-        recruitment.active ? "Recrutamento desativado" : "Recrutamento ativado",
-      );
+      toast.add({
+        type: "success",
+        title: recruitment.active
+          ? "Recrutamento desativado"
+          : "Recrutamento ativado",
+      });
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro ao alterar o estado");
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao alterar o estado",
+      });
     }
   };
 
   const handleDuplicatePhases = async (id: number) => {
     try {
       const count = await duplicateRecruitmentPhases(id);
-      toast.success(
-        count > 0
-          ? "Fases copiadas do recrutamento anterior"
-          : "Não há fases para duplicar",
-      );
+      toast.add({
+        type: "success",
+        title:
+          count > 0
+            ? "Fases copiadas do recrutamento anterior"
+            : "Não há fases para duplicar",
+      });
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro ao duplicar as fases");
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao duplicar as fases",
+      });
     }
   };
 
@@ -283,11 +299,11 @@ export function RecruitmentManagerDialog({
       await removeRecruitment(deleteTarget.id);
       setList((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
-      toast.success("Recrutamento apagado");
+      toast.add({ type: "success", title: "Recrutamento apagado" });
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro ao apagar");
+      toast.add({ type: "error", title: "Ocorreu um erro ao apagar" });
     } finally {
       setIsDeleting(false);
     }

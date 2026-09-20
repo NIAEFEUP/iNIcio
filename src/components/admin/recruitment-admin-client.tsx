@@ -35,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/layout/page-header";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Recruitment } from "@/lib/db";
 
 interface RecruitmentAdminClientProps {
@@ -120,7 +120,9 @@ export default function RecruitmentAdminClient({
       Number.isNaN(endDate.getTime()) ||
       startDate >= endDate
     ) {
-      toast("A data de fim tem de ser posterior à data de início");
+      toast.add({
+        title: "A data de fim tem de ser posterior à data de início",
+      });
       return;
     }
 
@@ -138,19 +140,19 @@ export default function RecruitmentAdminClient({
       if (editingRecruitment) {
         await editRecruitment(newRecruitment);
         setRecruitmentsState((prev) => upsertRecruitment(prev, newRecruitment));
-        toast("Recrutamento atualizado");
+        toast.add({ title: "Recrutamento atualizado" });
         setIsEditDialogOpen(false);
       } else {
         const created = await addRecruitment(newRecruitment);
         setRecruitmentsState((prev) =>
           upsertRecruitment(prev, { ...newRecruitment, id: created.id }),
         );
-        toast("Recrutamento adicionado");
+        toast.add({ title: "Recrutamento adicionado" });
         setIsAddDialogOpen(false);
       }
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro na submissão");
+      toast.add({ title: "Ocorreu um erro na submissão" });
       return;
     }
 
@@ -184,20 +186,22 @@ export default function RecruitmentAdminClient({
     try {
       await deleteRecruitment(id);
       setRecruitmentsState((prev) => prev.filter((r) => r.id !== id));
-      toast("Recrutamento apagado");
+      toast.add({ title: "Recrutamento apagado" });
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro ao apagar");
+      toast.add({ title: "Ocorreu um erro ao apagar" });
     }
   };
 
   const handleDuplicatePhases = async (id: number) => {
     try {
       const count = await duplicatePhases(id);
-      toast(count > 0 ? "Fases copiadas" : "Não há fases para duplicar");
+      toast.add({
+        title: count > 0 ? "Fases copiadas" : "Não há fases para duplicar",
+      });
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro ao duplicar as fases");
+      toast.add({ title: "Ocorreu um erro ao duplicar as fases" });
     }
   };
 

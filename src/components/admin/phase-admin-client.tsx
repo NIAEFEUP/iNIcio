@@ -50,7 +50,7 @@ import {
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { RecruitmentPhase } from "@/lib/db";
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
 
@@ -140,7 +140,9 @@ export default function PhaseAdminClient({
     e.preventDefault();
 
     if (!editing && !form.recruitmentId) {
-      toast("Não existe um recrutamento ativo para associar a fase");
+      toast.add({
+        title: "Não existe um recrutamento ativo para associar a fase",
+      });
       return;
     }
 
@@ -161,22 +163,22 @@ export default function PhaseAdminClient({
         setPhasesState((prev) =>
           prev.map((p) => (p.id === phase.id ? { ...p, ...phase } : p)),
         );
-        toast("Fase atualizada");
+        toast.add({ title: "Fase atualizada" });
         setIsEditOpen(false);
       } catch (err) {
         console.error(err);
-        toast("Ocorreu um erro na submissão");
+        toast.add({ title: "Ocorreu um erro na submissão" });
         return;
       }
     } else {
       try {
         await addPhase(phase);
         setPhasesState((prev) => [...prev, phase]);
-        toast("Fase adicionada");
+        toast.add({ title: "Fase adicionada" });
         setIsAddOpen(false);
       } catch (err) {
         console.error(err);
-        toast("Ocorreu um erro na submissão");
+        toast.add({ title: "Ocorreu um erro na submissão" });
         return;
       }
     }
@@ -205,10 +207,10 @@ export default function PhaseAdminClient({
       try {
         await deletePhase(id);
         setPhasesState((prev) => prev.filter((p) => p.id !== id));
-        toast("Fase apagada");
+        toast.add({ title: "Fase apagada" });
       } catch (err) {
         console.error(err);
-        toast("Ocorreu um erro na submissao");
+        toast.add({ title: "Ocorreu um erro na submissao" });
         return;
       }
     },

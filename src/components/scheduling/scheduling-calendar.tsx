@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Calendar, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 import { Slot } from "@/lib/db";
@@ -75,14 +75,17 @@ export default function SchedulingCalendar({
     try {
       const ok = await confirmAction(selectedSlots);
       if (ok) {
-        toast.success("Horário agendado com sucesso!");
+        toast.add({ type: "success", title: "Horário agendado com sucesso!" });
         router.push(confirmUrl);
         router.refresh();
       } else {
-        toast.error("Ocorreu um erro ao tentar agendar o horário.");
+        toast.add({
+          type: "error",
+          title: "Ocorreu um erro ao tentar agendar o horário.",
+        });
       }
     } catch {
-      toast.error("Erro ao comunicar com o servidor.");
+      toast.add({ type: "error", title: "Erro ao comunicar com o servidor." });
     } finally {
       setIsSubmitting(false);
     }

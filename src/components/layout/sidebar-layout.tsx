@@ -4,7 +4,6 @@ import * as React from "react";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { type RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/toast";
 import { setSelectedRecruitment } from "@/cookies/set";
 import type { User as UserType } from "@/hooks/use-auth";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +57,6 @@ export function SidebarLayout({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <Toaster />
       <AppSidebar
         user={activeUser}
         isAuthenticated={activeIsAuthenticated}

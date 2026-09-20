@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import {
   Dialog,
@@ -117,11 +117,12 @@ export function CandidateScheduleModal({
           await bookOrChangeDynamicSlot(selectedSlotId);
         }
 
-        toast.success(
-          currentSlot
+        toast.add({
+          type: "success",
+          title: currentSlot
             ? "Horário alterado com sucesso!"
             : "Horário agendado com sucesso!",
-        );
+        });
         router.refresh();
         handleOpenChange(false);
       } catch (err) {
@@ -129,7 +130,7 @@ export function CandidateScheduleModal({
           err instanceof Error
             ? err.message
             : "Ocorreu um erro ao agendar o horário.";
-        toast.error(message);
+        toast.add({ type: "error", title: message });
       }
     });
   };

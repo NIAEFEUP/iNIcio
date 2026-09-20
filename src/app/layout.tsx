@@ -4,7 +4,7 @@ import "./globals.css";
 
 import NavbarController from "@/components/navbar-controller";
 import { Footer } from "@/components/footer";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 
