@@ -6,7 +6,7 @@ import RealTimeEditor from "@/components/editor/real-time-editor";
 import { toast } from "@/components/ui/toast";
 import { getInitials } from "@/lib/utils";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { BlockNoteEditor } from "@blocknote/core";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
@@ -31,7 +31,9 @@ export function CommentDisplay({
 }: CommentDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editEditor, setEditEditor] = useState<BlockNoteEditor | null>(null);
+  // Hold the editor in a ref so a stale instance from a previous edit
+  // session can never be used to save
+  const editEditorRef = useRef<BlockNoteEditor | null>(null);
 
   const authorCandidateFriend = Array.isArray(candidate)
     ? candidate.filter((c) =>
@@ -51,13 +53,24 @@ export function CommentDisplay({
     comment.comment.authorId === currentUserId,
   );
 
-  const handleSaveEdit = async () => {
-    if (!editEditor || !comment.comment || !onSaveEdit) return;
+  const closeEditor = () => {
+    editEditorRef.current = null;
+    setIsEditing(false);
+  };
 
-    const content = editEditor.document;
-    // Cleared the editor: abort silently, nothing to save as a new comment
+  const startEditing = () => {
+    editEditorRef.current = null;
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!comment.comment || !onSaveEdit) return;
+
+    const content = editEditorRef.current?.document;
+    // No captured editor (untouched or empty document) or cleared content:
+    // nothing to save, close silently
     if (!content || content.length === 0) {
-      setIsEditing(false);
+      closeEditor();
       return;
     }
 
@@ -65,7 +78,7 @@ export function CommentDisplay({
     try {
       const ok = await onSaveEdit(comment.comment.id, content);
       if (ok) {
-        setIsEditing(false);
+        closeEditor();
       } else {
         toast.add({
           type: "error",
@@ -113,7 +126,7 @@ export function CommentDisplay({
                 <button
                   type="button"
                   aria-label="Editar comentário"
-                  onClick={() => setIsEditing(true)}
+                  onClick={startEditing}
                   className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
                 >
                   <Pencil className="size-3.5" />
@@ -145,7 +158,9 @@ export function CommentDisplay({
               <RealTimeEditor
                 entity={{ content: comment.comment?.content }}
                 mentionItems={recruiters}
-                onChange={(editor) => setEditEditor(editor)}
+                onChange={(editor) => {
+                  editEditorRef.current = editor;
+                }}
                 collab={false}
                 boxed={false}
               />
@@ -153,7 +168,7 @@ export function CommentDisplay({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsEditing(false)}
+                  onClick={closeEditor}
                   disabled={isSaving}
                 >
                   Cancelar
