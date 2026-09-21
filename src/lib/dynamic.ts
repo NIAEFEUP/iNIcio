@@ -74,44 +74,44 @@ export async function tryToAddCandidateToDynamic(
       )
       .for("update");
 
-    if (s.length > 0) {
-      await trx
-        .update(slot)
-        .set({ quantity: s[0].quantity - 1 })
-        .where(eq(slot.id, slotParam.id));
-
-      const possibleDynamic = await trx
-        .select()
-        .from(dynamic)
-        .where(eq(dynamic.slot, slotParam.id))
-        .for("update");
-
-      if (possibleDynamic.length === 0) {
-        const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
-
-        const [insertedDynamic] = await trx
-          .insert(dynamic)
-          .values({
-            slot: slotParam.id,
-            recruitmentId: targetRecruitmentId,
-            content: dynamicTemplate ? dynamicTemplate.content : [],
-          })
-          .returning({ id: dynamic.id });
-
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: insertedDynamic.id,
-          recruitmentId: targetRecruitmentId,
-        });
-      } else {
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: possibleDynamic[0].id,
-          recruitmentId: targetRecruitmentId,
-        });
-      }
-    } else {
+    if (s.length === 0) {
       throw new Error("Slot not found or full");
+    }
+
+    await trx
+      .update(slot)
+      .set({ quantity: s[0].quantity - 1 })
+      .where(eq(slot.id, slotParam.id));
+
+    const possibleDynamic = await trx
+      .select()
+      .from(dynamic)
+      .where(eq(dynamic.slot, slotParam.id))
+      .for("update");
+
+    if (possibleDynamic.length === 0) {
+      const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
+
+      const [insertedDynamic] = await trx
+        .insert(dynamic)
+        .values({
+          slot: slotParam.id,
+          recruitmentId: targetRecruitmentId,
+          content: dynamicTemplate ? dynamicTemplate.content : [],
+        })
+        .returning({ id: dynamic.id });
+
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: insertedDynamic.id,
+        recruitmentId: targetRecruitmentId,
+      });
+    } else {
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: possibleDynamic[0].id,
+        recruitmentId: targetRecruitmentId,
+      });
     }
   });
 }

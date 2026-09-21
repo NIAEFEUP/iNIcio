@@ -10,10 +10,14 @@ import {
 import { db, Recruitment, RecruitmentPhase } from "./db";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import {
+  getPhaseState,
   getRecruitmentState,
+  normalizePhaseIdentifier,
   RECRUITMENT_PHASE_IDENTIFIERS,
   type RecruitmentState,
 } from "./recruitment-state";
+
+export { RECRUITMENT_PHASE_IDENTIFIERS };
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
@@ -191,6 +195,26 @@ export async function getCurrentRecruitmentState(
     : [];
 
   return getRecruitmentState(recruitment ?? null, phases);
+}
+
+export async function isRecruitmentPhaseOpen(
+  identifier: string,
+  recruitmentId?: number,
+): Promise<boolean> {
+  const activeRecruitment = await getActiveRecruitment();
+  const targetId = recruitmentId ?? activeRecruitment?.id;
+  if (!targetId || !activeRecruitment || targetId !== activeRecruitment.id)
+    return false;
+
+  const phases = await getAllRecruitmentPhases(targetId);
+  const normalized = normalizePhaseIdentifier(identifier);
+  const phase = phases.find(
+    (p) =>
+      p.role === "candidate" &&
+      normalizePhaseIdentifier(p.clientIdentifier) === normalized,
+  );
+
+  return phase ? getPhaseState(phase) === "open" : false;
 }
 
 export async function getRecruitmentPhases(

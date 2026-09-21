@@ -9,7 +9,9 @@ import { PageHeader } from "@/components/layout/page-header";
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
 import { dynamic, interview } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/action-guard";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -45,8 +47,19 @@ export default async function AdminTemplates() {
     "use server";
     await requireAdminSession();
 
+    const target = await getTargetRecruitment();
+    if (!target) return;
+
     try {
-      await db.update(interview).set({ content: update });
+      await db
+        .update(interview)
+        .set({ content: update })
+        .where(
+          and(
+            eq(interview.recruitmentId, target.id),
+            eq(interview.locked, false),
+          ),
+        );
     } catch (error) {
       console.error("Error saving interview template:", error);
       throw error;
@@ -57,8 +70,14 @@ export default async function AdminTemplates() {
     "use server";
     await requireAdminSession();
 
+    const target = await getTargetRecruitment();
+    if (!target) return;
+
     try {
-      await db.update(dynamic).set({ content: update });
+      await db
+        .update(dynamic)
+        .set({ content: update })
+        .where(eq(dynamic.recruitmentId, target.id));
     } catch (error) {
       console.error("Error saving dynamic template:", error);
       throw error;

@@ -52,29 +52,46 @@ export default async function SlotsPage() {
     "use server";
     await requireAdminSession();
 
-    const reconciled = reconcileOperations(slots);
+    if (currentRecruitment) {
+      const reconciled = reconcileOperations(slots);
 
-    await db.transaction(async (tx) => {
-      for (const s of reconciled) {
-        if (s.type === "add") {
-          const existing = await tx
-            .select()
-            .from(slot)
-            .where(
-              and(
-                eq(slot.start, s.slot.start),
-                eq(slot.type, s.slot.type),
-                eq(slot.recruitmentId, s.slot.recruitmentId),
-                eq(slot.duration, s.slot.duration),
-              ),
-            );
+      await db.transaction(async (tx) => {
+        for (const s of reconciled) {
+          if (s.type === "add") {
+            const existing = await tx
+              .select()
+              .from(slot)
+              .where(
+                and(
+                  eq(slot.start, s.slot.start),
+                  eq(slot.type, s.slot.type),
+                  eq(slot.recruitmentId, currentRecruitment.id),
+                  eq(slot.duration, s.slot.duration),
+                ),
+              );
 
-          if (existing.length === 0) await tx.insert(slot).values(s.slot);
-        } else {
-          await tx.delete(slot).where(eq(slot.id, s.slot.id));
+            if (existing.length === 0) {
+              await tx.insert(slot).values({
+                start: s.slot.start,
+                duration: s.slot.duration,
+                quantity: s.slot.quantity,
+                type: s.slot.type,
+                recruitmentId: currentRecruitment.id,
+              });
+            }
+          } else if (s.slot.id !== undefined) {
+            await tx
+              .delete(slot)
+              .where(
+                and(
+                  eq(slot.id, s.slot.id),
+                  eq(slot.recruitmentId, currentRecruitment.id),
+                ),
+              );
+          }
         }
-      }
-    });
+      });
+    }
 
     return getExistingSlots(currentRecruitment?.id);
   };
