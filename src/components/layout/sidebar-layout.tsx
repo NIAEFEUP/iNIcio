@@ -62,8 +62,6 @@ export function SidebarLayout({
           onLogout={activeLogout}
           currentPath={activePath}
           recruitments={recruitments}
-          selectedRecruitmentId={selectedRecruitmentId}
-          onSelectRecruitment={onSelectRecruitment}
         />
         <SidebarInset>
           <div className="flex-1 p-6 py-4">{children}</div>

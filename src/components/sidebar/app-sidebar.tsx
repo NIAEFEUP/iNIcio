@@ -27,8 +27,6 @@ export interface AppSidebarProps {
   onLogout?: () => Promise<void>;
   currentPath?: string;
   recruitments?: RecruitmentOption[];
-  selectedRecruitmentId?: number;
-  onSelectRecruitment?: (id: number) => void;
 }
 
 export function AppSidebar({
@@ -39,18 +37,12 @@ export function AppSidebar({
   onLogout,
   currentPath = "",
   recruitments,
-  selectedRecruitmentId,
-  onSelectRecruitment,
 }: AppSidebarProps) {
   const [managerOpen, setManagerOpen] = React.useState(false);
   const [managerMode, setManagerMode] =
     React.useState<RecruitmentManagerMode>("overview");
 
-  const { recruitmentId: contextRecruitmentId, selectRecruitment } =
-    useRecruitment();
-
-  const effectiveRecruitmentId = selectedRecruitmentId ?? contextRecruitmentId;
-  const effectiveSelectRecruitment = onSelectRecruitment ?? selectRecruitment;
+  const { recruitmentId, selectRecruitment } = useRecruitment();
 
   const openManager = React.useCallback((mode: RecruitmentManagerMode) => {
     setManagerMode(mode);
@@ -63,8 +55,8 @@ export function AppSidebar({
         <SidebarHeader>
           <SidebarHeaderComponent
             recruitments={recruitments}
-            selectedRecruitmentId={effectiveRecruitmentId}
-            onSelectRecruitment={effectiveSelectRecruitment}
+            selectedRecruitmentId={recruitmentId ?? undefined}
+            onSelectRecruitment={selectRecruitment}
             onOpenManager={openManager}
             isAdmin={isAdmin}
           />

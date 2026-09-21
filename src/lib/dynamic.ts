@@ -245,16 +245,7 @@ export async function getCandidateDynamic(
 }
 
 export async function updateDynamic(dynamicId: number, content: unknown) {
-  await db.transaction(async (trx) => {
-    try {
-      await trx
-        .update(dynamic)
-        .set({ content: content })
-        .where(eq(dynamic.id, dynamicId));
-    } catch (e) {
-      console.error(e);
-    }
-  });
+  await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
 }
 
 export async function createDynamicComment(
@@ -262,19 +253,10 @@ export async function createDynamicComment(
   content: Array<any>,
   authorId: string,
 ) {
-  await db.transaction(async (trx) => {
-    try {
-      await trx
-        .insert(dynamicComment)
-        .values({
-          content: content,
-          dynamicId: dynamicId,
-          authorId: authorId,
-        })
-        .returning({ id: dynamicComment.id });
-    } catch (e) {
-      console.error(e);
-    }
+  await db.insert(dynamicComment).values({
+    content: content,
+    dynamicId: dynamicId,
+    authorId: authorId,
   });
 }
 

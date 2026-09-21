@@ -157,13 +157,12 @@ export async function saveDynamicComment(
   const targetId = await getTargetRecruitmentId();
   const user = await requireRecruiterSession(targetId);
 
-  try {
-    await createDynamicComment(dynamicId, content, user.id);
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+  const dynamic = await getDynamic(dynamicId, targetId);
+  if (!dynamic)
+    throw new Error("Dynamic not found in the selected recruitment");
+
+  await createDynamicComment(dynamicId, content, user.id);
+  return true;
 }
 
 export async function updateInterviewContent(
@@ -182,6 +181,10 @@ export async function updateDynamicContent(
 ) {
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
+
+  const dynamic = await getDynamic(dynamicId, targetId);
+  if (!dynamic)
+    throw new Error("Dynamic not found in the selected recruitment");
 
   await updateDynamic(dynamicId, content);
 }
