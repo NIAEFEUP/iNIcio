@@ -286,7 +286,17 @@ export async function updateDynamicComment(
   content: Array<any>,
   authorId: string,
   dynamicId: number,
+  recruitmentId: number,
 ): Promise<boolean> {
+  const d = await db
+    .select({ id: dynamic.id })
+    .from(dynamic)
+    .where(
+      and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, recruitmentId)),
+    );
+
+  if (d.length === 0) return false;
+
   const updated = await db
     .update(dynamicComment)
     .set({ content, editedAt: new Date() })
@@ -294,7 +304,7 @@ export async function updateDynamicComment(
       and(
         eq(dynamicComment.id, commentId),
         eq(dynamicComment.authorId, authorId),
-        eq(dynamicComment.dynamicId, dynamicId),
+        eq(dynamicComment.dynamicId, d[0].id),
       ),
     )
     .returning({ id: dynamicComment.id });
