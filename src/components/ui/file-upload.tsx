@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Camera, FileText, Upload, X, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,21 @@ export function FileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (type !== "image" || !selectedFile) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedFile, type]);
 
   const Icon = type === "image" ? Camera : FileText;
   const acceptTypes = accept || (type === "image" ? "image/*" : ".pdf");
@@ -150,20 +165,50 @@ export function FileUpload({
             <>
               <div
                 className={cn(
-                  "p-3 rounded-full",
-                  isUploading
-                    ? "bg-blue-100 text-blue-600"
-                    : uploadProgress === 100
-                      ? "bg-green-100 text-green-600"
-                      : "bg-muted",
+                  "flex items-center justify-center",
+                  type === "image" && "h-32 w-32",
                 )}
               >
-                {isUploading ? (
-                  <Upload className="h-6 w-6 animate-pulse" />
-                ) : uploadProgress === 100 ? (
-                  <Check className="h-6 w-6" />
+                {previewUrl ? (
+                  <div className="relative h-32 w-32 overflow-hidden rounded-full border border-border bg-background shadow-sm">
+                    <img
+                      src={previewUrl}
+                      alt="Preview da fotografia"
+                      className={cn(
+                        "h-full w-full object-cover",
+                        isUploading && "opacity-40",
+                      )}
+                    />
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Upload className="h-6 w-6 animate-pulse text-primary" />
+                      </div>
+                    )}
+                    {uploadProgress === 100 && !isUploading && (
+                      <span className="absolute right-1 bottom-1 rounded-full bg-green-100 p-1 text-green-600 ring-2 ring-background">
+                        <Check className="h-4 w-4" />
+                      </span>
+                    )}
+                  </div>
                 ) : (
-                  <Icon className="h-6 w-6" />
+                  <div
+                    className={cn(
+                      "p-3 rounded-full",
+                      isUploading
+                        ? "bg-blue-100 text-blue-600"
+                        : uploadProgress === 100
+                          ? "bg-green-100 text-green-600"
+                          : "bg-muted",
+                    )}
+                  >
+                    {isUploading ? (
+                      <Upload className="h-6 w-6 animate-pulse" />
+                    ) : uploadProgress === 100 ? (
+                      <Check className="h-6 w-6" />
+                    ) : (
+                      <Icon className="h-6 w-6" />
+                    )}
+                  </div>
                 )}
               </div>
 
