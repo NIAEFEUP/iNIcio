@@ -15,7 +15,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useSession } from "@/lib/use-session";
 
 const nameSchema = z.object({
@@ -47,7 +47,7 @@ export function EditProfileName() {
 
   const onSubmit = async (data: NameFormData) => {
     if (data.name === session?.user?.name) {
-      toast("O nome inserido é igual ao atual");
+      toast.add({ title: "O nome inserido é igual ao atual" });
       return;
     }
 
@@ -56,9 +56,11 @@ export function EditProfileName() {
     });
 
     if (!error) {
-      toast.success("Nome alterado com sucesso");
+      toast.add({ type: "success", title: "Nome alterado com sucesso" });
     } else {
-      toast.error("Ocorreu um erro ao alterar o nome", {
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao alterar o nome",
         description: error.message,
       });
     }

@@ -3,7 +3,6 @@ import RecruiterAvailabilityClient, {
 } from "@/components/recruiter/recruiter-availability-progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
-import { recruiterAvailability } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -12,7 +11,6 @@ import {
   isRecruiter,
   removeAvailability,
 } from "@/lib/recruiter";
-import { and, eq } from "drizzle-orm";
 import { Calendar } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -53,31 +51,9 @@ export default async function RecruiterAvailabilityPage() {
         };
 
         if (operation.type === "add") {
-          const existing = await tx
-            .select()
-            .from(recruiterAvailability)
-            .where(
-              and(
-                eq(recruiterAvailability.start, sanitizedAvailability.start),
-                eq(
-                  recruiterAvailability.recruitmentId,
-                  sanitizedAvailability.recruitmentId,
-                ),
-                eq(
-                  recruiterAvailability.duration,
-                  sanitizedAvailability.duration,
-                ),
-                eq(
-                  recruiterAvailability.recruiterId,
-                  sanitizedAvailability.recruiterId,
-                ),
-              ),
-            );
-
-          if (existing.length === 0)
-            await addAvailability(sanitizedAvailability);
+          await addAvailability(sanitizedAvailability, tx);
         } else {
-          await removeAvailability(sanitizedAvailability);
+          await removeAvailability(sanitizedAvailability, tx);
         }
       }
     });

@@ -16,6 +16,19 @@ export const availableCourses = [
   "mecd",
 ];
 
+export const availableInterests = [
+  "projetos",
+  "imagem",
+  "comunicacao",
+  "sinf",
+  "uni",
+  "tts",
+  "eventos",
+  "nitsig",
+  "website",
+  "niployments",
+];
+
 export const availableClassifications = [
   "muito fraco",
   "normal",

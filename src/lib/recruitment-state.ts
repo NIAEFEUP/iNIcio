@@ -33,6 +33,7 @@ export const RECRUITMENT_PHASE_IDENTIFIERS = {
   dynamic: "dinâmica",
   review: "avaliacao",
   voting: "votacao",
+  result: "resultado",
 } as const;
 
 export type RecruitmentPhaseKind = keyof typeof RECRUITMENT_PHASE_IDENTIFIERS;

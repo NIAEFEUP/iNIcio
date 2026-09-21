@@ -1,4 +1,7 @@
-import { FileText } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 
 import {
   Card,
@@ -7,73 +10,52 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function SubmittedApplicationMessage() {
   return (
-    <section className="bg-gradient-to-br from-background via-muted/30 to-primary/5 h-full w-full">
-      <div className="container mx-auto px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance mb-6">
-            Completa o teu
-            <span className="text-red-600 relative inline-block">
-              processo de recrutamento
-              <svg
-                className="absolute -bottom-2 left-0 w-full"
-                height="8"
-                viewBox="0 0 200 8"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M1 5.5C50 1.5 150 1.5 199 5.5"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  className="text-red-600"
-                />
-              </svg>
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground text-pretty mb-8 max-w-2xl mx-auto leading-relaxed">
-            Estás quase lá! Se ainda não o fizeste, completa os passos em falta
-            para terminares a tua candidatura ao{" "}
-            <span className="text-primary font-semibold">NIAEFEUP</span> e
-            juntares-te à nossa comunidade.
-          </p>
-
-          <div className="flex flex-row sm:flex-row gap-4 mb-12 w-full">
-            <Link href="/candidate/progress" className="w-full">
-              <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-red-600 cursor-pointer w-full">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-600 transition-colors">
-                    <FileText className="h-6 w-6 text-red-600 group-hover:text-white transition-colors" />
-                  </div>
-                  <CardTitle className="text-2xl text-left">
-                    Ver Progresso
-                  </CardTitle>
-                  <CardDescription className="text-base text-left">
-                    Vê as etapas que ainda te faltam para continuares o teu
-                    processo de recrutamento
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-sm text-red-600 font-medium group-hover:gap-2 transition-all">
-                    Ver progresso
-                    <span className="inline-block transition-transform group-hover:translate-x-1">
-                      →
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
+    <div className="container mx-auto px-4 py-12 md:py-20 max-w-7xl text-center">
+      <div className="flex flex-col items-center space-y-6">
+        <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <CheckCircle2 className="size-8 text-primary" />
         </div>
-      </div>
 
-      <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-20 right-10 w-32 h-32 bg-accent/10 rounded-full blur-xl"></div>
-    </section>
+        <div className="space-y-2">
+          <Badge variant="secondary" className="font-normal text-xs mb-2">
+            Candidatura Registada
+          </Badge>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            A tua candidatura está a caminho!
+          </h1>
+          <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Obrigado pelo teu interesse no NIAEFEUP. Podes acompanhar o estado
+            atual, agendamentos de entrevistas ou dinâmicas e o teu resultado
+            diretamente na plataforma.
+          </p>
+        </div>
+
+        <Card className="w-full text-left">
+          <CardHeader>
+            <CardTitle className="text-base">Próximos Passos</CardTitle>
+            <CardDescription className="text-sm">
+              Consulta o teu percurso de recrutamento para veres o estado das
+              etapas e eventuais marcações pendentes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              nativeButton={false}
+              size="lg"
+              className="w-full gap-2"
+              render={<Link href="/candidate/progress" />}
+            >
+              Ver o meu Progresso
+              <ArrowRight className="size-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

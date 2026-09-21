@@ -7,7 +7,7 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/db/schema";
 import {
@@ -24,9 +24,7 @@ export async function tryToAddCandidateToDynamic(
   recruitmentId?: number,
 ) {
   const targetRecruitmentId =
-    recruitmentId ??
-    slotParam.recruitmentId ??
-    (await getActiveRecruitment())?.id;
+    recruitmentId ?? (await getActiveRecruitment())?.id;
 
   if (!targetRecruitmentId) {
     throw new Error("No recruitment specified or active");
@@ -66,47 +64,54 @@ export async function tryToAddCandidateToDynamic(
     const s = await trx
       .select()
       .from(slot)
-      .where(eq(slot.id, slotParam.id))
+      .where(
+        and(
+          eq(slot.id, slotParam.id),
+          eq(slot.recruitmentId, targetRecruitmentId),
+          eq(slot.type, "dynamic"),
+          gt(slot.quantity, 0),
+        ),
+      )
       .for("update");
 
-    if (s.length > 0) {
-      await trx
-        .update(slot)
-        .set({ quantity: s[0].quantity - 1 })
-        .where(eq(slot.id, slotParam.id));
+    if (s.length === 0) {
+      throw new Error("Slot not found or full");
+    }
 
-      const possibleDynamic = await trx
-        .select()
-        .from(dynamic)
-        .where(eq(dynamic.slot, slotParam.id))
-        .for("update");
+    await trx
+      .update(slot)
+      .set({ quantity: s[0].quantity - 1 })
+      .where(eq(slot.id, slotParam.id));
 
-      if (possibleDynamic.length === 0) {
-        const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
+    const possibleDynamic = await trx
+      .select()
+      .from(dynamic)
+      .where(eq(dynamic.slot, slotParam.id))
+      .for("update");
 
-        const [insertedDynamic] = await trx
-          .insert(dynamic)
-          .values({
-            slot: slotParam.id,
-            recruitmentId: targetRecruitmentId,
-            content: dynamicTemplate ? dynamicTemplate.content : [],
-          })
-          .returning({ id: dynamic.id });
+    if (possibleDynamic.length === 0) {
+      const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
 
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: insertedDynamic.id,
+      const [insertedDynamic] = await trx
+        .insert(dynamic)
+        .values({
+          slot: slotParam.id,
           recruitmentId: targetRecruitmentId,
-        });
-      } else {
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: possibleDynamic[0].id,
-          recruitmentId: targetRecruitmentId,
-        });
-      }
+          content: dynamicTemplate ? dynamicTemplate.content : [],
+        })
+        .returning({ id: dynamic.id });
+
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: insertedDynamic.id,
+        recruitmentId: targetRecruitmentId,
+      });
     } else {
-      throw new Error("Slot not found");
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: possibleDynamic[0].id,
+        recruitmentId: targetRecruitmentId,
+      });
     }
   });
 }

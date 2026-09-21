@@ -1,7 +1,7 @@
 import AdminResources from "@/components/admin/admin-resources";
-import { recruiter } from "@/db/schema";
 import { isAdmin } from "@/lib/admin";
-import { db, getAllCandidateUsers } from "@/lib/db";
+import { getAllCandidateUsers } from "@/lib/db";
+import { getRecruiters } from "@/lib/recruitment";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
@@ -17,9 +17,9 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const recruiters = await db.select().from(recruiter);
   const targetId = await getTargetRecruitmentId();
-  const candidates = await getAllCandidateUsers(targetId);
+  const recruiters = targetId ? await getRecruiters(targetId) : [];
+  const candidates = targetId ? await getAllCandidateUsers(targetId) : [];
 
   return (
     <div className="flex flex-col gap-6">

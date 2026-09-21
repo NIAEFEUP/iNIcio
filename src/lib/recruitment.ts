@@ -2,19 +2,22 @@ import {
   recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
-  slot,
   recruiter,
   user,
   recruiterToCandidate,
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import {
+  getPhaseState,
   getRecruitmentState,
+  normalizePhaseIdentifier,
   RECRUITMENT_PHASE_IDENTIFIERS,
   type RecruitmentState,
 } from "./recruitment-state";
+
+export { RECRUITMENT_PHASE_IDENTIFIERS };
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
@@ -194,6 +197,26 @@ export async function getCurrentRecruitmentState(
   return getRecruitmentState(recruitment ?? null, phases);
 }
 
+export async function isRecruitmentPhaseOpen(
+  identifier: string,
+  recruitmentId?: number,
+): Promise<boolean> {
+  const activeRecruitment = await getActiveRecruitment();
+  const targetId = recruitmentId ?? activeRecruitment?.id;
+  if (!targetId || !activeRecruitment || targetId !== activeRecruitment.id)
+    return false;
+
+  const phases = await getAllRecruitmentPhases(targetId);
+  const normalized = normalizePhaseIdentifier(identifier);
+  const phase = phases.find(
+    (p) =>
+      p.role === "candidate" &&
+      normalizePhaseIdentifier(p.clientIdentifier) === normalized,
+  );
+
+  return phase ? getPhaseState(phase) === "open" : false;
+}
+
 export async function getRecruitmentPhases(
   role: "candidate" | "recruiter",
   recruitmentId?: number,
@@ -244,48 +267,6 @@ export async function editRecruitmentPhase(r: RecruitmentPhase) {
 
 export async function deleteRecruitmentPhase(id: number) {
   await db.delete(recruitmentPhase).where(eq(recruitmentPhase.id, id));
-}
-
-export async function getInterviewSlots(recruitmentId?: number) {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  return await db.transaction(async (trx) => {
-    const interviewSlots = await trx
-      .select()
-      .from(slot)
-      .where(
-        and(
-          eq(slot.type, "interview"),
-          eq(slot.recruitmentId, targetId),
-          gt(slot.quantity, 0),
-        ),
-      )
-      .for("update");
-
-    return interviewSlots;
-  });
-}
-
-export async function getDynamicSlots(recruitmentId?: number) {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  return await db.transaction(async (trx) => {
-    const dynamicSlots = await trx
-      .select()
-      .from(slot)
-      .where(
-        and(
-          eq(slot.type, "dynamic"),
-          eq(slot.recruitmentId, targetId),
-          gt(slot.quantity, 0),
-        ),
-      )
-      .for("update");
-
-    return dynamicSlots;
-  });
 }
 
 export async function isRecruitmentPhaseDone(

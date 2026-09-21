@@ -8,13 +8,15 @@ import {
   recruiterToInterview,
 } from "@/db/schema";
 import { db, User } from "@/lib/db";
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, asc, eq, gt, lt, sql } from "drizzle-orm";
 import {
   getSessionUser,
   requireAdminSession,
   requireRecruiterSession,
 } from "@/lib/action-guard";
 import { getActiveRecruitment } from "@/lib/recruitment";
+import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
+import { deliverPendingNotifications } from "@/lib/notification-service";
 
 export async function markNotificationAsRead(id: number) {
   const user = await getSessionUser();
@@ -26,6 +28,26 @@ export async function markNotificationAsRead(id: number) {
         isRead: true,
       })
       .where(and(eq(notification.id, id), eq(notification.userId, user.id)));
+  });
+}
+
+/**
+ * Delivers notifications whose time has come for the current user and returns
+ * the new unread notifications created after `sinceId`. Used by the live
+ * notifier to surface notifications as toasts.
+ */
+export async function pollNotifications(sinceId: number) {
+  const user = await getSessionUser();
+
+  await deliverPendingNotifications(user.id);
+
+  return await db.query.notification.findMany({
+    where: and(
+      eq(notification.userId, user.id),
+      eq(notification.isRead, false),
+      gt(notification.id, sinceId),
+    ),
+    orderBy: asc(notification.id),
   });
 }
 
@@ -42,12 +64,10 @@ export async function getAvailableRecruiters(
   const endUtc = new Date(end.toISOString());
 
   const conditions = [
-    gte(recruiterAvailability.start, startUtc),
     lt(recruiterAvailability.start, endUtc),
+    sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${sql.param(startUtc, recruiterAvailability.start)}`,
+    eq(recruiterAvailability.recruitmentId, targetId),
   ];
-  if (targetId) {
-    conditions.push(eq(recruiterAvailability.recruitmentId, targetId));
-  }
 
   const results = await db.query.recruiterAvailability.findMany({
     where: and(...conditions),
@@ -133,4 +153,18 @@ export async function unassignRecruiter(
         ),
       );
   }
+}
+
+export async function getSignedProfilePictureUrl(targetPictureUrl: string) {
+  const user = await getSessionUser();
+  const cleanPath = fromFullUrlToPath(targetPictureUrl);
+
+  if (
+    !cleanPath.startsWith(`profiles/${user.id}/`) &&
+    targetPictureUrl !== user.image
+  ) {
+    throw new Error("Unauthorized access to image file");
+  }
+
+  return await getFilenameUrl(targetPictureUrl);
 }

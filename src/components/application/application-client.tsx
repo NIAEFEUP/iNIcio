@@ -1,9 +1,23 @@
 "use client";
 
 import type React from "react";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  User,
+  Phone,
+  GraduationCap,
+  FileText,
+  Globe,
+  Heart,
+  MessageSquare,
+  Lightbulb,
+  Send,
+  Info,
+  AlertCircle,
+} from "lucide-react";
+import { FaLinkedin, FaGithub } from "react-icons/fa";
+
 import {
   Card,
   CardContent,
@@ -12,29 +26,55 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CVUpload } from "@/components/ui/cv-upload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  User,
-  Phone,
-  GraduationCap,
-  Calendar,
-  Camera,
-  FileText,
-  Globe,
-  Heart,
-  MessageSquare,
-  Lightbulb,
-  Send,
-} from "lucide-react";
-import { FaLinkedin, FaGithub } from "react-icons/fa";
-import { Separator } from "@/components/ui/separator";
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { CVUpload } from "@/components/ui/cv-upload";
+
+const INTEREST_OPTIONS = [
+  { value: "projetos", label: "Projetos" },
+  { value: "imagem", label: "Imagem" },
+  { value: "comunicacao", label: "Comunicação" },
+  { value: "sinf", label: "Sinf (Semana de Informática)" },
+  { value: "uni", label: "Uni" },
+  { value: "tts", label: "TTS" },
+  { value: "eventos", label: "Eventos" },
+  { value: "nitsig", label: "NitSig" },
+  { value: "website", label: "Website do NI" },
+  { value: "niployments", label: "NIployments" },
+];
+
+const DISCOVERY_OPTIONS = [
+  { value: "instagram", label: "Instagram" },
+  { value: "amigos", label: "Amigos / Colegas" },
+  { value: "professores", label: "Professores" },
+  { value: "email", label: "Email institucional" },
+  { value: "aefeup", label: "AEFEUP" },
+  { value: "banca", label: "Banca no corredor da FEUP" },
+  { value: "open_day", label: "NI Open Day" },
+  { value: "outro", label: "Outro" },
+];
 
 export default function ApplicationClient() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState(() => {
     let savedApp = null;
-
-    if (typeof window !== "undefined")
-      savedApp = localStorage?.getItem("application");
+    if (typeof window !== "undefined") {
+      savedApp = localStorage.getItem("application");
+    }
 
     return savedApp
       ? JSON.parse(savedApp)
@@ -57,24 +97,25 @@ export default function ApplicationClient() {
         };
   });
 
-  useEffect(() => {
-    localStorage.setItem("application", JSON.stringify(formData));
-  }, [formData]);
-
   const [uploadedFiles, setUploadedFiles] = useState({
     cv: null as { fileName: string; url: string } | null,
   });
 
-  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("application", JSON.stringify(formData));
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    localStorage.setItem("application", JSON.stringify(formData));
+    setErrorMessage(null);
+    setIsSubmitting(true);
 
     const submissionData = {
       ...formData,
-      curriculum: uploadedFiles.cv?.url || "",
+      curriculum: uploadedFiles.cv?.url || formData.curriculum || "",
     };
 
     try {
@@ -87,16 +128,22 @@ export default function ApplicationClient() {
       });
 
       if (res.ok) {
+        localStorage.removeItem("application");
         router.push("/candidate/progress");
+        router.refresh();
       } else {
         const errorData = await res.json();
-        alert(
-          `Erro ao submeter candidatura: ${errorData.message || "Erro desconhecido"}`,
+        setErrorMessage(
+          errorData.message ||
+            errorData.error ||
+            "Ocorreu um erro ao submeter a candidatura.",
         );
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Erro ao submeter candidatura. Tenta novamente: " + error);
+      setErrorMessage("Erro de ligação. Por favor, tenta novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,27 +153,24 @@ export default function ApplicationClient() {
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev: typeof formData) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (
     fieldName: "interests" | "recruitment_first_interaction",
     value: string,
   ) => {
-    setFormData((prev) => ({
+    setFormData((prev: typeof formData) => ({
       ...prev,
       [fieldName]: prev[fieldName].includes(value)
-        ? prev[fieldName].filter((item) => item !== value)
+        ? prev[fieldName].filter((item: string) => item !== value)
         : [...prev[fieldName], value],
     }));
   };
 
   const handleCVSuccess = (result: { fileName: string; url: string }) => {
-    setUploadedFiles((prev) => ({
-      ...prev,
-      cv: result,
-    }));
-    setFormData((prev) => ({
+    setUploadedFiles((prev) => ({ ...prev, cv: result }));
+    setFormData((prev: typeof formData) => ({
       ...prev,
       curriculum: result.fileName,
     }));
@@ -134,559 +178,500 @@ export default function ApplicationClient() {
 
   const handleUploadError = (error: string) => {
     console.error("Upload error:", error);
-    // TODO: toast notification
+    setErrorMessage("Erro no carregamento do CV: " + error);
   };
 
   return (
-    <div className="min-h-screen form-gradient">
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 py-16">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-balance mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Formulário de candidatura
+    <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-start">
+        <div className="space-y-3 md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-7rem)] md:overflow-y-auto">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            Formulário de Candidatura
           </h1>
-          <div className="space-y-6 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">
-              Convém estares atento ao teu email nos próximos dias.
-            </p>
-            <p>
-              Apenas usaremos o teu número telefónico para contactos mais
-              urgentes.
-            </p>
-            <p>
-              A submissão de um CV pode contribuir significativamente para a
-              avaliação da tua candidatura.
-            </p>
-            <p>
-              Recomendamos que adiciones o teu <strong>GitHub</strong>,{" "}
-              <strong>LinkedIn</strong> ou
-              <strong> Site Pessoal</strong>, se tiveres, para podermos ver o
-              teu trabalho.
-            </p>
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+            Preenche com calma as informações abaixo para te podermos conhecer
+            melhor. O progresso é guardado automaticamente no teu navegador.
+          </p>
 
-            <Separator />
-
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">
-                Projetos
-              </h2>
-              <p>
-                O departamento de Projetos foca-se em desenvolver soluções que
-                melhoram e facilitam o dia a dia de um estudante. Os vários
-                projetos utilizam um leque de tecnologias modernas e de
-                aprendizagem importantes para o futuro de um engenheiro
-                informático.
-              </p>
-              <p>
-                Os principais projetos do NIAEFEUP são a <strong>UNI</strong>, o{" "}
-                <strong>TTS</strong> e o <strong>NitSig</strong>. Neste
-                departamento, pode-se aprender de forma casual e hands-on.
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">Eventos</h2>
-              <p>
-                No departamento de Eventos, focamo-nos na organização de eventos
-                para a comunidade académica, nomeadamente estudante de
-                informática. Procuramos estimular o interesse dos estudantes na
-                aprendizagem de tecnologias, com workshops ao longo do ano, bem
-                como criar oportunidades de socializar nos Jantares de Curso,
-                Rally tascas e outros convívios.
-              </p>
-              <p>
-                Temos ainda a <strong>Semana de Informática</strong>, um evento
-                ao longo de vários dias, repleto de workshops, palestras e muito
-                mais.
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">
-                Imagem e Comunicação
-              </h2>
-              <p>
-                É o departamento de Comunicação que está encarregue da
-                divulgação junto dos estudantes dos eventos, projetos e todo o
-                conteúdo relacionado ao NI através das várias redes sociais,
-                cartazes, e-mail, entre outros. A equipa também organiza visitas
-                a escolas e bancas para dar a conhecer o NIAEFEUP, o curso e a
-                FEUP.
-              </p>
-              <p>
-                A equipa de Imagem está encarregue da produção de conteúdo
-                gráfico e da gestão da imagem do núcleo — desde garantir que a
-                UI/UX dos vários projetos estão de acordo com os padrões
-                estabelecidos, até à criação de material para as redes sociais e
-                ao procedimento por detrás da criação do merchandising do curso.
-              </p>
-            </div>
-          </div>
+          <Card className="bg-muted/40">
+            <CardContent>
+              <Accordion>
+                <AccordionItem value="tips" className="border-b-0">
+                  <AccordionTrigger className="py-1 text-sm font-medium hover:no-underline">
+                    <span className="flex items-center gap-2">
+                      <Info className="size-4 text-primary" />
+                      Informações importantes e sobre os departamentos
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-3 pb-0 text-xs md:text-sm text-muted-foreground space-y-3">
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        Contactos & Avaliação:
+                      </p>
+                      <p>
+                        • Mantém atenção ao teu email nos próximos dias para
+                        acompanhares convocações.
+                      </p>
+                      <p>
+                        • O número de telemóvel será usado apenas para contactos
+                        urgentes de agendamento.
+                      </p>
+                      <p>
+                        • A submissão de CV e links (GitHub, LinkedIn,
+                        portfólio) é opcional, mas valorizada!
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-2 md:gap-2.5 pt-2">
+                      <div className="rounded-lg border border-border p-2.5 bg-background md:flex md:items-start md:gap-2.5">
+                        <p className="font-medium text-foreground text-xs">
+                          Projetos
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 md:mt-0">
+                          Desenvolvimento de soluções para a comunidade
+                          académica (uni, TTS, NIployments).
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2.5 bg-background md:flex md:items-start md:gap-2.5">
+                        <p className="font-medium text-foreground text-xs">
+                          Eventos
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 md:mt-0">
+                          Semana de Informática (SINF), workshops e convívios
+                          académicos.
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border p-2.5 bg-background md:flex md:items-start md:gap-2.5">
+                        <p className="font-medium text-foreground text-xs">
+                          Imagem & Comunicação
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 md:mt-0">
+                          Criação gráfica, UI/UX, redes sociais, merchandising e
+                          divulgação do núcleo.
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <Card className="form-section border-0 shadow-lg">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
+              <div className="flex items-center gap-2.5">
                 <div>
-                  <CardTitle className="text-xl">Informação Pessoal</CardTitle>
+                  <CardTitle className="text-lg">Informação Pessoal</CardTitle>
                   <CardDescription>
-                    Os teus dados básicos para podermos entrar em contacto
-                    contigo
+                    Dados para identificação e contacto
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    Número de Telemóvel *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="+351 900 000 000"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                    required
-                  />
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Número de Telemóvel *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="+351 912 345 678"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="pl-9"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <GraduationCap className="h-4 w-4 text-primary" />
-                    Número Mecanográfico *
-                  </label>
-                  <input
-                    type="text"
-                    name="student_number"
-                    placeholder="202N0NNNN"
-                    value={formData.student_number}
-                    onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                    required
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="student_number">Número Mecanográfico *</Label>
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      id="student_number"
+                      name="student_number"
+                      type="text"
+                      placeholder="ex: 202301234"
+                      value={formData.student_number}
+                      onChange={handleInputChange}
+                      className="pl-9"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Curso *
-                  </label>
-                  <select
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="degree">Curso *</Label>
+                  <NativeSelect
+                    id="degree"
                     name="degree"
                     value={formData.degree}
                     onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
+                    className="w-full"
                     required
                   >
-                    <option value="">Escolhe o teu curso</option>
-                    <option value="leic">
-                      L.EIC - Licenciatura em Engenharia Informática e
-                      Computação
-                    </option>
-                    <option value="meic">
-                      M.EIC - Mestrado em Engenharia Informática e Computação
-                    </option>
-                    <option value="mesw">
-                      MESW - Mestrado em Engenharia de Software
-                    </option>
-                    <option value="mm">MM - Mestrado em Multimédia</option>
-                    <option value="mia">
-                      M.IA - Mestrado em Inteligência Artifical
-                    </option>
-                    <option value="liacd">
-                      l:IACD - Licenciatura em Inteligência Artificial e Ciência
-                      de Dados
-                    </option>
-                    <option value="mecd">
-                      MECD - Mestrado em Engenharia e Ciência de Dados
-                    </option>
-                  </select>
+                    <NativeSelectOption value="">
+                      Seleciona o teu curso
+                    </NativeSelectOption>
+                    <NativeSelectOption value="leic">
+                      L.EIC - Engenharia Informática e Computação
+                    </NativeSelectOption>
+                    <NativeSelectOption value="meic">
+                      M.EIC - Engenharia Informática e Computação
+                    </NativeSelectOption>
+                    <NativeSelectOption value="mesw">
+                      MESW - Engenharia de Software
+                    </NativeSelectOption>
+                    <NativeSelectOption value="liacd">
+                      L.IACD - IA e Ciência de Dados
+                    </NativeSelectOption>
+                    <NativeSelectOption value="mecd">
+                      MECD - Ciência de Dados
+                    </NativeSelectOption>
+                    <NativeSelectOption value="mm">
+                      MM - Multimédia
+                    </NativeSelectOption>
+                    <NativeSelectOption value="mia">
+                      M.IA - Inteligência Artificial
+                    </NativeSelectOption>
+                    <NativeSelectOption value="outro">
+                      Outro curso FEUP / U.Porto
+                    </NativeSelectOption>
+                  </NativeSelect>
                 </div>
 
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    Ano Curricular *
-                  </label>
-                  <select
+                <div className="space-y-2">
+                  <Label htmlFor="curricular_year">Ano Curricular *</Label>
+                  <NativeSelect
+                    id="curricular_year"
                     name="curricular_year"
                     value={formData.curricular_year}
                     onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
+                    className="w-full"
                     required
                   >
-                    <option value="">Ano curricular</option>
-                    <option value="1bsc">1.º da Licenciatura</option>
-                    <option value="2bsc">2.º da Licenciatura</option>
-                    <option value="3bsc">3.º da Licenciatura</option>
-                    <option value="1msc">1.º do Mestrado</option>
-                    <option value="2msc">2.º do Mestrado</option>
-                  </select>
+                    <NativeSelectOption value="">
+                      Seleciona o ano atual
+                    </NativeSelectOption>
+                    <NativeSelectOption value="1bsc">
+                      1.º ano de Licenciatura
+                    </NativeSelectOption>
+                    <NativeSelectOption value="2bsc">
+                      2.º ano de Licenciatura
+                    </NativeSelectOption>
+                    <NativeSelectOption value="3bsc">
+                      3.º ano de Licenciatura
+                    </NativeSelectOption>
+                    <NativeSelectOption value="1msc">
+                      1.º ano de Mestrado
+                    </NativeSelectOption>
+                    <NativeSelectOption value="2msc">
+                      2.º ano de Mestrado
+                    </NativeSelectOption>
+                    <NativeSelectOption value="outro">Outro</NativeSelectOption>
+                  </NativeSelect>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="form-section border-0 shadow-lg">
+          <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
+              <div className="flex items-center gap-2.5">
                 <div>
-                  <CardTitle className="text-xl">Documentos</CardTitle>
+                  <CardTitle className="text-lg">Curriculum Vitae</CardTitle>
                   <CardDescription>
-                    Submete os documentos necessários para a tua candidatura
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-3">
-                    <FileText className="h-4 w-4 text-primary" />
-                    CV
-                  </label>
-                  <CVUpload
-                    onSuccess={handleCVSuccess}
-                    onError={handleUploadError}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Submete o teu CV em formato PDF.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="form-section border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Globe className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Links Sociais</CardTitle>
-                  <CardDescription>
-                    Partilha os teus perfis online (opcional)
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <FaLinkedin className="h-4 w-4 text-primary" />
-                  LinkedIn
-                </label>
-                <input
-                  type="url"
-                  name="linkedin"
-                  placeholder="https://linkedin.com/company/niaefeup"
-                  value={formData.linkedin}
-                  onChange={handleInputChange}
-                  className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <FaGithub className="h-4 w-4 text-primary" />
-                    GitHub
-                  </label>
-                  <input
-                    type="url"
-                    name="github"
-                    placeholder="https://github.com/NIAEFEUP"
-                    value={formData.github}
-                    onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                    <Globe className="h-4 w-4 text-primary" />
-                    Site Pessoal
-                  </label>
-                  <input
-                    type="url"
-                    name="website"
-                    placeholder="https://niaefeup.pt"
-                    value={formData.website}
-                    onChange={handleInputChange}
-                    className="h-11 w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-colors"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="form-section border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Heart className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Interesses</CardTitle>
-                  <CardDescription>
-                    Seleciona as áreas onde te vês a contribuir no NIAEFEUP
+                    Submete o teu currículo em formato PDF (recomendado)
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div>
-                <label className="text-base font-medium mb-4 block">
-                  O que te vês a fazer no NIAEFEUP? *
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    { value: "projetos", label: "Projetos" },
-                    { value: "imagem", label: "Imagem" },
-                    { value: "comunicacao", label: "ComuNIcação" },
-                    { value: "sinf", label: "Sinf" },
-                    { value: "uni", label: "Uni" },
-                    { value: "tts", label: "TTS" },
-                    { value: "eventos", label: "Eventos" },
-                    { value: "nitsig", label: "NitSig" },
-                    { value: "website", label: "Website do NI" },
-                    { value: "niployments", label: "NIployments" },
-                  ].map((interest) => {
-                    const isChecked = formData.interests.includes(
-                      interest.value,
-                    );
-                    return (
-                      <div
-                        key={interest.value}
-                        className={`checkbox-card rounded-xl border-2 p-4 flex items-center gap-3 cursor-pointer transition-all ${
-                          isChecked
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() =>
-                          handleCheckboxChange("interests", interest.value)
-                        }
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() =>
-                            handleCheckboxChange("interests", interest.value)
-                          }
-                          className="w-4 h-4 text-primary bg-transparent border-2 border-border rounded focus:ring-primary focus:ring-2"
-                        />
-                        <label className="font-medium text-sm cursor-pointer flex-1">
-                          {interest.label}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <CVUpload
+                onSuccess={handleCVSuccess}
+                onError={handleUploadError}
+              />
             </CardContent>
           </Card>
 
-          <Card className="form-section border-0 shadow-lg">
+          <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                </div>
+              <div className="flex items-center gap-2.5">
                 <div>
-                  <CardTitle className="text-xl">Questões</CardTitle>
+                  <CardTitle className="text-lg">
+                    Links & Presença Online
+                  </CardTitle>
                   <CardDescription>
-                    Conta-nos mais sobre ti e a tua motivação *
+                    Partilha perfis que ajudem a conhecer o teu percurso
+                    (opcional)
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-8">
-              <div>
-                <label className="text-base font-medium mb-2 block">
-                  Qual o teu interesse na opção/opções que escolheste? *
-                </label>
-                <textarea
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn</Label>
+                <div className="relative">
+                  <FaLinkedin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    id="linkedin"
+                    type="url"
+                    name="linkedin"
+                    placeholder="https://linkedin.com/in/oteunome"
+                    value={formData.linkedin}
+                    onChange={handleInputChange}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="github">GitHub</Label>
+                  <div className="relative">
+                    <FaGithub className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      id="github"
+                      type="url"
+                      name="github"
+                      placeholder="https://github.com/oteuuser"
+                      value={formData.github}
+                      onChange={handleInputChange}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Site Pessoal / Portfólio</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      id="website"
+                      type="url"
+                      name="website"
+                      placeholder="https://omeusite.pt"
+                      value={formData.website}
+                      onChange={handleInputChange}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2.5">
+                <div>
+                  <CardTitle className="text-lg">
+                    Áreas de Interesse *
+                  </CardTitle>
+                  <CardDescription>
+                    Seleciona as equipas ou projetos onde gostarias de colaborar
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {INTEREST_OPTIONS.map((item) => {
+                  const checked = formData.interests.includes(item.value);
+                  return (
+                    <label
+                      key={item.value}
+                      className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        checked
+                          ? "border-primary bg-primary/5 text-foreground font-medium"
+                          : "border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() =>
+                          handleCheckboxChange("interests", item.value)
+                        }
+                      />
+                      <span className="text-xs sm:text-sm select-none">
+                        {item.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="interest_justification">
+                  Porque escolheste estas áreas? *
+                </Label>
+                <Textarea
+                  id="interest_justification"
                   name="interest_justification"
-                  placeholder="Escreve aqui sobre o que te motiva nas áreas que selecionaste..."
+                  placeholder="Explica brevemente o que te atrai nestas opções e o que esperas aprender ou contribuir..."
                   value={formData.interest_justification}
                   onChange={handleInputChange}
-                  className="min-h-[120px] w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none transition-colors"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-base font-medium mb-2 block">
-                  Com que tecnologias/ferramentas já trabalhaste? (ex. React,
-                  Photoshop, etc.) *
-                </label>
-                <textarea
-                  name="experience"
-                  placeholder="Lista as tecnologias, linguagens de programação, ferramentas de design, etc. que já utilizaste..."
-                  value={formData.experience}
-                  onChange={handleInputChange}
-                  className="min-h-[120px] w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="text-base font-medium mb-2 block">
-                  Porquê o NI? *
-                </label>
-                <textarea
-                  name="motivation"
-                  placeholder="O que te atrai no NIAEFEUP? Que impacto esperas ter e receber?"
-                  value={formData.motivation}
-                  onChange={handleInputChange}
-                  className="min-h-[120px] w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none transition-colors"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-base font-medium mb-2 block">
-                  O que achas que o NIAEFEUP pode ganhar ao receber-te como
-                  membro? *
-                </label>
-                <textarea
-                  name="self_promotion"
-                  placeholder="Destaca as tuas competências, experiências e qualidades que podem contribuir para o NI..."
-                  value={formData.self_promotion}
-                  onChange={handleInputChange}
-                  className="min-h-[120px] w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none transition-colors"
+                  rows={3}
                   required
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="form-section border-0 shadow-lg">
+          <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                </div>
+              <div className="flex items-center gap-2.5">
                 <div>
-                  <CardTitle className="text-xl">
+                  <CardTitle className="text-lg">
+                    Percurso & Motivação
+                  </CardTitle>
+                  <CardDescription>
+                    Não precisas de ter vasta experiência. Valorizamos a vontade
+                    de aprender!
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="experience">
+                  Que tecnologias ou ferramentas já experimentaste?
+                </Label>
+                <Textarea
+                  id="experience"
+                  name="experience"
+                  placeholder="Ex: C, Python, JavaScript, Figma, Git, ou projetos de cadeiras... Se estiveres a começar, não hesites em dizer!"
+                  value={formData.experience}
+                  onChange={handleInputChange}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="motivation">Porquê o NI? *</Label>
+                <Textarea
+                  id="motivation"
+                  name="motivation"
+                  placeholder="O que te motivou a concorrer ao núcleo e o que esperas retirar desta experiência?"
+                  value={formData.motivation}
+                  onChange={handleInputChange}
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="self_promotion">
+                  O que podes trazer à equipa? *
+                </Label>
+                <Textarea
+                  id="self_promotion"
+                  name="self_promotion"
+                  placeholder="Fala-nos de qualidades tuas, como curiosidade, trabalho em equipa, dedicação, etc."
+                  value={formData.self_promotion}
+                  onChange={handleInputChange}
+                  rows={3}
+                  required
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2.5">
+                <div>
+                  <CardTitle className="text-lg">
                     Como nos descobriste?
                   </CardTitle>
                   <CardDescription>
-                    Ajuda-nos a perceber como chegaste até nós
+                    Ajuda-nos a perceber de onde chegaste e deixa qualquer ideia
+                    que tenhas
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div>
-                <label className="text-base font-medium mb-4 block">
-                  Como descobriste o recrutamento do NIAEFEUP?
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { value: "instagram", label: "Instagram" },
-                    { value: "amigos", label: "Amigos" },
-                    { value: "professores", label: "Professores" },
-                    { value: "email", label: "Email" },
-                    { value: "aefeup", label: "AEFEUP" },
-                    { value: "banca", label: "Banca no corredor da FEUP" },
-                    { value: "open_day", label: "NI Open Day" },
-                    { value: "outro", label: "Outro" },
-                  ].map((source) => {
-                    const isChecked =
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Onde ouviste falar deste recrutamento?</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {DISCOVERY_OPTIONS.map((item) => {
+                    const checked =
                       formData.recruitment_first_interaction.includes(
-                        source.value,
+                        item.value,
                       );
                     return (
-                      <div
-                        key={source.value}
-                        className={`checkbox-card rounded-xl border-2 p-4 flex items-center gap-3 cursor-pointer transition-all ${
-                          isChecked
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
+                      <label
+                        key={item.value}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5 text-foreground font-medium"
+                            : "border-border hover:bg-muted/50 text-muted-foreground hover:text-foreground"
                         }`}
-                        onClick={() =>
-                          handleCheckboxChange(
-                            "recruitment_first_interaction",
-                            source.value,
-                          )
-                        }
                       >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() =>
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() =>
                             handleCheckboxChange(
                               "recruitment_first_interaction",
-                              source.value,
+                              item.value,
                             )
                           }
-                          className="w-4 h-4 text-primary bg-transparent border-2 border-border rounded focus:ring-primary focus:ring-2"
                         />
-                        <label className="font-medium text-sm cursor-pointer flex-1">
-                          {source.label}
-                        </label>
-                      </div>
+                        <span className="text-xs select-none">
+                          {item.label}
+                        </span>
+                      </label>
                     );
                   })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className="form-section border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Sugestões</CardTitle>
-                  <CardDescription>
-                    Partilha as tuas ideias connosco (opcional)
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <label className="text-base font-medium mb-2 block">
-                  Tens alguma sugestão para o NIAEFEUP ou algum dos seus
-                  projetos?
-                </label>
-                <textarea
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="suggestions">
+                  Tens alguma ideia ou sugestão para o núcleo? (opcional)
+                </Label>
+                <Textarea
+                  id="suggestions"
                   name="suggestions"
-                  placeholder="Partilha as tuas ideias, sugestões de melhoria ou projetos que gostarias de ver implementados..."
+                  placeholder="Alguma ideia de projeto, evento ou melhoria que gostarias de ver no NI?"
                   value={formData.suggestions}
                   onChange={handleInputChange}
-                  className="min-h-[120px] w-full bg-input/50 border border-border/50 rounded-md px-3 py-2 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none transition-colors"
+                  rows={2}
                 />
               </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-center pt-8">
-            <Button type="submit" variant="secondary">
-              <Send className="h-4 w-4 mr-2" />
-              Submeter Candidatura
+          {/* Error Alert */}
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Submit Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-8">
+            <p className="text-xs text-muted-foreground text-center sm:text-left">
+              Ao submeteres, a tua candidatura fica disponível para a equipa do
+              NI avaliar.
+            </p>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto gap-2"
+            >
+              <Send className="size-4" />
+              {isSubmitting ? "A submeter..." : "Submeter Candidatura"}
             </Button>
           </div>
         </form>
