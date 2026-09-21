@@ -20,7 +20,10 @@ import { submitApplicationComment } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { getCandidateWithMetadata } from "@/lib/candidate";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
-import { getApplicationComments } from "@/lib/comment";
+import {
+  getApplicationComments,
+  updateApplicationComment,
+} from "@/lib/comment";
 import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
@@ -52,7 +55,14 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const saveToDatabase = async (content: Array<any>) => {
     "use server";
     const user = await requireRecruiterSession(targetId);
-    return await submitApplicationComment(id, content, user.id);
+    const commentId = await submitApplicationComment(id, content, user.id);
+    return commentId ? { success: true, id: commentId } : { success: false };
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    "use server";
+    const user = await requireRecruiterSession(targetId);
+    return await updateApplicationComment(commentId, content, user.id);
   };
 
   return (
@@ -131,6 +141,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
                   type="application"
                   comments={comments}
                   saveToDatabase={saveToDatabase}
+                  onEditComment={editComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>

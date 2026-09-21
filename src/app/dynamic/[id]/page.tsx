@@ -23,6 +23,7 @@ import {
   getDynamic,
   getDynamicInterviewers,
   updateDynamic,
+  updateDynamicComment,
 } from "@/lib/dynamic";
 import { getDynamicComments } from "@/lib/comment";
 import { generateJWT } from "@/lib/jwt";
@@ -50,11 +51,17 @@ export default async function DynamicPage({ params }: any) {
     await updateDynamic(id, content);
   }
 
+  async function handleCommentEdit(commentId: number, content: Array<any>) {
+    "use server";
+    const user = await requireRecruiterSession(recruitmentId);
+    return await updateDynamicComment(commentId, content, user.id);
+  }
+
   async function handleCommentSave(content: Array<any>) {
     "use server";
     const user = await requireRecruiterSession(recruitmentId);
-    await createDynamicComment(id, content, user.id);
-    return true;
+    const commentId = await createDynamicComment(id, content, user.id);
+    return commentId ? { success: true, id: commentId } : { success: false };
   }
 
   async function addDynamicClassification(
@@ -153,6 +160,7 @@ export default async function DynamicPage({ params }: any) {
                   type="dynamic"
                   comments={comments}
                   saveToDatabase={handleCommentSave}
+                  onEditComment={handleCommentEdit}
                   recruiters={recruiters}
                 />
               </CommentFrame>

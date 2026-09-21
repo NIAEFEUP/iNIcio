@@ -142,9 +142,9 @@ export async function addInterviewComment(
   content: Array<any>,
   candidateId: string,
   recruitmentId?: number,
-): Promise<boolean> {
+): Promise<number | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return false;
+  if (!targetId) return null;
 
   return await db.transaction(async (trx) => {
     const i = await trx
@@ -158,21 +158,43 @@ export async function addInterviewComment(
       )
       .for("update");
 
-    if (i.length === 0) return false;
+    if (i.length === 0) return null;
 
     try {
-      await trx.insert(interviewComment).values({
-        content,
-        authorId,
-        interviewId: i[0].id,
-      });
+      const inserted = await trx
+        .insert(interviewComment)
+        .values({
+          content,
+          authorId,
+          interviewId: i[0].id,
+        })
+        .returning({ id: interviewComment.id });
 
-      return true;
+      return inserted[0]?.id ?? null;
     } catch (e) {
       console.error(e);
-      return false;
+      return null;
     }
   });
+}
+
+export async function updateInterviewComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+): Promise<boolean> {
+  const updated = await db
+    .update(interviewComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(interviewComment.id, commentId),
+        eq(interviewComment.authorId, authorId),
+      ),
+    )
+    .returning({ id: interviewComment.id });
+
+  return updated.length > 0;
 }
 
 export async function addInterviewTemplate(content: Array<any>) {
@@ -231,6 +253,7 @@ export async function getInterviewComments(
         id: c.id,
         content: c.content,
         createdAt: c.createdAt,
+        editedAt: c.editedAt,
         interviewId: c.interviewId,
         authorId: c.authorId,
       },

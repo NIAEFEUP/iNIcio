@@ -43,6 +43,13 @@
       "when": 1789936513184,
       "tag": "0005_rapid_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789996116301,
+      "tag": "0006_glossy_purple_man",
+      "breakpoints": true
     }
   ]
 }

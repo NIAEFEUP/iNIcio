@@ -261,10 +261,10 @@ export async function createDynamicComment(
   dynamicId: number,
   content: Array<any>,
   authorId: string,
-) {
-  await db.transaction(async (trx) => {
+): Promise<number | null> {
+  return await db.transaction(async (trx) => {
     try {
-      await trx
+      const inserted = await trx
         .insert(dynamicComment)
         .values({
           content: content,
@@ -272,10 +272,32 @@ export async function createDynamicComment(
           authorId: authorId,
         })
         .returning({ id: dynamicComment.id });
+
+      return inserted[0]?.id ?? null;
     } catch (e) {
       console.error(e);
+      return null;
     }
   });
+}
+
+export async function updateDynamicComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+): Promise<boolean> {
+  const updated = await db
+    .update(dynamicComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(dynamicComment.id, commentId),
+        eq(dynamicComment.authorId, authorId),
+      ),
+    )
+    .returning({ id: dynamicComment.id });
+
+  return updated.length > 0;
 }
 
 export async function getAllCandidatesWithDynamic(

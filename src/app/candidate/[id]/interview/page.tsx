@@ -29,6 +29,7 @@ import {
   getInterviewComments,
   getInterviewers,
   updateInterview,
+  updateInterviewComment,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters, isRecruiter } from "@/lib/recruiter";
@@ -58,7 +59,14 @@ export default async function InterviewPage({ params }: any) {
   async function handleCommentSave(content: Array<any>) {
     "use server";
     const user = await requireRecruiterSession(recruitmentId);
-    return await addInterviewComment(user.id, content, id);
+    const commentId = await addInterviewComment(user.id, content, id);
+    return commentId ? { success: true, id: commentId } : { success: false };
+  }
+
+  async function handleCommentEdit(commentId: number, content: Array<any>) {
+    "use server";
+    const user = await requireRecruiterSession(recruitmentId);
+    return await updateInterviewComment(commentId, content, user.id);
   }
 
   async function addInterviewClassification(
@@ -200,6 +208,7 @@ export default async function InterviewPage({ params }: any) {
                   type="interview"
                   comments={comments}
                   saveToDatabase={handleCommentSave}
+                  onEditComment={handleCommentEdit}
                   recruiters={recruiters}
                 />
               </CommentFrame>
