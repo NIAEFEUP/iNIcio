@@ -13,7 +13,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme-provider";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { type User as UserType, useAuth } from "@/hooks/use-auth";
+import { useSignedProfilePictureUrl } from "@/hooks/use-signed-profile-picture-url";
 import { getInitials } from "@/lib/utils";
 import { AccountSettingsModal } from "@/components/profile/account-settings-modal";
 
@@ -82,6 +83,8 @@ export function SidebarFooterComponent(props?: SidebarFooterProps) {
     props?.isAuthenticated !== undefined
       ? props.isAuthenticated
       : auth.isAuthenticated;
+
+  const [signedImageUrl] = useSignedProfilePictureUrl(user?.image);
 
   const handleLogout = React.useCallback(async () => {
     setIsOpen(false);
@@ -175,6 +178,10 @@ export function SidebarFooterComponent(props?: SidebarFooterProps) {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg after:rounded-lg">
+                    <AvatarImage
+                      src={signedImageUrl || undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
                       {userInitials}
                     </AvatarFallback>
@@ -207,6 +214,10 @@ export function SidebarFooterComponent(props?: SidebarFooterProps) {
 
                 <div className="flex items-center gap-2.5 py-1.5 px-2 rounded-md">
                   <Avatar className="h-8 w-8 rounded-lg shrink-0 after:rounded-lg">
+                    <AvatarImage
+                      src={signedImageUrl || undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
                       {userInitials}
                     </AvatarFallback>
