@@ -20,6 +20,7 @@ import { ProfileImageUpload } from "@/components/ui/profile-image-upload";
 import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/use-session";
 import { getInitials } from "@/lib/utils";
+import { useSignedProfilePictureUrl } from "@/hooks/use-signed-profile-picture-url";
 import { getSignedProfilePictureUrl } from "@/app/actions";
 
 interface AccountSettingsModalProps {
@@ -42,25 +43,10 @@ export function AccountSettingsModal({
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = React.useState(false);
 
-  // Profile image signed url state
-  const [signedImageUrl, setSignedImageUrl] = React.useState<string | null>(
-    null,
+  // Profile image signed url
+  const [signedImageUrl, setSignedImageUrl] = useSignedProfilePictureUrl(
+    session?.user?.image,
   );
-
-  const userImage = session?.user?.image;
-  React.useEffect(() => {
-    let cancelled = false;
-    if (userImage) {
-      getSignedProfilePictureUrl(userImage)
-        .then((url) => {
-          if (!cancelled && url) setSignedImageUrl(url);
-        })
-        .catch(() => {});
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [userImage]);
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,7 +170,7 @@ export function AccountSettingsModal({
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
               <Avatar className="size-12 border border-border">
                 <AvatarImage
-                  src={signedImageUrl || session?.user?.image || undefined}
+                  src={signedImageUrl || undefined}
                   alt={session?.user?.name || "Avatar"}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
@@ -244,7 +230,7 @@ export function AccountSettingsModal({
             <div className="flex flex-col items-center gap-4 py-2">
               <Avatar className="size-20 border border-border">
                 <AvatarImage
-                  src={signedImageUrl || session?.user?.image || undefined}
+                  src={signedImageUrl || undefined}
                   alt={session?.user?.name || "Avatar"}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold text-base">
@@ -259,7 +245,12 @@ export function AccountSettingsModal({
                       await authClient.updateUser({
                         image: result.fileName,
                       });
-                      setSignedImageUrl(result.url);
+                      // result.url is an unsigned URL (bucket is private);
+                      // show the photo immediately via a signed URL
+                      const signed = await getSignedProfilePictureUrl(
+                        result.fileName,
+                      );
+                      if (signed) setSignedImageUrl(signed);
                       toast.add({
                         type: "success",
                         title: "Foto de perfil atualizada!",
