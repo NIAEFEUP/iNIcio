@@ -23,6 +23,7 @@ import {
 import { GridCard } from "@/components/data-table/grid-card";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
@@ -161,7 +162,7 @@ export default function CandidateGridCard({
   const interests = candidate.application?.interests ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
-  const picture = candidate.image || undefined;
+  const picture = getStableImageUrl(candidate.image);
   const name = candidate.name || "Candidato";
   const contactLines = [
     candidate.application?.studentNumber
