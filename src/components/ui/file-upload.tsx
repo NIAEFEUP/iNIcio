@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Camera, FileText, Upload, X, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,21 @@ export function FileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (type !== "image" || !selectedFile) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedFile, type]);
 
   const Icon = type === "image" ? Camera : FileText;
   const acceptTypes = accept || (type === "image" ? "image/*" : ".pdf");
@@ -148,24 +163,34 @@ export function FileUpload({
         <div className="flex flex-col items-center justify-center space-y-3 text-center">
           {displayFileName ? (
             <>
-              <div
-                className={cn(
-                  "p-3 rounded-full",
-                  isUploading
-                    ? "bg-blue-100 text-blue-600"
-                    : uploadProgress === 100
-                      ? "bg-green-100 text-green-600"
-                      : "bg-muted",
-                )}
-              >
-                {isUploading ? (
-                  <Upload className="h-6 w-6 animate-pulse" />
-                ) : uploadProgress === 100 ? (
-                  <Check className="h-6 w-6" />
-                ) : (
-                  <Icon className="h-6 w-6" />
-                )}
-              </div>
+              {previewUrl ? (
+                <div className="relative h-32 w-32 overflow-hidden rounded-full border border-border bg-background shadow-sm">
+                  <img
+                    src={previewUrl}
+                    alt="Preview da fotografia"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "p-3 rounded-full",
+                    isUploading
+                      ? "bg-blue-100 text-blue-600"
+                      : uploadProgress === 100
+                        ? "bg-green-100 text-green-600"
+                        : "bg-muted",
+                  )}
+                >
+                  {isUploading ? (
+                    <Upload className="h-6 w-6 animate-pulse" />
+                  ) : uploadProgress === 100 ? (
+                    <Check className="h-6 w-6" />
+                  ) : (
+                    <Icon className="h-6 w-6" />
+                  )}
+                </div>
+              )}
 
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
