@@ -17,6 +17,7 @@ import {
 } from "./candidate";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 import { getActiveRecruitment } from "./recruitment";
+import { getPreviousApplicationYears } from "./previous-applications";
 
 export async function tryToAddCandidateToDynamic(
   candidateId: string,
@@ -159,6 +160,14 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
 
   if (!res) return null;
 
+  const previousApplicationYears = await getPreviousApplicationYears(
+    res.candidates.map((c) => ({
+      userId: c.candidate.userId,
+      studentNumber: c.candidate.application?.studentNumber,
+    })),
+    res.recruitmentId,
+  );
+
   return {
     ...res,
     candidates: await Promise.all(
@@ -181,6 +190,8 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
         dynamic: c.candidate.dynamic,
         interview: c.candidate.interview,
         knownRecruiters: c.candidate.knownRecruiters,
+        previousApplicationYears:
+          previousApplicationYears.get(c.candidate.userId) ?? [],
         votingDecision: recruitmentId
           ? await getLatestVotingDecisionForCandidate(
               c.candidate.userId,
@@ -316,6 +327,14 @@ export async function getAllCandidatesWithDynamic(
     (a, b) => (a.application?.id ?? 0) - (b.application?.id ?? 0),
   );
 
+  const previousApplicationYears = await getPreviousApplicationYears(
+    candidates.map((c) => ({
+      userId: c.userId,
+      studentNumber: c.application?.studentNumber,
+    })),
+    targetId,
+  );
+
   const res: Array<CandidateWithMetadata> = await Promise.all(
     candidates.map(async (c) => {
       const votingDecision = targetId
@@ -338,6 +357,7 @@ export async function getAllCandidatesWithDynamic(
           : null,
         knownRecruiters: c.knownRecruiters,
         votingDecision,
+        previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
       };
     }),
   );
