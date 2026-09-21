@@ -84,14 +84,14 @@ export default function PrivacyPolicy() {
           </li>
           <li>
             <p>
-              <strong>Website</strong> refers to TimeTableSelector, accessible
+              <strong>Website</strong> refers to iNIcio, accessible
               from{" "}
               <a
-                href="tts.niaefeup.pt"
+                href="inicio.niaefeup.pt"
                 rel="external nofollow noreferrer noopener"
                 target="_blank"
               >
-                tts.niaefeup.pt
+                inicio.niaefeup.pt
               </a>
             </p>
           </li>
