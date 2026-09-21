@@ -84,8 +84,7 @@ export default function PrivacyPolicy() {
           </li>
           <li>
             <p>
-              <strong>Website</strong> refers to iNIcio, accessible
-              from{" "}
+              <strong>Website</strong> refers to iNIcio, accessible from{" "}
               <a
                 href="https://inicio.niaefeup.pt"
                 rel="external nofollow noreferrer noopener"
