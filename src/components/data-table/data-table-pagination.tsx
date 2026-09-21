@@ -30,7 +30,7 @@ export function DataTablePagination<TData>({
   return (
     <div className="flex flex-col items-center justify-between gap-4 border-t pt-4 sm:flex-row">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Rows per page</span>
+        <span className="text-xs text-muted-foreground">Items per page</span>
         <Select
           value={String(pageSize)}
           onValueChange={(value) => {
