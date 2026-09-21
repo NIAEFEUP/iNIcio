@@ -1,7 +1,7 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -18,10 +18,9 @@ export default async function FriendsLayout({
     return redirect("/");
   }
 
-  if (
-    !(await isRecruiter(session?.user.id)) &&
-    !(await isAdmin(session?.user.id))
-  ) {
+  const targetRecruitmentId = await getTargetRecruitmentId();
+
+  if (!(await isRecruiter(session.user.id, targetRecruitmentId))) {
     return redirect("/");
   }
 

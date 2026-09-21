@@ -50,7 +50,7 @@ interface CandidatesClientProps {
   availableDepartments: Array<string>;
 }
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 48;
 
 const DECISION_OPTIONS = [
   { value: "approved", label: "Aprovado" },
