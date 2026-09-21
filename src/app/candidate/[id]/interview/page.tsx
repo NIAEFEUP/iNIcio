@@ -122,6 +122,7 @@ export default function InterviewPage() {
             friends={candidate.knownRecruiters}
             authUser={user ? { id: user.id } : null}
             classifyInterview={handleClassifyInterview}
+            showContactInfo
           />
           <RecruiterAssignedInfo interviewers={interviewers} />
           {candidate.votingDecision && (

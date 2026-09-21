@@ -43,6 +43,7 @@ interface CandidateGridCardProps {
   candidate: CandidateWithMetadata;
   friends?: Array<RecruiterToCandidate>;
   authUser?: { id?: string } | null;
+  showContactInfo?: boolean;
   classifyInterview?: (
     candidateId: string,
     classification: string,
@@ -103,6 +104,7 @@ export default function CandidateGridCard({
   candidate,
   friends = [],
   authUser = null,
+  showContactInfo = false,
   classifyInterview,
   classifyDynamic,
 }: CandidateGridCardProps) {
@@ -161,6 +163,13 @@ export default function CandidateGridCard({
   const year = candidate.application?.curricularYear;
   const picture = candidate.image || undefined;
   const name = candidate.name || "Candidato";
+  const contactLines = [
+    candidate.application?.studentNumber
+      ? `nº ${candidate.application.studentNumber}`
+      : null,
+    candidate.application?.phone,
+    candidate.email,
+  ].filter(Boolean) as Array<string>;
 
   const avatar = (
     <Dialog>
@@ -210,9 +219,17 @@ export default function CandidateGridCard({
         </Link>
       }
       subtitle={
-        candidate.application?.studentNumber
-          ? `nº ${candidate.application.studentNumber}`
-          : undefined
+        showContactInfo && contactLines.length > 0 ? (
+          <span className="flex flex-col gap-0.5">
+            {contactLines.map((line, idx) => (
+              <span key={idx} className="block truncate">
+                {line}
+              </span>
+            ))}
+          </span>
+        ) : candidate.application?.studentNumber ? (
+          `nº ${candidate.application.studentNumber}`
+        ) : undefined
       }
       actions={
         <div className="flex w-full items-center justify-between gap-2">

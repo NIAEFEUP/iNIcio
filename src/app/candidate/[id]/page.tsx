@@ -89,6 +89,7 @@ export default function CandidatePage() {
             candidate={candidate}
             friends={candidate.knownRecruiters}
             authUser={user ? { id: user.id } : null}
+            showContactInfo
           />
           <CandidateLinksCard
             githubUrl={candidate.application?.github}
