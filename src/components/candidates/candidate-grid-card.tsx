@@ -25,6 +25,7 @@ import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
+import { CandidatePreviousApplicationsBadge } from "./candidate-previous-applications-badge";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
 function useSyncedState<S>(
@@ -159,6 +160,7 @@ export default function CandidateGridCard({
   };
 
   const interests = candidate.application?.interests ?? [];
+  const previousApplicationYears = candidate.previousApplicationYears ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
   const picture = candidate.image || undefined;
@@ -232,6 +234,13 @@ export default function CandidateGridCard({
         ) : (
           "\u00A0"
         )
+      }
+      badge={
+        previousApplicationYears.length > 0 ? (
+          <CandidatePreviousApplicationsBadge
+            years={previousApplicationYears}
+          />
+        ) : undefined
       }
       actions={
         <div className="flex w-full items-center justify-between gap-2">
