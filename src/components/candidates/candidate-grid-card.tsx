@@ -229,7 +229,9 @@ export default function CandidateGridCard({
           </span>
         ) : candidate.application?.studentNumber ? (
           `nº ${candidate.application.studentNumber}`
-        ) : "\u00A0"
+        ) : (
+          "\u00A0"
+        )
       }
       actions={
         <div className="flex w-full items-center justify-between gap-2">
