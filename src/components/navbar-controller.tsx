@@ -9,6 +9,7 @@ import { hasApplication } from "@/lib/application";
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { getAllCandidateResults } from "@/lib/final-messages";
 import { getNotifications } from "@/lib/notifications";
+import { NotificationLive } from "./notifications/notification-live";
 
 export default async function NavbarController() {
   const session = await auth.api.getSession({
@@ -37,13 +38,21 @@ export default async function NavbarController() {
 
   const notifications = await getNotifications(session?.user?.id);
 
+  const initialNotificationId = notifications.reduce(
+    (max, notification) => Math.max(max, notification.id),
+    0,
+  );
+
   return (
-    <Navbar
-      isAdmin={admin ? true : false}
-      isRecruiter={recruiter ? true : false}
-      showProgress={showProgress}
-      hasResultsToShow={hasResultsToShow}
-      notifications={notifications}
-    />
+    <>
+      <Navbar
+        isAdmin={admin ? true : false}
+        isRecruiter={recruiter ? true : false}
+        showProgress={showProgress}
+        hasResultsToShow={hasResultsToShow}
+        notifications={notifications}
+      />
+      <NotificationLive initialMaxId={initialNotificationId} />
+    </>
   );
 }
