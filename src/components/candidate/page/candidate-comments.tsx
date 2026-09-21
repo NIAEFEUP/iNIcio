@@ -106,6 +106,14 @@ export default function CandidateComments({
 
     editor.replaceBlocks(editor.topLevelBlocks, []);
 
+    // Restore the visible editor and drop the optimistic entry when the
+    // comment could not be persisted
+    const rollback = () => {
+      setCommentValue(prevComment);
+      editor.replaceBlocks(editor.topLevelBlocks, prevComment);
+      setCommentsState((prev) => prev.filter((c) => c !== optimisticComment));
+    };
+
     try {
       const res = await saveToDatabase(commentValue);
 
@@ -122,11 +130,11 @@ export default function CandidateComments({
           );
         }
       } else {
-        setCommentValue(prevComment);
-        setCommentsState((prev) => prev.filter((c) => c !== optimisticComment));
+        rollback();
       }
     } catch (error) {
       console.error(error);
+      rollback();
     }
   };
 
