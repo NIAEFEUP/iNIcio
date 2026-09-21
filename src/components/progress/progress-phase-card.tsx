@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Calendar, CheckCircle, Clock, Lock } from "lucide-react";
 
@@ -27,9 +27,11 @@ export default function ProgressPhaseCard({
   phaseStart,
   eventDateText = null,
 }: ProgressPhaseCardProps) {
-  // const router = useRouter();
+  const router = useRouter();
+  const now = new Date();
 
-  const available = phaseStart && phaseEnd && new Date() > phaseStart;
+  const available =
+    !!phaseStart && !!phaseEnd && now >= phaseStart && now <= phaseEnd;
 
   function getBackgroundColor() {
     if (checked && available) return "bg-green-50";
@@ -56,8 +58,12 @@ export default function ProgressPhaseCard({
   }
 
   function getSoonText() {
-    if (phaseStart) {
+    if (phaseStart && now < phaseStart) {
       return `Abre em ${phaseStart.toLocaleString("pt-PT")}`;
+    }
+
+    if (phaseEnd) {
+      return `Terminou a ${phaseEnd.toLocaleString("pt-PT")}`;
     }
 
     return "Em breve";
@@ -66,7 +72,7 @@ export default function ProgressPhaseCard({
   return (
     <div
       onClick={() => {
-        if (!checked && available) redirect(redirectUrl);
+        if (!checked && available) router.push(redirectUrl);
       }}
     >
       <Card className={cn(getBorderColor(), getBackgroundColor())}>

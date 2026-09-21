@@ -4,8 +4,11 @@ import getCandidateWithInterviewAndDynamic from "@/lib/candidate";
 import { Slot } from "@/lib/db";
 import addInterviewWithSlot from "@/lib/interview";
 import {
+  getActiveRecruitment,
   getInterviewSlots,
+  isRecruitmentPhaseOpen,
   markInterviewRecruitmentPhaseAsDone,
+  RECRUITMENT_PHASE_IDENTIFIERS,
 } from "@/lib/recruitment";
 import { headers } from "next/headers";
 import { getSessionUser } from "@/lib/action-guard";
@@ -19,12 +22,24 @@ export default async function CandidateInterviewSchedule() {
     "use server";
 
     const user = await getSessionUser();
-
     if (!slots || !Array.isArray(slots) || slots.length === 0) return false;
+
+    const activeRecruitment = await getActiveRecruitment();
+
+    if (!activeRecruitment || slots[0]?.recruitmentId !== activeRecruitment.id)
+      return false;
+
+    if (
+      !(await isRecruitmentPhaseOpen(
+        RECRUITMENT_PHASE_IDENTIFIERS.interview,
+        activeRecruitment.id,
+      ))
+    )
+      return false;
 
     try {
       for (const slot of slots.slice(0, 1)) {
-        await addInterviewWithSlot(user.id, slot);
+        await addInterviewWithSlot(user.id, slot, activeRecruitment.id);
         await markInterviewRecruitmentPhaseAsDone(user.id);
       }
 

@@ -31,17 +31,28 @@ export const slot = pgTable(
   ],
 );
 
-export const recruiterAvailability = pgTable("recruiter_availability", {
-  id: serial("id").primaryKey(),
-  start: timestamp("start").notNull(),
-  duration: integer("duration").notNull(),
-  recruiterId: text("recruiter_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  recruitmentId: integer("recruitment_id")
-    .notNull()
-    .references(() => recruitment.id, { onDelete: "cascade" }),
-});
+export const recruiterAvailability = pgTable(
+  "recruiter_availability",
+  {
+    id: serial("id").primaryKey(),
+    start: timestamp("start").notNull(),
+    duration: integer("duration").notNull(),
+    recruiterId: text("recruiter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    recruitmentId: integer("recruitment_id")
+      .notNull()
+      .references(() => recruitment.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("recruiter_availability_unique").on(
+      table.start,
+      table.duration,
+      table.recruiterId,
+      table.recruitmentId,
+    ),
+  ],
+);
 
 export const recruiterAvailabilityRelations = relations(
   recruiterAvailability,
