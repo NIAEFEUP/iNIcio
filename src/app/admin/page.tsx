@@ -18,8 +18,8 @@ export default async function AdminPage() {
   }
 
   const targetId = await getTargetRecruitmentId();
-  const recruiters = await getRecruiters(targetId);
-  const candidates = await getAllCandidateUsers(targetId);
+  const recruiters = targetId ? await getRecruiters(targetId) : [];
+  const candidates = targetId ? await getAllCandidateUsers(targetId) : [];
 
   return (
     <div className="flex flex-col gap-6">
