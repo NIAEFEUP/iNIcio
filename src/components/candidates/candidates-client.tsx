@@ -34,7 +34,6 @@ import { GridView } from "@/components/data-table/grid-view";
 import { getInitials } from "@/lib/utils";
 
 import { CandidateWithMetadata } from "@/lib/candidate";
-import { User } from "@/lib/db";
 import CandidateGridCard from "./candidate-grid-card";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
@@ -45,7 +44,7 @@ import {
 } from "@/lib/constants";
 
 interface CandidatesClientProps {
-  authUser?: User | null;
+  authUser?: { id?: string } | null;
   candidates: Array<CandidateWithMetadata>;
   availableDepartments: Array<string>;
 }

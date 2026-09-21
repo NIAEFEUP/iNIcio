@@ -1,12 +1,14 @@
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+"use client";
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateProfileCard from "@/components/candidate/page/candidate-profile-card";
+import CandidateGridCard from "@/components/candidates/candidate-grid-card";
 import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
 import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
@@ -16,130 +18,114 @@ import {
   EvaluationPanel,
 } from "@/components/layout/evaluation-layout";
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
+import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
+import { DataErrorState } from "@/components/data-table/data-state-view";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 
-import { candidate } from "@/db/schema";
-import { applicationAnswerCount } from "@/lib/candidate-answers";
-import { auth } from "@/lib/auth";
-import { getCandidateWithMetadata } from "@/lib/candidate";
-import { db } from "@/lib/db";
 import {
-  addInterviewComment,
-  getInterview,
-  getInterviewComments,
-  getInterviewers,
-  updateInterview,
-} from "@/lib/interview";
-import { generateJWT } from "@/lib/jwt";
-import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { getRole } from "@/lib/role";
-import { getTargetRecruitment } from "@/lib/selected-recruitment";
-import { requireRecruiterSession } from "@/lib/action-guard";
+  classifyInterview,
+  saveInterviewComment,
+  updateInterviewContent,
+} from "@/app/candidate/actions";
+import { applicationAnswerCount } from "@/lib/candidate-answers";
+import { useAuth } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import {
+  candidateKey,
+  interviewKey,
+  useInterviewData,
+} from "@/lib/hooks/candidates/use-candidate-data";
 
-export default async function InterviewPage({ params }: any) {
-  const { id } = await params;
+export default function InterviewPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const { data, isLoading, error } = useInterviewData(id);
+  const { user } = useAuth();
+  const { mutate } = useSWRConfig();
+  const { recruitmentId } = useRecruitment();
 
-  const targetRecruitment = await getTargetRecruitment();
-  const recruitmentId = targetRecruitment?.id;
-  if (!recruitmentId) notFound();
+  const candidateFromData = data?.candidate;
 
-  if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
+  useEffect(() => {
+    if (!candidateFromData) return;
+    mutate(
+      candidateKey(candidateFromData.id, recruitmentId),
+      candidateFromData,
+      { revalidate: false },
+    );
+  }, [candidateFromData, recruitmentId, mutate]);
 
-  async function handleContentSave(content: any) {
-    "use server";
-    await requireRecruiterSession(recruitmentId);
-    await updateInterview(id, content);
+  if (isLoading && !data) {
+    return <EvaluationSkeleton showInterviewers />;
   }
 
-  async function handleCommentSave(content: Array<any>) {
-    "use server";
-    const user = await requireRecruiterSession(recruitmentId);
-    return await addInterviewComment(user.id, content, id);
+  if (error || !data) {
+    return (
+      <DataErrorState
+        title="Entrevista não encontrada"
+        message={error instanceof Error ? error.message : undefined}
+      />
+    );
   }
 
-  async function addInterviewClassification(
+  const { candidate, interview, interviewers, comments, recruiters, token } =
+    data;
+  const answeredCount = applicationAnswerCount(candidate.application);
+
+  const saveContent = async (content: unknown) => {
+    await updateInterviewContent(id, content);
+  };
+
+  const saveComment = async (content: Array<unknown>) => {
+    const ok = await saveInterviewComment(id, content);
+    if (ok) {
+      mutate(interviewKey(id, recruitmentId));
+    }
+    return ok;
+  };
+
+  const handleClassifyInterview = async (
     candidateId: string,
     classification: string,
-  ) {
-    "use server";
-    await requireRecruiterSession(recruitmentId);
-
-    if (!recruitmentId) return;
-
-    await db
-      .update(candidate)
-      .set({ interviewClassification: classification })
-      .where(
-        and(
-          eq(candidate.userId, candidateId),
-          eq(candidate.recruitmentId, recruitmentId),
-        ),
-      );
-  }
-
-  const candidateWithMetadata = await getCandidateWithMetadata(
-    id,
-    recruitmentId,
-  );
-
-  const interview = await getInterview(id, recruitmentId);
-
-  if (!interview) notFound();
-
-  const recruiters = await getRecruiters(recruitmentId);
-  const interviewers = await getInterviewers(interview.id);
-  const comments = await getInterviewComments(interview.id);
-  const answeredCount = applicationAnswerCount(
-    candidateWithMetadata.application,
-  );
-
-  const jwt = await generateJWT(
-    session?.user.id,
-    await getRole(session?.user.id),
-    [`interview-${id}`],
-  );
+  ) => {
+    await classifyInterview(candidateId, classification);
+    mutate(
+      candidateKey(candidateId, recruitmentId),
+      (current: any) =>
+        current
+          ? { ...current, interviewClassification: classification }
+          : current,
+      { revalidate: false },
+    );
+  };
 
   return (
     <EvaluationLayout
       header={
         <PageHeader
           backHref={`/candidate/${id}`}
-          title={candidateWithMetadata.name}
+          title={candidate.name}
           actions={
             <CandidateHeaderActions
-              candidateId={candidateWithMetadata.id}
+              candidateId={candidate.id}
               currentPage="interview"
-              dynamicId={candidateWithMetadata.dynamic?.dynamicId}
+              dynamicId={candidate.dynamic?.dynamicId}
             />
           }
         />
       }
       sidebar={
         <>
-          <CandidateProfileCard
-            candidate={candidateWithMetadata}
-            friends={candidateWithMetadata.knownRecruiters}
-            authUser={
-              session
-                ? {
-                    ...session.user,
-                    image: session.user.image ?? "",
-                    role: session.user.role as
-                      "recruiter" | "candidate" | "admin",
-                  }
-                : null
-            }
-            classifyInterview={addInterviewClassification}
+          <CandidateGridCard
+            candidate={candidate}
+            friends={candidate.knownRecruiters}
+            authUser={user ? { id: user.id } : null}
+            classifyInterview={handleClassifyInterview}
           />
           <RecruiterAssignedInfo interviewers={interviewers} />
-          {candidateWithMetadata.votingDecision && (
-            <CandidateVotingStatus
-              votingDecision={candidateWithMetadata.votingDecision}
-            />
+          {candidate.votingDecision && (
+            <CandidateVotingStatus votingDecision={candidate.votingDecision} />
           )}
         </>
       }
@@ -153,12 +139,12 @@ export default async function InterviewPage({ params }: any) {
             content: (
               <EvaluationPanel>
                 <RealTimeEditor
-                  token={jwt}
+                  token={token}
                   key={`interview-editor-${id}`}
                   roomId={`interview-${id}`}
                   docId={`interview-${id}`}
-                  userName={session ? session.user.name : "Anonymous"}
-                  saveHandler={handleContentSave}
+                  userName={user?.name ?? "Anonymous"}
+                  saveHandler={saveContent}
                   entity={interview}
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
@@ -172,20 +158,18 @@ export default async function InterviewPage({ params }: any) {
             count: answeredCount,
             content: (
               <CandidateAnswers
-                key={candidateWithMetadata.id}
-                application={candidateWithMetadata.application}
+                key={candidate.id}
+                application={candidate.application}
               />
             ),
           },
           {
             id: "curriculum",
             label: "Currículo",
-            hidden: !candidateWithMetadata.application?.curriculum,
+            hidden: !candidate.application?.curriculum,
             content: (
               <EvaluationPanel>
-                <CandidateCurriculum
-                  application={candidateWithMetadata.application}
-                />
+                <CandidateCurriculum application={candidate.application} />
               </EvaluationPanel>
             ),
           },
@@ -196,10 +180,10 @@ export default async function InterviewPage({ params }: any) {
             content: (
               <CommentFrame>
                 <CandidateComments
-                  candidate={candidateWithMetadata}
+                  candidate={candidate}
                   type="interview"
                   comments={comments}
-                  saveToDatabase={handleCommentSave}
+                  saveToDatabase={saveComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>

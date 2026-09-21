@@ -10,6 +10,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import type { User as UserType } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import { SidebarContentComponent } from "./sidebar-content";
 import { SidebarFooterComponent } from "./sidebar-footer";
 import {
@@ -45,6 +46,12 @@ export function AppSidebar({
   const [managerMode, setManagerMode] =
     React.useState<RecruitmentManagerMode>("overview");
 
+  const { recruitmentId: contextRecruitmentId, selectRecruitment } =
+    useRecruitment();
+
+  const effectiveRecruitmentId = selectedRecruitmentId ?? contextRecruitmentId;
+  const effectiveSelectRecruitment = onSelectRecruitment ?? selectRecruitment;
+
   const openManager = React.useCallback((mode: RecruitmentManagerMode) => {
     setManagerMode(mode);
     setManagerOpen(true);
@@ -56,8 +63,8 @@ export function AppSidebar({
         <SidebarHeader>
           <SidebarHeaderComponent
             recruitments={recruitments}
-            selectedRecruitmentId={selectedRecruitmentId}
-            onSelectRecruitment={onSelectRecruitment}
+            selectedRecruitmentId={effectiveRecruitmentId}
+            onSelectRecruitment={effectiveSelectRecruitment}
             onOpenManager={openManager}
             isAdmin={isAdmin}
           />

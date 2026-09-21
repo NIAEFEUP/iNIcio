@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
 import { Building2, Calendar, Network, SlidersHorizontal } from "lucide-react";
 
@@ -13,17 +13,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GridCard } from "@/components/data-table/grid-card";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
 import { CandidateWithMetadata } from "@/lib/candidate";
-import { RecruiterToCandidate, User } from "@/lib/db";
+import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
+
+function useSyncedState<S>(
+  value: S,
+): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const [state, setState] = React.useState(value);
+  const [previous, setPrevious] = React.useState(value);
+  if (!Object.is(previous, value)) {
+    setPrevious(value);
+    setState(value);
+  }
+  return [state, setState];
+}
 
 interface CandidateGridCardProps {
   candidate: CandidateWithMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: User | null;
+  authUser?: { id?: string } | null;
+  classifyInterview?: (
+    candidateId: string,
+    classification: string,
+  ) => void | Promise<void>;
+  classifyDynamic?: (
+    candidateId: string,
+    classification: string,
+  ) => void | Promise<void>;
 }
 
 function InfoRow({
@@ -48,18 +75,52 @@ function InfoRow({
   );
 }
 
+function ClassificationSelect({
+  value,
+  onChange,
+}: {
+  value?: string | null;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select
+      value={value && value !== "none" ? value : ""}
+      onValueChange={onChange}
+    >
+      <SelectTrigger className="h-7 w-28 text-xs font-medium">
+        <SelectValue placeholder="Classificar" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="muito fraco">Muito fraco</SelectItem>
+        <SelectItem value="normal">Normal</SelectItem>
+        <SelectItem value="muito forte">Muito forte</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 export default function CandidateGridCard({
   candidate,
   friends = [],
   authUser = null,
+  classifyInterview,
+  classifyDynamic,
 }: CandidateGridCardProps) {
-  const [known, setKnown] = useState<boolean>(
+  const [known, setKnown] = React.useState<boolean>(
     friends.some(
       (friend) =>
         friend.candidateId === candidate.id &&
         friend.recruiterId === authUser?.id,
     ),
   );
+
+  const [interviewClassification, setInterviewClassification] = useSyncedState<
+    string | null | undefined
+  >(candidate.interviewClassification);
+
+  const [dynamicClassification, setDynamicClassification] = useSyncedState<
+    string | null | undefined
+  >(candidate.dynamicClassification);
 
   const toggleKnown = async () => {
     setKnown((prev) => !prev);
@@ -69,6 +130,30 @@ export default function CandidateGridCard({
       body: JSON.stringify({ candidateId: candidate.id }),
     });
     if (!result.ok) setKnown((prev) => !prev);
+  };
+
+  const handleInterviewClassification = async (value: string) => {
+    if (!classifyInterview) return;
+    const previous = interviewClassification;
+    setInterviewClassification(value);
+    try {
+      await classifyInterview(candidate.id, value);
+    } catch (err) {
+      console.error(err);
+      setInterviewClassification(previous);
+    }
+  };
+
+  const handleDynamicClassification = async (value: string) => {
+    if (!classifyDynamic) return;
+    const previous = dynamicClassification;
+    setDynamicClassification(value);
+    try {
+      await classifyDynamic(candidate.id, value);
+    } catch (err) {
+      console.error(err);
+      setDynamicClassification(previous);
+    }
   };
 
   const interests = candidate.application?.interests ?? [];
@@ -159,13 +244,27 @@ export default function CandidateGridCard({
         icon={<SlidersHorizontal className="size-3.5" />}
         label="Entrevista"
       >
-        <ClassificationText level={candidate.interviewClassification} />
+        {classifyInterview ? (
+          <ClassificationSelect
+            value={interviewClassification}
+            onChange={handleInterviewClassification}
+          />
+        ) : (
+          <ClassificationText level={interviewClassification} />
+        )}
       </InfoRow>
       <InfoRow
         icon={<SlidersHorizontal className="size-3.5" />}
         label="Dinâmica"
       >
-        <ClassificationText level={candidate.dynamicClassification} />
+        {classifyDynamic ? (
+          <ClassificationSelect
+            value={dynamicClassification}
+            onChange={handleDynamicClassification}
+          />
+        ) : (
+          <ClassificationText level={dynamicClassification} />
+        )}
       </InfoRow>
       {interests.length > 0 && (
         <InfoRow icon={<Network className="size-3.5" />} label="Departamentos">

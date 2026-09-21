@@ -4,10 +4,10 @@ import * as React from "react";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { type RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { setSelectedRecruitment } from "@/cookies/set";
+import { RecruitmentProvider } from "@/lib/contexts/recruitment-context";
 import type { User as UserType } from "@/hooks/use-auth";
 import { useAuth } from "@/hooks/use-auth";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export interface SidebarLayoutProps {
   children?: React.ReactNode;
@@ -38,7 +38,6 @@ export function SidebarLayout({
 }: SidebarLayoutProps) {
   const auth = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
 
   const activeUser = user !== undefined ? user : auth.user;
   const activeIsAuthenticated =
@@ -48,29 +47,28 @@ export function SidebarLayout({
     isRecruiter !== undefined ? isRecruiter : activeUser?.isRecruiter;
   const activeLogout = onLogout ?? auth.logout;
   const activePath = currentPath ?? pathname ?? "";
-  const activeSelectRecruitment =
-    onSelectRecruitment ??
-    ((id: number) => {
-      setSelectedRecruitment(id);
-      router.refresh();
-    });
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar
-        user={activeUser}
-        isAuthenticated={activeIsAuthenticated}
-        isAdmin={activeIsAdmin}
-        isRecruiter={activeIsRecruiter}
-        onLogout={activeLogout}
-        currentPath={activePath}
-        recruitments={recruitments}
-        selectedRecruitmentId={selectedRecruitmentId}
-        onSelectRecruitment={activeSelectRecruitment}
-      />
-      <SidebarInset>
-        <div className="flex-1 p-6 py-4">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+    <RecruitmentProvider
+      initialRecruitmentId={selectedRecruitmentId}
+      onSelectRecruitment={onSelectRecruitment}
+    >
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar
+          user={activeUser}
+          isAuthenticated={activeIsAuthenticated}
+          isAdmin={activeIsAdmin}
+          isRecruiter={activeIsRecruiter}
+          onLogout={activeLogout}
+          currentPath={activePath}
+          recruitments={recruitments}
+          selectedRecruitmentId={selectedRecruitmentId}
+          onSelectRecruitment={onSelectRecruitment}
+        />
+        <SidebarInset>
+          <div className="flex-1 p-6 py-4">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </RecruitmentProvider>
   );
 }
