@@ -7,6 +7,12 @@ import { Building2, Calendar, Network, SlidersHorizontal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { GridCard } from "@/components/data-table/grid-card";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
@@ -69,24 +75,47 @@ export default function CandidateGridCard({
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
   const picture = candidate.image || undefined;
+  const name = candidate.name || "Candidato";
 
-  return (
-    <GridCard
-      avatar={
-        <Avatar className="size-14 shrink-0 ring-2 ring-border/60">
-          <AvatarImage
-            src={picture}
-            alt={candidate.name || "Candidato"}
-            className="object-cover"
-          />
+  const avatar = (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            className="cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={`Ver foto de ${name}`}
+          >
+            <Avatar className="size-14 shrink-0 ring-2 ring-border/60">
+              <AvatarImage src={picture} alt={name} className="object-cover" />
+              <AvatarFallback>
+                <InitialsAvatar
+                  className="size-full rounded-full text-base font-bold"
+                  initials={getInitials(candidate.name)}
+                />
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        }
+      />
+      <DialogContent className="w-fit max-w-[min(90vw,28rem)] bg-transparent p-2 ring-0 sm:max-w-none">
+        <DialogTitle className="sr-only">Foto de {name}</DialogTitle>
+        <Avatar className="size-64 sm:size-80 shrink-0">
+          <AvatarImage src={picture} alt={name} className="object-cover" />
           <AvatarFallback>
             <InitialsAvatar
-              className="size-full rounded-full text-base font-bold"
+              className="size-full rounded-full text-4xl font-bold"
               initials={getInitials(candidate.name)}
             />
           </AvatarFallback>
         </Avatar>
-      }
+      </DialogContent>
+    </Dialog>
+  );
+
+  return (
+    <GridCard
+      avatar={avatar}
       title={
         <Link
           href={`/candidate/${candidate.id}`}
