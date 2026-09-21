@@ -62,7 +62,13 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const editComment = async (commentId: number, content: Array<any>) => {
     "use server";
     const user = await requireRecruiterSession(targetId);
-    return await updateApplicationComment(commentId, content, user.id);
+    return await updateApplicationComment(
+      commentId,
+      content,
+      user.id,
+      id,
+      targetId,
+    );
   };
 
   return (

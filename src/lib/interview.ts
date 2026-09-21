@@ -182,7 +182,21 @@ export async function updateInterviewComment(
   commentId: number,
   content: Array<any>,
   authorId: string,
+  candidateId: string,
+  recruitmentId: number,
 ): Promise<boolean> {
+  const i = await db
+    .select({ id: interview.id })
+    .from(interview)
+    .where(
+      and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, recruitmentId),
+      ),
+    );
+
+  if (i.length === 0) return false;
+
   const updated = await db
     .update(interviewComment)
     .set({ content, editedAt: new Date() })
@@ -190,6 +204,7 @@ export async function updateInterviewComment(
       and(
         eq(interviewComment.id, commentId),
         eq(interviewComment.authorId, authorId),
+        eq(interviewComment.interviewId, i[0].id),
       ),
     )
     .returning({ id: interviewComment.id });

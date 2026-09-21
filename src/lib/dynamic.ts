@@ -285,6 +285,7 @@ export async function updateDynamicComment(
   commentId: number,
   content: Array<any>,
   authorId: string,
+  dynamicId: number,
 ): Promise<boolean> {
   const updated = await db
     .update(dynamicComment)
@@ -293,6 +294,7 @@ export async function updateDynamicComment(
       and(
         eq(dynamicComment.id, commentId),
         eq(dynamicComment.authorId, authorId),
+        eq(dynamicComment.dynamicId, dynamicId),
       ),
     )
     .returning({ id: dynamicComment.id });

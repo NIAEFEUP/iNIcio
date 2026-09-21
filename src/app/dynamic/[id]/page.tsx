@@ -54,7 +54,7 @@ export default async function DynamicPage({ params }: any) {
   async function handleCommentEdit(commentId: number, content: Array<any>) {
     "use server";
     const user = await requireRecruiterSession(recruitmentId);
-    return await updateDynamicComment(commentId, content, user.id);
+    return await updateDynamicComment(commentId, content, user.id, id);
   }
 
   async function handleCommentSave(content: Array<any>) {

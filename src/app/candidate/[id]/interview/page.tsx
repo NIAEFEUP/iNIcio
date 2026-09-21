@@ -66,7 +66,13 @@ export default async function InterviewPage({ params }: any) {
   async function handleCommentEdit(commentId: number, content: Array<any>) {
     "use server";
     const user = await requireRecruiterSession(recruitmentId);
-    return await updateInterviewComment(commentId, content, user.id);
+    return await updateInterviewComment(
+      commentId,
+      content,
+      user.id,
+      id,
+      recruitmentId,
+    );
   }
 
   async function addInterviewClassification(
