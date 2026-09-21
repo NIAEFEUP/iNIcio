@@ -4,7 +4,7 @@ import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import type { RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
-import { getRecruitments } from "@/lib/recruitment";
+import { getRecruitmentIdsForUser, getRecruitments } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 import { getSelectedRecruitmentId } from "@/lib/selected-recruitment";
 
@@ -18,18 +18,29 @@ export async function DashboardShell({ children }: { children: ReactNode }) {
 
   const userId = session?.user?.id;
 
-  const [rawRecruitments, selectedRecruitmentId, userIsAdmin, userIsRecruiter] =
-    await Promise.all([
-      getRecruitments(),
-      getSelectedRecruitmentId(),
-      isAdmin(userId),
-      isRecruiter(userId),
-    ]);
+  const [
+    rawRecruitments,
+    selectedRecruitmentId,
+    userIsAdmin,
+    userIsRecruiter,
+    userRecruitmentIds,
+  ] = await Promise.all([
+    getRecruitments(),
+    getSelectedRecruitmentId(),
+    isAdmin(userId),
+    isRecruiter(userId),
+    getRecruitmentIdsForUser(userId),
+  ]);
+
+  const visibleRecruitments =
+    userIsAdmin || userRecruitmentIds.length === 0
+      ? rawRecruitments
+      : rawRecruitments.filter((r) => userRecruitmentIds.includes(r.id));
 
   const isActive = (value: boolean | string) =>
     value === true || value === "true";
 
-  const recruitments: RecruitmentOption[] = rawRecruitments.map((r) => ({
+  const recruitments: RecruitmentOption[] = visibleRecruitments.map((r) => ({
     id: r.id,
     year: Number.parseInt(r.lectiveYear, 10),
     semester: r.semester,

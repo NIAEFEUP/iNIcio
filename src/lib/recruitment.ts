@@ -53,6 +53,17 @@ export async function getRecruitments() {
   return recruitments;
 }
 
+export async function getRecruitmentIdsForUser(userId?: string) {
+  if (!userId) return [];
+
+  const memberships = await db
+    .select({ recruitmentId: usersToRecruitments.recruitmentId })
+    .from(usersToRecruitments)
+    .where(eq(usersToRecruitments.userId, userId));
+
+  return memberships.map(({ recruitmentId }) => recruitmentId);
+}
+
 function assertRecruitmentWindow(r: Pick<Recruitment, "start" | "end">) {
   const start = new Date(r.start).getTime();
   const end = new Date(r.end).getTime();
