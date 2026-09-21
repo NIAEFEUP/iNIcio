@@ -19,6 +19,9 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
 
+const PAGE_SIZE_OPTIONS = [6, 12, 24, 48, 96, 144];
+const ALL_PAGE_SIZE = "all";
+
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
@@ -26,34 +29,42 @@ export function DataTablePagination<TData>({
   const pageSize = table.getState().pagination.pageSize;
   const pageCount = table.getPageCount();
   const totalItems = table.getFilteredRowModel().rows.length;
+  const isAll = !PAGE_SIZE_OPTIONS.includes(pageSize);
+
+  const handlePageSizeChange = (value: string) => {
+    if (value === ALL_PAGE_SIZE) {
+      table.setPageSize(totalItems);
+    } else {
+      table.setPageSize(Number(value));
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 border-t pt-4 sm:flex-row">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Items per page</span>
+        <span className="text-xs text-muted-foreground">Items por página</span>
         <Select
-          value={String(pageSize)}
-          onValueChange={(value) => {
-            table.setPageSize(Number(value));
-          }}
+          value={isAll ? ALL_PAGE_SIZE : String(pageSize)}
+          onValueChange={handlePageSizeChange}
         >
           <SelectTrigger className="h-8 w-16 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[6, 12, 24, 48].map((size) => (
+            {PAGE_SIZE_OPTIONS.map((size) => (
               <SelectItem key={size} value={String(size)}>
                 {size}
               </SelectItem>
             ))}
+            <SelectItem value={ALL_PAGE_SIZE}>Todos</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="text-xs text-muted-foreground">
         {totalItems > 0
-          ? `${pageIndex * pageSize + 1}-${Math.min((pageIndex + 1) * pageSize, totalItems)} of ${pageCount} pages`
-          : "0-0 of 0 pages"}
+          ? `${pageIndex * pageSize + 1}-${Math.min((pageIndex + 1) * pageSize, totalItems)} de ${pageCount} páginas`
+          : "0-0 de 0 páginas"}
       </div>
 
       <div className="flex items-center gap-1">

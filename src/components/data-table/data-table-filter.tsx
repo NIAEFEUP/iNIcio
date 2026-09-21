@@ -114,7 +114,7 @@ export function DataTableFilter({
             )}
             disabled={disabled || options.length === 0}
           >
-            <span className="text-muted-foreground">Filter by {title}</span>
+            <span className="text-muted-foreground">Filtrar por {title}</span>
             {selectedValues.length === 0 ? (
               <span className="font-medium text-foreground">
                 {defaultAllLabel}
