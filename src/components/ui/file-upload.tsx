@@ -163,34 +163,54 @@ export function FileUpload({
         <div className="flex flex-col items-center justify-center space-y-3 text-center">
           {displayFileName ? (
             <>
-              {previewUrl ? (
-                <div className="relative h-32 w-32 overflow-hidden rounded-full border border-border bg-background shadow-sm">
-                  <img
-                    src={previewUrl}
-                    alt="Preview da fotografia"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div
-                  className={cn(
-                    "p-3 rounded-full",
-                    isUploading
-                      ? "bg-blue-100 text-blue-600"
-                      : uploadProgress === 100
-                        ? "bg-green-100 text-green-600"
-                        : "bg-muted",
-                  )}
-                >
-                  {isUploading ? (
-                    <Upload className="h-6 w-6 animate-pulse" />
-                  ) : uploadProgress === 100 ? (
-                    <Check className="h-6 w-6" />
-                  ) : (
-                    <Icon className="h-6 w-6" />
-                  )}
-                </div>
-              )}
+              <div
+                className={cn(
+                  "flex items-center justify-center",
+                  type === "image" && "h-32 w-32",
+                )}
+              >
+                {previewUrl ? (
+                  <div className="relative h-32 w-32 overflow-hidden rounded-full border border-border bg-background shadow-sm">
+                    <img
+                      src={previewUrl}
+                      alt="Preview da fotografia"
+                      className={cn(
+                        "h-full w-full object-cover",
+                        isUploading && "opacity-40",
+                      )}
+                    />
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Upload className="h-6 w-6 animate-pulse text-primary" />
+                      </div>
+                    )}
+                    {uploadProgress === 100 && !isUploading && (
+                      <span className="absolute right-1 bottom-1 rounded-full bg-green-100 p-1 text-green-600 ring-2 ring-background">
+                        <Check className="h-4 w-4" />
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "p-3 rounded-full",
+                      isUploading
+                        ? "bg-blue-100 text-blue-600"
+                        : uploadProgress === 100
+                          ? "bg-green-100 text-green-600"
+                          : "bg-muted",
+                    )}
+                  >
+                    {isUploading ? (
+                      <Upload className="h-6 w-6 animate-pulse" />
+                    ) : uploadProgress === 100 ? (
+                      <Check className="h-6 w-6" />
+                    ) : (
+                      <Icon className="h-6 w-6" />
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
