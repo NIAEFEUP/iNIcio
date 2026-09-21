@@ -502,7 +502,11 @@ export default function CandidatesClient({
         }
       />
 
-      <p className="text-sm text-muted-foreground">
+      <p
+        role="status"
+        aria-live="polite"
+        className="text-sm text-muted-foreground"
+      >
         <span className="font-semibold text-foreground">{filteredCount}</span>{" "}
         candidaturas
       </p>
