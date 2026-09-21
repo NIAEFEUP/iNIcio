@@ -19,15 +19,6 @@ export function ViewModeToggle({
   return (
     <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
       <Button
-        variant={viewMode === "list" ? "secondary" : "ghost"}
-        size="sm"
-        className="h-7 gap-1.5 px-3 text-xs"
-        onClick={() => onViewModeChange("list")}
-      >
-        <List className="size-3.5" />
-        {listLabel}
-      </Button>
-      <Button
         variant={viewMode === "grid" ? "secondary" : "ghost"}
         size="sm"
         className="h-7 gap-1.5 px-3 text-xs"
@@ -35,6 +26,15 @@ export function ViewModeToggle({
       >
         <Grid className="size-3.5" />
         {gridLabel}
+      </Button>
+      <Button
+        variant={viewMode === "list" ? "secondary" : "ghost"}
+        size="sm"
+        className="h-7 gap-1.5 px-3 text-xs"
+        onClick={() => onViewModeChange("list")}
+      >
+        <List className="size-3.5" />
+        {listLabel}
       </Button>
     </div>
   );

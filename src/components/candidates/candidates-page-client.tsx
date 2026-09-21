@@ -7,6 +7,7 @@ import {
   DataErrorState,
   DataLoadingState,
 } from "@/components/data-table/data-state-view";
+import type { ViewMode } from "@/components/data-table/view-mode-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import {
@@ -16,7 +17,11 @@ import {
 
 import CandidatesClient from "./candidates-client";
 
-export default function CandidatesPageClient() {
+export default function CandidatesPageClient({
+  initialViewMode = "grid",
+}: {
+  initialViewMode?: ViewMode;
+}) {
   const { data, isLoading, error } = useCandidatesData();
   const { mutate } = useSWRConfig();
   const { recruitmentId } = useRecruitment();
@@ -49,6 +54,7 @@ export default function CandidatesPageClient() {
       candidates={data?.candidates ?? []}
       availableDepartments={data?.availableDepartments ?? []}
       authUser={user ? { id: user.id } : null}
+      initialViewMode={initialViewMode}
     />
   );
 }

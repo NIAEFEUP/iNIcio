@@ -1,6 +1,7 @@
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, Edit2, Trash2 } from "lucide-react";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -131,6 +132,8 @@ export function getActionsColumn<T>({
 export interface DataTableEntityCellProps {
   name: React.ReactNode;
   initials?: string;
+  image?: string;
+  imageAlt?: string;
   badge?: React.ReactNode;
   subtitle?: React.ReactNode;
   className?: string;
@@ -139,6 +142,8 @@ export interface DataTableEntityCellProps {
 export function DataTableEntityCell({
   name,
   initials,
+  image,
+  imageAlt,
   badge,
   subtitle,
   className,
@@ -150,7 +155,19 @@ export function DataTableEntityCell({
         className,
       )}
     >
-      {initials && <InitialsAvatar initials={initials} size="sm" />}
+      {image ? (
+        <Avatar size="sm" className="ring-1 ring-border/60">
+          <AvatarImage src={image} alt={imageAlt} />
+          <AvatarFallback>
+            <InitialsAvatar
+              className="size-full rounded-full text-[10px] font-bold"
+              initials={initials ?? "?"}
+            />
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        initials && <InitialsAvatar initials={initials} size="sm" />
+      )}
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-2">
           <span>{name}</span>

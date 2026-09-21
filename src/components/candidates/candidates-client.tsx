@@ -31,6 +31,7 @@ import {
   type ViewMode,
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
+import { setCandidatesViewMode } from "@/cookies/set";
 import { getInitials } from "@/lib/utils";
 
 import { CandidateWithMetadata } from "@/lib/candidate";
@@ -47,6 +48,7 @@ interface CandidatesClientProps {
   authUser?: { id?: string } | null;
   candidates: Array<CandidateWithMetadata>;
   availableDepartments: Array<string>;
+  initialViewMode?: ViewMode;
 }
 
 const PAGE_SIZE = 48;
@@ -73,8 +75,13 @@ export default function CandidatesClient({
   authUser,
   candidates,
   availableDepartments,
+  initialViewMode = "grid",
 }: CandidatesClientProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setCandidatesViewMode(mode);
+  };
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
@@ -100,6 +107,8 @@ export default function CandidatesClient({
         ),
         cell: ({ row }) => (
           <DataTableEntityCell
+            image={row.original.image || undefined}
+            imageAlt={row.original.name}
             name={
               <Link
                 href={`/candidate/${row.original.id}`}
