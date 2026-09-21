@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 
 export interface DataTableSortableHeaderProps<TData, TValue> {
   column: Column<TData, TValue>;
@@ -157,7 +158,7 @@ export function DataTableEntityCell({
     >
       {image ? (
         <Avatar size="sm" className="ring-1 ring-border/60">
-          <AvatarImage src={image} alt={imageAlt} />
+          <AvatarImage src={getStableImageUrl(image)} alt={imageAlt} />
           <AvatarFallback>
             <InitialsAvatar
               className="size-full rounded-full text-[10px] font-bold"
