@@ -55,7 +55,12 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
   const saveToDatabase = async (content: Array<any>) => {
     "use server";
     const user = await requireRecruiterSession(targetId);
-    const commentId = await submitApplicationComment(id, content, user.id);
+    const commentId = await submitApplicationComment(
+      id,
+      content,
+      user.id,
+      targetId,
+    );
     return commentId ? { success: true, id: commentId } : { success: false };
   };
 

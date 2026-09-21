@@ -59,7 +59,12 @@ export default async function InterviewPage({ params }: any) {
   async function handleCommentSave(content: Array<any>) {
     "use server";
     const user = await requireRecruiterSession(recruitmentId);
-    const commentId = await addInterviewComment(user.id, content, id);
+    const commentId = await addInterviewComment(
+      user.id,
+      content,
+      id,
+      recruitmentId,
+    );
     return commentId ? { success: true, id: commentId } : { success: false };
   }
 
