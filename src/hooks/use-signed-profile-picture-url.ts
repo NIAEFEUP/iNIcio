@@ -10,8 +10,8 @@ export function useSignedProfilePictureUrl(image?: string | null) {
 
   React.useEffect(() => {
     let cancelled = false;
+    setSignedImageUrl(null);
     if (image) {
-      getSignedProfilePictureUrl(image)
         .then((url) => {
           if (!cancelled && url) setSignedImageUrl(url);
         })
