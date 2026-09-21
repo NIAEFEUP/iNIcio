@@ -761,11 +761,14 @@ async function main() {
 
   // Current candidates:
   //  1 = re-applicant, mid-process (interview + dynamic booked, voting open)
+  //  2 = re-applicant from past, applied again (many interests)
+  //  5 = first application (many interests)
   //  6 = applied only (nothing scheduled)
   //  7 = applied + interview booked (dynamic pending)
   //  8 = fully processed, accepted
   //  9 = fully processed, rejected
-  const currentCandidateIds = ["1", "6", "7", "8", "9"];
+  //  10 = past rejected, re-applied (many interests)
+  const currentCandidateIds = ["1", "2", "5", "6", "7", "8", "9", "10"];
   for (const candidateId of currentCandidateIds) {
     await db.insert(candidate).values({
       userId: candidateId,
@@ -802,6 +805,21 @@ async function main() {
     candidatura: "done",
     entrevista: "done",
     dinamica: "done",
+  });
+  await seedCandidatePhaseStatuses("2", currentPhases, {
+    candidatura: "done",
+    entrevista: "todo",
+    dinamica: "todo",
+  });
+  await seedCandidatePhaseStatuses("5", currentPhases, {
+    candidatura: "done",
+    entrevista: "todo",
+    dinamica: "todo",
+  });
+  await seedCandidatePhaseStatuses("10", currentPhases, {
+    candidatura: "done",
+    entrevista: "todo",
+    dinamica: "todo",
   });
 
   await seedRecruiterPhaseStatuses("3", currentPhases, {
@@ -949,6 +967,58 @@ async function main() {
     interests: ["comunicacao"],
   });
 
+  await seedApplication({
+    candidateId: "2",
+    recruitmentId: currentRecruitment.id,
+    studentNumber: 202100002,
+    phone: "910000002",
+    degree: "mesw",
+    curricularYear: "1msc",
+    experience: "2 anos em voluntariado associativo",
+    motivation: "Quero voltar a contribuir ativamente para o NIAEFEUP",
+    selfPromotion: "Muitos interesses e disponibilidade",
+    interestJustification: "Envolvimento multicanal",
+    accepted: false,
+    interests: ["projetos", "imagem", "comunicacao", "sinf", "uni"],
+  });
+
+  await seedApplication({
+    candidateId: "5",
+    recruitmentId: currentRecruitment.id,
+    studentNumber: 202100003,
+    phone: "910000003",
+    degree: "leic",
+    curricularYear: "3bsc",
+    experience: "Organização de eventos académicos",
+    motivation: "Primeira candidatura, quero fazer parte do NI",
+    selfPromotion: "Gosto de estar em vários projetos",
+    interestJustification: "Interesses diversificados",
+    accepted: false,
+    interests: [
+      "projetos",
+      "website",
+      "eventos",
+      "nitsig",
+      "tts",
+      "comunicacao",
+    ],
+  });
+
+  await seedApplication({
+    candidateId: "10",
+    recruitmentId: currentRecruitment.id,
+    studentNumber: 202100008,
+    phone: "910000008",
+    degree: "mia",
+    curricularYear: "1msc",
+    experience: "Design e apoio técnico em eventos",
+    motivation: "Re-candidatura depois da experiência do ano passado",
+    selfPromotion: "Disponível para várias áreas",
+    interestJustification: "Gosto de aprender em várias frentes",
+    accepted: false,
+    interests: ["uni", "tts", "eventos", "nitsig", "niployments", "sinf"],
+  });
+
   await db.insert(appreciation).values([
     { applicationId: currentApp6, recruiterId: "3", grade: 3 },
     { applicationId: currentApp7, recruiterId: "3", grade: 1 },
@@ -1020,8 +1090,11 @@ async function main() {
     currentRecruitment.id,
     [
       { candidateId: "1", voteFinished: false, accepted: 1, rejected: 0 },
+      { candidateId: "2", voteFinished: false, accepted: 0, rejected: 0 },
+      { candidateId: "5", voteFinished: false, accepted: 0, rejected: 0 },
       { candidateId: "6", voteFinished: false, accepted: 0, rejected: 0 },
       { candidateId: "7", voteFinished: false, accepted: 0, rejected: 0 },
+      { candidateId: "10", voteFinished: false, accepted: 0, rejected: 0 },
       {
         candidateId: "8",
         voteFinished: true,
@@ -1156,10 +1229,10 @@ async function main() {
     "  candidato1@test.com  (1)  re-applicant | past accepted | current in progress (interview+dynamic booked, voting open -> result PENDING)",
   );
   console.log(
-    "  candidato2@test.com  (2)  past accepted only | no current application",
+    "  candidato2@test.com  (2)  past accepted | current re-applied (5 interests)",
   );
   console.log(
-    "  candidato3@test.com  (5)  registered, never applied (can apply)",
+    "  candidato3@test.com  (5)  current: first application (6 interests)",
   );
   console.log(
     "  candidato4@test.com  (6)  current: applied, nothing scheduled",
@@ -1174,7 +1247,7 @@ async function main() {
     "  candidato7@test.com  (9)  current: fully processed -> REJECTED (result rejected)",
   );
   console.log(
-    "  candidato8@test.com  (10) past rejected only | no current application",
+    "  candidato8@test.com  (10) past rejected | current re-applied (6 interests)",
   );
   console.log("");
   console.log("Recruiters:");
