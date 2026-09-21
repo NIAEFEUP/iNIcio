@@ -10,6 +10,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import type { User as UserType } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import { SidebarContentComponent } from "./sidebar-content";
 import { SidebarFooterComponent } from "./sidebar-footer";
 import {
@@ -26,8 +27,6 @@ export interface AppSidebarProps {
   onLogout?: () => Promise<void>;
   currentPath?: string;
   recruitments?: RecruitmentOption[];
-  selectedRecruitmentId?: number;
-  onSelectRecruitment?: (id: number) => void;
 }
 
 export function AppSidebar({
@@ -38,12 +37,12 @@ export function AppSidebar({
   onLogout,
   currentPath = "",
   recruitments,
-  selectedRecruitmentId,
-  onSelectRecruitment,
 }: AppSidebarProps) {
   const [managerOpen, setManagerOpen] = React.useState(false);
   const [managerMode, setManagerMode] =
     React.useState<RecruitmentManagerMode>("overview");
+
+  const { recruitmentId, selectRecruitment } = useRecruitment();
 
   const openManager = React.useCallback((mode: RecruitmentManagerMode) => {
     setManagerMode(mode);
@@ -56,8 +55,8 @@ export function AppSidebar({
         <SidebarHeader>
           <SidebarHeaderComponent
             recruitments={recruitments}
-            selectedRecruitmentId={selectedRecruitmentId}
-            onSelectRecruitment={onSelectRecruitment}
+            selectedRecruitmentId={recruitmentId ?? undefined}
+            onSelectRecruitment={selectRecruitment}
             onOpenManager={openManager}
             isAdmin={isAdmin}
           />

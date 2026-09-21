@@ -16,13 +16,15 @@ This will also automatically register the pre-commit hook that formats your code
 npm install
 ```
 
-### 2. Start the PostgreSQL database
+### 2. Start the local services
 
-Make sure you have **Docker** installed. Then, run the following command to start the PostgreSQL database:
+Make sure you have **Docker** installed. Then, run the following command to start the local services (PostgreSQL, MinIO, and the websocket server):
 
 ```bash
 docker compose up -d
 ```
+
+This also provisions the local S3 bucket: after MinIO starts, the one-shot `createbuckets` service creates a bucket named after `S3_BUCKET` (default `inicio`, see `.env`). The MinIO console is available at http://localhost:9001 (login `inicio` / `inicio123`).
 
 ### 3. Setup environment variables
 

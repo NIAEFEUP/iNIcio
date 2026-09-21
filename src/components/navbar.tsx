@@ -18,6 +18,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useSession } from "@/lib/use-session";
 import { authClient } from "@/lib/auth-client";
+import { useSignedProfilePictureUrl } from "@/hooks/use-signed-profile-picture-url";
 import { cn, getInitials } from "@/lib/utils";
 import { Button, buttonVariants } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -81,6 +82,7 @@ export default function Navbar({
 
   const user = session?.user;
   const userInitials = getInitials(user?.name);
+  const [signedImageUrl] = useSignedProfilePictureUrl(user?.image);
 
   const handleLogout = async () => {
     try {
@@ -147,7 +149,7 @@ export default function Navbar({
                       >
                         <Avatar className="size-8 ring-1 ring-border">
                           <AvatarImage
-                            src={user.image || undefined}
+                            src={signedImageUrl || undefined}
                             alt={user.name || "User"}
                           />
                           <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
