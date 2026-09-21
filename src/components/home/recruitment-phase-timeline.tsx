@@ -1,24 +1,31 @@
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
 import type { RecruitmentPhase } from "@/lib/db";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
-const STATE_LABELS: Record<PhaseState, string> = {
-  upcoming: "Futura",
-  open: "A decorrer",
-  closed: "Terminada",
-};
-
-const STATE_BADGE_CLASSES: Record<PhaseState, string> = {
-  open: "bg-primary text-primary-foreground",
-  upcoming: "bg-secondary text-secondary-foreground",
-  closed: "bg-secondary text-secondary-foreground",
+const STATE_CONFIG: Record<
+  PhaseState,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  open: { label: "A decorrer", variant: "default" },
+  upcoming: { label: "Futura", variant: "outline" },
+  closed: { label: "Terminada", variant: "secondary" },
 };
 
 function formatWindow(phase: RecruitmentPhase): string {
   const start = phase.start
-    ? new Date(phase.start).toLocaleString("pt-PT")
+    ? new Date(phase.start).toLocaleDateString("pt-PT", {
+        day: "numeric",
+        month: "short",
+      })
     : "—";
-  const end = phase.end ? new Date(phase.end).toLocaleString("pt-PT") : "—";
-  return `${start} – ${end}`;
+  const end = phase.end
+    ? new Date(phase.end).toLocaleDateString("pt-PT", {
+        day: "numeric",
+        month: "short",
+      })
+    : "—";
+  return `${start} a ${end}`;
 }
 
 interface RecruitmentPhaseTimelineProps {
@@ -33,32 +40,42 @@ export default function RecruitmentPhaseTimeline({
     (a, b) => (a.start?.getTime() ?? 0) - (b.start?.getTime() ?? 0),
   );
 
-  return (
-    <ul className="mx-auto mt-10 flex w-full max-w-lg list-none flex-col gap-3 text-left">
-      {sorted.map((phase) => {
-        const state = getPhaseState(phase, now);
+  if (sorted.length === 0) {
+    return null;
+  }
 
-        return (
-          <li
-            key={phase.id}
-            className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-semibold text-card-foreground">
-                {phase.title}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatWindow(phase)}
-              </p>
-            </div>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs ${STATE_BADGE_CLASSES[state]}`}
-            >
-              {STATE_LABELS[state]}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+  return (
+    <div className="mx-auto mt-8 w-full max-w-lg text-left">
+      <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">
+        Fases do Recrutamento
+      </h3>
+      <Card>
+        <CardContent className="divide-y divide-border p-0">
+          {sorted.map((phase) => {
+            const state = getPhaseState(phase, now);
+            const { label, variant } = STATE_CONFIG[state];
+
+            return (
+              <div
+                key={phase.id}
+                className="flex items-center justify-between p-4 transition-colors"
+              >
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">
+                    {phase.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatWindow(phase)}
+                  </p>
+                </div>
+                <Badge variant={variant} className="text-xs font-normal">
+                  {label}
+                </Badge>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

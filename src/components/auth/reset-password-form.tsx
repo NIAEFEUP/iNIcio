@@ -1,7 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, KeyRound, Lock } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  KeyRound,
+  Lock,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,8 +22,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authClient } from "@/lib/auth-client";
 
 const formSchema = z
@@ -85,50 +93,40 @@ export default function ResetPasswordForm({
   }
 
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <KeyRound className="h-8 w-8 text-primary" />
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-10 sm:py-12">
+      <div className="grid w-full max-w-4xl items-center gap-12 sm:gap-16 md:grid-cols-2 lg:gap-24">
+        <div className="space-y-3 text-center md:text-left">
+          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <KeyRound className="size-7 text-primary" />
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
             Nova palavra-passe
           </h1>
-          <p className="text-sm leading-relaxed text-gray-600">
-            Escolhe uma nova palavra-passe para a tua conta
+          <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">
+            Escolhe uma nova palavra-passe para a tua conta.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-xl">
+        <div className="space-y-6">
           {successMessage ? (
             <div className="space-y-4">
-              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                <p className="text-sm text-green-700">{successMessage}</p>
-              </div>
-              <Link
-                href="/login"
-                className={buttonVariants({
-                  variant: "secondary",
-                  className: "w-full",
-                })}
-              >
+              <Alert>
+                <CheckCircle2 className="size-4" />
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+              <Button className="w-full" render={<Link href="/login" />}>
                 Voltar ao login
-              </Link>
+              </Button>
             </div>
           ) : errorMessage && (hasInvalidToken || !token) ? (
             <div className="space-y-4">
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-sm text-red-600">{errorMessage}</p>
-              </div>
-              <Link
-                href="/login"
-                className={buttonVariants({
-                  variant: "secondary",
-                  className: "w-full",
-                })}
-              >
+              <Alert variant="destructive">
+                <AlertCircle className="size-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+              <Button className="w-full" render={<Link href="/login" />}>
                 Voltar ao login
-              </Link>
+              </Button>
             </div>
           ) : (
             <Form {...form}>
@@ -144,17 +142,17 @@ export default function ResetPasswordForm({
                       <FormLabel>Nova palavra-passe</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type={showPassword ? "text" : "password"}
                             placeholder="Mínimo 8 caracteres"
-                            className="h-12 rounded-lg border-gray-200 pl-10 pr-10"
+                            className="h-11 pl-9 pr-9"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             aria-label={
                               showPassword
                                 ? "Esconder palavra-passe"
@@ -162,9 +160,9 @@ export default function ResetPasswordForm({
                             }
                           >
                             {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
+                              <EyeOff className="size-4" />
                             ) : (
-                              <Eye className="h-4 w-4" />
+                              <Eye className="size-4" />
                             )}
                           </button>
                         </div>
@@ -182,19 +180,19 @@ export default function ResetPasswordForm({
                       <FormLabel>Confirmar palavra-passe</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Repete a palavra-passe"
-                            className="h-12 rounded-lg border-gray-200 pl-10 pr-10"
+                            className="h-11 pl-9 pr-9"
                           />
                           <button
                             type="button"
                             onClick={() =>
                               setShowConfirmPassword(!showConfirmPassword)
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             aria-label={
                               showConfirmPassword
                                 ? "Esconder confirmação"
@@ -202,9 +200,9 @@ export default function ResetPasswordForm({
                             }
                           >
                             {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" />
+                              <EyeOff className="size-4" />
                             ) : (
-                              <Eye className="h-4 w-4" />
+                              <Eye className="size-4" />
                             )}
                           </button>
                         </div>
@@ -215,16 +213,16 @@ export default function ResetPasswordForm({
                 />
 
                 {errorMessage && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                    <p className="text-sm text-red-600">{errorMessage}</p>
-                  </div>
+                  <Alert variant="destructive">
+                    <AlertCircle className="size-4" />
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                  </Alert>
                 )}
 
                 <Button
                   type="submit"
-                  variant="secondary"
                   disabled={isLoading}
-                  className="w-full"
+                  className="w-full mt-2"
                 >
                   {isLoading ? "A guardar..." : "Alterar palavra-passe"}
                 </Button>

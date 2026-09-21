@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import { Dynamic, Interview, NewSlot, Slot } from "@/lib/db";
 import { SlotOperation } from "@/app/admin/interviews/page";
@@ -132,9 +132,9 @@ export default function SlotAdminCalendar({
       const updated = await saveSlots(slotOperations);
       setSlots(updated);
       setSlotOperations([]);
-      toast("Slots guardados");
+      toast.add({ title: "Slots guardados" });
     } catch (error) {
-      toast("Erro ao guardar slots: " + error);
+      toast.add({ title: "Erro ao guardar slots: " + error });
     }
   };
 

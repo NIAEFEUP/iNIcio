@@ -2,14 +2,13 @@ import {
   recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
-  slot,
   recruiter,
   user,
   recruiterToCandidate,
   usersToRecruitments,
 } from "@/db/schema";
 import { db, Recruitment, RecruitmentPhase } from "./db";
-import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import {
   getPhaseState,
   getRecruitmentState,
@@ -268,48 +267,6 @@ export async function editRecruitmentPhase(r: RecruitmentPhase) {
 
 export async function deleteRecruitmentPhase(id: number) {
   await db.delete(recruitmentPhase).where(eq(recruitmentPhase.id, id));
-}
-
-export async function getInterviewSlots(recruitmentId?: number) {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  return await db.transaction(async (trx) => {
-    const interviewSlots = await trx
-      .select()
-      .from(slot)
-      .where(
-        and(
-          eq(slot.type, "interview"),
-          eq(slot.recruitmentId, targetId),
-          gt(slot.quantity, 0),
-        ),
-      )
-      .for("update");
-
-    return interviewSlots;
-  });
-}
-
-export async function getDynamicSlots(recruitmentId?: number) {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  return await db.transaction(async (trx) => {
-    const dynamicSlots = await trx
-      .select()
-      .from(slot)
-      .where(
-        and(
-          eq(slot.type, "dynamic"),
-          eq(slot.recruitmentId, targetId),
-          gt(slot.quantity, 0),
-        ),
-      )
-      .for("update");
-
-    return dynamicSlots;
-  });
 }
 
 export async function isRecruitmentPhaseDone(

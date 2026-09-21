@@ -39,7 +39,7 @@ import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface RecruiterRow {
   userId: string;
@@ -111,7 +111,8 @@ export default function RecruiterAdminClient({
   async function handleAdd(e?: React.FormEvent) {
     e?.preventDefault();
     const idToAdd = selected ? selected.id : userId;
-    if (!idToAdd) return toast.error("Escolhe um utilizador");
+    if (!idToAdd)
+      return toast.add({ type: "error", title: "Escolhe um utilizador" });
 
     try {
       await addRecruiter(idToAdd);
@@ -140,10 +141,10 @@ export default function RecruiterAdminClient({
       setResults([]);
       setSelected(null);
       setIsAddOpen(false);
-      toast.success("Recrutador adicionado");
+      toast.add({ type: "success", title: "Recrutador adicionado" });
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro na submissao");
+      toast.add({ type: "error", title: "Ocorreu um erro na submissao" });
     }
   }
 
@@ -157,10 +158,10 @@ export default function RecruiterAdminClient({
     try {
       await removeRecruiter(id);
       setList((s) => s.filter((r) => r.userId !== id));
-      toast.success("Recrutador removido");
+      toast.add({ type: "success", title: "Recrutador removido" });
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro na submissao");
+      toast.add({ type: "error", title: "Ocorreu um erro na submissao" });
     }
   }
 

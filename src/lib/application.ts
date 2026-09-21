@@ -1,34 +1,92 @@
 import { application, applicationInterests } from "@/db/schema";
-import { Application, db } from "./db";
-
-import { and, eq } from "drizzle-orm";
+import { Application, db, Recruitment } from "./db";
+import { and, desc, eq } from "drizzle-orm";
 import { addApplicationComment } from "./comment";
 import { getFilenameUrl } from "./file-upload";
 import { notification } from "@/db/schema/notification";
 import { getActiveRecruitment } from "./recruitment";
+import type { CandidateRecruitmentResult } from "./final-messages";
+
+export type UserApplicationWithRecruitment = Application & {
+  recruitment: Recruitment | null;
+};
+
+export type UserApplicationWithDetails = UserApplicationWithRecruitment & {
+  interests: string[];
+  result?: CandidateRecruitmentResult | null;
+};
 
 export async function getApplication(
   id: string,
   recruitmentId?: number,
 ): Promise<Application | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return null;
 
-  const whereClause = and(
-    eq(application.candidateId, id),
-    eq(application.recruitmentId, targetId),
-  );
+  if (targetId) {
+    const whereClause = and(
+      eq(application.candidateId, id),
+      eq(application.recruitmentId, targetId),
+    );
 
-  const app = await db.query.application.findFirst({
-    where: whereClause,
+    const app = await db.query.application.findFirst({
+      where: whereClause,
+    });
+
+    if (app) {
+      return {
+        ...app,
+        curriculum: await getFilenameUrl(app?.curriculum),
+      };
+    }
+  }
+
+  // Fallback: if no recruitmentId was specified and no application exists for the active recruitment,
+  // return the latest submitted application for this candidate
+  if (!recruitmentId) {
+    const latestApp = await db.query.application.findFirst({
+      where: eq(application.candidateId, id),
+      orderBy: [desc(application.submittedAt)],
+    });
+
+    if (latestApp) {
+      return {
+        ...latestApp,
+        curriculum: await getFilenameUrl(latestApp?.curriculum),
+      };
+    }
+  }
+
+  return null;
+}
+
+export async function getUserApplications(
+  userId: string,
+): Promise<UserApplicationWithRecruitment[]> {
+  if (!userId) return [];
+
+  const apps = await db.query.application.findMany({
+    where: eq(application.candidateId, userId),
+    with: {
+      recruitment: true,
+    },
+    orderBy: [desc(application.submittedAt)],
   });
 
-  if (!app) return null;
+  return apps as UserApplicationWithRecruitment[];
+}
 
-  return {
-    ...app,
-    curriculum: await getFilenameUrl(app?.curriculum),
-  };
+export async function hasAnyApplication(
+  userId: string | undefined,
+): Promise<boolean> {
+  if (!userId) return false;
+
+  const app = await db
+    .select({ id: application.id })
+    .from(application)
+    .where(eq(application.candidateId, userId))
+    .limit(1);
+
+  return app.length > 0;
 }
 
 export async function hasApplication(
@@ -93,13 +151,13 @@ export async function submitApplicationComment(
     return await db.transaction(async (tx) => {
       const mentions = [];
       for (const c of content) {
-        mentions.push(...c.content.filter((c) => c.type === "mention"));
+        mentions.push(...c.content.filter((c: any) => c.type === "mention"));
       }
 
       const id = await addApplicationComment(app[0].id, content, authorId);
 
       const uniqueMentions = Array.from(
-        new Map(mentions.map((m) => [m.userId, m])).values(),
+        new Map(mentions.map((m: any) => [m.userId, m])).values(),
       );
 
       for (const mention of uniqueMentions) {

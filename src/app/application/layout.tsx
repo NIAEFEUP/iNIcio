@@ -1,4 +1,4 @@
-import { getApplication } from "@/lib/application";
+import { hasAnyApplication } from "@/lib/application";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { isRecruiter } from "@/lib/recruiter";
@@ -6,7 +6,7 @@ import { getCurrentRecruitmentState } from "@/lib/recruitment";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
+export default async function ApplicationLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -20,15 +20,12 @@ export default async function AdminLayout({
   if (await isAdmin(session.user.id)) redirect("/admin");
   if (await isRecruiter(session.user.id)) redirect("/recruiter/progress");
 
-  if (session?.user) {
-    const application = await getApplication(session?.user.id);
+  const userHasAnyApp = await hasAnyApplication(session.user.id);
+  const currentRecruitment = await getCurrentRecruitmentState();
 
-    if (application) {
-      redirect("/candidate/progress");
-    }
+  if (!userHasAnyApp && !currentRecruitment.canApply) {
+    redirect("/");
   }
-
-  if (!(await getCurrentRecruitmentState()).canApply) redirect("/");
 
   return <>{children}</>;
 }

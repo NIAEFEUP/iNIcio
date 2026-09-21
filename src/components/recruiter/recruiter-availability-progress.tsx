@@ -12,7 +12,7 @@ import ChooseCustomSlot from "../slot/choose-custom-slot";
 import { useRef, useState } from "react";
 import { NewRecruiterAvailability, RecruiterAvailability } from "@/lib/db";
 
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Save } from "lucide-react";
 import { RecruiterAvailabilityStats } from "./recruiter-availability-stats";
 
@@ -116,7 +116,7 @@ export default function RecruiterAvailabilityClient({
             onClick={async () => {
               const ok = await saveAvailabilities(availabilityOperations);
 
-              if (ok) toast("Guardado com sucesso");
+              if (ok) toast.add({ title: "Guardado com sucesso" });
             }}
           >
             <Save className="h-4 w-4" />
