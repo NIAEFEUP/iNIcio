@@ -7,7 +7,7 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { application } from "@/db/schema";
 import {
@@ -24,9 +24,7 @@ export async function tryToAddCandidateToDynamic(
   recruitmentId?: number,
 ) {
   const targetRecruitmentId =
-    recruitmentId ??
-    slotParam.recruitmentId ??
-    (await getActiveRecruitment())?.id;
+    recruitmentId ?? (await getActiveRecruitment())?.id;
 
   if (!targetRecruitmentId) {
     throw new Error("No recruitment specified or active");
@@ -66,47 +64,54 @@ export async function tryToAddCandidateToDynamic(
     const s = await trx
       .select()
       .from(slot)
-      .where(eq(slot.id, slotParam.id))
+      .where(
+        and(
+          eq(slot.id, slotParam.id),
+          eq(slot.recruitmentId, targetRecruitmentId),
+          eq(slot.type, "dynamic"),
+          gt(slot.quantity, 0),
+        ),
+      )
       .for("update");
 
-    if (s.length > 0) {
-      await trx
-        .update(slot)
-        .set({ quantity: s[0].quantity - 1 })
-        .where(eq(slot.id, slotParam.id));
+    if (s.length === 0) {
+      throw new Error("Slot not found or full");
+    }
 
-      const possibleDynamic = await trx
-        .select()
-        .from(dynamic)
-        .where(eq(dynamic.slot, slotParam.id))
-        .for("update");
+    await trx
+      .update(slot)
+      .set({ quantity: s[0].quantity - 1 })
+      .where(eq(slot.id, slotParam.id));
 
-      if (possibleDynamic.length === 0) {
-        const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
+    const possibleDynamic = await trx
+      .select()
+      .from(dynamic)
+      .where(eq(dynamic.slot, slotParam.id))
+      .for("update");
 
-        const [insertedDynamic] = await trx
-          .insert(dynamic)
-          .values({
-            slot: slotParam.id,
-            recruitmentId: targetRecruitmentId,
-            content: dynamicTemplate ? dynamicTemplate.content : [],
-          })
-          .returning({ id: dynamic.id });
+    if (possibleDynamic.length === 0) {
+      const dynamicTemplate = await trx.query.dynamicTemplate.findFirst();
 
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: insertedDynamic.id,
+      const [insertedDynamic] = await trx
+        .insert(dynamic)
+        .values({
+          slot: slotParam.id,
           recruitmentId: targetRecruitmentId,
-        });
-      } else {
-        await trx.insert(candidateToDynamic).values({
-          candidateId: candidateId,
-          dynamicId: possibleDynamic[0].id,
-          recruitmentId: targetRecruitmentId,
-        });
-      }
+          content: dynamicTemplate ? dynamicTemplate.content : [],
+        })
+        .returning({ id: dynamic.id });
+
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: insertedDynamic.id,
+        recruitmentId: targetRecruitmentId,
+      });
     } else {
-      throw new Error("Slot not found");
+      await trx.insert(candidateToDynamic).values({
+        candidateId: candidateId,
+        dynamicId: possibleDynamic[0].id,
+        recruitmentId: targetRecruitmentId,
+      });
     }
   });
 }
@@ -159,18 +164,29 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
     candidates: await Promise.all(
       res.candidates.map(async (c) => ({
         ...c.candidate.user,
-        application: {
-          ...c.candidate.application,
-          profilePicture: await getFilenameUrl(
-            c.candidate.application?.profilePicture,
-          ),
-          interests: c.candidate.application?.interests.map((i) => i.interest),
-        },
+        image: await getFilenameUrl(c.candidate.user?.image),
+        application: c.candidate.application
+          ? {
+              ...c.candidate.application,
+              curriculum: await getFilenameUrl(
+                c.candidate.application?.curriculum,
+              ),
+              interests: c.candidate.application?.interests.map(
+                (i) => i.interest,
+              ),
+            }
+          : null,
         interviewClassification: c.candidate.interviewClassification,
         dynamicClassification: c.candidate.dynamicClassification,
         dynamic: c.candidate.dynamic,
         interview: c.candidate.interview,
         knownRecruiters: c.candidate.knownRecruiters,
+        votingDecision: recruitmentId
+          ? await getLatestVotingDecisionForCandidate(
+              c.candidate.userId,
+              recruitmentId,
+            )
+          : await getLatestVotingDecisionForCandidate(c.candidate.userId),
       })),
     ),
   };
@@ -326,6 +342,7 @@ export async function getAllCandidatesWithDynamic(
 
       return {
         ...c.user,
+        image: await getFilenameUrl(c.user?.image),
         dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
         interview: c.interview as CandidateWithMetadata["interview"],
         interviewClassification: c.interviewClassification ?? "none",
@@ -333,9 +350,7 @@ export async function getAllCandidatesWithDynamic(
         application: c.application
           ? {
               ...c.application,
-              profilePicture: await getFilenameUrl(
-                c.application?.profilePicture,
-              ),
+              curriculum: await getFilenameUrl(c.application?.curriculum),
               interests: c.application?.interests.map((i) => i.interest),
             }
           : null,

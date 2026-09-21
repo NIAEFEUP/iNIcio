@@ -5,7 +5,6 @@ import RealTimeEditor from "@/components/editor/real-time-editor";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { useSession } from "@/lib/use-session";
 import {
@@ -98,42 +97,41 @@ export default function CandidateComments({
   };
 
   return (
-    <ScrollArea className="h-128 flex flex-col gap-4">
-      <Table>
-        <TableBody className="w-full">
-          {!isPending && session && (
-            <TableRow className="flex flex-col md:flex-row items-center mx-4">
-              <TableCell className="w-full">
-                <form
-                  className="flex flex-row items-center justify-center gap-4"
-                  onSubmit={handleSubmit}
-                >
-                  <RealTimeEditor
-                    mentionItems={recruiters}
-                    onChange={(editor) => {
-                      setCommentValue(editor.document);
-                      setEditor(editor);
-                    }}
-                    collab={false}
-                  />
-                  <Button variant="default" type="submit" className="h-32">
-                    <Send />
-                  </Button>
-                </form>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+    <div className="flex flex-col gap-4">
+      {!isPending && session && (
+        <form className="flex flex-row items-end gap-3" onSubmit={handleSubmit}>
+          <div className="min-w-0 flex-1">
+            <RealTimeEditor
+              mentionItems={recruiters}
+              onChange={(editor) => {
+                setCommentValue(editor.document);
+                setEditor(editor);
+              }}
+              collab={false}
+              boxed={false}
+            />
+          </div>
+          <Button
+            variant="default"
+            type="submit"
+            size="icon"
+            className="shrink-0"
+            aria-label="Enviar comentário"
+          >
+            <Send />
+          </Button>
+        </form>
+      )}
 
-      <div>
-        <div className="relative">
-          <Separator className="my-8" />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs font-medium text-muted-foreground">
-            Comentários anteriores
-          </span>
-        </div>
+      <ScrollArea className="h-128 pr-2">
         <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Separator className="my-4" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs font-medium text-muted-foreground">
+              Comentários anteriores
+            </span>
+          </div>
+
           {commentsState?.map((comment, idx) => (
             <CommentDisplay
               key={`comment-${idx}`}
@@ -142,7 +140,7 @@ export default function CandidateComments({
             />
           ))}
         </div>
-      </div>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 }

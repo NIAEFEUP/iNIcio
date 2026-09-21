@@ -38,5 +38,6 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     "inicio-ws/**",
+    "src/components/ui/**",
   ]),
 ]);

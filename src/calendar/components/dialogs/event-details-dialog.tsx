@@ -32,7 +32,9 @@ export function EventDetailsDialog({ event, children }: IProps) {
   return (
     <>
       <Dialog>
-        <DialogTrigger asChild>{children}</DialogTrigger>
+        {children ? (
+          <DialogTrigger render={children as React.ReactElement} />
+        ) : null}
 
         <DialogContent>
           <DialogHeader>

@@ -1,3 +1,4 @@
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
@@ -24,5 +25,5 @@ export default async function FriendsLayout({
     return redirect("/");
   }
 
-  return <>{children}</>;
+  return <DashboardShell>{children}</DashboardShell>;
 }

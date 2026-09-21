@@ -1,3 +1,4 @@
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { auth } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { headers } from "next/headers";
@@ -22,5 +23,5 @@ export default async function DynamicLayout({
     redirect("/");
   }
 
-  return <>{children}</>;
+  return <DashboardShell>{children}</DashboardShell>;
 }

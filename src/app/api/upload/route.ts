@@ -4,6 +4,7 @@ import {
   uploadCV,
   deleteFile,
   UploadResult,
+  fromFullUrlToPath,
 } from "@/lib/file-upload";
 import { auth } from "@/lib/auth";
 
@@ -79,11 +80,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Security check: ensure the file belongs to the user
+    // Security check: ensure the file belongs to the user with strict prefix
     const userId = session.user.id;
+    const path = fromFullUrlToPath(fileName);
     if (
-      !fileName.includes(`profiles/${userId}`) &&
-      !fileName.includes(`cvs/${userId}`)
+      !path.startsWith(`profiles/${userId}/`) &&
+      !path.startsWith(`cvs/${userId}/`)
     ) {
       return NextResponse.json(
         { error: "Unauthorized to delete this file" },
@@ -91,7 +93,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const success = await deleteFile(fileName);
+    const success = await deleteFile(path);
 
     if (!success) {
       return NextResponse.json(

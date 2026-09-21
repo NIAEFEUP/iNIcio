@@ -32,9 +32,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { PageHeader } from "@/components/layout/page-header";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Recruitment } from "@/lib/db";
 
 interface RecruitmentAdminClientProps {
@@ -119,7 +120,9 @@ export default function RecruitmentAdminClient({
       Number.isNaN(endDate.getTime()) ||
       startDate >= endDate
     ) {
-      toast("A data de fim tem de ser posterior à data de início");
+      toast.add({
+        title: "A data de fim tem de ser posterior à data de início",
+      });
       return;
     }
 
@@ -137,19 +140,19 @@ export default function RecruitmentAdminClient({
       if (editingRecruitment) {
         await editRecruitment(newRecruitment);
         setRecruitmentsState((prev) => upsertRecruitment(prev, newRecruitment));
-        toast("Recrutamento atualizado");
+        toast.add({ title: "Recrutamento atualizado" });
         setIsEditDialogOpen(false);
       } else {
         const created = await addRecruitment(newRecruitment);
         setRecruitmentsState((prev) =>
           upsertRecruitment(prev, { ...newRecruitment, id: created.id }),
         );
-        toast("Recrutamento adicionado");
+        toast.add({ title: "Recrutamento adicionado" });
         setIsAddDialogOpen(false);
       }
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro na submissão");
+      toast.add({ title: "Ocorreu um erro na submissão" });
       return;
     }
 
@@ -183,40 +186,38 @@ export default function RecruitmentAdminClient({
     try {
       await deleteRecruitment(id);
       setRecruitmentsState((prev) => prev.filter((r) => r.id !== id));
-      toast("Recrutamento apagado");
+      toast.add({ title: "Recrutamento apagado" });
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro ao apagar");
+      toast.add({ title: "Ocorreu um erro ao apagar" });
     }
   };
 
   const handleDuplicatePhases = async (id: number) => {
     try {
       const count = await duplicatePhases(id);
-      toast(count > 0 ? "Fases copiadas" : "Não há fases para duplicar");
+      toast.add({
+        title: count > 0 ? "Fases copiadas" : "Não há fases para duplicar",
+      });
     } catch (err) {
       console.error(err);
-      toast("Ocorreu um erro ao duplicar as fases");
+      toast.add({ title: "Ocorreu um erro ao duplicar as fases" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Recrutamentos
-            </h1>
-          </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Recrutamentos"
+        actions={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger
+              render={
+                <Button className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" /> Adicionar
+                </Button>
+              }
+            />
             <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">
@@ -369,8 +370,8 @@ export default function RecruitmentAdminClient({
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-
+        }
+      >
         {/* Recruitments Table */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -629,7 +630,7 @@ export default function RecruitmentAdminClient({
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageHeader>
     </div>
   );
 }

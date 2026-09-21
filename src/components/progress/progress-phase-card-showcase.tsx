@@ -3,29 +3,56 @@
 import { RecruitmentPhase } from "@/lib/db";
 import ProgressPhaseCard from "./progress-phase-card";
 
-const progressPhaseActions: { [key: string]: string } = {
-  entrevista: "/candidate/interview/schedule",
-  dinâmica: "/candidate/dynamic/schedule",
+const progressPhaseActions: Record<string, string> = {
   candidatura: "/application",
   recruiter_availability: "/recruiter/availability",
-  profile: "/profile",
   who_knows: "/candidates",
-  resultado: "/candidate/result",
+  resultado: "/#candidaturas",
 };
+
+interface CandidateEventInfo {
+  interview?: {
+    slot?: {
+      start?: Date | string | null;
+    } | null;
+  } | null;
+  dynamic?: {
+    dynamic?: {
+      slot?: {
+        start?: Date | string | null;
+      } | null;
+    } | null;
+  } | null;
+}
 
 interface ProgressPhaseCardShowcaseProps {
   progressPhases: Array<RecruitmentPhase & { checked: boolean }>;
-  candidate?: any | null;
+  candidate?: CandidateEventInfo | null;
   role: "candidate" | "recruiter";
 }
 
-const getCandidateEventDate = (phase: RecruitmentPhase, candidate: any) => {
-  if (phase.clientIdentifier.trim().toLowerCase() === "entrevista") {
-    return candidate?.interview?.slot?.start?.toLocaleString("pt-PT");
-  } else if (phase.clientIdentifier.trim().toLowerCase() === "dinâmica") {
-    return candidate?.dynamic?.dynamic?.slot?.start?.toLocaleString("pt-PT");
+const getCandidateEventDate = (
+  phase: RecruitmentPhase,
+  candidate: CandidateEventInfo | null,
+) => {
+  const identifier = phase.clientIdentifier.trim().toLowerCase();
+  if (identifier === "entrevista" && candidate?.interview?.slot?.start) {
+    return new Date(candidate.interview.slot.start).toLocaleString("pt-PT", {
+      dateStyle: "full",
+      timeStyle: "short",
+    });
+  } else if (
+    identifier === "dinâmica" &&
+    candidate?.dynamic?.dynamic?.slot?.start
+  ) {
+    return new Date(candidate.dynamic.dynamic.slot.start).toLocaleString(
+      "pt-PT",
+      {
+        dateStyle: "full",
+        timeStyle: "short",
+      },
+    );
   }
-
   return null;
 };
 
@@ -34,38 +61,29 @@ export default function ProgressPhaseCardShowcase({
   candidate = null,
   role,
 }: ProgressPhaseCardShowcaseProps) {
-  const getEventDate = (phase: RecruitmentPhase) => {
-    if (role === "candidate") return getCandidateEventDate(phase, candidate);
-    else if (role === "recruiter") return "";
-  };
-
   return (
-    <>
-      <div className="flex flex-col gap-4 justify-center items-center">
-        {progressPhases.map((phase, idx) => {
-          const date = getEventDate(phase);
+    <div className="flex flex-col gap-4 w-full">
+      {progressPhases.map((phase, idx) => {
+        const date =
+          role === "candidate" ? getCandidateEventDate(phase, candidate) : null;
 
-          return (
-            <div key={`${phase.title}-${idx}`} className="w-full max-w-[50em]">
-              <ProgressPhaseCard
-                key={idx}
-                number={idx + 1}
-                title={phase.title}
-                description={phase.description}
-                redirectUrl={
-                  progressPhaseActions[
-                    phase.clientIdentifier.trim().toLowerCase()
-                  ]
-                }
-                checked={phase.checked}
-                phaseStart={phase.start}
-                phaseEnd={phase.end}
-                eventDateText={date && `Marcado em ${date}`}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </>
+        const actionUrl =
+          progressPhaseActions[phase.clientIdentifier.trim().toLowerCase()];
+
+        return (
+          <ProgressPhaseCard
+            key={phase.id || `${phase.title}-${idx}`}
+            number={idx + 1}
+            title={phase.title}
+            description={phase.description}
+            redirectUrl={actionUrl}
+            checked={phase.checked}
+            phaseStart={phase.start}
+            phaseEnd={phase.end}
+            eventDateText={date ? `Agendado para: ${date}` : null}
+          />
+        );
+      })}
+    </div>
   );
 }

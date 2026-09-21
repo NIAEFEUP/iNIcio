@@ -1,8 +1,33 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import SlotBox from "./slot-box";
+
+interface ChooseCustomSlotProps {
+  slots: any[];
+  dates: Date[];
+  tableRef: React.RefObject<HTMLTableElement | null>;
+  timeSlots: string[];
+  getSlotForCell: (date: Date, time: string, slots: any[]) => any;
+  getCellKey: (date: Date, time: string) => Date;
+  selectedSlot: any;
+  handleCellClick: (date: Date, time: string) => void;
+  getTypeColor: (type: any) => string;
+  formatDateHeader: (date: Date) => {
+    dayName: string;
+    dayNumber: number;
+    month: string;
+  };
+  headerAction?: ReactNode;
+  legend?: ReactNode;
+}
 
 export default function ChooseCustomSlot({
   slots,
@@ -15,7 +40,9 @@ export default function ChooseCustomSlot({
   handleCellClick,
   getTypeColor,
   formatDateHeader,
-}) {
+  headerAction,
+  legend,
+}: ChooseCustomSlotProps) {
   const [dragging, setDragging] = useState<boolean>(false);
 
   const onMouseUp = () => {
@@ -38,6 +65,7 @@ export default function ChooseCustomSlot({
           <Calendar className="h-5 w-5" />
           Calendário
         </CardTitle>
+        {headerAction && <CardAction>{headerAction}</CardAction>}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -108,6 +136,8 @@ export default function ChooseCustomSlot({
             </tbody>
           </table>
         </div>
+
+        {legend && <div className="mt-4">{legend}</div>}
       </CardContent>
     </Card>
   );

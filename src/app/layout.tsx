@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 import NavbarController from "@/components/navbar-controller";
-import { Toaster } from "sonner";
+import { Footer } from "@/components/footer";
+import { Toaster } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-montserrat",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "iNIcio",
@@ -22,11 +21,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt" className={montserrat.variable}>
-      <body className={`flex flex-col h-screen antialiased`}>
-        <NavbarController />
-        <main className="grow">{children}</main>
-        <Toaster />
+    <html
+      lang="pt"
+      className={cn("font-sans", inter.variable)}
+      suppressHydrationWarning
+    >
+      <body className="flex flex-col min-h-screen antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NavbarController />
+          <main className="grow flex flex-col">{children}</main>
+          <Footer />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

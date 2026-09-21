@@ -14,8 +14,11 @@ export default function CandidateVotingPhaseCard({ votingPhase }) {
       </CardHeader>
 
       <CardContent className="relative z-10">
-        <Button asChild>
-          <Link href={`/candidates/voting/${votingPhase.id}`}>Ver votação</Link>
+        <Button
+          nativeButton={false}
+          render={<Link href={`/candidates/voting/${votingPhase.id}`} />}
+        >
+          Ver votação
         </Button>
       </CardContent>
     </Card>

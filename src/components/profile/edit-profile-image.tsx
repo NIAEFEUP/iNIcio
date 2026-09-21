@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Upload } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useSession } from "@/lib/use-session";
 import { ProfileImageUpload } from "../ui/profile-image-upload";
 
@@ -52,12 +52,12 @@ export function EditProfileImage({
           <div className="relative">
             <Avatar className="h-32 w-32 ring-4 ring-primary/10 ring-offset-4 ring-offset-background">
               <AvatarImage
-                src={previewUrl || "/placeholder.svg"}
+                src={previewUrl || undefined}
                 alt={session?.user?.name}
                 className="object-cover"
               />
               <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-3xl font-semibold">
-                {session?.user?.name?.charAt(0)}
+                {getInitials(session?.user?.name)}
               </AvatarFallback>
             </Avatar>
           </div>

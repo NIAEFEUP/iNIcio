@@ -104,7 +104,9 @@ export function EditEventDialog({ children, event }: IProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onToggle}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children ? (
+        <DialogTrigger render={children as React.ReactElement} />
+      ) : null}
 
       <DialogContent>
         <DialogHeader>
@@ -361,11 +363,13 @@ export function EditEventDialog({ children, event }: IProps) {
         </Form>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
+          <DialogClose
+            render={
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            }
+          />
 
           <Button form="event-form" type="submit">
             Save changes

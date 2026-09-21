@@ -11,35 +11,55 @@ import {
   recruitment,
   recruitmentPhase,
   recruitmentPhaseStatus,
-  user,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fromFullUrlToPath } from "@/lib/file-upload";
 import { z } from "zod";
+import {
+  availableCourses,
+  availableCurricularYears,
+  availableInterests,
+} from "@/lib/constants";
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { getRecruitmentState } from "@/lib/recruitment-state";
 import { isRecruiter } from "@/lib/recruiter";
 
+const requiredText = z.string().min(1);
+
 const applicationSchema = z.object({
-  fullname: z.string().min(1),
   student_number: z
     .union([z.string(), z.number()])
-    .refine((value) => value !== "" && !Number.isNaN(Number(value)), {
-      message: "student_number must be numeric",
+    .refine((value) => /^\d+$/.test(String(value).trim()), {
+      message: "student_number must be a positive integer",
+    })
+    .transform((value) => Number(String(value).trim()))
+    .refine((value) => value > 0 && value <= 2147483647, {
+      message: "student_number is out of range",
     }),
-  phone: z.string().optional(),
-  degree: z.string().optional(),
-  curricular_year: z.string().optional(),
-  profile_picture: z.string().default(""),
+  phone: requiredText,
+  degree: z.string().refine((value) => availableCourses.includes(value), {
+    message: "Invalid degree",
+  }),
+  curricular_year: z
+    .string()
+    .refine((value) => availableCurricularYears.includes(value), {
+      message: "Invalid curricular year",
+    }),
   curriculum: z.string().default(""),
-  interests: z.array(z.string()).default([]),
+  interests: z
+    .array(
+      z.string().refine((value) => availableInterests.includes(value), {
+        message: "Invalid interest",
+      }),
+    )
+    .default([]),
   linkedin: z.string().optional(),
   github: z.string().optional(),
   website: z.string().optional(),
-  interest_justification: z.string().optional(),
+  interest_justification: requiredText,
   experience: z.string().optional(),
-  motivation: z.string().optional(),
-  self_promotion: z.string().optional(),
+  motivation: requiredText,
+  self_promotion: requiredText,
   suggestions: z.string().optional(),
 });
 
@@ -49,6 +69,15 @@ export async function POST(req: Request) {
   });
 
   if (!session) return new Response("Unauthorized", { status: 401 });
+
+  if (!session.user.image) {
+    return NextResponse.json(
+      {
+        error: "É necessário ter uma fotografia de perfil para se candidatar.",
+      },
+      { status: 403 },
+    );
+  }
 
   if (await isRecruiter(session.user.id))
     return new Response("Forbidden", { status: 403 });
@@ -112,7 +141,6 @@ export async function POST(req: Request) {
     const app = await tx
       .insert(application)
       .values({
-        fullName: data.fullname,
         submittedAt: new Date(),
         studentNumber: Number(data.student_number),
         linkedIn: data.linkedin,
@@ -122,7 +150,6 @@ export async function POST(req: Request) {
         phone: data.phone,
         degree: data.degree,
         curricularYear: data.curricular_year,
-        profilePicture: fromFullUrlToPath(data.profile_picture),
         curriculum: fromFullUrlToPath(data.curriculum),
         experience: data.experience,
         motivation: data.motivation,
@@ -132,16 +159,15 @@ export async function POST(req: Request) {
         candidateId: session.user.id,
         recruitmentId: target.id,
       })
+      .onConflictDoNothing()
       .returning({ id: application.id });
 
-    if (data.profile_picture) {
-      await tx
-        .update(user)
-        .set({
-          image: data.profile_picture,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, session.user.id));
+    if (app.length === 0) {
+      return {
+        ok: false as const,
+        status: 409,
+        error: "Já existe uma candidatura para este recrutamento",
+      };
     }
 
     for (const interest of data.interests) {
@@ -182,5 +208,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return new Response();
+  return NextResponse.json({ success: true });
 }

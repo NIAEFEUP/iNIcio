@@ -4,10 +4,14 @@ import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 import { headers } from "next/headers";
+import { PageHeader } from "@/components/layout/page-header";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
 import { dynamic, interview } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { requireAdminSession } from "@/lib/action-guard";
+import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function AdminTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -17,6 +21,7 @@ export default async function AdminTemplates() {
 
   const addInterviewTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addInterviewTemplate(update);
@@ -28,6 +33,7 @@ export default async function AdminTemplates() {
 
   const addDynamicTemplateAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
 
     try {
       await addDynamicTemplate(update);
@@ -39,9 +45,21 @@ export default async function AdminTemplates() {
 
   const interviewOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
+
+    const target = await getTargetRecruitment();
+    if (!target) return;
 
     try {
-      await db.update(interview).set({ content: update });
+      await db
+        .update(interview)
+        .set({ content: update })
+        .where(
+          and(
+            eq(interview.recruitmentId, target.id),
+            eq(interview.locked, false),
+          ),
+        );
     } catch (error) {
       console.error("Error saving interview template:", error);
       throw error;
@@ -50,9 +68,16 @@ export default async function AdminTemplates() {
 
   const dynamicOverrideAction = async (update: any) => {
     "use server";
+    await requireAdminSession();
+
+    const target = await getTargetRecruitment();
+    if (!target) return;
 
     try {
-      await db.update(dynamic).set({ content: update });
+      await db
+        .update(dynamic)
+        .set({ content: update })
+        .where(eq(dynamic.recruitmentId, target.id));
     } catch (error) {
       console.error("Error saving dynamic template:", error);
       throw error;
@@ -62,18 +87,22 @@ export default async function AdminTemplates() {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
+    ["interview-template-room"],
   );
 
   return (
-    <AdminTemplateClient
-      interviewOverrideAction={interviewOverrideAction}
-      dynamicOverrideAction={dynamicOverrideAction}
-      addInterviewTemplateAction={addInterviewTemplateAction}
-      addDynamicTemplateAction={addDynamicTemplateAction}
-      session={session}
-      jwt={jwt}
-      interviewTemplate={interviewTemplate}
-      dynamicTemplate={dynamicTemplate}
-    />
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Documentos" />
+      <AdminTemplateClient
+        interviewOverrideAction={interviewOverrideAction}
+        dynamicOverrideAction={dynamicOverrideAction}
+        addInterviewTemplateAction={addInterviewTemplateAction}
+        addDynamicTemplateAction={addDynamicTemplateAction}
+        session={session}
+        jwt={jwt}
+        interviewTemplate={interviewTemplate}
+        dynamicTemplate={dynamicTemplate}
+      />
+    </div>
   );
 }

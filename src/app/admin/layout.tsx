@@ -1,3 +1,4 @@
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -16,5 +17,5 @@ export default async function AdminLayout({
     redirect("/");
   }
 
-  return <>{children}</>;
+  return <DashboardShell>{children}</DashboardShell>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import { Dynamic, Interview, NewSlot, Slot } from "@/lib/db";
 import { SlotOperation } from "@/app/admin/interviews/page";
@@ -32,7 +32,9 @@ interface SlotAdminCalendarProps {
     interview: Interview[];
     dynamic: Dynamic[];
   };
-  saveSlots: (slots: SlotOperation[]) => Promise<void>;
+  saveSlots: (
+    slots: SlotOperation[],
+  ) => Promise<{ interview: Slot[]; dynamic: Slot[] }>;
 }
 
 export enum SlotType {
@@ -91,27 +93,16 @@ export default function SlotAdminCalendar({
     const start = new Date(date);
     start.setHours(hours, minutes, 0, 0);
 
-    const end = new Date(start);
-    end.setMinutes(start.getMinutes() + slotConfig[slotType].duration);
-
     const currentSlots = slots[slotType];
 
-    const existingIndex = currentSlots.findIndex(
-      (slot) =>
-        slot.start.getTime() === start.getTime() &&
-        slot.start.getTime() + slot.duration * 60000 === end.getTime(),
-    );
+    const isSameSlot = (slot: Slot | NewSlot) =>
+      slot.type === slotType && slot.start.getTime() === start.getTime();
+
+    const existingIndex = currentSlots.findIndex(isSameSlot);
 
     if (existingIndex !== -1) {
       setSlotOperations((prev) => [
-        ...prev.filter(
-          (s) =>
-            !(
-              s.type === "remove" &&
-              s.slot.start.getTime() === start.getTime() &&
-              s.slot.start.getTime() + s.slot.duration * 60000 === end.getTime()
-            ),
-        ),
+        ...prev.filter((s) => !(s.type === "remove" && isSameSlot(s.slot))),
         { type: "remove", slot: currentSlots[existingIndex] },
       ]);
 
@@ -130,14 +121,7 @@ export default function SlotAdminCalendar({
 
       setSlots({ ...slots, [slotType]: [...currentSlots, newSlot] });
       setSlotOperations((prev) => [
-        ...prev.filter(
-          (s) =>
-            !(
-              s.type === "remove" &&
-              s.slot.start.getTime() === start.getTime() &&
-              s.slot.start.getTime() + s.slot.duration * 60000 === end.getTime()
-            ),
-        ),
+        ...prev.filter((s) => !(s.type === "remove" && isSameSlot(s.slot))),
         { type: "add", slot: newSlot },
       ]);
     }
@@ -145,10 +129,12 @@ export default function SlotAdminCalendar({
 
   const handleSaveSlots = async () => {
     try {
-      saveSlots(slotOperations);
-      toast("Slots guardados");
+      const updated = await saveSlots(slotOperations);
+      setSlots(updated);
+      setSlotOperations([]);
+      toast.add({ title: "Slots guardados" });
     } catch (error) {
-      toast("Erro ao guardar slots: " + error);
+      toast.add({ title: "Erro ao guardar slots: " + error });
     }
   };
 

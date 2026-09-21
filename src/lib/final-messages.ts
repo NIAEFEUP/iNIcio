@@ -2,17 +2,118 @@ import { finalMessageTemplate } from "@/db/schema";
 import { db, FinalMessageTemplate } from "./db";
 import { eq } from "drizzle-orm";
 import { getLatestVotingDecisionForCandidate } from "./voting";
+import { getUserApplications } from "./application";
+import { getActiveRecruitment, getRecruitmentPhases } from "./recruitment";
+import {
+  getPhaseState,
+  normalizePhaseIdentifier,
+  RECRUITMENT_PHASE_IDENTIFIERS,
+} from "./recruitment-state";
 
-export async function getMessage(candidateId: string) {
-  const result = await getLatestVotingDecisionForCandidate(candidateId);
+export type CandidateRecruitmentResult = {
+  recruitmentId: number;
+  recruitmentTitle: string;
+  lectiveYear: string | null;
+  semester: number | null;
+  isCurrent: boolean;
+  decision: "approved" | "rejected" | "pending";
+  content: Array<unknown>;
+};
+
+const RESULT_PHASE_IDENTIFIER = RECRUITMENT_PHASE_IDENTIFIERS.result;
+
+/**
+ * Whether the candidate-facing "resultado" phase of a recruitment has started.
+ * A finalized result is only revealed when that phase is no longer upcoming.
+ * When no "resultado" phase is configured, the result is not gated.
+ */
+export async function canRevealCandidateResult(
+  recruitmentId: number,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const phases = await getRecruitmentPhases("candidate", recruitmentId);
+  const resultPhase = phases.find(
+    (phase) =>
+      normalizePhaseIdentifier(phase.clientIdentifier) ===
+      RESULT_PHASE_IDENTIFIER,
+  );
+
+  if (!resultPhase) return true;
+
+  return getPhaseState(resultPhase, now) !== "upcoming";
+}
+
+export async function getMessage(candidateId: string, recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (!targetId || !(await canRevealCandidateResult(targetId))) {
+    return null;
+  }
+
+  const result = await getLatestVotingDecisionForCandidate(
+    candidateId,
+    targetId,
+  );
 
   if (!result) return null;
 
   if (result.decision === "reject") {
-    return { decision: "rejected", message: await getRejectedMessage() };
+    return {
+      decision: "rejected" as const,
+      message: await getRejectedMessage(),
+    };
   } else {
-    return { decision: "approved", message: await getAcceptedMessage() };
+    return {
+      decision: "approved" as const,
+      message: await getAcceptedMessage(),
+    };
   }
+}
+
+export async function getAllCandidateResults(
+  candidateId: string,
+): Promise<CandidateRecruitmentResult[]> {
+  const userApps = await getUserApplications(candidateId);
+  const activeRec = await getActiveRecruitment();
+
+  const results: CandidateRecruitmentResult[] = [];
+
+  for (const app of userApps) {
+    const isCurrent =
+      activeRec?.id != null && app.recruitmentId === activeRec.id;
+    const votingDecision = await getLatestVotingDecisionForCandidate(
+      candidateId,
+      app.recruitmentId,
+    );
+
+    let decision: "approved" | "rejected" | "pending" = "pending";
+    let messageContent: Array<unknown> = [];
+
+    if (votingDecision && (await canRevealCandidateResult(app.recruitmentId))) {
+      if (votingDecision.decision === "reject") {
+        decision = "rejected";
+        const msg = await getRejectedMessage();
+        messageContent = (msg?.content ?? []) as Array<unknown>;
+      } else {
+        decision = "approved";
+        const msg = await getAcceptedMessage();
+        messageContent = (msg?.content ?? []) as Array<unknown>;
+      }
+    }
+
+    results.push({
+      recruitmentId: app.recruitmentId,
+      recruitmentTitle:
+        app.recruitment?.title ?? `Recrutamento #${app.recruitmentId}`,
+      lectiveYear: app.recruitment?.lectiveYear ?? null,
+      semester: app.recruitment?.semester ?? null,
+      isCurrent,
+      decision,
+      content: messageContent,
+    });
+  }
+
+  return results;
 }
 
 export async function getAcceptedMessage() {

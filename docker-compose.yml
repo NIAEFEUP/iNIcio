@@ -5,7 +5,7 @@ services:
     ports:
       - "1234:1234"
     environment:
-      JWT_SECRET: ${JWT_SECRET:-inicio}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (see .env.example)}
       HOST: 0.0.0.0
       PORT: 1234
   db:

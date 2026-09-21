@@ -1,6 +1,8 @@
 import ProgressPhaseCardShowcase from "@/components/progress/progress-phase-card-showcase";
+import { PageHeader } from "@/components/layout/page-header";
 import { auth } from "@/lib/auth";
 import { getRecruitmentPhases } from "@/lib/recruitment";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { headers } from "next/headers";
 
 const checkedVerifiers: {
@@ -17,8 +19,10 @@ export default async function RecruiterProgress() {
     headers: await headers(),
   });
 
+  const targetId = await getTargetRecruitmentId();
+
   const progressPhases = await Promise.all(
-    (await getRecruitmentPhases("recruiter")).map(async (phase) => {
+    (await getRecruitmentPhases("recruiter", targetId)).map(async (phase) => {
       const isDone = checkedVerifiers[
         phase.clientIdentifier.trim().toLowerCase()
       ]
@@ -37,7 +41,7 @@ export default async function RecruiterProgress() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-4xl text-center font-bold">Progresso</h1>
+      <PageHeader title="Progresso" />
       <p className="text-center">
         Agora que complestaste a tua candidatura, tens outras tarefas para
         realizar!

@@ -1,4 +1,4 @@
-import { candidate, recruiterToCandidate } from "@/db/schema";
+import { candidate } from "@/db/schema";
 import {
   Application,
   db,
@@ -21,9 +21,12 @@ export type CandidateWithMetadata = User & {
   dynamicClassification: string;
   interviewClassification: string;
   votingDecision?: {
-    decision: "approve" | "reject";
+    votingPhaseId: number;
+    voteFinished: boolean;
     approveCount: number;
     rejectCount: number;
+    decision: "approve" | "reject";
+    createdAt: Date | null;
   } | null;
 };
 
@@ -117,7 +120,6 @@ export async function getCandidateWithMetadata(
     application: res.application
       ? {
           ...res.application,
-          profilePicture: await getFilenameUrl(res.application?.profilePicture),
           curriculum: await getFilenameUrl(res.application?.curriculum),
           interests: res.application?.interests.map((i) => i.interest),
         }

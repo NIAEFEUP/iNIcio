@@ -1,6 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { CandidateWithMetadata } from "@/lib/candidate";
-import { Label } from "@radix-ui/react-label";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface CandidateQuickInfoSelectProps {
@@ -15,35 +15,26 @@ interface CandidateQuickInfoSelectProps {
 export default function CandidateQuickInfoSelect({
   candidate,
   selectActionHandler,
-  candidateSelected = false,
+  candidateSelected,
 }: CandidateQuickInfoSelectProps) {
-  const [checked, setChecked] = useState<boolean>(candidateSelected);
-  const [prevCandidateSelected, setPrevCandidateSelected] =
-    useState<boolean>(candidateSelected);
-  if (prevCandidateSelected !== candidateSelected) {
-    setPrevCandidateSelected(candidateSelected);
-    setChecked(candidateSelected);
-  }
+  const [isSelected, setIsSelected] = useState<boolean>(
+    candidateSelected || false,
+  );
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative">
-        <Checkbox
-          id={`select-candidate-${candidate.id}`}
-          className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
-          checked={checked}
-          onCheckedChange={(checked: boolean) => {
-            selectActionHandler(checked, candidate);
-            setChecked(checked);
-          }}
-        />
-      </div>
-      <Label
-        htmlFor={`select-candidate-${candidate.id}`}
-        className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
-      >
-        Selecionar
-      </Label>
+    <div
+      key={candidate.id}
+      className="flex flex-row gap-2 items-center text-sm"
+    >
+      <Checkbox
+        checked={isSelected}
+        onCheckedChange={(checked) => {
+          setIsSelected(checked as boolean);
+          selectActionHandler(checked as boolean, candidate);
+        }}
+        id={candidate.id}
+      />
+      <Label htmlFor={candidate.id}>{candidate.name}</Label>
     </div>
   );
 }
