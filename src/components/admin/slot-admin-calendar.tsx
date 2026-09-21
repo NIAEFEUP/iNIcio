@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { toast } from "@/components/ui/toast";
 
-import { Dynamic, Interview, NewSlot, Slot } from "@/lib/db";
+import { Dynamic, Interview, Slot } from "@/lib/db";
 import { SlotOperation } from "@/app/admin/interviews/page";
 import ChooseCustomSlot, { SlotCell } from "../slot/choose-custom-slot";
 import {
@@ -42,6 +42,8 @@ export enum SlotType {
   dynamic = "dynamic",
 }
 
+type PendingSlot = Omit<Slot, "id"> & { id?: Slot["id"] };
+
 export default function SlotAdminCalendar({
   candidates,
   recruitmentId,
@@ -53,9 +55,11 @@ export default function SlotAdminCalendar({
   saveSlots,
 }: SlotAdminCalendarProps) {
   const [slots, setSlots] = useState<{
-    interview: Slot[];
-    dynamic: Slot[];
+    interview: PendingSlot[];
+    dynamic: PendingSlot[];
   }>(existingSlots);
+
+  const [saving, setSaving] = useState(false);
 
   const [baseline, setBaseline] = useState(existingSlots);
 
@@ -96,6 +100,7 @@ export default function SlotAdminCalendar({
   };
 
   const onCellsChange = (cells: SlotCell[], selected: boolean) => {
+    if (saving) return;
     setSlots((prev) => {
       const current = prev[slotType];
 
@@ -106,7 +111,7 @@ export default function SlotAdminCalendar({
             (start) =>
               !current.some((s) => s.start.getTime() === start.getTime()),
           )
-          .map((start): NewSlot => ({
+          .map((start) => ({
             start,
             duration: slotConfig[slotType].duration,
             quantity: slotConfig[slotType].quantity,
@@ -125,7 +130,8 @@ export default function SlotAdminCalendar({
   };
 
   const handleSaveSlots = async () => {
-    const slotKey = (s: Slot | NewSlot) => s.start.getTime();
+    if (saving) return;
+    const slotKey = (s: Slot | PendingSlot) => s.start.getTime();
     const types = [SlotType.interview, SlotType.dynamic];
 
     const operations: SlotOperation[] = types.flatMap((type) => {
@@ -141,6 +147,7 @@ export default function SlotAdminCalendar({
       ];
     });
 
+    setSaving(true);
     try {
       const updated = await saveSlots(operations);
       setSlots(updated);
@@ -148,6 +155,8 @@ export default function SlotAdminCalendar({
       toast.add({ title: "Slots guardados" });
     } catch (error) {
       toast.add({ title: "Erro ao guardar slots: " + error });
+    } finally {
+      setSaving(false);
     }
   };
 

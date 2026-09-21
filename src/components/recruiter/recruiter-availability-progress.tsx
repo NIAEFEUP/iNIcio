@@ -93,11 +93,17 @@ export default function RecruiterAvailabilityClient({
         .map((availability) => ({ type: "add" as const, availability })),
     ];
 
-    const ok = await saveAvailabilities(operations);
+    try {
+      const ok = await saveAvailabilities(operations);
+      if (!ok) {
+        toast.add({ title: "Erro ao guardar disponibilidade" });
+        return;
+      }
 
-    if (ok) {
       setBaseline(availabilities);
       toast.add({ title: "Guardado com sucesso" });
+    } catch {
+      toast.add({ title: "Erro ao guardar disponibilidade" });
     }
   };
 
