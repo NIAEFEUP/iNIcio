@@ -3,7 +3,12 @@ import { db, FinalMessageTemplate } from "./db";
 import { eq } from "drizzle-orm";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 import { getUserApplications } from "./application";
-import { getActiveRecruitment } from "./recruitment";
+import { getActiveRecruitment, getRecruitmentPhases } from "./recruitment";
+import {
+  getPhaseState,
+  normalizePhaseIdentifier,
+  RECRUITMENT_PHASE_IDENTIFIERS,
+} from "./recruitment-state";
 
 export type CandidateRecruitmentResult = {
   recruitmentId: number;
@@ -15,10 +20,39 @@ export type CandidateRecruitmentResult = {
   content: Array<unknown>;
 };
 
+const RESULT_PHASE_IDENTIFIER = RECRUITMENT_PHASE_IDENTIFIERS.result;
+
+/**
+ * Whether the candidate-facing "resultado" phase of a recruitment has started.
+ * A finalized result is only revealed when that phase is no longer upcoming.
+ * When no "resultado" phase is configured, the result is not gated.
+ */
+export async function canRevealCandidateResult(
+  recruitmentId: number,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const phases = await getRecruitmentPhases("candidate", recruitmentId);
+  const resultPhase = phases.find(
+    (phase) =>
+      normalizePhaseIdentifier(phase.clientIdentifier) ===
+      RESULT_PHASE_IDENTIFIER,
+  );
+
+  if (!resultPhase) return true;
+
+  return getPhaseState(resultPhase, now) !== "upcoming";
+}
+
 export async function getMessage(candidateId: string, recruitmentId?: number) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (!targetId || !(await canRevealCandidateResult(targetId))) {
+    return null;
+  }
+
   const result = await getLatestVotingDecisionForCandidate(
     candidateId,
-    recruitmentId,
+    targetId,
   );
 
   if (!result) return null;
@@ -55,7 +89,7 @@ export async function getAllCandidateResults(
     let decision: "approved" | "rejected" | "pending" = "pending";
     let messageContent: Array<unknown> = [];
 
-    if (votingDecision) {
+    if (votingDecision && (await canRevealCandidateResult(app.recruitmentId))) {
       if (votingDecision.decision === "reject") {
         decision = "rejected";
         const msg = await getRejectedMessage();
