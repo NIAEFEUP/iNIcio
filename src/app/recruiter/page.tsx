@@ -2,13 +2,16 @@ import RecruiterResources from "@/components/recruiter/recruiter-resources";
 import { PageHeader } from "@/components/layout/page-header";
 import { auth } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function RecruiterPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!(await isRecruiter(session?.user.id))) {
+  const targetId = await getTargetRecruitmentId();
+
+  if (!(await isRecruiter(session?.user.id, targetId))) {
     redirect("/");
   }
 
