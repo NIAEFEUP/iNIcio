@@ -124,7 +124,7 @@ export default function LandingPage({
             </>
           ) : isRecruiter || isAdmin ? (
             <Link
-              href={isAdmin ? "/admin" : "/candidates"}
+              href={isAdmin ? "/admin" : "/recruiter"}
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "text-base px-6 h-12 gap-2",

@@ -4,6 +4,7 @@ export default function SlotBox({
   existingSlot,
   isSlotSelected,
   getTypeColor,
+  preview = null,
 }) {
   return (
     <div
@@ -15,6 +16,9 @@ export default function SlotBox({
           `${getTypeColor(existingSlot.type)} border-solid border-transparent text-white`,
         isSlotSelected &&
           `${getTypeColor(existingSlot.type)} border-solid border-yellow-400 border-4 text-white shadow-lg ring-2 ring-yellow-200`,
+        preview === "select" && "ring-2 ring-inset ring-emerald-400",
+        preview === "deselect" && "ring-2 ring-inset ring-red-400 opacity-60",
+        preview === "select" && !existingSlot && "bg-emerald-50",
       )}
     >
       {existingSlot && (

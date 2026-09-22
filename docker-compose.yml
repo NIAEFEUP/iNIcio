@@ -33,6 +33,15 @@ services:
     ports:
       - 9000:9000 # S3
       - 9001:9001 # UI
+  createbuckets:
+    image: "quay.io/minio/mc:latest"
+    depends_on:
+      - s3
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://s3:9000 inicio inicio123 > /dev/null 2>&1; do sleep 1; done;
+      mc mb --ignore-existing local/${S3_BUCKET:-inicio};
+      "
 
 volumes:
   pgdata-inicio:

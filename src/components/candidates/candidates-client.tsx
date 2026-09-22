@@ -31,10 +31,10 @@ import {
   type ViewMode,
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
+import { setCandidatesViewMode } from "@/cookies/set";
 import { getInitials } from "@/lib/utils";
 
 import { CandidateWithMetadata } from "@/lib/candidate";
-import { User } from "@/lib/db";
 import CandidateGridCard from "./candidate-grid-card";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
@@ -45,12 +45,18 @@ import {
 } from "@/lib/constants";
 
 interface CandidatesClientProps {
-  authUser?: User | null;
+  authUser?: { id?: string } | null;
   candidates: Array<CandidateWithMetadata>;
   availableDepartments: Array<string>;
+  initialViewMode?: ViewMode;
 }
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 48;
+
+const PREVIOUS_APPLICATION_OPTIONS = [
+  { value: "yes", label: "Já se candidatou" },
+  { value: "no", label: "Primeira candidatura" },
+];
 
 const DECISION_OPTIONS = [
   { value: "approved", label: "Aprovado" },
@@ -74,8 +80,13 @@ export default function CandidatesClient({
   authUser,
   candidates,
   availableDepartments,
+  initialViewMode = "grid",
 }: CandidatesClientProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setCandidatesViewMode(mode);
+  };
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
@@ -101,6 +112,8 @@ export default function CandidatesClient({
         ),
         cell: ({ row }) => (
           <DataTableEntityCell
+            image={row.original.image || undefined}
+            imageAlt={row.original.name}
             name={
               <Link
                 href={`/candidate/${row.original.id}`}
@@ -167,6 +180,26 @@ export default function CandidatesClient({
           multiIncludes(row, value, (c) =>
             c.application?.curricularYear ? [c.application.curricularYear] : [],
           ),
+      },
+      {
+        id: "previousApplications",
+        accessorFn: (c) => (c.previousApplicationYears ?? []).join(", "),
+        header: "Recandidatura",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const years = row.original.previousApplicationYears ?? [];
+          return (
+            <span className="text-sm text-foreground">
+              {years.length > 0 ? years.join(", ") : "-"}
+            </span>
+          );
+        },
+        filterFn: (row, _id, value: string[]) => {
+          if (!value || value.length === 0) return true;
+          const applied =
+            (row.original.previousApplicationYears ?? []).length > 0;
+          return value.some((v) => (v === "yes" ? applied : !applied));
+        },
       },
       {
         id: "departments",
@@ -306,6 +339,9 @@ export default function CandidatesClient({
   const selectedYears =
     (columnFilters.find((f) => f.id === "year")?.value as
       string[] | undefined) ?? [];
+  const selectedPreviousApplications =
+    (columnFilters.find((f) => f.id === "previousApplications")?.value as
+      string[] | undefined) ?? [];
   const selectedDepartments =
     (columnFilters.find((f) => f.id === "departments")?.value as
       string[] | undefined) ?? [];
@@ -359,6 +395,7 @@ export default function CandidatesClient({
               email: "Email",
               course: "Curso",
               year: "Ano",
+              previousApplications: "Recandidatura",
               departments: "Departamentos",
               interviewClassification: "Entrevista",
               dynamicClassification: "Dinâmica",
@@ -389,6 +426,16 @@ export default function CandidatesClient({
               }))}
               selectedValues={selectedYears}
               onSelectedValuesChange={(values) => setFilter("year", values)}
+            />
+            <DataTableFilter
+              title="Recandidatura"
+              pluralTitle="Recandidaturas"
+              allLabel="Todas as candidaturas"
+              options={PREVIOUS_APPLICATION_OPTIONS}
+              selectedValues={selectedPreviousApplications}
+              onSelectedValuesChange={(values) =>
+                setFilter("previousApplications", values)
+              }
             />
             <DataTableFilter
               title="Departamento"
@@ -455,7 +502,11 @@ export default function CandidatesClient({
         }
       />
 
-      <p className="text-sm text-muted-foreground">
+      <p
+        role="status"
+        aria-live="polite"
+        className="text-sm text-muted-foreground"
+      >
         <span className="font-semibold text-foreground">{filteredCount}</span>{" "}
         candidaturas
       </p>

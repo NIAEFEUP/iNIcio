@@ -8,7 +8,7 @@ import {
   getCellKey,
   getSlotForCell,
 } from "@/lib/date";
-import ChooseCustomSlot from "../slot/choose-custom-slot";
+import ChooseCustomSlot, { SlotCell } from "../slot/choose-custom-slot";
 import { useRef, useState } from "react";
 import { NewRecruiterAvailability, RecruiterAvailability } from "@/lib/db";
 
@@ -20,6 +20,8 @@ export type AvailabilityOperation = {
   type: "add" | "remove";
   availability: RecruiterAvailability | NewRecruiterAvailability;
 };
+
+const SLOT_MINUTES = 30;
 
 interface RecruiterAvailabilityClientProps {
   currentAvailabilities: RecruiterAvailability[];
@@ -40,59 +42,68 @@ export default function RecruiterAvailabilityClient({
     NewRecruiterAvailability[]
   >(currentAvailabilities);
 
-  const [availabilityOperations, setAvailabilityOperations] = useState<
-    AvailabilityOperation[]
-  >([]);
+  const [baseline, setBaseline] = useState<NewRecruiterAvailability[]>(
+    currentAvailabilities,
+  );
 
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const handleCellClick = (date: Date, time: string) => {
+  const cellStart = ({ date, time }: SlotCell) => {
     const [hours, minutes] = time.split(":").map(Number);
     const start = new Date(date);
-
     start.setHours(hours, minutes, 0, 0);
+    return start;
+  };
 
-    const end = new Date(start);
-    end.setMinutes(start.getMinutes() + 30);
+  const onCellsChange = (cells: SlotCell[], selected: boolean) => {
+    setAvailabilities((prev) => {
+      if (selected) {
+        const additions = cells
+          .map(cellStart)
+          .filter(
+            (start) => !prev.some((s) => s.start.getTime() === start.getTime()),
+          )
+          .map((start) => ({
+            start,
+            duration: SLOT_MINUTES,
+            recruitmentId,
+            recruiterId,
+          }));
+        return additions.length > 0 ? [...prev, ...additions] : prev;
+      }
 
-    const existingIndex = availabilities.findIndex(
-      (slot) =>
-        slot.start.getTime() === start.getTime() &&
-        slot.start.getTime() + slot.duration * 60000 === end.getTime(),
+      const starts = new Set(cells.map((cell) => cellStart(cell).getTime()));
+      const next = prev.filter((s) => !starts.has(s.start.getTime()));
+      return next.length === prev.length ? prev : next;
+    });
+  };
+
+  const handleSave = async () => {
+    const selectedStarts = new Set(
+      availabilities.map((s) => s.start.getTime()),
     );
+    const baselineStarts = new Set(baseline.map((s) => s.start.getTime()));
 
-    if (existingIndex !== -1) {
-      setAvailabilityOperations((prev) => [
-        ...prev.filter(
-          (s) =>
-            !(
-              s.type === "remove" &&
-              s.availability.start.getTime() === start.getTime() &&
-              s.availability.start.getTime() +
-                s.availability.duration * 60000 ===
-                end.getTime()
-            ),
-        ),
-        { type: "remove", availability: availabilities[existingIndex] },
-      ]);
+    const operations: AvailabilityOperation[] = [
+      ...baseline
+        .filter((s) => !selectedStarts.has(s.start.getTime()))
+        .map((availability) => ({ type: "remove" as const, availability })),
+      ...availabilities
+        .filter((s) => !baselineStarts.has(s.start.getTime()))
+        .map((availability) => ({ type: "add" as const, availability })),
+    ];
 
-      setAvailabilities(availabilities.filter((_, i) => i != existingIndex));
-    } else {
-      const newAvailibity = {
-        start: start,
-        duration: 30,
-        recruitmentId,
-        recruiterId: recruiterId,
-      };
+    try {
+      const ok = await saveAvailabilities(operations);
+      if (!ok) {
+        toast.add({ title: "Erro ao guardar disponibilidade" });
+        return;
+      }
 
-      setAvailabilities((prev) => [...prev, newAvailibity]);
-      setAvailabilityOperations((prev) => [
-        ...prev,
-        {
-          type: "add",
-          availability: newAvailibity,
-        },
-      ]);
+      setBaseline(availabilities);
+      toast.add({ title: "Guardado com sucesso" });
+    } catch {
+      toast.add({ title: "Erro ao guardar disponibilidade" });
     }
   };
 
@@ -104,21 +115,15 @@ export default function RecruiterAvailabilityClient({
         slots={availabilities}
         dates={generateDates()}
         tableRef={tableRef}
-        timeSlots={generateTimeSlots(9, 19, 30)}
+        timeSlots={generateTimeSlots(9, 19, SLOT_MINUTES)}
         getSlotForCell={getSlotForCell}
         getCellKey={getCellKey}
         selectedSlot={null}
-        handleCellClick={handleCellClick}
+        onCellsChange={onCellsChange}
         getTypeColor={() => "bg-primary"}
         formatDateHeader={formatDateHeader}
         headerAction={
-          <Button
-            onClick={async () => {
-              const ok = await saveAvailabilities(availabilityOperations);
-
-              if (ok) toast.add({ title: "Guardado com sucesso" });
-            }}
-          >
+          <Button onClick={handleSave}>
             <Save className="h-4 w-4" />
             Guardar
           </Button>

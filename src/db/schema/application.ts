@@ -51,6 +51,7 @@ export const application = pgTable(
       table.recruitmentId,
     ),
     index("application_recruitment_id_idx").on(table.recruitmentId),
+    index("application_student_number_idx").on(table.studentNumber),
   ],
 );
 
