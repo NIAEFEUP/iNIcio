@@ -3,9 +3,9 @@
 import { useState, useRef } from "react";
 import { toast } from "@/components/ui/toast";
 
-import { Dynamic, Interview, NewSlot, Slot } from "@/lib/db";
+import { Dynamic, Interview, Slot } from "@/lib/db";
 import { SlotOperation } from "@/app/admin/interviews/page";
-import ChooseCustomSlot from "../slot/choose-custom-slot";
+import ChooseCustomSlot, { SlotCell } from "../slot/choose-custom-slot";
 import {
   formatDateHeader,
   generateDates,
@@ -42,6 +42,8 @@ export enum SlotType {
   dynamic = "dynamic",
 }
 
+type PendingSlot = Omit<Slot, "id"> & { id?: Slot["id"] };
+
 export default function SlotAdminCalendar({
   candidates,
   recruitmentId,
@@ -53,13 +55,15 @@ export default function SlotAdminCalendar({
   saveSlots,
 }: SlotAdminCalendarProps) {
   const [slots, setSlots] = useState<{
-    interview: Slot[];
-    dynamic: Slot[];
+    interview: PendingSlot[];
+    dynamic: PendingSlot[];
   }>(existingSlots);
 
-  const [slotType, setSlotType] = useState<SlotType>(SlotType.interview);
+  const [saving, setSaving] = useState(false);
 
-  const [slotOperations, setSlotOperations] = useState<SlotOperation[]>([]);
+  const [baseline, setBaseline] = useState(existingSlots);
+
+  const [slotType, setSlotType] = useState<SlotType>(SlotType.interview);
 
   const [slotConfig, setSlotConfig] = useState({
     interview: {
@@ -88,53 +92,71 @@ export default function SlotAdminCalendar({
 
   const dates = generateDates();
 
-  const handleCellClick = (date: Date, time: string) => {
+  const cellStart = ({ date, time }: SlotCell) => {
     const [hours, minutes] = time.split(":").map(Number);
     const start = new Date(date);
     start.setHours(hours, minutes, 0, 0);
+    return start;
+  };
 
-    const currentSlots = slots[slotType];
+  const onCellsChange = (cells: SlotCell[], selected: boolean) => {
+    if (saving) return;
+    setSlots((prev) => {
+      const current = prev[slotType];
 
-    const isSameSlot = (slot: Slot | NewSlot) =>
-      slot.type === slotType && slot.start.getTime() === start.getTime();
+      if (selected) {
+        const additions = cells
+          .map(cellStart)
+          .filter(
+            (start) =>
+              !current.some((s) => s.start.getTime() === start.getTime()),
+          )
+          .map((start) => ({
+            start,
+            duration: slotConfig[slotType].duration,
+            quantity: slotConfig[slotType].quantity,
+            type: slotType,
+            recruitmentId,
+          }));
+        if (additions.length === 0) return prev;
+        return { ...prev, [slotType]: [...current, ...additions] };
+      }
 
-    const existingIndex = currentSlots.findIndex(isSameSlot);
-
-    if (existingIndex !== -1) {
-      setSlotOperations((prev) => [
-        ...prev.filter((s) => !(s.type === "remove" && isSameSlot(s.slot))),
-        { type: "remove", slot: currentSlots[existingIndex] },
-      ]);
-
-      setSlots((prev) => ({
-        ...prev,
-        [slotType]: prev[slotType].filter((_, i) => i !== existingIndex),
-      }));
-    } else {
-      const newSlot: NewSlot = {
-        start,
-        duration: slotConfig[slotType].duration,
-        quantity: slotConfig[slotType].quantity,
-        type: slotType,
-        recruitmentId,
-      };
-
-      setSlots({ ...slots, [slotType]: [...currentSlots, newSlot] });
-      setSlotOperations((prev) => [
-        ...prev.filter((s) => !(s.type === "remove" && isSameSlot(s.slot))),
-        { type: "add", slot: newSlot },
-      ]);
-    }
+      const starts = new Set(cells.map((cell) => cellStart(cell).getTime()));
+      const next = current.filter((s) => !starts.has(s.start.getTime()));
+      if (next.length === current.length) return prev;
+      return { ...prev, [slotType]: next };
+    });
   };
 
   const handleSaveSlots = async () => {
+    if (saving) return;
+    const slotKey = (s: Slot | PendingSlot) => s.start.getTime();
+    const types = [SlotType.interview, SlotType.dynamic];
+
+    const operations: SlotOperation[] = types.flatMap((type) => {
+      const selectedStarts = new Set(slots[type].map(slotKey));
+      const baselineStarts = new Set(baseline[type].map(slotKey));
+      return [
+        ...baseline[type]
+          .filter((s) => !selectedStarts.has(slotKey(s)))
+          .map((slot) => ({ type: "remove" as const, slot })),
+        ...slots[type]
+          .filter((s) => !baselineStarts.has(slotKey(s)))
+          .map((slot) => ({ type: "add" as const, slot })),
+      ];
+    });
+
+    setSaving(true);
     try {
-      const updated = await saveSlots(slotOperations);
+      const updated = await saveSlots(operations);
       setSlots(updated);
-      setSlotOperations([]);
+      setBaseline(updated);
       toast.add({ title: "Slots guardados" });
     } catch (error) {
       toast.add({ title: "Erro ao guardar slots: " + error });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -177,7 +199,7 @@ export default function SlotAdminCalendar({
             getSlotForCell={getSlotForCell}
             getCellKey={getCellKey}
             selectedSlot={selectedSlot}
-            handleCellClick={handleCellClick}
+            onCellsChange={onCellsChange}
             getTypeColor={getTypeColor}
             formatDateHeader={formatDateHeader}
           />
