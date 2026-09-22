@@ -15,7 +15,7 @@ import {
   candidateFilterRestrictions,
   CandidateWithMetadata,
 } from "./candidate";
-import { getLatestVotingDecisionForCandidate } from "./voting";
+import { getLatestVotingDecisionsForCandidates } from "./voting";
 import { getActiveRecruitment } from "./recruitment";
 import { getPreviousApplicationYears } from "./previous-applications";
 
@@ -168,6 +168,11 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
     res.recruitmentId,
   );
 
+  const votingDecisions = await getLatestVotingDecisionsForCandidates(
+    res.candidates.map((c) => c.candidate.userId),
+    recruitmentId ?? res.recruitmentId,
+  );
+
   return {
     ...res,
     candidates: await Promise.all(
@@ -192,12 +197,7 @@ export async function getDynamic(dynamicId: number, recruitmentId?: number) {
         knownRecruiters: c.candidate.knownRecruiters,
         previousApplicationYears:
           previousApplicationYears.get(c.candidate.userId) ?? [],
-        votingDecision: recruitmentId
-          ? await getLatestVotingDecisionForCandidate(
-              c.candidate.userId,
-              recruitmentId,
-            )
-          : await getLatestVotingDecisionForCandidate(c.candidate.userId),
+        votingDecision: votingDecisions.get(c.candidate.userId) ?? null,
       })),
     ),
   };
@@ -335,12 +335,13 @@ export async function getAllCandidatesWithDynamic(
     targetId,
   );
 
+  const votingDecisions = await getLatestVotingDecisionsForCandidates(
+    candidates.map((c) => c.userId),
+    targetId,
+  );
+
   const res: Array<CandidateWithMetadata> = await Promise.all(
     candidates.map(async (c) => {
-      const votingDecision = targetId
-        ? await getLatestVotingDecisionForCandidate(c.userId, targetId)
-        : await getLatestVotingDecisionForCandidate(c.userId);
-
       return {
         ...c.user,
         image: await getFilenameUrl(c.user?.image),
@@ -356,7 +357,7 @@ export async function getAllCandidatesWithDynamic(
             }
           : null,
         knownRecruiters: c.knownRecruiters,
-        votingDecision,
+        votingDecision: votingDecisions.get(c.userId) ?? null,
         previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
       };
     }),

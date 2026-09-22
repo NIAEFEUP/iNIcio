@@ -1,8 +1,8 @@
 import { and, eq, inArray, lt, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { application, recruitment } from "@/db/schema";
 import { db } from "./db";
-import { getRecruitmentById } from "./recruitment";
 
 export interface CandidateIdentity {
   userId: string;
@@ -21,9 +21,6 @@ export async function getPreviousApplicationYears(
   const years = new Map<string, Array<string>>();
   if (identities.length === 0) return years;
 
-  const viewed = await getRecruitmentById(recruitmentId);
-  if (!viewed) return years;
-
   const userIds = [...new Set(identities.map((i) => i.userId))];
   const studentNumbers = [
     ...new Set(
@@ -33,6 +30,10 @@ export async function getPreviousApplicationYears(
     ),
   ];
 
+  // Self-join the viewed recruitment so this stays a single query; a missing
+  // recruitment simply produces no rows.
+  const viewed = alias(recruitment, "viewed_recruitment");
+
   const rows = await db
     .select({
       candidateId: application.candidateId,
@@ -41,6 +42,7 @@ export async function getPreviousApplicationYears(
     })
     .from(application)
     .innerJoin(recruitment, eq(recruitment.id, application.recruitmentId))
+    .innerJoin(viewed, eq(viewed.id, recruitmentId))
     .where(
       and(
         lt(recruitment.start, viewed.start),
