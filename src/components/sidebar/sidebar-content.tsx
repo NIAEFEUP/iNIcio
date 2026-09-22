@@ -63,6 +63,12 @@ export function SidebarContentComponent({
 
   const recruiterSections: NavItem[] = [
     {
+      title: "Painel",
+      path: "/recruiter",
+      icon: LayoutDashboard,
+      exact: true,
+    },
+    {
       title: "Disponibilidades",
       path: "/recruiter/availability",
       icon: Clock,
