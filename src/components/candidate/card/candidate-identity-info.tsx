@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CandidateWithMetadata } from "@/lib/candidate";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import Link from "next/link";
 
@@ -17,7 +18,7 @@ export default function CandidateIdentityInfo({
       <div className="relative">
         <Avatar className="h-20 w-20 ring-4 ring-primary/10 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-primary/20">
           <AvatarImage
-            src={candidate?.image || "/placeholder.svg"}
+            src={getStableImageUrl(candidate?.image) || "/placeholder.svg"}
             alt={candidate?.name}
             className="object-cover"
           />

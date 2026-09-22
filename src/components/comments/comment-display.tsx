@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
@@ -26,7 +27,7 @@ export function CommentDisplay({ candidate, comment }: CommentDisplayProps) {
       <div className="flex items-start gap-3">
         <Avatar size="lg" className="ring-2 ring-border/60">
           <AvatarImage
-            src={comment.user?.image || undefined}
+            src={getStableImageUrl(comment.user?.image) || undefined}
             alt={comment.user?.name}
           />
           <AvatarFallback>
