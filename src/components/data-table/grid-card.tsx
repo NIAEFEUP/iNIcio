@@ -34,7 +34,7 @@ export function GridCard({
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-xl border bg-card p-4 shadow-xs",
+        "relative flex flex-col justify-between rounded-xl border bg-card p-4 shadow-xs",
         className,
       )}
     >
