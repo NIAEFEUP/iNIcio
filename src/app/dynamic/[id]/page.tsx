@@ -1,10 +1,12 @@
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+"use client";
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 
 import CandidateComments from "@/components/candidate/page/candidate-comments";
+import CandidateGridCard from "@/components/candidates/candidate-grid-card";
 import CommentFrame from "@/components/comments/comment-frame";
-import DynamicCandidatesCard from "@/components/dynamic/dynamic-candidates-card";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,93 +15,93 @@ import {
   EvaluationPanel,
 } from "@/components/layout/evaluation-layout";
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
+import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
+import { DataErrorState } from "@/components/data-table/data-state-view";
 import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
 
-import { candidate } from "@/db/schema";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import {
-  createDynamicComment,
-  getDynamic,
-  getDynamicInterviewers,
-  updateDynamic,
-  updateDynamicComment,
-} from "@/lib/dynamic";
-import { getDynamicComments } from "@/lib/comment";
-import { generateJWT } from "@/lib/jwt";
-import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { getRole } from "@/lib/role";
-import { getTargetRecruitment } from "@/lib/selected-recruitment";
-import { requireRecruiterSession } from "@/lib/action-guard";
+  classifyDynamic,
+  editDynamicComment,
+  saveDynamicComment,
+  updateDynamicContent,
+} from "@/app/candidate/actions";
+import { useAuth } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import {
+  candidateKey,
+  dynamicKey,
+  useDynamicData,
+} from "@/lib/hooks/candidates/use-candidate-data";
 
-export default async function DynamicPage({ params }: any) {
-  const { id } = await params;
+export default function DynamicPage() {
+  const params = useParams<{ id: string }>();
+  const dynamicId = Number(params.id);
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const { data, isLoading, error } = useDynamicData(dynamicId);
+  const { user } = useAuth();
+  const { mutate } = useSWRConfig();
+  const { recruitmentId } = useRecruitment();
 
-  const targetRecruitment = await getTargetRecruitment();
-  const recruitmentId = targetRecruitment?.id;
-  if (!recruitmentId) notFound();
+  const candidatesFromData = data?.dynamic.candidates;
 
-  if (!(await isRecruiter(session?.user.id, recruitmentId))) redirect("/");
+  useEffect(() => {
+    if (!candidatesFromData) return;
+    for (const candidate of candidatesFromData) {
+      mutate(candidateKey(candidate.id, recruitmentId), candidate, {
+        revalidate: false,
+      });
+    }
+  }, [candidatesFromData, recruitmentId, mutate]);
 
-  async function handleContentSave(content: any) {
-    "use server";
-    await requireRecruiterSession(recruitmentId);
-    await updateDynamic(id, content);
+  if (isLoading && !data) {
+    return <EvaluationSkeleton showInterviewers contentCardsCount={1} />;
   }
 
-  async function handleCommentEdit(commentId: number, content: Array<any>) {
-    "use server";
-    const user = await requireRecruiterSession(recruitmentId);
-    return await updateDynamicComment(
-      commentId,
-      content,
-      user.id,
-      id,
-      recruitmentId,
+  if (error || !data) {
+    return (
+      <DataErrorState
+        title="Dinâmica não encontrada"
+        message={error instanceof Error ? error.message : undefined}
+      />
     );
   }
 
-  async function handleCommentSave(content: Array<any>) {
-    "use server";
-    const user = await requireRecruiterSession(recruitmentId);
-    const commentId = await createDynamicComment(id, content, user.id);
-    return commentId ? { success: true, id: commentId } : { success: false };
-  }
+  const { dynamic, interviewers, comments, recruiters, token } = data;
 
-  async function addDynamicClassification(
+  const saveContent = async (content: unknown) => {
+    await updateDynamicContent(dynamicId, content);
+  };
+
+  const saveComment = async (content: Array<unknown>) => {
+    const result = await saveDynamicComment(dynamicId, content);
+    if (result.success) {
+      mutate(dynamicKey(dynamicId, recruitmentId));
+    }
+    return result;
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    const ok = await editDynamicComment(dynamicId, commentId, content);
+    if (ok) {
+      mutate(dynamicKey(dynamicId, recruitmentId));
+    }
+    return ok;
+  };
+
+  const handleClassifyDynamic = async (
     candidateId: string,
     classification: string,
-  ) {
-    "use server";
-    await requireRecruiterSession(recruitmentId);
-
-    await db
-      .update(candidate)
-      .set({ dynamicClassification: classification })
-      .where(
-        and(
-          eq(candidate.userId, candidateId),
-          eq(candidate.recruitmentId, recruitmentId),
-        ),
-      );
-  }
-
-  const dynamic = await getDynamic(id, recruitmentId);
-  if (!dynamic) notFound();
-
-  const recruiters = await getRecruiters(recruitmentId);
-  const interviewers = await getDynamicInterviewers(dynamic.id);
-  const comments = await getDynamicComments(dynamic.id);
-
-  const jwt = await generateJWT(
-    session?.user.id,
-    await getRole(session?.user.id),
-    [`dynamic-${id}`],
-  );
+  ) => {
+    await classifyDynamic(candidateId, classification);
+    mutate(
+      candidateKey(candidateId, recruitmentId),
+      (current: any) =>
+        current
+          ? { ...current, dynamicClassification: classification }
+          : current,
+      { revalidate: false },
+    );
+  };
 
   return (
     <EvaluationLayout
@@ -121,10 +123,22 @@ export default async function DynamicPage({ params }: any) {
       }
       sidebar={
         <>
-          <DynamicCandidatesCard
-            candidates={dynamic.candidates}
-            addDynamicClassification={addDynamicClassification}
-          />
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Candidatos
+            </h3>
+            <div className="flex flex-col gap-4">
+              {dynamic.candidates.map((candidate) => (
+                <CandidateGridCard
+                  key={candidate.id}
+                  candidate={candidate}
+                  friends={candidate.knownRecruiters}
+                  authUser={user ? { id: user.id } : null}
+                  classifyDynamic={handleClassifyDynamic}
+                />
+              ))}
+            </div>
+          </div>
 
           <RecruiterAssignedInfo
             interviewers={interviewers}
@@ -142,12 +156,12 @@ export default async function DynamicPage({ params }: any) {
             content: (
               <EvaluationPanel>
                 <RealTimeEditor
-                  token={jwt}
-                  key={`dynamic-editor-${id}`}
-                  roomId={`dynamic-${id}`}
-                  docId={`dynamic-${id}`}
-                  userName={session ? session.user.name : "Anonymous"}
-                  saveHandler={handleContentSave}
+                  token={token}
+                  key={`dynamic-editor-${dynamicId}`}
+                  roomId={`dynamic-${dynamicId}`}
+                  docId={`dynamic-${dynamicId}`}
+                  userName={user?.name ?? "Anonymous"}
+                  saveHandler={saveContent}
                   entity={dynamic}
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
@@ -165,8 +179,8 @@ export default async function DynamicPage({ params }: any) {
                   candidate={dynamic.candidates}
                   type="dynamic"
                   comments={comments}
-                  saveToDatabase={handleCommentSave}
-                  onEditComment={handleCommentEdit}
+                  saveToDatabase={saveComment}
+                  onEditComment={editComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>

@@ -1,12 +1,14 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
 import { CandidateLinksCard } from "@/components/candidate/candidate-links-card";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateProfileCard from "@/components/candidate/page/candidate-profile-card";
+import CandidateGridCard from "@/components/candidates/candidate-grid-card";
 import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
 import CommentFrame from "@/components/comments/comment-frame";
 import { PageHeader } from "@/components/layout/page-header";
@@ -15,65 +17,65 @@ import {
   EvaluationPanel,
 } from "@/components/layout/evaluation-layout";
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
+import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
+import { DataErrorState } from "@/components/data-table/data-state-view";
 
-import { submitApplicationComment } from "@/lib/application";
-import { auth } from "@/lib/auth";
-import { getCandidateWithMetadata } from "@/lib/candidate";
-import { applicationAnswerCount } from "@/lib/candidate-answers";
 import {
-  getApplicationComments,
-  updateApplicationComment,
-} from "@/lib/comment";
-import { getLatestVotingDecisionForCandidate } from "@/lib/voting";
-import { getRecruiters, isRecruiter } from "@/lib/recruiter";
-import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
-import { requireRecruiterSession } from "@/lib/action-guard";
+  editApplicationComment,
+  saveApplicationComment,
+} from "@/app/candidate/actions";
+import { applicationAnswerCount } from "@/lib/candidate-answers";
+import { useAuth } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import {
+  applicationCommentsKey,
+  useApplicationComments,
+  useCandidateData,
+  useRecruiters,
+} from "@/lib/hooks/candidates/use-candidate-data";
 
-type CandidatePageProps = {
-  params: any;
-};
+export default function CandidatePage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
 
-export default async function CandidatePage({ params }: CandidatePageProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const { data: candidate, isLoading, error } = useCandidateData(id);
+  const { data: commentsData } = useApplicationComments(id);
+  const { data: recruitersData } = useRecruiters();
+  const { user } = useAuth();
+  const { mutate } = useSWRConfig();
+  const { recruitmentId } = useRecruitment();
 
-  const targetId = await getTargetRecruitmentId();
+  if (isLoading && !candidate) {
+    return <EvaluationSkeleton />;
+  }
 
-  if (!(await isRecruiter(session?.user.id, targetId))) redirect("/");
+  if (error || !candidate) {
+    return (
+      <DataErrorState
+        title="Candidato não encontrado"
+        message={error instanceof Error ? error.message : undefined}
+      />
+    );
+  }
 
-  const { id } = await params;
-
-  const candidate = await getCandidateWithMetadata(id, targetId);
-
-  const comments = await getApplicationComments(id, targetId);
-  const votingDecision = await getLatestVotingDecisionForCandidate(
-    id,
-    targetId,
-  );
-  const recruiters = await getRecruiters(targetId);
+  const comments = commentsData ?? [];
+  const recruiters = recruitersData ?? [];
   const answeredCount = applicationAnswerCount(candidate.application);
 
-  const saveToDatabase = async (content: Array<any>) => {
-    "use server";
-    const user = await requireRecruiterSession(targetId);
-    const commentId = await submitApplicationComment(
-      id,
-      content,
-      user.id,
-      targetId,
-    );
-    return commentId ? { success: true, id: commentId } : { success: false };
+  const saveComment = async (content: Array<unknown>) => {
+    const result = await saveApplicationComment(id, content);
+    if (result.success) {
+      mutate(applicationCommentsKey(id, recruitmentId));
+    }
+    return result;
   };
 
   const editComment = async (commentId: number, content: Array<any>) => {
-    "use server";
-    const user = await requireRecruiterSession(targetId);
-    return await updateApplicationComment(
-      commentId,
-      content,
-      user.id,
-      id,
-      targetId,
-    );
+    const ok = await editApplicationComment(id, commentId, content);
+    if (ok) {
+      mutate(applicationCommentsKey(id, recruitmentId));
+    }
+    return ok;
   };
 
   return (
@@ -94,26 +96,18 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
       }
       sidebar={
         <>
-          <CandidateProfileCard
+          <CandidateGridCard
             candidate={candidate}
             friends={candidate.knownRecruiters}
-            authUser={
-              session
-                ? {
-                    ...session.user,
-                    image: session.user.image ?? "",
-                    role: session.user.role as
-                      "recruiter" | "candidate" | "admin",
-                  }
-                : null
-            }
+            authUser={user ? { id: user.id } : null}
+            showContactInfo
           />
           <CandidateLinksCard
             githubUrl={candidate.application?.github}
             linkedinUrl={candidate.application?.linkedIn}
             websiteUrl={candidate.application?.personalWebsite}
           />
-          <CandidateVotingStatus votingDecision={votingDecision} />
+          <CandidateVotingStatus votingDecision={candidate.votingDecision} />
         </>
       }
     >
@@ -151,7 +145,7 @@ export default async function CandidatePage({ params }: CandidatePageProps) {
                   candidate={candidate}
                   type="application"
                   comments={comments}
-                  saveToDatabase={saveToDatabase}
+                  saveToDatabase={saveComment}
                   onEditComment={editComment}
                   recruiters={recruiters}
                 />

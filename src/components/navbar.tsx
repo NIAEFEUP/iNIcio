@@ -187,9 +187,7 @@ export default function Navbar({
                       {(isAdmin || isRecruiter) && (
                         <DropdownMenuItem
                           onClick={() =>
-                            router.push(
-                              isAdmin ? "/admin" : "/recruiter/progress",
-                            )
+                            router.push(isAdmin ? "/admin" : "/recruiter")
                           }
                           className="cursor-pointer"
                         >
@@ -337,7 +335,7 @@ export default function Navbar({
 
               {user && (isAdmin || isRecruiter) && (
                 <Link
-                  href={isAdmin ? "/admin" : "/recruiter/progress"}
+                  href={isAdmin ? "/admin" : "/recruiter"}
                   className={cn(
                     buttonVariants({
                       variant: "outline",

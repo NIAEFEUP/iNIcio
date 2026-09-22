@@ -63,7 +63,7 @@ export function GridCard({
       </div>
 
       {children && (
-        <div className="mt-4 flex flex-col gap-2 border-t pt-3 text-xs">
+        <div className="mt-4 flex min-h-0 flex-1 flex-col gap-2 border-t pt-3 text-xs">
           {children}
         </div>
       )}

@@ -1,6 +1,6 @@
 {
-  "id": "5c20549f-8c32-4a27-8dfc-3b44ea3c15f9",
-  "prevId": "0781bd5c-ed9b-4b24-8ecb-12bdaf7f3e3f",
+  "id": "f28e690c-dc80-438c-b43b-934f2570411b",
+  "prevId": "5c20549f-8c32-4a27-8dfc-3b44ea3c15f9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -658,6 +658,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "application_id": {
           "name": "application_id",
           "type": "integer",
@@ -729,6 +735,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "dynamic_id": {
           "name": "dynamic_id",
           "type": "integer",
@@ -799,6 +811,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "interview_id": {
           "name": "interview_id",

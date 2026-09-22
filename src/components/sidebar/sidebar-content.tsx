@@ -62,6 +62,16 @@ export function SidebarContentComponent({
   const canRecruit = isRecruiter || isAdmin;
 
   const recruiterSections: NavItem[] = [
+    ...(!isAdmin
+      ? [
+          {
+            title: "Dashboard",
+            path: "/recruiter",
+            icon: LayoutDashboard,
+            exact: true,
+          },
+        ]
+      : []),
     {
       title: "Disponibilidades",
       path: "/recruiter/availability",

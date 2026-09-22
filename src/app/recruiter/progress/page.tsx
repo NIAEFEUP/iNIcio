@@ -43,8 +43,7 @@ export default async function RecruiterProgress() {
     <div className="flex flex-col gap-8">
       <PageHeader title="Progresso" />
       <p className="text-center">
-        Agora que complestaste a tua candidatura, tens outras tarefas para
-        realizar!
+        Acompanha aqui as tarefas que tens de realizar durante o recrutamento.
       </p>
 
       <ProgressPhaseCardShowcase

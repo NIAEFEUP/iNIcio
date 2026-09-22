@@ -1,10 +1,9 @@
 import "server-only";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   application,
-  candidate,
   candidateVote,
   recruiterVote,
   votingPhase,
@@ -336,57 +335,144 @@ export async function makeCandidateVoteDefinitive(
   }
 }
 
+export interface VotingDecision {
+  votingPhaseId: number;
+  voteFinished: boolean;
+  approveCount: number;
+  rejectCount: number;
+  decision: "approve" | "reject";
+  createdAt: Date | null;
+}
+
+/**
+ * Resolves the latest voting decision for several candidates in a fixed number
+ * of queries, instead of querying per candidate. Candidates without a finished
+ * vote in the recruitment map to null.
+ */
+export async function getLatestVotingDecisionsForCandidates(
+  candidateIds: Array<string>,
+  recruitmentId?: number,
+): Promise<Map<string, VotingDecision | null>> {
+  const decisions = new Map<string, VotingDecision | null>();
+  const uniqueIds = [...new Set(candidateIds)];
+  if (uniqueIds.length === 0) return decisions;
+
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) {
+    for (const id of uniqueIds) decisions.set(id, null);
+    return decisions;
+  }
+
+  // Latest voting phase per candidate within the recruitment
+  const phases = await db
+    .select({
+      candidateId: votingPhaseCandidate.candidateId,
+      votingPhaseId: votingPhaseCandidate.votingPhaseId,
+      voteFinished: votingPhaseCandidate.voteFinished,
+      createdAt: votingPhase.created_at,
+    })
+    .from(votingPhaseCandidate)
+    .innerJoin(
+      votingPhase,
+      eq(votingPhase.id, votingPhaseCandidate.votingPhaseId),
+    )
+    .where(
+      and(
+        eq(votingPhase.recruitmentId, targetId),
+        inArray(votingPhaseCandidate.candidateId, uniqueIds),
+      ),
+    )
+    .orderBy(desc(votingPhaseCandidate.votingPhaseId));
+
+  const latest = new Map<string, (typeof phases)[number]>();
+  for (const phase of phases) {
+    if (!latest.has(phase.candidateId)) latest.set(phase.candidateId, phase);
+  }
+
+  const finished = [...latest.values()].filter((p) => p.voteFinished);
+
+  const votesByCandidate = new Map<
+    string,
+    { approve: number; reject: number }
+  >();
+  if (finished.length > 0) {
+    const votes = await db
+      .select({
+        candidateId: candidateVote.candidateId,
+        decision: candidateVote.decision,
+      })
+      .from(candidateVote)
+      .where(
+        and(
+          inArray(
+            candidateVote.votingPhaseId,
+            finished.map((p) => p.votingPhaseId),
+          ),
+          inArray(
+            candidateVote.candidateId,
+            finished.map((p) => p.candidateId),
+          ),
+        ),
+      );
+
+    for (const vote of votes) {
+      const counts = votesByCandidate.get(vote.candidateId) ?? {
+        approve: 0,
+        reject: 0,
+      };
+      if (vote.decision === "approve") counts.approve += 1;
+      else counts.reject += 1;
+      votesByCandidate.set(vote.candidateId, counts);
+    }
+  }
+
+  const acceptedByCandidate = new Map<string, boolean>();
+  if (finished.length > 0) {
+    const applications = await db
+      .select({
+        candidateId: application.candidateId,
+        accepted: application.accepted,
+      })
+      .from(application)
+      .where(
+        and(
+          eq(application.recruitmentId, targetId),
+          inArray(application.candidateId, uniqueIds),
+        ),
+      );
+    for (const app of applications) {
+      acceptedByCandidate.set(app.candidateId, app.accepted);
+    }
+  }
+
+  for (const id of uniqueIds) {
+    const phase = latest.get(id);
+    if (!phase || !phase.voteFinished) {
+      decisions.set(id, null);
+      continue;
+    }
+
+    const counts = votesByCandidate.get(id) ?? { approve: 0, reject: 0 };
+    decisions.set(id, {
+      votingPhaseId: phase.votingPhaseId,
+      voteFinished: true,
+      approveCount: counts.approve,
+      rejectCount: counts.reject,
+      decision: acceptedByCandidate.get(id) ? "approve" : "reject",
+      createdAt: phase.createdAt,
+    });
+  }
+
+  return decisions;
+}
+
 export async function getLatestVotingDecisionForCandidate(
   candidateId: string,
   recruitmentId?: number,
 ) {
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return null;
-
-  const latestVotingPhases = await db.query.votingPhaseCandidate.findMany({
-    where: eq(votingPhaseCandidate.candidateId, candidateId),
-    orderBy: [desc(votingPhaseCandidate.votingPhaseId)],
-    with: {
-      votingPhase: true,
-    },
-  });
-
-  const matchingPhase = latestVotingPhases.find(
-    (p) => p.votingPhase.recruitmentId === targetId,
+  const decisions = await getLatestVotingDecisionsForCandidates(
+    [candidateId],
+    recruitmentId,
   );
-
-  if (!matchingPhase || !matchingPhase.voteFinished) {
-    return null;
-  }
-
-  const votes = await db.query.candidateVote.findMany({
-    where: and(
-      eq(candidateVote.votingPhaseId, matchingPhase.votingPhaseId),
-      eq(candidateVote.candidateId, candidateId),
-    ),
-  });
-
-  const approveCount = votes.filter((v) => v.decision === "approve").length;
-  const rejectCount = votes.filter((v) => v.decision === "reject").length;
-
-  const c = await db.query.candidate.findFirst({
-    where: and(
-      eq(candidate.userId, candidateId),
-      eq(candidate.recruitmentId, targetId),
-    ),
-    with: {
-      application: true,
-    },
-  });
-
-  const rejected = matchingPhase.voteFinished && !c?.application?.accepted;
-
-  return {
-    votingPhaseId: matchingPhase.votingPhaseId,
-    voteFinished: matchingPhase.voteFinished,
-    approveCount,
-    rejectCount,
-    decision: rejected ? "reject" : ("approve" as "approve" | "reject"),
-    createdAt: matchingPhase.votingPhase.created_at,
-  };
+  return decisions.get(candidateId) ?? null;
 }

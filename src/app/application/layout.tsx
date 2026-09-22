@@ -18,7 +18,7 @@ export default async function ApplicationLayout({
   if (!session?.user) redirect("/login");
 
   if (await isAdmin(session.user.id)) redirect("/admin");
-  if (await isRecruiter(session.user.id)) redirect("/recruiter/progress");
+  if (await isRecruiter(session.user.id)) redirect("/recruiter");
 
   const userHasAnyApp = await hasAnyApplication(session.user.id);
   const currentRecruitment = await getCurrentRecruitmentState();
