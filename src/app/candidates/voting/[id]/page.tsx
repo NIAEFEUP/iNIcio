@@ -134,12 +134,12 @@ export default async function CandidateVotingPage({
   const initialCandidateVotes = initialCandidate
     ? await getCandidateVotes(currentVotingPhase.id, initialCandidate.id)
     : [];
-  const initialApprovedCount = initialCandidateVotes.filter(
-    (v) => v.decision === "approve",
-  ).length;
-  const initialRejectedCount = initialCandidateVotes.filter(
-    (v) => v.decision === "reject",
-  ).length;
+  const initialApprovedCount = admin
+    ? initialCandidateVotes.filter((v) => v.decision === "approve").length
+    : 0;
+  const initialRejectedCount = admin
+    ? initialCandidateVotes.filter((v) => v.decision === "reject").length
+    : 0;
   const initialVotedCount = initialCandidateVotes.length;
   const initialTotalToVote = 0;
   const initialFinishedCandidates = currentVotingPhase.candidates.filter(

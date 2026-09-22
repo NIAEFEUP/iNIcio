@@ -46,11 +46,17 @@ function getTokenFromRequest(request) {
   return match ? match[1] : null;
 }
 
+const MAX_BROADCAST_BODY_BYTES = 64 * 1024;
+
 const server = http.createServer((request, response) => {
   if (request.method === "POST" && request.url === "/broadcast") {
     let body = "";
     request.on("data", (chunk) => {
       body += chunk;
+      if (body.length > MAX_BROADCAST_BODY_BYTES) {
+        writeJson(response, 413, { error: "Payload too large" });
+        request.destroy();
+      }
     });
     request.on("end", () => {
       const payload = verifyToken(getTokenFromRequest(request));

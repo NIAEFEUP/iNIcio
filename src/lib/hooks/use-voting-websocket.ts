@@ -25,6 +25,7 @@ interface UseVotingWebSocketOptions {
   initialTotalToVote: number;
   initialFinishedCandidates: number;
   onStatusChanged?: (candidateId: string) => void;
+  onCandidateFinished?: (candidateId: string) => void;
 }
 
 const INITIAL_RETRY_DELAY = 1000;
@@ -41,6 +42,7 @@ export function useVotingWebSocket({
   initialTotalToVote,
   initialFinishedCandidates,
   onStatusChanged,
+  onCandidateFinished,
 }: UseVotingWebSocketOptions) {
   const [state, setState] = useState<VotingWebSocketState>({
     connected: false,
@@ -94,12 +96,20 @@ export function useVotingWebSocket({
 
       setState((prev) => {
         switch (type) {
-          case "state_snapshot":
+          case "state_snapshot": {
+            const nextSnapshotCandidateId =
+              (payload.currentCandidateId as string | null) ??
+              prev.currentCandidateId;
+            if (
+              onStatusChanged &&
+              nextSnapshotCandidateId &&
+              nextSnapshotCandidateId !== prev.currentCandidateId
+            ) {
+              onStatusChanged(nextSnapshotCandidateId);
+            }
             return {
               ...prev,
-              currentCandidateId:
-                (payload.currentCandidateId as string | null) ??
-                prev.currentCandidateId,
+              currentCandidateId: nextSnapshotCandidateId,
               approvedCount:
                 (payload.approvedCount as number | undefined) ??
                 prev.approvedCount,
@@ -114,6 +124,7 @@ export function useVotingWebSocket({
                 (payload.finishedCandidates as number | undefined) ??
                 prev.finishedCandidates,
             };
+          }
           case "status_changed": {
             const nextCandidateId =
               (payload.candidateId as string | null) ?? prev.currentCandidateId;
@@ -125,7 +136,14 @@ export function useVotingWebSocket({
               currentCandidateId: nextCandidateId,
             };
           }
-          case "vote_updated":
+          case "vote_updated": {
+            const voteCandidateId = payload.candidateId as string | undefined;
+            if (
+              voteCandidateId &&
+              voteCandidateId !== prev.currentCandidateId
+            ) {
+              return prev;
+            }
             return {
               ...prev,
               approvedCount:
@@ -139,6 +157,7 @@ export function useVotingWebSocket({
               totalToVote:
                 (payload.totalToVote as number | undefined) ?? prev.totalToVote,
             };
+          }
           case "votes_reset":
             return {
               ...prev,
@@ -148,7 +167,24 @@ export function useVotingWebSocket({
               totalToVote:
                 (payload.totalToVote as number | undefined) ?? prev.totalToVote,
             };
-          case "candidate_finished":
+          case "candidate_finished": {
+            const finishedCandidateId = payload.candidateId as
+              string | undefined;
+            if (
+              finishedCandidateId &&
+              finishedCandidateId === prev.currentCandidateId &&
+              onCandidateFinished
+            ) {
+              onCandidateFinished(finishedCandidateId);
+            }
+            return {
+              ...prev,
+              finishedCandidates:
+                (payload.finishedCandidates as number | undefined) ??
+                prev.finishedCandidates,
+            };
+          }
+          case "finished_updated":
             return {
               ...prev,
               finishedCandidates:
@@ -169,10 +205,13 @@ export function useVotingWebSocket({
         }
       });
     },
-    [onStatusChanged],
+    [onStatusChanged, onCandidateFinished],
   );
 
   const connect = useCallback(() => {
+    if (!votingPhaseId || !token) {
+      return;
+    }
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
@@ -251,8 +290,15 @@ export function useVotingWebSocket({
     clearReconnect();
     clearPing();
     if (wsRef.current) {
-      wsRef.current.close();
+      const ws = wsRef.current;
       wsRef.current = null;
+      // Detach handlers before closing so the old socket's onclose
+      // cannot schedule a duplicate reconnect after a manual reconnect.
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
     }
   }, [clearPing, clearReconnect]);
 

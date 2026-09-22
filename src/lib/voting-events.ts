@@ -38,6 +38,12 @@ export type VotingEvent =
         decision: "accept" | "reject";
         finishedCandidates: number;
       };
+    }
+  | {
+      type: "finished_updated";
+      payload: {
+        finishedCandidates: number;
+      };
     };
 
 export async function broadcastVotingEvent(
@@ -65,14 +71,19 @@ export async function broadcastVotingEvent(
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
       console.error(
         "[voting-events] broadcast failed",
         response.status,
-        await response.text(),
+        errorBody,
+      );
+      throw new Error(
+        `Failed to broadcast voting event: ${response.status} ${errorBody}`,
       );
     }
   } catch (error) {
     console.error("[voting-events] broadcast error", error);
+    throw error;
   }
 }
 
@@ -160,5 +171,14 @@ export async function broadcastCandidateFinished(
       decision,
       finishedCandidates,
     },
+  });
+}
+
+export async function broadcastFinishedUpdated(votingPhaseId: number) {
+  const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
+
+  await broadcastVotingEvent(votingPhaseId, {
+    type: "finished_updated",
+    payload: { finishedCandidates },
   });
 }

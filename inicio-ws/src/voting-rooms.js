@@ -123,6 +123,7 @@ function applyEvent(room, event) {
       room.state.votedCount = 0;
       break;
     case "vote_updated":
+      if (payload.candidateId !== room.state.currentCandidateId) break;
       room.hasVoteState = true;
       room.state.approvedCount = payload.approvedCount ?? 0;
       room.state.rejectedCount = payload.rejectedCount ?? 0;
@@ -136,9 +137,10 @@ function applyEvent(room, event) {
       break;
     case "candidate_finished":
       room.state.finishedCandidates = payload.finishedCandidates ?? 0;
-      if (payload.candidateId === room.state.currentCandidateId) {
-        room.state.votedCount = 0;
-      }
+      break;
+    case "finished_updated":
+      room.hasVoteState = true;
+      room.state.finishedCandidates = payload.finishedCandidates ?? 0;
       break;
     default:
       break;
@@ -233,6 +235,16 @@ function handleClientMessage(room, client, data) {
 export function broadcast(roomName, event) {
   const room = typeof roomName === "string" ? rooms.get(roomName) : roomName;
   if (!room) return;
+
+  // Drop late updates for the previous candidate entirely: they must
+  // neither touch room state nor reach the clients still connected.
+  const { type, payload } = event;
+  if (
+    type === "vote_updated" &&
+    payload?.candidateId !== room.state.currentCandidateId
+  ) {
+    return;
+  }
 
   applyEvent(room, event);
 

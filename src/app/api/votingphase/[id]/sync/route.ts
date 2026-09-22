@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import {
+  broadcastFinishedUpdated,
   broadcastStatusChanged,
   broadcastVoteUpdated,
 } from "@/lib/voting-events";
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest, context: any) {
       await broadcastStatusChanged(votingPhaseId, status.candidateId);
       await broadcastVoteUpdated(votingPhaseId, status.candidateId);
     }
+    await broadcastFinishedUpdated(votingPhaseId);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

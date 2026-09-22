@@ -263,7 +263,7 @@ export async function makeCandidateVoteDefinitive(
   candidateId: string,
 ) {
   try {
-    await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       const vp = await tx.query.votingPhase.findFirst({
         where: eq(votingPhase.id, votingPhaseId),
       });
@@ -327,8 +327,9 @@ export async function makeCandidateVoteDefinitive(
             eq(application.recruitmentId, vp.recruitmentId),
           ),
         );
+
+      return true;
     });
-    return true;
   } catch (e) {
     console.log(e);
     return false;

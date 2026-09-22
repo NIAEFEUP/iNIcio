@@ -86,6 +86,15 @@ export function CandidateVotingSlideshow({
     [candidates],
   );
 
+  const handleCandidateFinished = useCallback(
+    (finishedCandidateId: string) => {
+      if (currentCandidate?.id === finishedCandidateId) {
+        setCandidateFinished(true);
+      }
+    },
+    [currentCandidate?.id],
+  );
+
   const {
     connected,
     connecting,
@@ -106,6 +115,7 @@ export function CandidateVotingSlideshow({
     initialTotalToVote,
     initialFinishedCandidates,
     onStatusChanged: handleStatusChanged,
+    onCandidateFinished: handleCandidateFinished,
   });
 
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
