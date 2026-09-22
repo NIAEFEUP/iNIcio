@@ -63,7 +63,7 @@ export function SidebarContentComponent({
 
   const recruiterSections: NavItem[] = [
     {
-      title: "Painel",
+      title: "Dashboard",
       path: "/recruiter",
       icon: LayoutDashboard,
       exact: true,

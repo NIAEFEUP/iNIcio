@@ -2,8 +2,6 @@
 
 import ResourceCard from "@/components/admin/resource-card";
 
-import { redirect } from "next/navigation";
-
 interface RecruiterResourcesProps {
   userId: string;
 }
@@ -17,31 +15,31 @@ export default function RecruiterResources({
         <ResourceCard
           title="Progresso"
           quantityText="Ver tarefas por concluir"
-          onClick={() => redirect("/recruiter/progress")}
+          href="/recruiter/progress"
         />
 
         <ResourceCard
           title="Disponibilidades"
           quantityText="Marcar horários disponíveis"
-          onClick={() => redirect("/recruiter/availability")}
+          href="/recruiter/availability"
         />
 
         <ResourceCard
           title="Candidatos"
           quantityText="Ver candidaturas"
-          onClick={() => redirect("/candidates")}
+          href="/candidates"
         />
 
         <ResourceCard
           title="Votações"
           quantityText="Votações em curso"
-          onClick={() => redirect("/candidates/voting")}
+          href="/candidates/voting"
         />
 
         <ResourceCard
           title="Alocações"
           quantityText="Visualizar calendário"
-          onClick={() => redirect(`/calendar/${userId}`)}
+          href={`/calendar/${userId}`}
         />
       </div>
     </div>
