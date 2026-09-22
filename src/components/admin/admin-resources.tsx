@@ -1,12 +1,10 @@
 "use client";
 
-import { Recruiter, User } from "@/lib/db";
-import ResourceCard from "./resource-card";
-
-import { redirect } from "next/navigation";
+import { User } from "@/lib/db";
+import ResourceCard from "@/components/common/resource-card";
 
 interface AdminResourcesProps {
-  recruiters: Array<Recruiter>;
+  recruiters: Array<{ userId: string }>;
   candidates: Array<User>;
   userId: string;
 }
@@ -22,55 +20,55 @@ export default function AdminResources({
         <ResourceCard
           title="Disponibilidades"
           quantityText="Ver disponibilidades"
-          onClick={() => redirect("/admin/availabilities")}
+          href="/admin/availabilities"
         />
 
         <ResourceCard
           title="Recrutamentos"
           quantityText="Gerir recrutamentos"
-          onClick={() => redirect("/admin/recruitments")}
+          href="/admin/recruitments"
         />
 
         <ResourceCard
           title="Fases de Recrutamento"
           quantityText="Gerir fases"
-          onClick={() => redirect("/admin/phases")}
+          href="/admin/phases"
         />
 
         <ResourceCard
           title="Recrutadores"
           quantityText={`${recruiters.length} recrutadores`}
-          onClick={() => redirect("/admin/recruiters")}
+          href="/admin/recruiters"
         />
 
         <ResourceCard
           title="Candidatos"
           quantityText={`${candidates.length} candidatos`}
-          onClick={() => redirect("/candidates")}
+          href="/candidates"
         />
 
         <ResourceCard
           title="Slots"
           quantityText="Gerir slots"
-          onClick={() => redirect("/admin/interviews")}
+          href="/admin/interviews"
         />
 
         <ResourceCard
           title="Templates"
           quantityText="Adicionar templates de entrevistas e dinâmicas"
-          onClick={() => redirect("/admin/templates")}
+          href="/admin/templates"
         />
 
         <ResourceCard
           title="Calendário"
           quantityText="Visualizar tarefas"
-          onClick={() => redirect(`/calendar/${userId}`)}
+          href={`/calendar/${userId}`}
         />
 
         <ResourceCard
           title="Mensagem Final"
           quantityText="Editar texto de Aceite / Recusado"
-          onClick={() => redirect("/admin/final-messages")}
+          href="/admin/final-messages"
         />
       </div>
     </div>
