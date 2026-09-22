@@ -11,6 +11,7 @@ import { and, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { FilterRestriction } from "./restriction";
 import { getActiveRecruitment } from "./recruitment";
+import { getPreviousApplicationYears } from "./previous-applications";
 import { getLatestVotingDecisionForCandidate } from "./voting";
 
 export type CandidateWithMetadata = User & {
@@ -18,6 +19,7 @@ export type CandidateWithMetadata = User & {
   dynamic: { candidateId: string; dynamicId: number; dynamic: Dynamic };
   interview: Interview;
   application: (Application & { interests: string[] }) | null;
+  previousApplicationYears: Array<string>;
   dynamicClassification: string;
   interviewClassification: string;
   votingDecision?: {
@@ -108,6 +110,11 @@ export async function getCandidateWithMetadata(
     ? await getLatestVotingDecisionForCandidate(candidateId, targetId)
     : null;
 
+  const previousApplicationYears = await getPreviousApplicationYears(
+    [{ userId: candidateId, studentNumber: res.application?.studentNumber }],
+    targetId,
+  );
+
   return {
     ...res.user,
     image: await getFilenameUrl(res.user?.image),
@@ -117,6 +124,7 @@ export async function getCandidateWithMetadata(
     interviewClassification: res.interviewClassification ?? "none",
     knownRecruiters: res.knownRecruiters,
     votingDecision,
+    previousApplicationYears: previousApplicationYears.get(candidateId) ?? [],
     application: res.application
       ? {
           ...res.application,
