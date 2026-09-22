@@ -1,6 +1,6 @@
 "use client";
 
-import ResourceCard from "@/components/admin/resource-card";
+import ResourceCard from "@/components/common/resource-card";
 
 interface RecruiterResourcesProps {
   userId: string;

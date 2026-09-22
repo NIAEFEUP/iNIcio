@@ -1,10 +1,10 @@
 "use client";
 
-import { Recruiter, User } from "@/lib/db";
-import ResourceCard from "./resource-card";
+import { User } from "@/lib/db";
+import ResourceCard from "@/components/common/resource-card";
 
 interface AdminResourcesProps {
-  recruiters: Array<Recruiter>;
+  recruiters: Array<{ userId: string }>;
   candidates: Array<User>;
   userId: string;
 }
