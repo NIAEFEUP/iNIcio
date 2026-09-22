@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, Calendar, Network, SlidersHorizontal } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  History,
+  Network,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +28,15 @@ import {
 } from "@/components/ui/select";
 import { GridCard } from "@/components/data-table/grid-card";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
-import { CandidatePreviousApplicationsBadge } from "./candidate-previous-applications-badge";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
 function useSyncedState<S>(
@@ -214,12 +224,28 @@ export default function CandidateGridCard({
     <GridCard
       avatar={avatar}
       title={
-        <Link
-          href={`/candidate/${candidate.id}`}
-          className="transition-colors hover:text-primary"
-        >
-          {candidate.name || "Sem nome"}
-        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href={`/candidate/${candidate.id}`}
+            className="min-w-0 truncate transition-colors hover:text-primary"
+          >
+            {candidate.name || "Sem nome"}
+          </Link>
+          {previousApplicationYears.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger
+                className="-ml-0.5 inline-flex shrink-0 cursor-help items-center text-muted-foreground"
+                aria-label={`Candidatou-se anteriormente em ${previousApplicationYears.join(", ")}`}
+              >
+                <History className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Candidatou-se anteriormente em{" "}
+                {previousApplicationYears.join(", ")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       }
       subtitle={
         showContactInfo && contactLines.length > 0 ? (
@@ -235,13 +261,6 @@ export default function CandidateGridCard({
         ) : (
           "\u00A0"
         )
-      }
-      badge={
-        previousApplicationYears.length > 0 ? (
-          <CandidatePreviousApplicationsBadge
-            years={previousApplicationYears}
-          />
-        ) : undefined
       }
       actions={
         <div className="flex w-full items-center justify-between gap-2">
@@ -296,13 +315,19 @@ export default function CandidateGridCard({
         )}
       </InfoRow>
       {interests.length > 0 && (
-        <InfoRow icon={<Network className="size-3.5" />} label="Departamentos">
-          {interests.map((i) => (
-            <Badge key={i} variant="secondary" className="text-[10px]">
-              {i}
-            </Badge>
-          ))}
-        </InfoRow>
+        <div className="space-y-2">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Network className="size-3.5 shrink-0" />
+            Departamentos
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {interests.map((i) => (
+              <Badge key={i} variant="secondary" className="text-[10px]">
+                {i}
+              </Badge>
+            ))}
+          </div>
+        </div>
       )}
     </GridCard>
   );

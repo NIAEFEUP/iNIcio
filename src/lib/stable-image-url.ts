@@ -6,10 +6,11 @@ type CacheEntry = { url: string; expiresAt: number };
 const signedUrlCache = new Map<string, CacheEntry>();
 
 function toStorageKey(url: string): string {
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url.split("/").slice(4).join("/");
+  const clean = url.split("?")[0].split("#")[0];
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean.split("/").slice(4).join("/");
   }
-  return url;
+  return clean;
 }
 
 /**

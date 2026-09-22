@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TimeInput } from "@/components/ui/time-input";
 import { SingleDayPicker } from "@/components/ui/single-day-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import {
   Form,
   FormField,
@@ -145,7 +146,10 @@ export function EditEventDialog({ children, event }: IProps) {
                             <div className="flex items-center gap-2">
                               <Avatar key={user.id} className="size-6">
                                 <AvatarImage
-                                  src={user.picturePath ?? undefined}
+                                  src={
+                                    getStableImageUrl(user.picturePath) ||
+                                    undefined
+                                  }
                                   alt={user.name}
                                 />
                                 <AvatarFallback className="text-xxs">
