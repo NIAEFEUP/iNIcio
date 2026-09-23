@@ -1,13 +1,13 @@
 import { Checkbox } from "@/components/ui/checkbox";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface CandidateQuickInfoSelectProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
   selectActionHandler: (
     checked: boolean,
-    candidate: CandidateWithMetadata,
+    candidate: CandidateListMetadata,
   ) => void;
   candidateSelected?: boolean;
 }

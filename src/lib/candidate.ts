@@ -14,6 +14,38 @@ import { getActiveRecruitment } from "./recruitment";
 import { getPreviousApplicationYears } from "./previous-applications";
 import { getLatestVotingDecisionsForCandidates } from "./voting";
 
+export type CandidateApplicationSummary = Pick<
+  Application,
+  | "id"
+  | "recruitmentId"
+  | "candidateId"
+  | "submittedAt"
+  | "studentNumber"
+  | "linkedIn"
+  | "github"
+  | "personalWebsite"
+  | "phone"
+  | "degree"
+  | "curricularYear"
+  | "curriculum"
+  | "accepted"
+> & {
+  interests: string[];
+};
+
+/** The list shape: the application carries only the columns list surfaces need. */
+export type CandidateListMetadata = Omit<
+  CandidateWithMetadata,
+  "application"
+> & {
+  application: CandidateApplicationSummary | null;
+};
+
+/** Same as `CandidateListMetadata` with the phase's per-candidate completion flag. */
+export type CandidateVotingMetadata = CandidateListMetadata & {
+  isFinished: boolean;
+};
+
 export type CandidateWithMetadata = User & {
   knownRecruiters: RecruiterToCandidate[];
   dynamic: { candidateId: string; dynamicId: number; dynamic: Dynamic };
@@ -36,12 +68,12 @@ export enum CandidateFilterRestriction {
   ONLY_WITH_INTERVIEW_AND_DYNAMIC = "ONLY_WITH_INTERVIEW_AND_DYNAMIC",
 }
 
-function restrictInterviewAndDynamic(candidates: Array<CandidateWithMetadata>) {
+function restrictInterviewAndDynamic(candidates: Array<CandidateListMetadata>) {
   return candidates.filter((c) => c.dynamic && c.interview);
 }
 
 export const candidateFilterRestrictions: FilterRestriction<
-  Array<CandidateWithMetadata>
+  Array<CandidateListMetadata>
 > = {
   ONLY_WITH_INTERVIEW_AND_DYNAMIC: restrictInterviewAndDynamic,
 };
@@ -67,15 +99,17 @@ export async function isCandidate(candidateId: string, recruitmentId?: number) {
 }
 
 /**
- * Loads several candidates' full metadata in a fixed number of queries: one
+ * Loads several candidates' list metadata in a fixed number of queries: one
  * candidate graph, one previous-years lookup, one batched voting-decision
  * lookup and one signing pass. Pass `candidateIds` to narrow the result to a
- * specific set (e.g. the candidates of a voting phase).
+ * specific set (e.g. the candidates of a voting phase). The application only
+ * carries the columns list surfaces need; use `getCandidateWithMetadata` when
+ * the full application (free-text answers) is required.
  */
 export async function getCandidatesWithMetadata(
   candidateIds?: Array<string>,
   recruitmentId?: number,
-): Promise<Array<CandidateWithMetadata>> {
+): Promise<Array<CandidateListMetadata>> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];
   if (candidateIds && candidateIds.length === 0) return [];
@@ -110,6 +144,21 @@ export async function getCandidatesWithMetadata(
       },
       interview: true,
       application: {
+        columns: {
+          id: true,
+          recruitmentId: true,
+          candidateId: true,
+          submittedAt: true,
+          studentNumber: true,
+          linkedIn: true,
+          github: true,
+          personalWebsite: true,
+          phone: true,
+          degree: true,
+          curricularYear: true,
+          curriculum: true,
+          accepted: true,
+        },
         with: {
           interests: true,
         },
@@ -139,8 +188,8 @@ export async function getCandidatesWithMetadata(
     candidates.map(async (c) => ({
       ...c.user,
       image: await getFilenameUrl(c.user?.image),
-      dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
-      interview: c.interview as CandidateWithMetadata["interview"],
+      dynamic: c.dynamic as CandidateListMetadata["dynamic"],
+      interview: c.interview as CandidateListMetadata["interview"],
       interviewClassification: c.interviewClassification ?? "none",
       dynamicClassification: c.dynamicClassification ?? "none",
       application: c.application
@@ -165,16 +214,65 @@ export async function getCandidateWithMetadata(
 
   if (!targetId) throw new Error("No recruitment specified or active");
 
-  const [candidateData] = await getCandidatesWithMetadata(
-    [candidateId],
-    targetId,
+  const whereClause = and(
+    eq(candidate.userId, candidateId),
+    eq(candidate.recruitmentId, targetId),
   );
 
-  if (!candidateData) {
+  const res = await db.query.candidate.findFirst({
+    where: whereClause,
+    with: {
+      user: true,
+      dynamic: {
+        with: {
+          dynamic: {
+            with: {
+              slot: true,
+            },
+          },
+        },
+      },
+      interview: true,
+      application: {
+        with: {
+          interests: true,
+        },
+      },
+      knownRecruiters: true,
+    },
+  });
+
+  if (!res) {
     throw new Error(`Candidate with ID ${candidateId} not found`);
   }
 
-  return candidateData;
+  const votingDecision = await getLatestVotingDecisionsForCandidates(
+    [candidateId],
+    targetId,
+  );
+  const previousApplicationYears = await getPreviousApplicationYears(
+    [{ userId: candidateId, studentNumber: res.application?.studentNumber }],
+    targetId,
+  );
+
+  return {
+    ...res.user,
+    image: await getFilenameUrl(res.user?.image),
+    dynamic: res.dynamic as CandidateWithMetadata["dynamic"],
+    interview: res.interview as CandidateWithMetadata["interview"],
+    interviewClassification: res.interviewClassification ?? "none",
+    dynamicClassification: res.dynamicClassification ?? "none",
+    application: res.application
+      ? {
+          ...res.application,
+          curriculum: await getFilenameUrl(res.application?.curriculum),
+          interests: res.application?.interests.map((i) => i.interest),
+        }
+      : null,
+    knownRecruiters: res.knownRecruiters,
+    votingDecision: votingDecision.get(candidateId) ?? null,
+    previousApplicationYears: previousApplicationYears.get(candidateId) ?? [],
+  };
 }
 
 export default async function getCandidateWithInterviewAndDynamic(

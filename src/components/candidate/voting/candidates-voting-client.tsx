@@ -4,7 +4,7 @@ import { User } from "@/lib/db";
 import { useState } from "react";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateFiltering from "../filter/candidate-filtering";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 
 interface CandidatesClientProps {
   authUser: User;
-  candidates: Array<CandidateWithMetadata>;
+  candidates: Array<CandidateListMetadata>;
   availableDepartments: Array<string>;
   handleCandidateSelection: (
     candidates: Array<string>,
@@ -30,11 +30,11 @@ export default function CandidateVotingChoiceClient({
   const router = useRouter();
 
   const [selectedCandidates, setSelectedCandidates] = useState<
-    Array<CandidateWithMetadata>
+    Array<CandidateListMetadata>
   >([]);
 
   const [filteredCandidates, setFilteredCandidates] =
-    useState<Array<CandidateWithMetadata>>(candidates);
+    useState<Array<CandidateListMetadata>>(candidates);
 
   return (
     <div className="flex flex-col gap-4">
@@ -90,7 +90,7 @@ export default function CandidateVotingChoiceClient({
       </section>
 
       <div className="mx-auto w-full max-w-[80em] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
-        {filteredCandidates.map((candidate: CandidateWithMetadata) => (
+        {filteredCandidates.map((candidate: CandidateListMetadata) => (
           <CandidateQuickInfo
             key={candidate.id || crypto.randomUUID()}
             candidate={candidate}
@@ -98,7 +98,7 @@ export default function CandidateVotingChoiceClient({
             selectActionActive={true}
             selectActionHandler={(
               checked: boolean,
-              candidate: CandidateWithMetadata,
+              candidate: CandidateListMetadata,
             ) => {
               if (checked) {
                 setSelectedCandidates((prev) => [...prev, candidate]);

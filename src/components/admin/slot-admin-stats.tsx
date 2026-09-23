@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { Calendar, Users, UserCheck, UserX } from "lucide-react";
 
 interface StatsGridProps {
@@ -7,7 +7,7 @@ interface StatsGridProps {
     [key: string]: Array<{ quantity: number }>;
   };
   slotType: string;
-  candidates: Array<CandidateWithMetadata>;
+  candidates: Array<CandidateListMetadata>;
 }
 
 export function SlotAdminStats({

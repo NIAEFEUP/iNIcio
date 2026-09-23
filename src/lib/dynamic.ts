@@ -12,7 +12,7 @@ import { getFilenameUrl } from "./file-upload";
 import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
-  CandidateWithMetadata,
+  CandidateListMetadata,
   getCandidatesWithMetadata,
 } from "./candidate";
 import { getLatestVotingDecisionsForCandidates } from "./voting";
@@ -274,7 +274,7 @@ export async function createDynamicComment(
 export async function getAllCandidatesWithDynamic(
   recruitmentIdOrRestrictions?: number | Array<CandidateFilterRestriction>,
   restrictionsParam?: Array<CandidateFilterRestriction>,
-): Promise<Array<CandidateWithMetadata>> {
+): Promise<Array<CandidateListMetadata>> {
   const recruitmentId =
     typeof recruitmentIdOrRestrictions === "number"
       ? recruitmentIdOrRestrictions

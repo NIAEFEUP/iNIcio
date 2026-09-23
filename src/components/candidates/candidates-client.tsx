@@ -34,7 +34,7 @@ import { GridView } from "@/components/data-table/grid-view";
 import { setCandidatesViewMode } from "@/cookies/set";
 import { getInitials } from "@/lib/utils";
 
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateGridCard from "./candidate-grid-card";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
@@ -46,7 +46,7 @@ import {
 
 interface CandidatesClientProps {
   authUser?: { id?: string } | null;
-  candidates: Array<CandidateWithMetadata>;
+  candidates: Array<CandidateListMetadata>;
   availableDepartments: Array<string>;
   initialViewMode?: ViewMode;
 }
@@ -65,9 +65,9 @@ const DECISION_OPTIONS = [
 ];
 
 const multiIncludes = (
-  row: { original: CandidateWithMetadata },
+  row: { original: CandidateListMetadata },
   value: string | string[] | undefined,
-  extract: (c: CandidateWithMetadata) => string[],
+  extract: (c: CandidateListMetadata) => string[],
 ) => {
   if (!value || (Array.isArray(value) && value.length === 0)) return true;
   const wanted = Array.isArray(value) ? value : [value];
@@ -111,7 +111,7 @@ export default function CandidatesClient({
     isMountedRef.current = true;
   }, []);
 
-  const columns = useMemo<ColumnDef<CandidateWithMetadata>[]>(
+  const columns = useMemo<ColumnDef<CandidateListMetadata>[]>(
     () => [
       {
         accessorKey: "name",
@@ -332,7 +332,7 @@ export default function CandidatesClient({
         .toLowerCase()
         .trim();
       if (!q) return true;
-      const c = row.original as CandidateWithMetadata;
+      const c = row.original as CandidateListMetadata;
       return (
         c.name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||

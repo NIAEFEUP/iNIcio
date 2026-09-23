@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
 
@@ -45,7 +45,7 @@ function useSyncedState<S>(
 }
 
 interface CandidateGridCardProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
   authUser?: { id?: string } | null;
   showContactInfo?: boolean;
