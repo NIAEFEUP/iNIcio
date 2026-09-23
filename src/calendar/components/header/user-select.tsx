@@ -2,6 +2,7 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 
 import { AvatarGroup } from "@/components/ui/avatar-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ export function UserSelect() {
               {users.map((user) => (
                 <Avatar key={user.id} className="size-6 text-xxs">
                   <AvatarImage
-                    src={user.picturePath ?? undefined}
+                    src={getStableImageUrl(user.picturePath) || undefined}
                     alt={user.name}
                   />
                   <AvatarFallback className="text-xxs">
@@ -44,7 +45,7 @@ export function UserSelect() {
             <div className="flex items-center gap-2">
               <Avatar key={user.id} className="size-6">
                 <AvatarImage
-                  src={user.picturePath ?? undefined}
+                  src={getStableImageUrl(user.picturePath) || undefined}
                   alt={user.name}
                 />
                 <AvatarFallback className="text-xxs">

@@ -16,6 +16,7 @@ import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
 import { Dynamic, Interview, RecruiterToCandidate, Slot, User } from "@/lib/db";
 import { getDateStringPT, getTimeString, overlap } from "@/lib/date";
 import { assignRecruiter, unassignRecruiter } from "@/app/actions";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import { SlotType } from "../admin/slot-admin-calendar";
 
@@ -107,7 +108,7 @@ export function BookingPicker({
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
-                    src={candidate.image || undefined}
+                    src={getStableImageUrl(candidate.image) || undefined}
                     alt={candidate.name}
                   />
                   <AvatarFallback className="text-xs font-semibold">

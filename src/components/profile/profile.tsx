@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { useSession } from "@/lib/use-session";
 
 interface ProfileProps {
@@ -20,7 +21,10 @@ export default function Profile({ pictureUrl }: ProfileProps) {
       <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
         <Avatar className="size-24 sm:size-28 ring-4 ring-primary/10 ring-offset-2 ring-offset-background shrink-0">
           <AvatarImage
-            src={pictureUrl || "/professional-student-portrait.png"}
+            src={
+              getStableImageUrl(pictureUrl) ||
+              "/professional-student-portrait.png"
+            }
             alt={session?.user?.name || "Profile"}
           />
           <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">

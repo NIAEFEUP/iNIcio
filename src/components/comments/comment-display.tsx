@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { toast } from "@/components/ui/toast";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import { useRef, useState } from "react";
@@ -100,7 +101,7 @@ export function CommentDisplay({
       <div className="flex items-start gap-3">
         <Avatar size="lg" className="ring-2 ring-border/60">
           <AvatarImage
-            src={comment.user?.image || undefined}
+            src={getStableImageUrl(comment.user?.image) || undefined}
             alt={comment.user?.name}
           />
           <AvatarFallback>

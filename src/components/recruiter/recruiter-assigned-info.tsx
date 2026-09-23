@@ -1,6 +1,7 @@
 "use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import type { User } from "@/lib/db";
 
@@ -31,7 +32,7 @@ export default function RecruiterAssignedInfo({
           >
             <Avatar size="sm">
               <AvatarImage
-                src={interviewer.image || undefined}
+                src={getStableImageUrl(interviewer.image) || undefined}
                 alt={interviewer.name || "Entrevistador"}
               />
               <AvatarFallback>
