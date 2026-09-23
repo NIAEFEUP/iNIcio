@@ -99,6 +99,14 @@ export default function CandidatesClient({
   });
   const isMountedRef = useRef(false);
 
+  // `user` is rebuilt on every render; keep the props and callbacks passed to
+  // the memoized grid cards stable so they can bail out.
+  const authUserId = authUser?.id;
+  const memoizedAuthUser = useMemo<{ id?: string } | null>(
+    () => (authUserId ? { id: authUserId } : null),
+    [authUserId],
+  );
+
   useEffect(() => {
     isMountedRef.current = true;
   }, []);
@@ -364,6 +372,24 @@ export default function CandidatesClient({
 
   const filteredCount = table.getFilteredRowModel().rows.length;
 
+  const renderGrid = useMemo(() => {
+    const render = (t: typeof table) => (
+      <GridView
+        table={t}
+        getItemKey={(c) => c.id ?? `candidate-${c.email}`}
+        renderCard={(c) => (
+          <CandidateGridCard
+            candidate={c}
+            friends={c.knownRecruiters}
+            authUser={memoizedAuthUser}
+          />
+        )}
+      />
+    );
+    render.displayName = "CandidatesGrid";
+    return render;
+  }, [memoizedAuthUser]);
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -516,19 +542,7 @@ export default function CandidatesClient({
         viewMode={viewMode}
         emptyTitle="Sem candidatos"
         emptyDescription="Nenhum candidato corresponde aos filtros selecionados."
-        renderGrid={(t) => (
-          <GridView
-            table={t}
-            getItemKey={(c) => c.id ?? `candidate-${c.email}`}
-            renderCard={(c) => (
-              <CandidateGridCard
-                candidate={c}
-                friends={c.knownRecruiters}
-                authUser={authUser}
-              />
-            )}
-          />
-        )}
+        renderGrid={renderGrid}
       />
     </div>
   );

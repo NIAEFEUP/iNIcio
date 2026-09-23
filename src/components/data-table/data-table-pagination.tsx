@@ -21,6 +21,9 @@ interface DataTablePaginationProps<TData> {
 
 const PAGE_SIZE_OPTIONS = [6, 12, 24, 48, 96, 144];
 const ALL_PAGE_SIZE = "all";
+// Upper bound for the "all" option: mounting a heavy card per row for an
+// unbounded dataset freezes the candidates grid, so cap the page size.
+const MAX_PAGE_SIZE = 288;
 
 export function DataTablePagination<TData>({
   table,
@@ -33,7 +36,7 @@ export function DataTablePagination<TData>({
 
   const handlePageSizeChange = (value: string) => {
     if (value === ALL_PAGE_SIZE) {
-      table.setPageSize(totalItems);
+      table.setPageSize(Math.min(totalItems, MAX_PAGE_SIZE));
     } else {
       table.setPageSize(Number(value));
     }

@@ -10,15 +10,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -27,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GridCard } from "@/components/data-table/grid-card";
-import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { CandidateAvatarLightbox } from "./candidate-avatar-lightbox";
 import {
   Tooltip,
   TooltipContent,
@@ -112,7 +105,7 @@ function ClassificationSelect({
   );
 }
 
-export default function CandidateGridCard({
+function CandidateGridCard({
   candidate,
   friends = [],
   authUser = null,
@@ -170,12 +163,19 @@ export default function CandidateGridCard({
     }
   };
 
-  const interests = candidate.application?.interests ?? [];
+  const interests = React.useMemo(
+    () => candidate.application?.interests ?? [],
+    [candidate.application?.interests],
+  );
   const previousApplicationYears = candidate.previousApplicationYears ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
   const picture = getStableImageUrl(candidate.image);
   const name = candidate.name || "Candidato";
+  const initials = React.useMemo(
+    () => getInitials(candidate.name),
+    [candidate.name],
+  );
   const contactLines = [
     candidate.application?.studentNumber
       ? `nº ${candidate.application.studentNumber}`
@@ -185,39 +185,11 @@ export default function CandidateGridCard({
   ].filter(Boolean) as Array<string>;
 
   const avatar = (
-    <Dialog>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className="cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label={`Ver foto de ${name}`}
-          >
-            <Avatar className="size-14 shrink-0 ring-2 ring-border/60">
-              <AvatarImage src={picture} alt={name} className="object-cover" />
-              <AvatarFallback>
-                <InitialsAvatar
-                  className="size-full rounded-full text-base font-bold"
-                  initials={getInitials(candidate.name)}
-                />
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        }
-      />
-      <DialogContent className="w-fit max-w-[min(90vw,28rem)] bg-transparent p-2 ring-0 sm:max-w-none">
-        <DialogTitle className="sr-only">Foto de {name}</DialogTitle>
-        <Avatar className="size-64 sm:size-80 shrink-0">
-          <AvatarImage src={picture} alt={name} className="object-cover" />
-          <AvatarFallback>
-            <InitialsAvatar
-              className="size-full rounded-full text-4xl font-bold"
-              initials={getInitials(candidate.name)}
-            />
-          </AvatarFallback>
-        </Avatar>
-      </DialogContent>
-    </Dialog>
+    <CandidateAvatarLightbox
+      picture={picture}
+      name={name}
+      initials={initials}
+    />
   );
 
   return (
@@ -332,3 +304,5 @@ export default function CandidateGridCard({
     </GridCard>
   );
 }
+
+export default React.memo(CandidateGridCard);
