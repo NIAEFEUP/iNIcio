@@ -9,11 +9,11 @@ import {
 import { db, DynamicTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
-import { application } from "@/db/schema";
 import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
   CandidateWithMetadata,
+  getCandidatesWithMetadata,
 } from "./candidate";
 import { getLatestVotingDecisionsForCandidates } from "./voting";
 import { getActiveRecruitment } from "./recruitment";
@@ -283,92 +283,14 @@ export async function getAllCandidatesWithDynamic(
     ? recruitmentIdOrRestrictions
     : restrictionsParam;
 
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  const candidates = await db.query.candidate.findMany({
-    where: (candidateTable, { eq, and, exists }) =>
-      and(
-        eq(candidateTable.recruitmentId, targetId),
-        exists(
-          db
-            .select()
-            .from(application)
-            .where(
-              and(
-                eq(application.candidateId, candidateTable.userId),
-                eq(application.recruitmentId, targetId),
-              ),
-            ),
-        ),
-      ),
-    with: {
-      user: true,
-      interview: true,
-      dynamic: {
-        with: {
-          dynamic: {
-            with: {
-              slot: true,
-            },
-          },
-        },
-      },
-      application: {
-        with: {
-          interests: true,
-        },
-      },
-      knownRecruiters: true,
-    },
-  });
-
-  candidates.sort(
-    (a, b) => (a.application?.id ?? 0) - (b.application?.id ?? 0),
-  );
-
-  const previousApplicationYears = await getPreviousApplicationYears(
-    candidates.map((c) => ({
-      userId: c.userId,
-      studentNumber: c.application?.studentNumber,
-    })),
-    targetId,
-  );
-
-  const votingDecisions = await getLatestVotingDecisionsForCandidates(
-    candidates.map((c) => c.userId),
-    targetId,
-  );
-
-  const res: Array<CandidateWithMetadata> = await Promise.all(
-    candidates.map(async (c) => {
-      return {
-        ...c.user,
-        image: await getFilenameUrl(c.user?.image),
-        dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
-        interview: c.interview as CandidateWithMetadata["interview"],
-        interviewClassification: c.interviewClassification ?? "none",
-        dynamicClassification: c.dynamicClassification ?? "none",
-        application: c.application
-          ? {
-              ...c.application,
-              curriculum: await getFilenameUrl(c.application?.curriculum),
-              interests: c.application?.interests.map((i) => i.interest),
-            }
-          : null,
-        knownRecruiters: c.knownRecruiters,
-        votingDecision: votingDecisions.get(c.userId) ?? null,
-        previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
-      };
-    }),
-  );
+  const res = await getCandidatesWithMetadata(undefined, recruitmentId);
 
   let filtered = res;
   for (const restriction of restrictions ?? []) {
     filtered = candidateFilterRestrictions[restriction](filtered);
   }
 
-  return Promise.resolve(filtered);
+  return filtered;
 }
 
 export async function addDynamicTemplate(content: Array<any>) {

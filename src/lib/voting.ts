@@ -10,7 +10,7 @@ import {
   votingPhaseCandidate,
   votingPhaseStatus,
 } from "@/db/schema";
-import { getCandidateWithMetadata } from "./candidate";
+import { getCandidatesWithMetadata } from "./candidate";
 
 export async function getCurrentVotingPhase(id: number) {
   const vPhase = await db.query.votingPhase.findFirst({
@@ -23,36 +23,27 @@ export async function getCurrentVotingPhase(id: number) {
 
   if (!vPhase) return null;
 
-  const candidates = await Promise.all(
-    vPhase.candidates.map(async (c) => {
-      const candidateData = await getCandidateWithMetadata(
-        c.candidateId,
+  const candidatesById = new Map(
+    (
+      await getCandidatesWithMetadata(
+        vPhase.candidates.map((c) => c.candidateId),
         vPhase.recruitmentId,
-      );
-      return {
-        ...candidateData,
-        isFinished: await getIsVoteFinished(id, c.candidateId),
-      };
-    }),
+      )
+    ).map((c) => [c.id, c]),
   );
+
+  const candidates = vPhase.candidates
+    .map((c) => {
+      const candidate = candidatesById.get(c.candidateId);
+      return candidate ? { ...candidate, isFinished: c.voteFinished } : null;
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null);
 
   return {
     ...vPhase,
     status: vPhase.status!,
     candidates,
   };
-}
-
-function getIsVoteFinished(votingPhaseId: number, candidateId: string) {
-  return db.query.votingPhaseCandidate
-    .findFirst({
-      where: (vpc) =>
-        and(
-          eq(vpc.votingPhaseId, votingPhaseId),
-          eq(vpc.candidateId, candidateId),
-        ),
-    })
-    .then((res) => res?.voteFinished || false);
 }
 
 export async function getVotingPhaseStatus(votingPhaseId: number) {

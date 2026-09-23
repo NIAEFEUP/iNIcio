@@ -1,4 +1,4 @@
-import { candidate } from "@/db/schema";
+import { application, candidate } from "@/db/schema";
 import {
   Application,
   db,
@@ -12,7 +12,7 @@ import { getFilenameUrl } from "./file-upload";
 import { FilterRestriction } from "./restriction";
 import { getActiveRecruitment } from "./recruitment";
 import { getPreviousApplicationYears } from "./previous-applications";
-import { getLatestVotingDecisionForCandidate } from "./voting";
+import { getLatestVotingDecisionsForCandidates } from "./voting";
 
 export type CandidateWithMetadata = User & {
   knownRecruiters: RecruiterToCandidate[];
@@ -66,21 +66,37 @@ export async function isCandidate(candidateId: string, recruitmentId?: number) {
   return query !== null && query !== undefined;
 }
 
-export async function getCandidateWithMetadata(
-  candidateId: string,
+/**
+ * Loads several candidates' full metadata in a fixed number of queries: one
+ * candidate graph, one previous-years lookup, one batched voting-decision
+ * lookup and one signing pass. Pass `candidateIds` to narrow the result to a
+ * specific set (e.g. the candidates of a voting phase).
+ */
+export async function getCandidatesWithMetadata(
+  candidateIds?: Array<string>,
   recruitmentId?: number,
-): Promise<CandidateWithMetadata> {
+): Promise<Array<CandidateWithMetadata>> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
+  if (candidateIds && candidateIds.length === 0) return [];
 
-  if (!targetId) throw new Error("No recruitment specified or active");
-
-  const whereClause = and(
-    eq(candidate.userId, candidateId),
-    eq(candidate.recruitmentId, targetId),
-  );
-
-  const res = await db.query.candidate.findFirst({
-    where: whereClause,
+  const candidates = await db.query.candidate.findMany({
+    where: (candidateTable, { eq, and, exists, inArray }) =>
+      and(
+        eq(candidateTable.recruitmentId, targetId),
+        candidateIds ? inArray(candidateTable.userId, candidateIds) : undefined,
+        exists(
+          db
+            .select()
+            .from(application)
+            .where(
+              and(
+                eq(application.candidateId, candidateTable.userId),
+                eq(application.recruitmentId, targetId),
+              ),
+            ),
+        ),
+      ),
     with: {
       user: true,
       dynamic: {
@@ -102,37 +118,63 @@ export async function getCandidateWithMetadata(
     },
   });
 
-  if (!res) {
-    throw new Error(`Candidate with ID ${candidateId} not found`);
-  }
-
-  const votingDecision = targetId
-    ? await getLatestVotingDecisionForCandidate(candidateId, targetId)
-    : null;
+  candidates.sort(
+    (a, b) => (a.application?.id ?? 0) - (b.application?.id ?? 0),
+  );
 
   const previousApplicationYears = await getPreviousApplicationYears(
-    [{ userId: candidateId, studentNumber: res.application?.studentNumber }],
+    candidates.map((c) => ({
+      userId: c.userId,
+      studentNumber: c.application?.studentNumber,
+    })),
     targetId,
   );
 
-  return {
-    ...res.user,
-    image: await getFilenameUrl(res.user?.image),
-    dynamic: res.dynamic as CandidateWithMetadata["dynamic"],
-    interview: res.interview as CandidateWithMetadata["interview"],
-    dynamicClassification: res.dynamicClassification ?? "none",
-    interviewClassification: res.interviewClassification ?? "none",
-    knownRecruiters: res.knownRecruiters,
-    votingDecision,
-    previousApplicationYears: previousApplicationYears.get(candidateId) ?? [],
-    application: res.application
-      ? {
-          ...res.application,
-          curriculum: await getFilenameUrl(res.application?.curriculum),
-          interests: res.application?.interests.map((i) => i.interest),
-        }
-      : null,
-  };
+  const votingDecisions = await getLatestVotingDecisionsForCandidates(
+    candidates.map((c) => c.userId),
+    targetId,
+  );
+
+  return Promise.all(
+    candidates.map(async (c) => ({
+      ...c.user,
+      image: await getFilenameUrl(c.user?.image),
+      dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
+      interview: c.interview as CandidateWithMetadata["interview"],
+      interviewClassification: c.interviewClassification ?? "none",
+      dynamicClassification: c.dynamicClassification ?? "none",
+      application: c.application
+        ? {
+            ...c.application,
+            curriculum: await getFilenameUrl(c.application?.curriculum),
+            interests: c.application?.interests.map((i) => i.interest),
+          }
+        : null,
+      knownRecruiters: c.knownRecruiters,
+      votingDecision: votingDecisions.get(c.userId) ?? null,
+      previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
+    })),
+  );
+}
+
+export async function getCandidateWithMetadata(
+  candidateId: string,
+  recruitmentId?: number,
+): Promise<CandidateWithMetadata> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+
+  if (!targetId) throw new Error("No recruitment specified or active");
+
+  const [candidateData] = await getCandidatesWithMetadata(
+    [candidateId],
+    targetId,
+  );
+
+  if (!candidateData) {
+    throw new Error(`Candidate with ID ${candidateId} not found`);
+  }
+
+  return candidateData;
 }
 
 export default async function getCandidateWithInterviewAndDynamic(
