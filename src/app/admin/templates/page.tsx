@@ -1,9 +1,8 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
 import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
-import { headers } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
@@ -14,7 +13,7 @@ import { requireAdminSession } from "@/lib/action-guard";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
 export default async function AdminTemplates() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const interviewTemplate = await getInterviewTemplate();
   const dynamicTemplate = await getDynamicTemplate();

@@ -16,6 +16,7 @@ import {
   RECRUITMENT_PHASE_IDENTIFIERS,
   type RecruitmentState,
 } from "./recruitment-state";
+import { cache } from "react";
 
 export { RECRUITMENT_PHASE_IDENTIFIERS };
 
@@ -28,7 +29,7 @@ export async function getLatestRecruitment() {
   });
 }
 
-export async function getActiveRecruitment() {
+export const getActiveRecruitment = cache(async () => {
   return await db.query.recruitment.findFirst({
     where: eq(recruitment.active, true),
     orderBy: (recruitment, { desc }) => [
@@ -36,7 +37,7 @@ export async function getActiveRecruitment() {
       desc(recruitment.id),
     ],
   });
-}
+});
 
 export async function getRecruitmentById(id: number) {
   return await db.query.recruitment.findFirst({

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { getAvailableRecruiters } from "@/app/actions";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const session = await getSessionFromRequest(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

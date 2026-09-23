@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, eq, gt, or } from "drizzle-orm";
 
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slot } from "@/db/schema";
 import {
@@ -33,9 +32,7 @@ type CandidateProgressProps = {
 export default async function CandidateProgress({
   searchParams,
 }: CandidateProgressProps) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/login");

@@ -1,16 +1,13 @@
 import EditorFrame from "@/components/editor/editor-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
 
 export default async function Collab() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user || !(await isAdmin(session.user.id))) {
     redirect("/");

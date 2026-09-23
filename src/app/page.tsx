@@ -2,8 +2,7 @@ export const dynamic = "force-dynamic";
 
 import "./globals.css";
 
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { isCandidate } from "@/lib/candidate";
 import { isRecruiter } from "@/lib/recruiter";
 import {
@@ -19,9 +18,7 @@ import LandingPage from "@/components/home/landing-page";
 export default async function Home() {
   const recruitmentState = await getCurrentRecruitmentState();
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const userId = session?.user?.id;
   const candidate = userId ? await isCandidate(userId) : false;

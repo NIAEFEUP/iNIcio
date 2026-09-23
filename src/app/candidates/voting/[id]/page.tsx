@@ -1,7 +1,7 @@
 import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
 import { PageHeader } from "@/components/layout/page-header";
 import { isAdmin } from "@/lib/admin";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   getCurrentVotingPhase,
@@ -9,7 +9,6 @@ import {
   getVotingPhaseRecruitmentId,
   voteForCandidate,
 } from "@/lib/voting";
-import { headers } from "next/headers";
 import { makeCandidateVoteDefinitive } from "@/lib/voting";
 import { deleteCandidateVotes } from "@/lib/voting";
 import { redirect } from "next/navigation";
@@ -25,7 +24,7 @@ interface CandidateVotingPageProps {
 export default async function CandidateVotingPage({
   params,
 }: CandidateVotingPageProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const { id } = await params;
 

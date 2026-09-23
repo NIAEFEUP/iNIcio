@@ -3,7 +3,7 @@ import RecruiterAvailabilityClient, {
 } from "@/components/recruiter/recruiter-availability-progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   addAvailability,
@@ -12,16 +12,13 @@ import {
   removeAvailability,
 } from "@/lib/recruiter";
 import { Calendar } from "lucide-react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import { requireRecruiterSession } from "@/lib/action-guard";
 
 export default async function RecruiterAvailabilityPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const targetRecruitment = await getTargetRecruitment();
 
