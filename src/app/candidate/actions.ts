@@ -8,7 +8,11 @@ import { submitApplicationComment } from "@/lib/application";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import type { CandidateWithMetadata } from "@/lib/candidate";
 import { getCandidateWithMetadata } from "@/lib/candidate";
-import { getApplicationComments, getDynamicComments } from "@/lib/comment";
+import {
+  getApplicationComments,
+  getDynamicComments,
+  updateApplicationComment,
+} from "@/lib/comment";
 import { db, User } from "@/lib/db";
 import type { Comment } from "@/components/candidate/page/candidate-comments";
 import {
@@ -17,6 +21,7 @@ import {
   getDynamicInterviewers,
   getAllCandidatesWithDynamic,
   updateDynamic,
+  updateDynamicComment,
 } from "@/lib/dynamic";
 import {
   addInterviewComment,
@@ -24,6 +29,7 @@ import {
   getInterviewComments,
   getInterviewers,
   updateInterview,
+  updateInterviewComment,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
@@ -133,27 +139,68 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
 export async function saveApplicationComment(
   candidateId: string,
   content: Array<unknown>,
+): Promise<{ success: boolean; id?: number }> {
+  const targetId = await getTargetRecruitmentId();
+  const user = await requireRecruiterSession(targetId);
+
+  const id = await submitApplicationComment(
+    candidateId,
+    content,
+    user.id,
+    targetId,
+  );
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editApplicationComment(
+  candidateId: string,
+  commentId: number,
+  content: Array<unknown>,
 ): Promise<boolean> {
   const targetId = await getTargetRecruitmentId();
   const user = await requireRecruiterSession(targetId);
 
-  return submitApplicationComment(candidateId, content, user.id, targetId);
+  return updateApplicationComment(
+    commentId,
+    content,
+    user.id,
+    candidateId,
+    targetId,
+  );
 }
 
 export async function saveInterviewComment(
   candidateId: string,
   content: Array<unknown>,
+): Promise<{ success: boolean; id?: number }> {
+  const targetId = await getTargetRecruitmentId();
+  const user = await requireRecruiterSession(targetId);
+
+  const id = await addInterviewComment(user.id, content, candidateId, targetId);
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editInterviewComment(
+  candidateId: string,
+  commentId: number,
+  content: Array<unknown>,
 ): Promise<boolean> {
   const targetId = await getTargetRecruitmentId();
   const user = await requireRecruiterSession(targetId);
 
-  return addInterviewComment(user.id, content, candidateId, targetId);
+  return updateInterviewComment(
+    commentId,
+    content,
+    user.id,
+    candidateId,
+    targetId,
+  );
 }
 
 export async function saveDynamicComment(
   dynamicId: number,
   content: Array<unknown>,
-): Promise<boolean> {
+): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
   const user = await requireRecruiterSession(targetId);
 
@@ -161,8 +208,19 @@ export async function saveDynamicComment(
   if (!dynamic)
     throw new Error("Dynamic not found in the selected recruitment");
 
-  await createDynamicComment(dynamicId, content, user.id);
-  return true;
+  const id = await createDynamicComment(dynamicId, content, user.id);
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editDynamicComment(
+  dynamicId: number,
+  commentId: number,
+  content: Array<unknown>,
+): Promise<boolean> {
+  const targetId = await getTargetRecruitmentId();
+  const user = await requireRecruiterSession(targetId);
+
+  return updateDynamicComment(commentId, content, user.id, dynamicId, targetId);
 }
 
 export async function updateInterviewContent(

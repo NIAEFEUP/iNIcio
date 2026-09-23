@@ -50,6 +50,13 @@
       "when": 1790069044100,
       "tag": "0006_striped_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790090474091,
+      "tag": "0007_dear_magdalene",
+      "breakpoints": true
     }
   ]
 }
