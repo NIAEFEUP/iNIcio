@@ -4,6 +4,7 @@ import {
   Calendar,
   CalendarClock,
   Clock,
+  DoorOpen,
   FileText,
   LayoutDashboard,
   Layers,
@@ -102,6 +103,15 @@ export function SidebarContentComponent({
     { title: "Recrutadores", path: "/admin/recruiters", icon: UserCog },
   ];
 
+  const eventSections: NavItem[] = [
+    {
+      title: "NI Open Day",
+      path: "/admin/events/open-day",
+      icon: DoorOpen,
+      exact: true,
+    },
+  ];
+
   const platformSections: NavItem[] = [
     { title: "Documentos", path: "/admin/templates", icon: FileText },
     {
@@ -153,6 +163,7 @@ export function SidebarContentComponent({
     <>
       {canRecruit && renderGroup("Recrutador", recruiterSections)}
       {isAdmin && renderGroup("Recrutamento", adminSections)}
+      {isAdmin && renderGroup("Eventos", eventSections)}
       {isAdmin && renderGroup("Plataforma", platformSections)}
     </>
   );

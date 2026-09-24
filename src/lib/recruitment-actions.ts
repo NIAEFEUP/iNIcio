@@ -17,6 +17,12 @@ export interface RecruitmentInput {
   start: string;
   end: string;
   active: boolean;
+  openDayEnabled: boolean;
+  openDayDate?: string | null;
+  openDayStartTime?: string;
+  openDayEndTime?: string;
+  openDayRoom?: string;
+  openDayImage?: string;
 }
 
 function parseRecruitment(input: RecruitmentInput): Omit<Recruitment, "id"> {
@@ -31,6 +37,20 @@ function parseRecruitment(input: RecruitmentInput): Omit<Recruitment, "id"> {
     throw new Error("A data de fim tem de ser posterior à data de início");
   }
 
+  const openDayDate =
+    input.openDayEnabled && input.openDayDate
+      ? new Date(input.openDayDate)
+      : null;
+
+  if (
+    input.openDayEnabled &&
+    (!input.openDayDate || Number.isNaN(openDayDate!.getTime()))
+  ) {
+    throw new Error(
+      "A data do NI Open Day é obrigatória quando o anúncio está ativo",
+    );
+  }
+
   return {
     lectiveYear: input.lectiveYear,
     semester: input.semester,
@@ -38,6 +58,12 @@ function parseRecruitment(input: RecruitmentInput): Omit<Recruitment, "id"> {
     start,
     end,
     active: input.active,
+    openDayEnabled: input.openDayEnabled,
+    openDayDate: openDayDate ?? null,
+    openDayStartTime: input.openDayStartTime?.trim() || "10:00",
+    openDayEndTime: input.openDayEndTime?.trim() || "18:00",
+    openDayRoom: input.openDayRoom?.trim() || "B315",
+    openDayImage: input.openDayImage?.trim() || "/images/ni.jpg",
   };
 }
 

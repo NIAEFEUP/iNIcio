@@ -135,7 +135,7 @@ export default function RecruiterAvailabilityClient({
               <span>Disponível</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 border-2 border-dashed border-gray-200 rounded"></div>
+              <div className="h-3 w-3 border-2 border-dashed border-gray-200 dark:border-muted-foreground/35 rounded"></div>
               <span>Indisponível</span>
             </div>
           </div>

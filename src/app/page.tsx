@@ -13,11 +13,15 @@ import {
 } from "@/lib/application";
 import { getFilenameUrl } from "@/lib/file-upload";
 import { getAllCandidateResults } from "@/lib/final-messages";
-import { getCurrentRecruitmentState } from "@/lib/recruitment";
+import {
+  getCurrentRecruitmentState,
+  getOpenDayAnnouncement,
+} from "@/lib/recruitment";
 import LandingPage from "@/components/home/landing-page";
 
 export default async function Home() {
   const recruitmentState = await getCurrentRecruitmentState();
+  const openDayAnnouncement = await getOpenDayAnnouncement();
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -91,6 +95,7 @@ export default async function Home() {
       applicationStatus={recruitmentState.applicationStatus}
       applicationDeadline={formattedDeadline}
       phases={recruitmentState.phases}
+      openDayAnnouncement={openDayAnnouncement}
     />
   );
 }

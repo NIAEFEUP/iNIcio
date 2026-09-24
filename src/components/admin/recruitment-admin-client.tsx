@@ -88,6 +88,12 @@ export default function RecruitmentAdminClient({
     start: "",
     end: "",
     active: true,
+    openDayEnabled: false,
+    openDayDate: "",
+    openDayStartTime: "10:00",
+    openDayEndTime: "18:00",
+    openDayRoom: "B315",
+    openDayImage: "/images/ni.jpg",
   });
 
   const applyDefaultsFromStart = (start: string) => {
@@ -134,6 +140,12 @@ export default function RecruitmentAdminClient({
       start: startDate,
       end: endDate,
       active: formData.active,
+      openDayEnabled: formData.openDayEnabled,
+      openDayDate: formData.openDayDate ? new Date(formData.openDayDate) : null,
+      openDayStartTime: formData.openDayStartTime,
+      openDayEndTime: formData.openDayEndTime,
+      openDayRoom: formData.openDayRoom,
+      openDayImage: formData.openDayImage,
     };
 
     try {
@@ -164,6 +176,12 @@ export default function RecruitmentAdminClient({
       start: "",
       end: "",
       active: true,
+      openDayEnabled: false,
+      openDayDate: "",
+      openDayStartTime: "10:00",
+      openDayEndTime: "18:00",
+      openDayRoom: "B315",
+      openDayImage: "/images/ni.jpg",
     });
     setEditingRecruitment(null);
   };
@@ -178,6 +196,14 @@ export default function RecruitmentAdminClient({
       start: new Date(recruitment.start).toISOString().slice(0, 16),
       end: new Date(recruitment.end).toISOString().slice(0, 16),
       active: recruitment.active,
+      openDayEnabled: recruitment.openDayEnabled,
+      openDayDate: recruitment.openDayDate
+        ? new Date(recruitment.openDayDate).toISOString().slice(0, 10)
+        : "",
+      openDayStartTime: recruitment.openDayStartTime || "10:00",
+      openDayEndTime: recruitment.openDayEndTime || "18:00",
+      openDayRoom: recruitment.openDayRoom || "B315",
+      openDayImage: recruitment.openDayImage || "/images/ni.jpg",
     });
     setIsEditDialogOpen(true);
   };
@@ -358,6 +384,117 @@ export default function RecruitmentAdminClient({
                       />
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4 pt-2">
+                    <Label
+                      htmlFor="add-open-day-enabled"
+                      className="text-right text-card-foreground"
+                    >
+                      NI Open Day
+                    </Label>
+                    <div className="col-span-3">
+                      <Switch
+                        id="add-open-day-enabled"
+                        checked={formData.openDayEnabled}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            openDayEnabled: checked,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {formData.openDayEnabled && (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="add-open-day-date"
+                          className="text-right text-card-foreground"
+                        >
+                          Data
+                        </Label>
+                        <Input
+                          id="add-open-day-date"
+                          type="date"
+                          value={formData.openDayDate}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              openDayDate: e.target.value,
+                            }))
+                          }
+                          className="col-span-3 bg-input border-border text-foreground"
+                          required={formData.openDayEnabled}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="add-open-day-start"
+                          className="text-right text-card-foreground"
+                        >
+                          Hora início
+                        </Label>
+                        <Input
+                          id="add-open-day-start"
+                          type="time"
+                          value={formData.openDayStartTime}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              openDayStartTime: e.target.value,
+                            }))
+                          }
+                          className="col-span-3 bg-input border-border text-foreground"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="add-open-day-end"
+                          className="text-right text-card-foreground"
+                        >
+                          Hora fim
+                        </Label>
+                        <Input
+                          id="add-open-day-end"
+                          type="time"
+                          value={formData.openDayEndTime}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              openDayEndTime: e.target.value,
+                            }))
+                          }
+                          className="col-span-3 bg-input border-border text-foreground"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="add-open-day-room"
+                          className="text-right text-card-foreground"
+                        >
+                          Sala
+                        </Label>
+                        <Input
+                          id="add-open-day-room"
+                          type="text"
+                          value={formData.openDayRoom}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              openDayRoom: e.target.value,
+                            }))
+                          }
+                          className="col-span-3 bg-input border-border text-foreground"
+                          placeholder="B315"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
@@ -618,6 +755,117 @@ export default function RecruitmentAdminClient({
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-4 items-center gap-4 pt-2">
+                  <Label
+                    htmlFor="edit-open-day-enabled"
+                    className="text-right text-card-foreground"
+                  >
+                    NI Open Day
+                  </Label>
+                  <div className="col-span-3">
+                    <Switch
+                      id="edit-open-day-enabled"
+                      checked={formData.openDayEnabled}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          openDayEnabled: checked,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {formData.openDayEnabled && (
+                  <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor="edit-open-day-date"
+                        className="text-right text-card-foreground"
+                      >
+                        Data
+                      </Label>
+                      <Input
+                        id="edit-open-day-date"
+                        type="date"
+                        value={formData.openDayDate}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            openDayDate: e.target.value,
+                          }))
+                        }
+                        className="col-span-3 bg-input border-border text-foreground"
+                        required={formData.openDayEnabled}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor="edit-open-day-start"
+                        className="text-right text-card-foreground"
+                      >
+                        Hora início
+                      </Label>
+                      <Input
+                        id="edit-open-day-start"
+                        type="time"
+                        value={formData.openDayStartTime}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            openDayStartTime: e.target.value,
+                          }))
+                        }
+                        className="col-span-3 bg-input border-border text-foreground"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor="edit-open-day-end"
+                        className="text-right text-card-foreground"
+                      >
+                        Hora fim
+                      </Label>
+                      <Input
+                        id="edit-open-day-end"
+                        type="time"
+                        value={formData.openDayEndTime}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            openDayEndTime: e.target.value,
+                          }))
+                        }
+                        className="col-span-3 bg-input border-border text-foreground"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor="edit-open-day-room"
+                        className="text-right text-card-foreground"
+                      >
+                        Sala
+                      </Label>
+                      <Input
+                        id="edit-open-day-room"
+                        type="text"
+                        value={formData.openDayRoom}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            openDayRoom: e.target.value,
+                          }))
+                        }
+                        className="col-span-3 bg-input border-border text-foreground"
+                        placeholder="B315"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <DialogFooter>
                 <Button

@@ -23,6 +23,16 @@ import type {
 import { CandidateApplicationModal } from "@/components/candidate/candidate-application-modal";
 import { CandidateResultModal } from "@/components/candidate/candidate-result-modal";
 
+interface OpenDayAnnouncement {
+  id: number;
+  enabled: boolean;
+  date: Date;
+  room: string;
+  startTime: string;
+  endTime: string;
+  image: string;
+}
+
 interface LandingPageProps {
   user: {
     id: string;
@@ -40,6 +50,7 @@ interface LandingPageProps {
   applicationStatus: ApplicationStatus;
   applicationDeadline?: string | null;
   phases?: RecruitmentPhase[];
+  openDayAnnouncement?: OpenDayAnnouncement | null;
 }
 
 export default function LandingPage({
@@ -52,6 +63,7 @@ export default function LandingPage({
   recruitmentStatus,
   applicationStatus,
   applicationDeadline,
+  openDayAnnouncement,
 }: LandingPageProps) {
   const [selectedApplication, setSelectedApplication] =
     useState<UserApplicationWithDetails | null>(null);
@@ -68,8 +80,47 @@ export default function LandingPage({
     ? userApplications.find((app) => app.recruitmentId === currentRecruitmentId)
     : null;
 
+  const openDayDate = openDayAnnouncement?.date
+    ? new Intl.DateTimeFormat("pt-PT", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(openDayAnnouncement.date))
+    : null;
+
   return (
     <div className="flex flex-col bg-background">
+      {openDayAnnouncement && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-8 sm:pt-10">
+          <div className="relative overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
+            <div className="relative h-[260px] sm:h-[340px] w-full">
+              <Image
+                src={openDayAnnouncement.image || "/images/ni.jpg"}
+                alt="NI Open Day"
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/35" />
+              <div className="absolute inset-0 flex items-end p-6 sm:p-10">
+                <div className="max-w-2xl text-white">
+                  <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-none">
+                    NI Open Day
+                  </h2>
+                  <p className="mt-3 text-base sm:text-lg text-white/90">
+                    {openDayDate && `Dia ${openDayDate}`} ·{" "}
+                    {openDayAnnouncement.startTime} -{" "}
+                    {openDayAnnouncement.endTime}
+                  </p>
+                  <p className="mt-1 text-sm sm:text-base text-white/80">
+                    Estamos na {openDayAnnouncement.room}.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
       <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 text-center max-w-7xl mx-auto px-4 sm:px-6">
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground leading-[1.1] mb-6">
           Queres fazer parte do NI?

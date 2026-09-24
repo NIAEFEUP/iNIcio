@@ -16,8 +16,8 @@ export function BookingSlotBox({
         <div
           key={booking.id}
           className={cn(
-            "w-full border-2 border-dashed border-gray-200 rounded cursor-pointer",
-            "hover:border-gray-300",
+            "w-full border-2 border-dashed border-gray-200 dark:border-muted-foreground/35 rounded cursor-pointer",
+            "hover:border-gray-300 dark:hover:border-muted-foreground/60",
             existingSlot &&
               !isSlotSelected &&
               `${getTypeColor(existingSlot.type)} border-solid border-transparent text-white`,
