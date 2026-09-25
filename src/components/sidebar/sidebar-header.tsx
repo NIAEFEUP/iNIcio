@@ -30,6 +30,12 @@ export interface RecruitmentOption {
   active: boolean;
   start: string;
   end: string;
+  openDayEnabled?: boolean;
+  openDayDate?: string | null;
+  openDayStartTime?: string;
+  openDayEndTime?: string;
+  openDayRoom?: string;
+  openDayImage?: string;
 }
 
 export type RecruitmentManagerMode = "overview" | "create";

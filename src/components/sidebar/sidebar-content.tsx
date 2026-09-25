@@ -33,6 +33,7 @@ interface SidebarContentProps {
   isRecruiter?: boolean;
   isAdmin?: boolean;
   user?: UserType | null;
+  onOpenOpenDay?: () => void;
 }
 
 type IconType = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
@@ -43,6 +44,7 @@ interface NavItem {
   icon: IconType;
   exact?: boolean;
   disabled?: boolean;
+  onSelect?: () => void;
 }
 
 function isActivePath(activePath: string, path?: string, exact?: boolean) {
@@ -56,6 +58,7 @@ export function SidebarContentComponent({
   isRecruiter = false,
   isAdmin = false,
   user,
+  onOpenOpenDay,
 }: SidebarContentProps) {
   const pathname = usePathname();
   const activePath = currentPath || pathname || "";
@@ -106,9 +109,9 @@ export function SidebarContentComponent({
   const eventSections: NavItem[] = [
     {
       title: "NI Open Day",
-      path: "/admin/events/open-day",
       icon: DoorOpen,
       exact: true,
+      onSelect: onOpenOpenDay,
     },
   ];
 
@@ -142,6 +145,17 @@ export function SidebarContentComponent({
                 </SidebarMenuItem>
               );
             }
+            if (item.onSelect) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton onClick={item.onSelect}>
+                    <Icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
