@@ -63,7 +63,7 @@ function parseRecruitment(input: RecruitmentInput): Omit<Recruitment, "id"> {
     openDayStartTime: input.openDayStartTime?.trim() || "10:00",
     openDayEndTime: input.openDayEndTime?.trim() || "18:00",
     openDayRoom: input.openDayRoom?.trim() || "B315",
-    openDayImage: input.openDayImage?.trim() || "/images/ni.jpg",
+    openDayImage: input.openDayImage?.trim() || "/images/B315.jpeg",
   };
 }
 

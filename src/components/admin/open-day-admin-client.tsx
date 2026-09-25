@@ -52,7 +52,7 @@ export default function OpenDayAdminClient({
   const [endTime, setEndTime] = useState(recruitment.openDayEndTime || "18:00");
   const [room, setRoom] = useState(recruitment.openDayRoom || "B315");
   const [image, setImage] = useState(
-    recruitment.openDayImage || "/images/ni.jpg",
+    recruitment.openDayImage || "/images/B315.jpeg",
   );
   const [isSaving, setIsSaving] = useState(false);
 
@@ -77,7 +77,7 @@ export default function OpenDayAdminClient({
         openDayStartTime: startTime,
         openDayEndTime: endTime,
         openDayRoom: room.trim() || "B315",
-        openDayImage: image.trim() || "/images/ni.jpg",
+        openDayImage: image.trim() || "/images/B315.jpeg",
       });
 
       toast.add({
@@ -209,7 +209,7 @@ export default function OpenDayAdminClient({
                       id="open-day-image"
                       value={image}
                       onChange={(event) => setImage(event.target.value)}
-                      placeholder="/images/ni.jpg"
+                      placeholder="/images/B315.jpeg"
                       className="bg-input border-border pl-9 text-foreground"
                     />
                   </div>

@@ -93,7 +93,7 @@ export default function RecruitmentAdminClient({
     openDayStartTime: "10:00",
     openDayEndTime: "18:00",
     openDayRoom: "B315",
-    openDayImage: "/images/ni.jpg",
+    openDayImage: "/images/B315.jpeg",
   });
 
   const applyDefaultsFromStart = (start: string) => {
@@ -181,7 +181,7 @@ export default function RecruitmentAdminClient({
       openDayStartTime: "10:00",
       openDayEndTime: "18:00",
       openDayRoom: "B315",
-      openDayImage: "/images/ni.jpg",
+      openDayImage: "/images/B315.jpeg",
     });
     setEditingRecruitment(null);
   };
@@ -203,7 +203,7 @@ export default function RecruitmentAdminClient({
       openDayStartTime: recruitment.openDayStartTime || "10:00",
       openDayEndTime: recruitment.openDayEndTime || "18:00",
       openDayRoom: recruitment.openDayRoom || "B315",
-      openDayImage: recruitment.openDayImage || "/images/ni.jpg",
+      openDayImage: recruitment.openDayImage || "/images/B315.jpeg",
     });
     setIsEditDialogOpen(true);
   };

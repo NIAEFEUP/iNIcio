@@ -173,7 +173,7 @@ export async function getOpenDayAnnouncement(recruitmentId?: number) {
     room: targetRecruitment.openDayRoom || "B315",
     startTime: targetRecruitment.openDayStartTime || "10:00",
     endTime: targetRecruitment.openDayEndTime || "18:00",
-    image: targetRecruitment.openDayImage || "/images/ni.jpg",
+    image: targetRecruitment.openDayImage || "/images/B315.jpeg",
   };
 }
 

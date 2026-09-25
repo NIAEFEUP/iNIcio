@@ -28,7 +28,7 @@ export const recruitment = pgTable(
     openDayStartTime: text("open_day_start_time").notNull().default("10:00"),
     openDayEndTime: text("open_day_end_time").notNull().default("18:00"),
     openDayRoom: text("open_day_room").notNull().default("B315"),
-    openDayImage: text("open_day_image").notNull().default("/images/ni.jpg"),
+    openDayImage: text("open_day_image").notNull().default("/images/B315.jpeg"),
   },
   (table) => [
     unique("recruitment_lective_year_semester_unique").on(

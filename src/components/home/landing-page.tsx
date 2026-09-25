@@ -95,7 +95,7 @@ export default function LandingPage({
           <div className="relative overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
             <div className="relative h-[260px] sm:h-[340px] w-full">
               <Image
-                src={openDayAnnouncement.image || "/images/ni.jpg"}
+                src={openDayAnnouncement.image || "/images/B315.jpeg"}
                 alt="NI Open Day"
                 fill
                 sizes="100vw"
