@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Calendar,
+  CalendarCheck,
   CalendarClock,
   Clock,
+  DoorOpen,
   FileText,
-  LayoutDashboard,
   Layers,
+  LayoutDashboard,
   MessageSquare,
   UserCheck,
   UserCog,
@@ -14,9 +18,8 @@ import {
   UsersRound,
   Vote,
 } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -25,40 +28,42 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import type { User as UserType } from "@/hooks/use-auth";
 
-interface SidebarContentProps {
-  currentPath?: string;
-  isRecruiter?: boolean;
-  isAdmin?: boolean;
-  user?: UserType | null;
-}
-
-type IconType = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
-
-interface NavItem {
+export interface NavItem {
   title: string;
   path?: string;
-  icon: IconType;
+  icon: LucideIcon;
   exact?: boolean;
   disabled?: boolean;
+  onSelect?: () => void;
 }
 
-function isActivePath(activePath: string, path?: string, exact?: boolean) {
-  if (!path) return false;
-  if (exact || path === "/admin") return activePath === path;
-  return activePath === path || activePath.startsWith(`${path}/`);
+export interface SidebarContentProps {
+  userId?: string;
+  isAdmin?: boolean;
+  isRecruiter?: boolean;
+  currentRecruitmentId?: number;
+  onOpenOpenDay?: () => void;
+}
+
+function isActivePath(
+  currentPath: string,
+  targetPath?: string,
+  exact = false,
+): boolean {
+  if (!targetPath) return false;
+  if (exact) return currentPath === targetPath;
+  return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
 }
 
 export function SidebarContentComponent({
-  currentPath,
-  isRecruiter = false,
+  userId,
   isAdmin = false,
-  user,
+  isRecruiter = false,
+  currentRecruitmentId,
+  onOpenOpenDay,
 }: SidebarContentProps) {
-  const pathname = usePathname();
-  const activePath = currentPath || pathname || "";
-
+  const activePath = usePathname();
   const canRecruit = isRecruiter || isAdmin;
 
   const recruiterSections: NavItem[] = [
@@ -75,13 +80,13 @@ export function SidebarContentComponent({
     {
       title: "Disponibilidades",
       path: "/recruiter/availability",
-      icon: Clock,
+      icon: CalendarClock,
     },
-    ...(user?.id
+    ...(userId
       ? [
           {
             title: "Alocações",
-            path: `/calendar/${user.id}`,
+            path: `/calendar/${userId}`,
             icon: Calendar,
           },
         ]
@@ -100,6 +105,11 @@ export function SidebarContentComponent({
     { title: "Fases", path: "/admin/phases", icon: Layers },
     { title: "Slots", path: "/admin/interviews", icon: Users },
     { title: "Recrutadores", path: "/admin/recruiters", icon: UserCog },
+    {
+      title: "Open Day",
+      icon: DoorOpen,
+      onSelect: onOpenOpenDay,
+    },
   ];
 
   const platformSections: NavItem[] = [
@@ -132,6 +142,17 @@ export function SidebarContentComponent({
                 </SidebarMenuItem>
               );
             }
+            if (item.onSelect) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton onClick={item.onSelect}>
+                    <Icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton

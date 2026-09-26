@@ -12,3 +12,4 @@ export * from "./user_roles";
 export * from "./notification";
 export * from "./voting";
 export * from "./final_messages";
+export * from "./open_day";

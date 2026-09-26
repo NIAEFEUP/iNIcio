@@ -13,10 +13,14 @@ import {
 import { getFilenameUrl } from "@/lib/file-upload";
 import { getAllCandidateResults } from "@/lib/final-messages";
 import { getCurrentRecruitmentState } from "@/lib/recruitment";
+import { getOpenDayAnnouncement } from "@/lib/open-day";
 import LandingPage from "@/components/home/landing-page";
 
 export default async function Home() {
   const recruitmentState = await getCurrentRecruitmentState();
+  const openDayAnnouncement = await getOpenDayAnnouncement(
+    recruitmentState.recruitment?.id,
+  );
 
   const session = await getSession();
 
@@ -88,6 +92,7 @@ export default async function Home() {
       applicationStatus={recruitmentState.applicationStatus}
       applicationDeadline={formattedDeadline}
       phases={recruitmentState.phases}
+      openDayAnnouncement={openDayAnnouncement}
     />
   );
 }

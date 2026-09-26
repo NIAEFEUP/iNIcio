@@ -50,6 +50,13 @@
       "when": 1790069044100,
       "tag": "0006_striped_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790421786703,
+      "tag": "0007_sturdy_champions",
+      "breakpoints": true
     }
   ]
 }
