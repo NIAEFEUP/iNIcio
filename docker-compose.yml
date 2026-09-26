@@ -8,6 +8,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (see .env.example)}
       HOST: 0.0.0.0
       PORT: 1234
+      NEXTJS_URL: ${NEXTJS_URL:-http://host.docker.internal:3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   db:
     image: postgres:17
     restart: always

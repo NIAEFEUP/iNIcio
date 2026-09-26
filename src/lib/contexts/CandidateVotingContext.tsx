@@ -31,6 +31,9 @@ interface CandidateVotingContextType {
   setCurrentCandidate: Dispatch<
     SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
   >;
+  approvedCount: number;
+  rejectedCount: number;
+  votedCount: number;
 }
 
 interface CandidateVotingProviderProps {
@@ -56,6 +59,9 @@ interface CandidateVotingProviderProps {
   setCurrentCandidate: Dispatch<
     SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
   >;
+  approvedCount: number;
+  rejectedCount: number;
+  votedCount: number;
 }
 
 export const CandidateVotingContext =
@@ -75,6 +81,9 @@ export function CandidateVotingProvider({
   recruiterVotes,
   currentCandidate,
   setCurrentCandidate,
+  approvedCount,
+  rejectedCount,
+  votedCount,
 }: CandidateVotingProviderProps) {
   return (
     <CandidateVotingContext.Provider
@@ -91,6 +100,9 @@ export function CandidateVotingProvider({
         recruiterVotes,
         currentCandidate,
         setCurrentCandidate,
+        approvedCount,
+        rejectedCount,
+        votedCount,
       }}
     >
       {children}

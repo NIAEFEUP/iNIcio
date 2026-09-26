@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import {
   changeCurrentVotingPhaseStatusCandidate,
+  getCandidateVotes,
   getCurrentVotingPhase,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
@@ -17,6 +18,13 @@ import {
   requireAdminSession,
   requireRecruiterSession,
 } from "@/lib/action-guard";
+import {
+  broadcastCandidateFinished,
+  broadcastStatusChanged,
+  broadcastVoteUpdated,
+  broadcastVotesReset,
+} from "@/lib/voting-events";
+import { generateJWT } from "@/lib/jwt";
 
 interface CandidateVotingPageProps {
   params: any;
@@ -45,12 +53,16 @@ export default async function CandidateVotingPage({
     const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      return await voteForCandidate(
+      const ok = await voteForCandidate(
         id,
         effectiveRecruiterId,
         candidateId,
         decision,
       );
+      if (ok) {
+        await broadcastVoteUpdated(id, candidateId);
+      }
+      return ok;
     }
 
     return false;
@@ -63,10 +75,15 @@ export default async function CandidateVotingPage({
     "use server";
     await requireAdminSession();
 
-    return await changeCurrentVotingPhaseStatusCandidate(
+    const ok = await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,
       candidateId,
     );
+    if (ok) {
+      await broadcastStatusChanged(votingPhaseId, candidateId);
+      await broadcastVoteUpdated(votingPhaseId, candidateId);
+    }
+    return ok;
   }
 
   async function makeVoteDefinitiveAction(
@@ -77,11 +94,15 @@ export default async function CandidateVotingPage({
     "use server";
     await requireAdminSession();
 
-    return await makeCandidateVoteDefinitive(
+    const ok = await makeCandidateVoteDefinitive(
       decision,
       votingPhaseId,
       candidateId,
     );
+    if (ok) {
+      await broadcastCandidateFinished(votingPhaseId, candidateId, decision);
+    }
+    return ok;
   }
 
   async function resetCandidateVotes(
@@ -92,9 +113,11 @@ export default async function CandidateVotingPage({
     await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
+    await broadcastVotesReset(votingPhaseId, candidateId);
   }
 
   const admin = await isAdmin(session?.user.id);
+  const userRole = admin ? "admin" : "recruiter";
 
   const currentVotingPhase = await getCurrentVotingPhase(id);
   if (!currentVotingPhase) redirect("/candidates");
@@ -103,6 +126,27 @@ export default async function CandidateVotingPage({
     currentVotingPhase.id,
     session?.user.id,
   );
+
+  const initialCandidateId = currentVotingPhase.status.candidateId;
+  const initialCandidate = currentVotingPhase.candidates.find(
+    (c) => c.id === initialCandidateId,
+  );
+  const initialCandidateVotes = initialCandidate
+    ? await getCandidateVotes(currentVotingPhase.id, initialCandidate.id)
+    : [];
+  const initialApprovedCount = admin
+    ? initialCandidateVotes.filter((v) => v.decision === "approve").length
+    : 0;
+  const initialRejectedCount = admin
+    ? initialCandidateVotes.filter((v) => v.decision === "reject").length
+    : 0;
+  const initialVotedCount = initialCandidateVotes.length;
+  const initialTotalToVote = 0;
+  const initialFinishedCandidates = currentVotingPhase.candidates.filter(
+    (c) => c.isFinished,
+  ).length;
+
+  const token = await generateJWT(session?.user.id, userRole, [`voting/${id}`]);
 
   return (
     <>
@@ -118,6 +162,13 @@ export default async function CandidateVotingPage({
         }
         recruiterVotes={recruiterVotes}
         makeVoteDefinitiveAction={makeVoteDefinitiveAction}
+        token={token}
+        initialCandidateId={initialCandidateId}
+        initialApprovedCount={initialApprovedCount}
+        initialRejectedCount={initialRejectedCount}
+        initialVotedCount={initialVotedCount}
+        initialTotalToVote={initialTotalToVote}
+        initialFinishedCandidates={initialFinishedCandidates}
       />
     </>
   );
