@@ -96,7 +96,8 @@ export async function getAllCandidateResults(
             inArray(recruitmentPhase.recruitmentId, recruitmentIds),
             eq(recruitmentPhase.role, "candidate"),
           ),
-        ),
+        )
+        .orderBy(recruitmentPhase.start),
       getAcceptedMessage(),
       getRejectedMessage(),
     ]);
@@ -106,14 +107,17 @@ export async function getAllCandidateResults(
   const canReveal = new Map<number, boolean>(
     recruitmentIds.map((id) => [id, true]),
   );
+  const seenResultPhases = new Set<number>();
   for (const phase of revealPhases) {
     if (
-      normalizePhaseIdentifier(phase.clientIdentifier) ===
-        RESULT_PHASE_IDENTIFIER &&
-      getPhaseState(phase) === "upcoming"
-    ) {
-      canReveal.set(phase.recruitmentId, false);
-    }
+      normalizePhaseIdentifier(phase.clientIdentifier) !==
+        RESULT_PHASE_IDENTIFIER ||
+      seenResultPhases.has(phase.recruitmentId)
+    )
+      continue;
+
+    seenResultPhases.add(phase.recruitmentId);
+    canReveal.set(phase.recruitmentId, getPhaseState(phase) !== "upcoming");
   }
 
   return userApps.map((app) => {
