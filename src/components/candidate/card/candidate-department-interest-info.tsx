@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 
 interface CandidateDepartmentInterestInfoProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
 }
 
 export default function CandidateDepartmentInterestInfo({

@@ -1,9 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import Navbar from "./navbar";
 import { isAdmin } from "@/lib/admin";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { hasApplication } from "@/lib/application";
 import { getActiveRecruitment } from "@/lib/recruitment";
@@ -12,9 +11,7 @@ import { getNotifications } from "@/lib/notifications";
 import { NotificationLive } from "./notifications/notification-live";
 
 export default async function NavbarController() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const admin = await isAdmin(session?.user?.id);
   const recruiter = await isRecruiter(session?.user?.id);

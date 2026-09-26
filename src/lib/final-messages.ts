@@ -1,7 +1,10 @@
-import { finalMessageTemplate } from "@/db/schema";
+import { finalMessageTemplate, recruitmentPhase } from "@/db/schema";
 import { db, FinalMessageTemplate } from "./db";
-import { eq } from "drizzle-orm";
-import { getLatestVotingDecisionForCandidate } from "./voting";
+import { and, eq, inArray } from "drizzle-orm";
+import {
+  getLatestVotingDecisionForCandidate,
+  getLatestVotingDecisionsByRecruitment,
+} from "./voting";
 import { getUserApplications } from "./application";
 import { getActiveRecruitment, getRecruitmentPhases } from "./recruitment";
 import {
@@ -74,46 +77,83 @@ export async function getAllCandidateResults(
   candidateId: string,
 ): Promise<CandidateRecruitmentResult[]> {
   const userApps = await getUserApplications(candidateId);
-  const activeRec = await getActiveRecruitment();
+  if (userApps.length === 0) return [];
 
-  const results: CandidateRecruitmentResult[] = [];
+  const recruitmentIds = [...new Set(userApps.map((a) => a.recruitmentId))];
 
-  for (const app of userApps) {
+  // One batched lookup each for the active recruitment, the voting decisions
+  // (per recruitment), the reveal phases and the message templates, instead of
+  // one set of queries per application.
+  const [activeRec, decisions, revealPhases, accepted, rejected] =
+    await Promise.all([
+      getActiveRecruitment(),
+      getLatestVotingDecisionsByRecruitment(candidateId, recruitmentIds),
+      db
+        .select()
+        .from(recruitmentPhase)
+        .where(
+          and(
+            inArray(recruitmentPhase.recruitmentId, recruitmentIds),
+            eq(recruitmentPhase.role, "candidate"),
+          ),
+        )
+        .orderBy(recruitmentPhase.start),
+      getAcceptedMessage(),
+      getRejectedMessage(),
+    ]);
+
+  // A result is revealed unless the recruitment has an upcoming "resultado"
+  // phase.
+  const canReveal = new Map<number, boolean>(
+    recruitmentIds.map((id) => [id, true]),
+  );
+  const seenResultPhases = new Set<number>();
+  for (const phase of revealPhases) {
+    if (
+      normalizePhaseIdentifier(phase.clientIdentifier) !==
+        RESULT_PHASE_IDENTIFIER ||
+      seenResultPhases.has(phase.recruitmentId)
+    )
+      continue;
+
+    seenResultPhases.add(phase.recruitmentId);
+    canReveal.set(phase.recruitmentId, getPhaseState(phase) !== "upcoming");
+  }
+
+  return userApps.map((app) => {
     const isCurrent =
       activeRec?.id != null && app.recruitmentId === activeRec.id;
-    const votingDecision = await getLatestVotingDecisionForCandidate(
-      candidateId,
-      app.recruitmentId,
-    );
+    const votingDecision = decisions.get(app.recruitmentId);
 
-    let decision: "approved" | "rejected" | "pending" = "pending";
-    let messageContent: Array<unknown> = [];
+    const revealed = canReveal.get(app.recruitmentId) ?? true;
 
-    if (votingDecision && (await canRevealCandidateResult(app.recruitmentId))) {
-      if (votingDecision.decision === "reject") {
-        decision = "rejected";
-        const msg = await getRejectedMessage();
-        messageContent = (msg?.content ?? []) as Array<unknown>;
-      } else {
-        decision = "approved";
-        const msg = await getAcceptedMessage();
-        messageContent = (msg?.content ?? []) as Array<unknown>;
-      }
+    if (!votingDecision || !revealed) {
+      return {
+        recruitmentId: app.recruitmentId,
+        recruitmentTitle:
+          app.recruitment?.title ?? `Recrutamento #${app.recruitmentId}`,
+        lectiveYear: app.recruitment?.lectiveYear ?? null,
+        semester: app.recruitment?.semester ?? null,
+        isCurrent,
+        decision: "pending" as const,
+        content: [] as Array<unknown>,
+      };
     }
 
-    results.push({
+    const approved = votingDecision.decision !== "reject";
+    const template = approved ? accepted : rejected;
+
+    return {
       recruitmentId: app.recruitmentId,
       recruitmentTitle:
         app.recruitment?.title ?? `Recrutamento #${app.recruitmentId}`,
       lectiveYear: app.recruitment?.lectiveYear ?? null,
       semester: app.recruitment?.semester ?? null,
       isCurrent,
-      decision,
-      content: messageContent,
-    });
-  }
-
-  return results;
+      decision: approved ? ("approved" as const) : ("rejected" as const),
+      content: (template?.content ?? []) as Array<unknown>,
+    };
+  });
 }
 
 export async function getAcceptedMessage() {

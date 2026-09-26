@@ -1,8 +1,7 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function FriendsLayout({
@@ -10,9 +9,7 @@ export default async function FriendsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     return redirect("/");

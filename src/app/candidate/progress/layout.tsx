@@ -1,6 +1,5 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function CandidateProgressLayout({
@@ -8,9 +7,7 @@ export default async function CandidateProgressLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return redirect("/login");

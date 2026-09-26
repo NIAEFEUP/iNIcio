@@ -6,12 +6,11 @@ import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 import CandidatesMailTo from "@/components/admin/candidates-mailto";
 import { PageHeader } from "@/components/layout/page-header";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   if (!(await isAdmin(session?.user.id))) {
     redirect("/");

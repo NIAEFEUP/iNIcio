@@ -1,9 +1,8 @@
 import ProgressPhaseCardShowcase from "@/components/progress/progress-phase-card-showcase";
 import { PageHeader } from "@/components/layout/page-header";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getRecruitmentPhases } from "@/lib/recruitment";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
-import { headers } from "next/headers";
 
 const checkedVerifiers: {
   [key: string]: (
@@ -15,9 +14,7 @@ const checkedVerifiers: {
 };
 
 export default async function RecruiterProgress() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const targetId = await getTargetRecruitmentId();
 
