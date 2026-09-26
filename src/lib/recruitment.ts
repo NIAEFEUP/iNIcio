@@ -18,6 +18,7 @@ import {
 } from "./recruitment-state";
 
 export { RECRUITMENT_PHASE_IDENTIFIERS };
+export { getOpenDayAnnouncement } from "./open-day";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({

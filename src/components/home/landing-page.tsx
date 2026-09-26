@@ -3,9 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock, MapPin } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -22,6 +21,16 @@ import type {
 } from "@/lib/recruitment-state";
 import { CandidateApplicationModal } from "@/components/candidate/candidate-application-modal";
 import { CandidateResultModal } from "@/components/candidate/candidate-result-modal";
+
+interface OpenDayAnnouncement {
+  id: number;
+  enabled: boolean;
+  date: Date;
+  room: string;
+  startTime: string;
+  endTime: string;
+  image: string;
+}
 
 interface LandingPageProps {
   user: {
@@ -40,6 +49,7 @@ interface LandingPageProps {
   applicationStatus: ApplicationStatus;
   applicationDeadline?: string | null;
   phases?: RecruitmentPhase[];
+  openDayAnnouncement?: OpenDayAnnouncement | null;
 }
 
 export default function LandingPage({
@@ -52,6 +62,8 @@ export default function LandingPage({
   recruitmentStatus,
   applicationStatus,
   applicationDeadline,
+  phases,
+  openDayAnnouncement,
 }: LandingPageProps) {
   const [selectedApplication, setSelectedApplication] =
     useState<UserApplicationWithDetails | null>(null);
@@ -64,8 +76,19 @@ export default function LandingPage({
   const isApplicationOpen =
     recruitmentStatus === "open" && applicationStatus === "open";
 
-  const currentApplication = currentRecruitmentId
-    ? userApplications.find((app) => app.recruitmentId === currentRecruitmentId)
+  const rawDate = openDayAnnouncement?.date
+    ? new Date(openDayAnnouncement.date)
+    : null;
+  const formattedOpenDayDate = rawDate
+    ? new Intl.DateTimeFormat("pt-PT", {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+      }).format(rawDate)
+    : null;
+  const openDayDate = formattedOpenDayDate
+    ? formattedOpenDayDate.charAt(0).toUpperCase() +
+      formattedOpenDayDate.slice(1)
     : null;
 
   return (
@@ -160,6 +183,51 @@ export default function LandingPage({
           )}
         </div>
       </section>
+
+      {openDayAnnouncement && (
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 w-full mb-12 sm:mb-16">
+          <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-muted/40 shadow-xs hover:border-primary/30 transition-all">
+            <Image
+              src={openDayAnnouncement.image || "/images/B315.jpeg"}
+              alt="NI Open Day"
+              fill
+              sizes="(max-width: 896px) 100vw, 896px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/40 to-transparent" />
+            <div className="relative flex flex-col justify-end min-h-70 sm:min-h-80 p-6 sm:p-8 md:p-10 space-y-4 text-white">
+              <div className="space-y-1.5 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/70">
+                  Open Day
+                </p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
+                  Vem conhecer o NI!
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1 text-xs sm:text-sm text-white/90 font-medium">
+                {openDayDate && (
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="size-4 text-white/70 shrink-0" />
+                    <span>{openDayDate}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Clock className="size-4 text-white/70 shrink-0" />
+                  <span>
+                    {openDayAnnouncement.startTime} -{" "}
+                    {openDayAnnouncement.endTime}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="size-4 text-white/70 shrink-0" />
+                  <span>Sala {openDayAnnouncement.room}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {user && userApplications.length > 0 && (
         <section
