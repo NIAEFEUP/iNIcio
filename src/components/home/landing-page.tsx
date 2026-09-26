@@ -195,19 +195,14 @@ export default function LandingPage({
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/40 to-transparent" />
-            <div className="relative flex flex-col justify-end min-h-[280px] sm:min-h-[320px] p-6 sm:p-8 md:p-10 space-y-4 text-white">
+            <div className="relative flex flex-col justify-end min-h-70 sm:min-h-80 p-6 sm:p-8 md:p-10 space-y-4 text-white">
               <div className="space-y-1.5 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/70">
-                  Open Day · Portas Abertas
+                  Open Day
                 </p>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
-                  Vem conhecer o NIAEFEUP
+                  Vem conhecer o NI!
                 </h2>
-                <p className="text-sm sm:text-base text-white/80 max-w-2xl leading-relaxed">
-                  Passa pela nossa sala para conheceres a equipa, esclareceres
-                  dúvidas sobre o recrutamento e descobrires os projetos em que
-                  podes colaborar!
-                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1 text-xs sm:text-sm text-white/90 font-medium">
