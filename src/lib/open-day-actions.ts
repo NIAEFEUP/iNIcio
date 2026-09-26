@@ -56,6 +56,10 @@ export async function saveOpenDayAnnouncementAction(
     );
   }
 
+  const image = input.image
+    ? input.image.trim() || "/images/B315.jpeg"
+    : "/images/B315.jpeg";
+
   const values = {
     recruitmentId,
     enabled: input.enabled,
@@ -63,22 +67,34 @@ export async function saveOpenDayAnnouncementAction(
     startTime: input.startTime.trim() || "10:00",
     endTime: input.endTime.trim() || "18:00",
     room: input.room.trim() || "B315",
-    image: input.image.trim() || "/images/B315.jpeg",
+    image,
   };
+
+  const updateSet: {
+    enabled: boolean;
+    date: Date | null;
+    startTime: string;
+    endTime: string;
+    room: string;
+    image?: string;
+  } = {
+    enabled: values.enabled,
+    date: values.date,
+    startTime: values.startTime,
+    endTime: values.endTime,
+    room: values.room,
+  };
+
+  if (input.image !== undefined) {
+    updateSet.image = values.image;
+  }
 
   const [saved] = await db
     .insert(openDayAnnouncement)
     .values(values)
     .onConflictDoUpdate({
       target: openDayAnnouncement.recruitmentId,
-      set: {
-        enabled: values.enabled,
-        date: values.date,
-        startTime: values.startTime,
-        endTime: values.endTime,
-        room: values.room,
-        image: values.image,
-      },
+      set: updateSet,
     })
     .returning();
 
