@@ -18,6 +18,7 @@ import {
 } from "./recruitment-state";
 
 export { RECRUITMENT_PHASE_IDENTIFIERS };
+export { getOpenDayAnnouncement } from "./open-day";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
@@ -76,12 +77,6 @@ function assertRecruitmentWindow(r: Pick<Recruitment, "start" | "end">) {
 export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
   assertRecruitmentWindow(r);
 
-  if (r.openDayEnabled && !r.openDayDate) {
-    throw new Error(
-      "A data do NI Open Day é obrigatória quando o anúncio está ativo",
-    );
-  }
-
   const [created] = await db.transaction(async (trx) => {
     if (r.active) {
       await trx.update(recruitment).set({ active: false });
@@ -96,12 +91,6 @@ export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
         start: r.start,
         end: r.end,
         active: r.active,
-        openDayEnabled: r.openDayEnabled,
-        openDayDate: r.openDayDate,
-        openDayStartTime: r.openDayStartTime,
-        openDayEndTime: r.openDayEndTime,
-        openDayRoom: r.openDayRoom,
-        openDayImage: r.openDayImage,
       })
       .returning({ id: recruitment.id });
   });
@@ -111,12 +100,6 @@ export async function addRecruitment(r: Omit<Recruitment, "id"> | Recruitment) {
 
 export async function editRecruitment(r: Recruitment) {
   assertRecruitmentWindow(r);
-
-  if (r.openDayEnabled && !r.openDayDate) {
-    throw new Error(
-      "A data do NI Open Day é obrigatória quando o anúncio está ativo",
-    );
-  }
 
   await db.transaction(async (trx) => {
     // Lock and validate the target before touching other rows, so a stale id
@@ -147,34 +130,9 @@ export async function editRecruitment(r: Recruitment) {
         start: r.start,
         end: r.end,
         active: r.active,
-        openDayEnabled: r.openDayEnabled,
-        openDayDate: r.openDayDate,
-        openDayStartTime: r.openDayStartTime,
-        openDayEndTime: r.openDayEndTime,
-        openDayRoom: r.openDayRoom,
-        openDayImage: r.openDayImage,
       })
       .where(eq(recruitment.id, r.id));
   });
-}
-
-export async function getOpenDayAnnouncement(recruitmentId?: number) {
-  const targetRecruitment = recruitmentId
-    ? await getRecruitmentById(recruitmentId)
-    : await getActiveRecruitment();
-
-  if (!targetRecruitment || !targetRecruitment.openDayEnabled) return null;
-  if (!targetRecruitment.openDayDate) return null;
-
-  return {
-    id: targetRecruitment.id,
-    enabled: targetRecruitment.openDayEnabled,
-    date: targetRecruitment.openDayDate,
-    room: targetRecruitment.openDayRoom || "B315",
-    startTime: targetRecruitment.openDayStartTime || "10:00",
-    endTime: targetRecruitment.openDayEndTime || "18:00",
-    image: targetRecruitment.openDayImage || "/images/B315.jpeg",
-  };
 }
 
 export async function deleteRecruitment(id: number) {

@@ -48,12 +48,6 @@ export async function DashboardShell({ children }: { children: ReactNode }) {
     active: isActive(r.active),
     start: r.start.toISOString(),
     end: r.end.toISOString(),
-    openDayEnabled: Boolean(r.openDayEnabled),
-    openDayDate: r.openDayDate ? r.openDayDate.toISOString() : null,
-    openDayStartTime: r.openDayStartTime || "10:00",
-    openDayEndTime: r.openDayEndTime || "18:00",
-    openDayRoom: r.openDayRoom || "B315",
-    openDayImage: r.openDayImage || "/images/B315.jpeg",
   }));
 
   const user = session?.user

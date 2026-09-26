@@ -88,12 +88,6 @@ export default function RecruitmentAdminClient({
     start: "",
     end: "",
     active: true,
-    openDayEnabled: false,
-    openDayDate: "",
-    openDayStartTime: "10:00",
-    openDayEndTime: "18:00",
-    openDayRoom: "B315",
-    openDayImage: "/images/B315.jpeg",
   });
 
   const applyDefaultsFromStart = (start: string) => {
@@ -140,12 +134,6 @@ export default function RecruitmentAdminClient({
       start: startDate,
       end: endDate,
       active: formData.active,
-      openDayEnabled: formData.openDayEnabled,
-      openDayDate: formData.openDayDate ? new Date(formData.openDayDate) : null,
-      openDayStartTime: formData.openDayStartTime,
-      openDayEndTime: formData.openDayEndTime,
-      openDayRoom: formData.openDayRoom,
-      openDayImage: formData.openDayImage,
     };
 
     try {
@@ -176,12 +164,6 @@ export default function RecruitmentAdminClient({
       start: "",
       end: "",
       active: true,
-      openDayEnabled: false,
-      openDayDate: "",
-      openDayStartTime: "10:00",
-      openDayEndTime: "18:00",
-      openDayRoom: "B315",
-      openDayImage: "/images/B315.jpeg",
     });
     setEditingRecruitment(null);
   };
@@ -196,14 +178,6 @@ export default function RecruitmentAdminClient({
       start: new Date(recruitment.start).toISOString().slice(0, 16),
       end: new Date(recruitment.end).toISOString().slice(0, 16),
       active: recruitment.active,
-      openDayEnabled: recruitment.openDayEnabled,
-      openDayDate: recruitment.openDayDate
-        ? new Date(recruitment.openDayDate).toISOString().slice(0, 10)
-        : "",
-      openDayStartTime: recruitment.openDayStartTime || "10:00",
-      openDayEndTime: recruitment.openDayEndTime || "18:00",
-      openDayRoom: recruitment.openDayRoom || "B315",
-      openDayImage: recruitment.openDayImage || "/images/B315.jpeg",
     });
     setIsEditDialogOpen(true);
   };
@@ -215,39 +189,61 @@ export default function RecruitmentAdminClient({
       toast.add({ title: "Recrutamento apagado" });
     } catch (err) {
       console.error(err);
-      toast.add({ title: "Ocorreu um erro ao apagar" });
+      toast.add({ title: "Erro ao apagar o recrutamento" });
     }
   };
 
-  const handleDuplicatePhases = async (id: number) => {
+  const handleDuplicate = async (id: number) => {
     try {
       const count = await duplicatePhases(id);
-      toast.add({
-        title: count > 0 ? "Fases copiadas" : "Não há fases para duplicar",
-      });
+      if (count === 0) {
+        toast.add({
+          title: "Sem fases anteriores",
+          description: "Não foram encontradas fases no recrutamento anterior.",
+        });
+      } else {
+        toast.add({
+          title: "Fases duplicadas",
+          description: `${count} fase(s) copiada(s) com sucesso.`,
+        });
+      }
     } catch (err) {
       console.error(err);
-      toast.add({ title: "Ocorreu um erro ao duplicar as fases" });
+      toast.add({
+        title: "Erro ao duplicar fases",
+        description: "Não foi possível duplicar as fases do recrutamento.",
+      });
     }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("pt-PT", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6">
       <PageHeader
-        title="Recrutamentos"
+        title="Gestão de Recrutamentos"
         actions={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger
               render={
-                <Button className="bg-primary hover:bg-primary/90">
-                  <Plus className="w-4 h-4 mr-2" /> Adicionar
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                  <Plus className="w-4 h-4" />
+                  Adicionar Recrutamento
                 </Button>
               }
             />
             <DialogContent className="bg-card border-border">
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">
-                  Adicionar recrutamento
+                  Adicionar Novo Recrutamento
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
                   Criar um novo período de recrutamento
@@ -265,7 +261,6 @@ export default function RecruitmentAdminClient({
                     <Input
                       id="lectiveYear"
                       type="text"
-                      placeholder="2026/2027"
                       value={formData.lectiveYear}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -333,11 +328,9 @@ export default function RecruitmentAdminClient({
                       type="datetime-local"
                       value={formData.start}
                       onChange={(e) => {
-                        applyDefaultsFromStart(e.target.value);
-                        setFormData((prev) => ({
-                          ...prev,
-                          start: e.target.value,
-                        }));
+                        const start = e.target.value;
+                        setFormData((prev) => ({ ...prev, start }));
+                        applyDefaultsFromStart(start);
                       }}
                       className="col-span-3 bg-input border-border text-foreground"
                       required
@@ -384,117 +377,6 @@ export default function RecruitmentAdminClient({
                       />
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-4 items-center gap-4 pt-2">
-                    <Label
-                      htmlFor="add-open-day-enabled"
-                      className="text-right text-card-foreground"
-                    >
-                      NI Open Day
-                    </Label>
-                    <div className="col-span-3">
-                      <Switch
-                        id="add-open-day-enabled"
-                        checked={formData.openDayEnabled}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            openDayEnabled: checked,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  {formData.openDayEnabled && (
-                    <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="add-open-day-date"
-                          className="text-right text-card-foreground"
-                        >
-                          Data
-                        </Label>
-                        <Input
-                          id="add-open-day-date"
-                          type="date"
-                          value={formData.openDayDate}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              openDayDate: e.target.value,
-                            }))
-                          }
-                          className="col-span-3 bg-input border-border text-foreground"
-                          required={formData.openDayEnabled}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="add-open-day-start"
-                          className="text-right text-card-foreground"
-                        >
-                          Hora início
-                        </Label>
-                        <Input
-                          id="add-open-day-start"
-                          type="time"
-                          value={formData.openDayStartTime}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              openDayStartTime: e.target.value,
-                            }))
-                          }
-                          className="col-span-3 bg-input border-border text-foreground"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="add-open-day-end"
-                          className="text-right text-card-foreground"
-                        >
-                          Hora fim
-                        </Label>
-                        <Input
-                          id="add-open-day-end"
-                          type="time"
-                          value={formData.openDayEndTime}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              openDayEndTime: e.target.value,
-                            }))
-                          }
-                          className="col-span-3 bg-input border-border text-foreground"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="add-open-day-room"
-                          className="text-right text-card-foreground"
-                        >
-                          Sala
-                        </Label>
-                        <Input
-                          id="add-open-day-room"
-                          type="text"
-                          value={formData.openDayRoom}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              openDayRoom: e.target.value,
-                            }))
-                          }
-                          className="col-span-3 bg-input border-border text-foreground"
-                          placeholder="B315"
-                        />
-                      </div>
-                    </>
-                  )}
                 </div>
                 <DialogFooter>
                   <Button
@@ -539,14 +421,21 @@ export default function RecruitmentAdminClient({
                   <TableHead className="text-muted-foreground">
                     Estado
                   </TableHead>
-                  <TableHead className="text-muted-foreground">Ações</TableHead>
+                  <TableHead className="text-right text-muted-foreground">
+                    Ações
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recruitmentsState.map((recruitment) => (
                   <TableRow key={recruitment.id} className="border-border">
                     <TableCell className="font-medium text-card-foreground">
-                      {recruitment.lectiveYear}
+                      <Link
+                        href={`/admin/phases`}
+                        className="hover:underline hover:cursor-pointer"
+                      >
+                        {recruitment.lectiveYear}
+                      </Link>
                     </TableCell>
                     <TableCell className="text-card-foreground">
                       {recruitment.semester}º
@@ -555,25 +444,30 @@ export default function RecruitmentAdminClient({
                       {recruitment.title}
                     </TableCell>
                     <TableCell className="text-card-foreground">
-                      {new Date(recruitment.start).toLocaleString("pt-PT")}
+                      {formatDate(recruitment.start)}
                     </TableCell>
                     <TableCell className="text-card-foreground">
-                      {new Date(recruitment.end).toLocaleString("pt-PT")}
+                      {formatDate(recruitment.end)}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={recruitment.active ? "default" : "secondary"}
-                        className={
-                          recruitment.active
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground"
-                        }
-                      >
-                        {recruitment.active ? "Ativo" : "Inativo"}
-                      </Badge>
+                      {recruitment.active ? (
+                        <Badge
+                          variant="default"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Ativo
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className="bg-muted text-muted-foreground"
+                        >
+                          Inativo
+                        </Badge>
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -582,21 +476,10 @@ export default function RecruitmentAdminClient({
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Link
-                          href={`/admin/phases?recruitmentId=${recruitment.id}`}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground hover:text-card-foreground"
-                          >
-                            Fases
-                          </Button>
-                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDuplicatePhases(recruitment.id)}
+                          onClick={() => handleDuplicate(recruitment.id)}
                           className="text-muted-foreground hover:text-card-foreground"
                         >
                           Duplicar fases
@@ -755,117 +638,6 @@ export default function RecruitmentAdminClient({
                     />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-4 items-center gap-4 pt-2">
-                  <Label
-                    htmlFor="edit-open-day-enabled"
-                    className="text-right text-card-foreground"
-                  >
-                    NI Open Day
-                  </Label>
-                  <div className="col-span-3">
-                    <Switch
-                      id="edit-open-day-enabled"
-                      checked={formData.openDayEnabled}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          openDayEnabled: checked,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                {formData.openDayEnabled && (
-                  <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-open-day-date"
-                        className="text-right text-card-foreground"
-                      >
-                        Data
-                      </Label>
-                      <Input
-                        id="edit-open-day-date"
-                        type="date"
-                        value={formData.openDayDate}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            openDayDate: e.target.value,
-                          }))
-                        }
-                        className="col-span-3 bg-input border-border text-foreground"
-                        required={formData.openDayEnabled}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-open-day-start"
-                        className="text-right text-card-foreground"
-                      >
-                        Hora início
-                      </Label>
-                      <Input
-                        id="edit-open-day-start"
-                        type="time"
-                        value={formData.openDayStartTime}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            openDayStartTime: e.target.value,
-                          }))
-                        }
-                        className="col-span-3 bg-input border-border text-foreground"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-open-day-end"
-                        className="text-right text-card-foreground"
-                      >
-                        Hora fim
-                      </Label>
-                      <Input
-                        id="edit-open-day-end"
-                        type="time"
-                        value={formData.openDayEndTime}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            openDayEndTime: e.target.value,
-                          }))
-                        }
-                        className="col-span-3 bg-input border-border text-foreground"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-open-day-room"
-                        className="text-right text-card-foreground"
-                      >
-                        Sala
-                      </Label>
-                      <Input
-                        id="edit-open-day-room"
-                        type="text"
-                        value={formData.openDayRoom}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            openDayRoom: e.target.value,
-                          }))
-                        }
-                        className="col-span-3 bg-input border-border text-foreground"
-                        placeholder="B315"
-                      />
-                    </div>
-                  </>
-                )}
               </div>
               <DialogFooter>
                 <Button
