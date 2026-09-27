@@ -24,7 +24,7 @@ export async function sendPasswordResetEmail({
   if (!apiKey || !from) {
     if (process.env.NODE_ENV !== "production") {
       console.log(
-        `\n[DEV] Password reset email for ${email} (${name}):\nReset URL: ${url}\n`,
+        "[DEV] Password reset email requested, but email configuration is missing.",
       );
       return;
     }

@@ -198,6 +198,18 @@ export async function updateAdminUserProfile({
     }
     finalImageKey = uploadRes.fileName ?? null;
 
+    if (existingUser.image) {
+      const oldKey = fromFullUrlToPath(existingUser.image);
+      const newKey = uploadRes.fileName;
+      if (newKey && oldKey !== newKey) {
+        try {
+          await deleteFile(oldKey);
+        } catch (err) {
+          console.error("Erro ao apagar avatar anterior:", err);
+        }
+      }
+    }
+
     await db
       .update(user)
       .set({

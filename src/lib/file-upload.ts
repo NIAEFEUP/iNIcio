@@ -111,22 +111,19 @@ export async function uploadProfileImage(
 
   const fileName = generateFileName(file.name, `profiles/${userId}`);
 
-  await db.transaction(async (tx) => {
-    const _user = await tx.query.user
-      .findFirst({
-        where: eq(user.id, userId),
-      })
-      .then((user) => user);
+  const uploadResult = await uploadFile(file, fileName);
+  if (!uploadResult.success) {
+    return uploadResult;
+  }
 
-    await tx
-      .update(user)
-      .set({
-        image: fileName,
-      })
-      .where(eq(user.id, _user.id));
-  });
+  await db
+    .update(user)
+    .set({
+      image: fileName,
+    })
+    .where(eq(user.id, userId));
 
-  return uploadFile(file, fileName);
+  return uploadResult;
 }
 
 export async function uploadCV(
