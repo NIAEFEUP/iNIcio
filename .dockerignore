@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.*
+.yarn/*
+
+# Next.js build and cache
+.next
+out
+
+# Git and CI
+.git
+.github
+
+# Environment files
+.env
+.env*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Misc / Development
+.husky
+.direnv
+.idea
+.vscode
+*.tsbuildinfo
+README.md
+docker-compose*.yml
+Dockerfile*
+flake.*
+.envrc
