@@ -623,7 +623,6 @@ export default function PhaseAdminClient({
                     }))
                   }
                   className="col-span-3 bg-input border-border text-foreground"
-                  required
                 />
               </div>
 
@@ -771,7 +770,6 @@ export default function PhaseAdminClient({
                     }))
                   }
                   className="col-span-3 bg-input border-border text-foreground"
-                  required
                 />
               </div>
 
