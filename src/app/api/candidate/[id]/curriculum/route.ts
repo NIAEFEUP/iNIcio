@@ -18,7 +18,17 @@ export async function GET(_request: Request, context: any) {
     return new Response("Unauthorized", { status: 403 });
   }
 
-  const candidate = await getCandidateWithMetadata(candidateId, recruitmentId);
+  let candidate;
+  try {
+    candidate = await getCandidateWithMetadata(candidateId, recruitmentId);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not found")) {
+      return new Response("Candidate not found", { status: 404 });
+    }
+    console.error("Curriculum candidate lookup failed:", error);
+    return new Response("Internal server error", { status: 500 });
+  }
+
   const curriculumUrl = candidate.application?.curriculum;
 
   if (!curriculumUrl) {
