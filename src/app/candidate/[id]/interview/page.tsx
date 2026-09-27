@@ -22,7 +22,7 @@ import {
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
 import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
 import { DataErrorState } from "@/components/data-table/data-state-view";
-import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+import { RecruiterAssignedHeader } from "@/components/recruiter/recruiter-assigned-header";
 
 import {
   classifyInterview,
@@ -158,9 +158,17 @@ export default function InterviewPage() {
           title={candidate.name}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              <RecruiterAssignedHeader
+                interviewers={interviewers}
+                title="Entrevistadores"
+              />
+              <CandidateHeaderActions
+                candidateId={candidate.id}
+                currentPage="interview"
+                dynamicId={candidate.dynamic?.dynamicId}
+              />
               <Button
                 variant={interview.locked ? "secondary" : "outline"}
-                size="sm"
                 disabled={isLocking}
                 onClick={handleToggleLock}
                 className={
@@ -178,31 +186,23 @@ export default function InterviewPage() {
                 )}
                 <span>{interview.locked ? "Bloqueada" : "Bloquear"}</span>
               </Button>
-              <CandidateHeaderActions
-                candidateId={candidate.id}
-                currentPage="interview"
-                dynamicId={candidate.dynamic?.dynamicId}
-              />
             </div>
           }
         />
       }
       sidebar={
-        <>
-          <RecruiterAssignedInfo interviewers={interviewers} />
-          <CandidateModularInfo
-            candidate={candidate}
-            friends={candidate.knownRecruiters}
-            authUser={user ? { id: user.id } : null}
-            recruitmentId={recruitmentId}
-            showResultVoting={false}
-            showKnownCheckbox={false}
-            onClassifyInterview={(value) =>
-              handleClassifyInterview(candidate.id, value)
-            }
-            readOnlyDynamic={true}
-          />
-        </>
+        <CandidateModularInfo
+          candidate={candidate}
+          friends={candidate.knownRecruiters}
+          authUser={user ? { id: user.id } : null}
+          recruitmentId={recruitmentId}
+          showResultVoting={false}
+          showKnownCheckbox={false}
+          onClassifyInterview={(value) =>
+            handleClassifyInterview(candidate.id, value)
+          }
+          readOnlyDynamic={true}
+        />
       }
     >
       <EvaluationTabs

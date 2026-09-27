@@ -22,7 +22,6 @@ export function CandidateHeaderActions({
         <Button
           nativeButton={false}
           variant="outline"
-          size="sm"
           render={<Link href={`/dynamic/${dynamicId}`} target="_blank" />}
         >
           <ExternalLink />
@@ -34,7 +33,6 @@ export function CandidateHeaderActions({
         <Button
           nativeButton={false}
           variant="outline"
-          size="sm"
           render={
             <Link
               href={`/candidate/${candidateId}/interview`}

@@ -20,7 +20,7 @@ import {
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
 import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
 import { DataErrorState } from "@/components/data-table/data-state-view";
-import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-info";
+import { RecruiterAssignedHeader } from "@/components/recruiter/recruiter-assigned-header";
 
 import {
   classifyDynamic,
@@ -162,66 +162,61 @@ export default function DynamicPage() {
             </div>
           }
           actions={
-            <Button
-              variant={dynamic.locked ? "secondary" : "outline"}
-              size="sm"
-              disabled={isLocking}
-              onClick={handleToggleLock}
-              className={
-                dynamic.locked
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-                  : ""
-              }
-            >
-              {isLocking ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : dynamic.locked ? (
-                <Lock className="size-3.5" />
-              ) : (
-                <Unlock className="size-3.5" />
-              )}
-              <span>{dynamic.locked ? "Bloqueada" : "Bloquear"}</span>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <RecruiterAssignedHeader
+                interviewers={interviewers}
+                title="Recrutadores"
+              />
+              <Button
+                variant={dynamic.locked ? "secondary" : "outline"}
+                disabled={isLocking}
+                onClick={handleToggleLock}
+                className={
+                  dynamic.locked
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                    : ""
+                }
+              >
+                {isLocking ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : dynamic.locked ? (
+                  <Lock className="size-3.5" />
+                ) : (
+                  <Unlock className="size-3.5" />
+                )}
+                <span>{dynamic.locked ? "Bloqueada" : "Bloquear"}</span>
+              </Button>
+            </div>
           }
         />
       }
       sidebar={
-        <>
-          <RecruiterAssignedInfo
-            interviewers={interviewers}
-            title="Recrutadores"
-          />
-
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-              Candidatos
-            </h3>
-            <div className="flex flex-col gap-4">
-              {dynamic.candidates.map((candidate, idx) => (
-                <div
-                  key={candidate.id}
-                  className={"bg-neutral-900/50 p-3 rounded-2xl"}
-                >
-                  <CandidateModularInfo
-                    candidate={candidate}
-                    friends={candidate.knownRecruiters}
-                    authUser={user ? { id: user.id } : null}
-                    recruitmentId={recruitmentId}
-                    showKnownCheckbox={false}
-                    showContactInfo={false}
-                    showLinks={false}
-                    showDepartmentInterests={false}
-                    showResultVoting={false}
-                    onClassifyDynamic={(value) =>
-                      handleClassifyDynamic(candidate.id, value)
-                    }
-                    readOnlyInterview={true}
-                  />
-                </div>
-              ))}
-            </div>
+        <div className="space-y-2">
+          <div className="flex flex-col gap-4">
+            {dynamic.candidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className={"bg-neutral-900/50 p-3 rounded-2xl"}
+              >
+                <CandidateModularInfo
+                  candidate={candidate}
+                  friends={candidate.knownRecruiters}
+                  authUser={user ? { id: user.id } : null}
+                  recruitmentId={recruitmentId}
+                  showKnownCheckbox={false}
+                  showContactInfo={false}
+                  showLinks={false}
+                  showDepartmentInterests={false}
+                  showResultVoting={false}
+                  onClassifyDynamic={(value) =>
+                    handleClassifyDynamic(candidate.id, value)
+                  }
+                  readOnlyInterview={true}
+                />
+              </div>
+            ))}
           </div>
-        </>
+        </div>
       }
     >
       <EvaluationTabs

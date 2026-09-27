@@ -14,6 +14,7 @@ export function EvaluationSkeleton({
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <Skeleton className="h-6 w-48" />
         <div className="flex items-center gap-2">
+          {showInterviewers && <Skeleton className="h-8 w-36 rounded-lg" />}
           <Skeleton className="h-7 w-28" />
           <Skeleton className="h-7 w-28" />
           <Skeleton className="h-7 w-24" />
@@ -40,7 +41,6 @@ export function EvaluationSkeleton({
               <Skeleton className="h-5 w-full" />
             </div>
           </div>
-          {showInterviewers && <Skeleton className="h-20 w-full rounded-xl" />}
           <Skeleton className="h-24 w-full rounded-xl" />
         </div>
 
