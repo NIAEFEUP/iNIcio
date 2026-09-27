@@ -49,6 +49,8 @@ interface CandidateGridCardProps {
   friends?: Array<RecruiterToCandidate>;
   authUser?: { id?: string } | null;
   showContactInfo?: boolean;
+  isSelected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
   classifyInterview?: (
     candidateId: string,
     classification: string,
@@ -110,6 +112,8 @@ function CandidateGridCard({
   friends = [],
   authUser = null,
   showContactInfo = false,
+  isSelected,
+  onSelectChange,
   classifyInterview,
   classifyDynamic,
 }: CandidateGridCardProps) {
@@ -194,6 +198,8 @@ function CandidateGridCard({
 
   return (
     <GridCard
+      isSelected={isSelected}
+      onSelectChange={onSelectChange}
       avatar={avatar}
       title={
         <div className="flex min-w-0 items-center gap-2">

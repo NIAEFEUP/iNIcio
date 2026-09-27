@@ -49,7 +49,9 @@ export function BulkActions({
         <Badge variant="secondary" className="tabular-nums">
           {selectedCount}
         </Badge>
-        <span>{label} selected</span>
+        <span>
+          {label} {selectedCount > 1 ? "selecionados" : "selecionado"}
+        </span>
       </div>
 
       <Separator orientation="vertical" />
@@ -57,7 +59,7 @@ export function BulkActions({
       {onExport && (
         <Button variant="outline" size="sm" onClick={onExport}>
           <Download />
-          Export CSV
+          Exportar para CSV
         </Button>
       )}
 
@@ -66,7 +68,7 @@ export function BulkActions({
       {onDelete && (
         <Button variant="destructive" size="sm" onClick={onDelete}>
           <Trash2 />
-          Delete
+          Eliminar
         </Button>
       )}
 
@@ -80,13 +82,13 @@ export function BulkActions({
                   variant="ghost"
                   size="icon-sm"
                   onClick={onClear}
-                  aria-label="Clear selection"
+                  aria-label="Limpar seleção"
                 >
                   <X />
                 </Button>
               }
             />
-            <TooltipContent side="top">Clear selection</TooltipContent>
+            <TooltipContent side="top">Limpar seleção</TooltipContent>
           </Tooltip>
         </>
       )}

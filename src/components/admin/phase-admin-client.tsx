@@ -11,6 +11,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
 import { CalendarDays, Plus, Search } from "lucide-react";
@@ -43,6 +44,7 @@ import {
   DataTableSortableHeader,
   DataTableEntityCell,
   getActionsColumn,
+  getSelectColumn,
 } from "@/components/data-table/data-table-column-helpers";
 import {
   ViewModeToggle,
@@ -50,6 +52,7 @@ import {
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
+import { BulkActions } from "@/components/data-table/bulk-actions";
 import { toast } from "@/components/ui/toast";
 import { RecruitmentPhase } from "@/lib/db";
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
@@ -112,6 +115,9 @@ export default function PhaseAdminClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const isMountedRef = useRef(false);
   useEffect(() => {
     isMountedRef.current = true;
@@ -227,6 +233,7 @@ export default function PhaseAdminClient({
         : "-";
 
     return [
+      getSelectColumn<RecruitmentPhase>(),
       {
         accessorKey: "title",
         header: ({ column }) => (
@@ -319,7 +326,7 @@ export default function PhaseAdminClient({
   const table = useReactTable({
     data: phasesState,
     columns,
-    state: { sorting, columnFilters, globalFilter, pagination },
+    state: { sorting, columnFilters, globalFilter, pagination, rowSelection },
     autoResetPageIndex: false,
     onSortingChange: (u) => {
       if (isMountedRef.current) setSorting(u);
@@ -332,6 +339,9 @@ export default function PhaseAdminClient({
     },
     onPaginationChange: (u) => {
       if (isMountedRef.current) setPagination(u);
+    },
+    onRowSelectionChange: (u) => {
+      if (isMountedRef.current) setRowSelection(u);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -360,8 +370,87 @@ export default function PhaseAdminClient({
     ]);
   };
 
+  const selectedCount = Object.keys(rowSelection).filter(
+    (k) => rowSelection[k],
+  ).length;
+
+  const handleBulkExportCSV = () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    const headers = [
+      "ID",
+      "Título",
+      "Descrição",
+      "Início",
+      "Fim",
+      "Papel",
+      "Identificador",
+    ];
+
+    const rows = selectedRows.map((p) => {
+      return [
+        `"${p.id ?? ""}"`,
+        `"${(p.title || "").replace(/"/g, '""')}"`,
+        `"${(p.description || "").replace(/"/g, '""')}"`,
+        `"${p.start ? new Date(p.start).toISOString() : ""}"`,
+        `"${p.end ? new Date(p.end).toISOString() : ""}"`,
+        `"${ROLE_LABELS[p.role] ?? p.role}"`,
+        `"${(p.clientIdentifier || "").replace(/"/g, '""')}"`,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `fases_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const ids = selectedRows
+        .map((p) => p.id)
+        .filter((id): id is number => id != null);
+      await Promise.all(ids.map((id) => deletePhase(id)));
+      setPhasesState((prev) => prev.filter((p) => !ids.includes(p.id!)));
+      table.toggleAllRowsSelected(false);
+      toast.add({ title: "Fases apagadas com sucesso" });
+    } catch (err) {
+      console.error(err);
+      toast.add({ title: "Ocorreu um erro ao apagar as fases" });
+    } finally {
+      setIsBulkDeleting(false);
+      setIsBulkDeleteOpen(false);
+    }
+  };
+
   const renderCard = (p: RecruitmentPhase) => {
     const state = getPhaseState(p, now);
+    const row = table
+      .getRowModel()
+      .rows.find((row) => row.original.id === p.id);
+    const isSelected = row ? row.getIsSelected() : false;
+
     return (
       <GridCard
         title={p.title}
@@ -371,6 +460,8 @@ export default function PhaseAdminClient({
             {PHASE_STATE_LABELS[state]}
           </Badge>
         }
+        isSelected={isSelected}
+        onSelectChange={(val) => row?.toggleSelected(val)}
         onEdit={() => handleEdit(p)}
         onDelete={() => {
           if (p.id != null) handleDelete(p.id);
@@ -769,6 +860,53 @@ export default function PhaseAdminClient({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk actions toolbar */}
+      <BulkActions
+        selectedCount={selectedCount}
+        entityLabel="fase"
+        entityPluralLabel="fases"
+        onExport={handleBulkExportCSV}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+        onClear={() => table.toggleAllRowsSelected(false)}
+      />
+
+      {/* Confirm bulk delete dialog */}
+      <Dialog
+        open={isBulkDeleteOpen}
+        onOpenChange={(open) => !open && setIsBulkDeleteOpen(false)}
+      >
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-card-foreground">
+              Tens a certeza que queres apagar?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedCount === 1
+                ? "Esta fase será eliminada permanentemente."
+                : `Estas ${selectedCount} fases serão eliminadas permanentemente.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsBulkDeleteOpen(false)}
+              disabled={isBulkDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+            >
+              {isBulkDeleting ? "A apagar..." : "Apagar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

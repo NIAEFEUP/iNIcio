@@ -9,6 +9,7 @@ import {
   useReactTable,
   type ColumnDef,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
 import { Plus, Search, UserRoundPlus } from "lucide-react";
@@ -30,6 +31,7 @@ import {
   DataTableEntityCell,
   DataTableSortableHeader,
   getActionsColumn,
+  getSelectColumn,
 } from "@/components/data-table/data-table-column-helpers";
 import {
   ViewModeToggle,
@@ -37,6 +39,7 @@ import {
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
+import { BulkActions } from "@/components/data-table/bulk-actions";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
@@ -85,6 +88,9 @@ export default function RecruiterAdminClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const isMountedRef = useRef(false);
   useEffect(() => {
     isMountedRef.current = true;
@@ -167,6 +173,7 @@ export default function RecruiterAdminClient({
 
   const columns = useMemo<ColumnDef<RecruiterRow>[]>(
     () => [
+      getSelectColumn<RecruiterRow>(),
       {
         accessorKey: "name",
         header: ({ column }) => (
@@ -202,7 +209,7 @@ export default function RecruiterAdminClient({
   const table = useReactTable({
     data: list,
     columns,
-    state: { sorting, globalFilter, pagination },
+    state: { sorting, globalFilter, pagination, rowSelection },
     autoResetPageIndex: false,
     onSortingChange: (u) => {
       if (isMountedRef.current) setSorting(u);
@@ -213,11 +220,77 @@ export default function RecruiterAdminClient({
     onPaginationChange: (u) => {
       if (isMountedRef.current) setPagination(u);
     },
+    onRowSelectionChange: (u) => {
+      if (isMountedRef.current) setRowSelection(u);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const selectedCount = Object.keys(rowSelection).filter(
+    (k) => rowSelection[k],
+  ).length;
+
+  const handleBulkExportCSV = () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    const headers = ["ID", "Nome", "Email"];
+
+    const rows = selectedRows.map((r) => {
+      return [
+        `"${r.userId}"`,
+        `"${(r.name || "").replace(/"/g, '""')}"`,
+        `"${(r.email || "").replace(/"/g, '""')}"`,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `recrutadores_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  async function handleBulkRemove() {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const ids = selectedRows.map((r) => r.userId);
+      await Promise.all(ids.map((id) => removeRecruiter(id)));
+      setList((s) => s.filter((r) => !ids.includes(r.userId)));
+      table.toggleAllRowsSelected(false);
+      toast.add({ type: "success", title: "Recrutadores removidos" });
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro na remoção dos recrutadores",
+      });
+    } finally {
+      setIsBulkDeleting(false);
+      setIsBulkDeleteOpen(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -269,19 +342,28 @@ export default function RecruiterAdminClient({
           <GridView
             table={t}
             getItemKey={(r) => r.userId}
-            renderCard={(r) => (
-              <GridCard
-                avatar={
-                  <InitialsAvatar
-                    size="md"
-                    initials={getInitials(r.name ?? r.email ?? r.userId)}
-                  />
-                }
-                title={r.name ?? "Sem nome"}
-                subtitle={r.email}
-                onDelete={() => setPendingDeleteId(r.userId)}
-              />
-            )}
+            renderCard={(r) => {
+              const row = t
+                .getRowModel()
+                .rows.find((row) => row.original.userId === r.userId);
+              const isSelected = row ? row.getIsSelected() : false;
+
+              return (
+                <GridCard
+                  avatar={
+                    <InitialsAvatar
+                      size="md"
+                      initials={getInitials(r.name ?? r.email ?? r.userId)}
+                    />
+                  }
+                  title={r.name ?? "Sem nome"}
+                  subtitle={r.email}
+                  isSelected={isSelected}
+                  onSelectChange={(val) => row?.toggleSelected(val)}
+                  onDelete={() => setPendingDeleteId(r.userId)}
+                />
+              );
+            }}
           />
         )}
       />
@@ -363,6 +445,53 @@ export default function RecruiterAdminClient({
             </Button>
             <Button type="button" variant="destructive" onClick={confirmRemove}>
               Remover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk actions toolbar */}
+      <BulkActions
+        selectedCount={selectedCount}
+        entityLabel="recrutador"
+        entityPluralLabel="recrutadores"
+        onExport={handleBulkExportCSV}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+        onClear={() => table.toggleAllRowsSelected(false)}
+      />
+
+      {/* Confirm bulk remove dialog */}
+      <Dialog
+        open={isBulkDeleteOpen}
+        onOpenChange={(open) => !open && setIsBulkDeleteOpen(false)}
+      >
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-card-foreground">
+              Tens a certeza que queres remover?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedCount === 1
+                ? "O recrutador selecionado deixará de ser recrutador deste período de recrutamento."
+                : `Os ${selectedCount} recrutadores selecionados deixarão de ser recrutadores deste período de recrutamento.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsBulkDeleteOpen(false)}
+              disabled={isBulkDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleBulkRemove}
+              disabled={isBulkDeleting}
+            >
+              {isBulkDeleting ? "A remover..." : "Remover"}
             </Button>
           </DialogFooter>
         </DialogContent>

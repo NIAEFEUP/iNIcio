@@ -10,6 +10,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -25,12 +26,14 @@ import { DataTableFilter } from "@/components/data-table/data-table-filter";
 import {
   DataTableEntityCell,
   DataTableSortableHeader,
+  getSelectColumn,
 } from "@/components/data-table/data-table-column-helpers";
 import {
   ViewModeToggle,
   type ViewMode,
 } from "@/components/data-table/view-mode-toggle";
 import { GridView } from "@/components/data-table/grid-view";
+import { BulkActions } from "@/components/data-table/bulk-actions";
 import { setCandidatesViewMode } from "@/cookies/set";
 import { getInitials } from "@/lib/utils";
 
@@ -97,6 +100,7 @@ export default function CandidatesClient({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const isMountedRef = useRef(false);
 
   // `user` is rebuilt on every render; keep the props and callbacks passed to
@@ -113,6 +117,7 @@ export default function CandidatesClient({
 
   const columns = useMemo<ColumnDef<CandidateListMetadata>[]>(
     () => [
+      getSelectColumn<CandidateListMetadata>(),
       {
         accessorKey: "name",
         header: ({ column }) => (
@@ -306,6 +311,7 @@ export default function CandidatesClient({
       columnVisibility,
       globalFilter,
       pagination,
+      rowSelection,
     },
     autoResetPageIndex: false,
     onSortingChange: (updater) => {
@@ -322,6 +328,9 @@ export default function CandidatesClient({
     },
     onPaginationChange: (updater) => {
       if (isMountedRef.current) setPagination(updater);
+    },
+    onRowSelectionChange: (updater) => {
+      if (isMountedRef.current) setRowSelection(updater);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -371,19 +380,88 @@ export default function CandidatesClient({
   };
 
   const filteredCount = table.getFilteredRowModel().rows.length;
+  const selectedCount = Object.keys(rowSelection).filter(
+    (k) => rowSelection[k],
+  ).length;
+
+  const handleBulkExportCSV = () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    const headers = [
+      "Nome",
+      "Email",
+      "Número de Estudante",
+      "Curso",
+      "Ano",
+      "Departamentos",
+      "Entrevista",
+      "Dinâmica",
+      "Decisão",
+    ];
+
+    const rows = selectedRows.map((c) => {
+      const decisionText =
+        c.votingDecision?.decision === "approve"
+          ? "Aprovado"
+          : c.votingDecision?.decision === "reject"
+            ? "Rejeitado"
+            : "Pendente";
+
+      return [
+        `"${(c.name || "").replace(/"/g, '""')}"`,
+        `"${(c.email || "").replace(/"/g, '""')}"`,
+        `"${String(c.application?.studentNumber ?? "").replace(/"/g, '""')}"`,
+        `"${(c.application?.degree || "").replace(/"/g, '""')}"`,
+        `"${c.application?.curricularYear ?? ""}"`,
+        `"${(c.application?.interests || []).join(", ").replace(/"/g, '""')}"`,
+        `"${(c.interviewClassification || "").replace(/"/g, '""')}"`,
+        `"${(c.dynamicClassification || "").replace(/"/g, '""')}"`,
+        `"${decisionText}"`,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `candidatos_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const renderGrid = useMemo(() => {
     const render = (t: typeof table) => (
       <GridView
         table={t}
         getItemKey={(c) => c.id ?? `candidate-${c.email}`}
-        renderCard={(c) => (
-          <CandidateGridCard
-            candidate={c}
-            friends={c.knownRecruiters}
-            authUser={memoizedAuthUser}
-          />
-        )}
+        renderCard={(c) => {
+          const row = t
+            .getRowModel()
+            .rows.find((row) => row.original.id === c.id);
+          const isSelected = row ? row.getIsSelected() : false;
+
+          return (
+            <CandidateGridCard
+              candidate={c}
+              friends={c.knownRecruiters}
+              authUser={memoizedAuthUser}
+              isSelected={isSelected}
+              onSelectChange={(val) => row?.toggleSelected(val)}
+            />
+          );
+        }}
       />
     );
     render.displayName = "CandidatesGrid";
@@ -543,6 +621,15 @@ export default function CandidatesClient({
         emptyTitle="Sem candidatos"
         emptyDescription="Nenhum candidato corresponde aos filtros selecionados."
         renderGrid={renderGrid}
+      />
+
+      {/* Bulk actions toolbar */}
+      <BulkActions
+        selectedCount={selectedCount}
+        entityLabel="candidato"
+        entityPluralLabel="candidatos"
+        onExport={handleBulkExportCSV}
+        onClear={() => table.toggleAllRowsSelected(false)}
       />
     </div>
   );
