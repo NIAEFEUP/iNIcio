@@ -230,6 +230,9 @@ export default function DynamicPage() {
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
                   editable={!dynamic.locked}
+                  onRoomReset={() =>
+                    mutate(dynamicKey(dynamicId, recruitmentId))
+                  }
                 />
               </EvaluationPanel>
             ),

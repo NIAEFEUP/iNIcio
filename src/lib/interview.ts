@@ -219,7 +219,10 @@ export async function addInterviewTemplate(content: Array<any>) {
     const template = await trx.query.interviewTemplate.findFirst();
 
     if (template) {
-      await trx.update(interviewTemplate).set({ content: content });
+      await trx
+        .update(interviewTemplate)
+        .set({ content: content })
+        .where(eq(interviewTemplate.id, template.id));
     } else {
       await trx.insert(interviewTemplate).values({ content: content });
     }

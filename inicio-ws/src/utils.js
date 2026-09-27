@@ -219,11 +219,15 @@ const closeConn = (doc, conn) => {
       Array.from(controlledIds),
       null,
     );
-    if (doc.conns.size === 0 && persistence !== null) {
-      // if persisted, we store state and destroy ydocument
-      persistence.writeState(doc.name, doc).then(() => {
+    if (doc.conns.size === 0) {
+      if (persistence !== null) {
+        // if persisted, we store state and destroy ydocument
+        persistence.writeState(doc.name, doc).then(() => {
+          doc.destroy();
+        });
+      } else {
         doc.destroy();
-      });
+      }
       docs.delete(doc.name);
     }
   }

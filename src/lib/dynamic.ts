@@ -347,7 +347,10 @@ export async function addDynamicTemplate(content: Array<any>) {
     const template = await trx.query.dynamicTemplate.findFirst();
 
     if (template) {
-      await trx.update(dynamicTemplate).set({ content: content });
+      await trx
+        .update(dynamicTemplate)
+        .set({ content: content })
+        .where(eq(dynamicTemplate.id, template.id));
       return;
     }
 

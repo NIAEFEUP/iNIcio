@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import WebSocket from "ws";
 import http from "http";
 import * as number from "lib0/number";
-import { setupWSConnection } from "./utils.js";
+import { setupWSConnection, docs } from "./utils.js";
 
 const wss = new WebSocket.Server({ noServer: true });
 const host = process.env.HOST || "localhost";
@@ -20,7 +20,56 @@ if (!jwtSecret) {
   process.exit(1);
 }
 
-const server = http.createServer((_request, response) => {
+const server = http.createServer((request, response) => {
+  if (request.method === "POST" && request.url === "/reset-rooms") {
+    let body = "";
+    request.on("data", (chunk) => {
+      body += chunk;
+    });
+    request.on("end", () => {
+      try {
+        const auth = request.headers.authorization;
+        const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+        if (!token) {
+          response.writeHead(401, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ error: "Unauthorized" }));
+          return;
+        }
+        const payload = jwt.verify(token, jwtSecret);
+        if (payload.role !== "admin") {
+          response.writeHead(403, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ error: "Forbidden" }));
+          return;
+        }
+
+        const data = JSON.parse(body || "{}");
+        const roomsToReset = Array.isArray(data.rooms) ? data.rooms : [];
+        for (const roomName of roomsToReset) {
+          const doc = docs.get(roomName);
+          if (doc) {
+            doc.conns.forEach((_, conn) => {
+              try {
+                conn.close(4000, "room_reset");
+              } catch {}
+            });
+            doc.destroy();
+            docs.delete(roomName);
+          }
+        }
+        console.log(`[ws] Reset ${roomsToReset.length} rooms`);
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(
+          JSON.stringify({ success: true, count: roomsToReset.length }),
+        );
+      } catch (err) {
+        console.error("[ws] Error resetting rooms:", err.message);
+        response.writeHead(500, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
   response.writeHead(200, { "Content-Type": "text/plain" });
   response.end("okay");
 });

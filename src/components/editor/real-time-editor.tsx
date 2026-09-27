@@ -44,6 +44,7 @@ interface RealTimeEditorProps {
   boxed?: boolean;
   editable?: boolean;
   onSaveStatusChange?: (status: SaveStatus) => void;
+  onRoomReset?: () => void;
 }
 
 export default function RealTimeEditor({
@@ -60,6 +61,7 @@ export default function RealTimeEditor({
   boxed = true,
   editable = true,
   onSaveStatusChange,
+  onRoomReset,
 }: RealTimeEditorProps) {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
@@ -127,6 +129,8 @@ export default function RealTimeEditor({
       if (collab && fragment && fragment.length > 0) {
         hasSeededContent.current = true;
         isReady.current = true;
+        setCurrentContent(JSON.stringify(editor.document));
+        onSaveStatusChange?.("saved");
         return;
       }
 
@@ -135,6 +139,7 @@ export default function RealTimeEditor({
       }
       hasSeededContent.current = true;
       isReady.current = true;
+      setCurrentContent(JSON.stringify(editor.document));
       onSaveStatusChange?.("saved");
     };
 
@@ -151,6 +156,39 @@ export default function RealTimeEditor({
     provider.on("sync", seedDocument);
     return () => provider.off("sync", seedDocument);
   }, [collab, editor, entity?.content, fragment, provider, onSaveStatusChange]);
+
+  useEffect(() => {
+    if (!provider) return;
+
+    const handleConnectionClose = (event: any) => {
+      if (event?.code === 4000) {
+        hasSeededContent.current = false;
+        onRoomReset?.();
+      }
+    };
+
+    provider.on("connection-close", handleConnectionClose);
+    return () => {
+      provider.off("connection-close", handleConnectionClose);
+    };
+  }, [provider, onRoomReset]);
+
+  const lastEntityContentRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!entity?.content || !editor || !isReady.current) return;
+
+    const stringified = JSON.stringify(entity.content);
+    if (
+      lastEntityContentRef.current !== null &&
+      lastEntityContentRef.current !== stringified
+    ) {
+      editor.replaceBlocks(editor.document, entity.content);
+      setCurrentContent(JSON.stringify(editor.document));
+      onSaveStatusChange?.("saved");
+    }
+    lastEntityContentRef.current = stringified;
+  }, [editor, entity?.content, onSaveStatusChange]);
 
   useEffect(() => {
     if (!saveHandler || !editor) return;
