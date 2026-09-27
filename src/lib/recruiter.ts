@@ -3,10 +3,11 @@ import { db, NewRecruiterAvailability } from "./db";
 import { and, eq } from "drizzle-orm";
 import { isAdmin } from "./admin";
 import { getActiveRecruitment } from "./recruitment";
+import { cache } from "react";
 
 type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export async function isRecruiter(id: string, recruitmentId?: number) {
+export const isRecruiter = cache(async (id: string, recruitmentId?: number) => {
   if (!id) return false;
 
   if (await isAdmin(id)) return true;
@@ -22,7 +23,7 @@ export async function isRecruiter(id: string, recruitmentId?: number) {
   });
 
   return enrolled !== null && enrolled !== undefined;
-}
+});
 
 export async function getRecruiters(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;

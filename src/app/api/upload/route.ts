@@ -6,13 +6,11 @@ import {
   UploadResult,
   fromFullUrlToPath,
 } from "@/lib/file-upload";
-import { auth } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const session = await getSessionFromRequest(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -62,9 +60,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const session = await getSessionFromRequest(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,9 +1,8 @@
 import { hasAnyApplication } from "@/lib/application";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { isRecruiter } from "@/lib/recruiter";
 import { getCurrentRecruitmentState } from "@/lib/recruitment";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function ApplicationLayout({
@@ -11,9 +10,7 @@ export default async function ApplicationLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) redirect("/login");
 

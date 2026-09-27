@@ -1,8 +1,8 @@
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { Building2, Calendar } from "lucide-react";
 
 interface CandidateAcademicInfoProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
 }
 
 export default function CandidateAcademicInfo({

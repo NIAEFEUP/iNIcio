@@ -1,10 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import ApplicationClient from "@/components/application/application-client";
 import { hasApplication } from "@/lib/application";
 import { getActiveRecruitment } from "@/lib/recruitment";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 type ApplicationPageProps = {
   searchParams?: Promise<{ action?: string }>;
@@ -13,9 +12,7 @@ type ApplicationPageProps = {
 export default async function Application({
   searchParams,
 }: ApplicationPageProps) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/login");

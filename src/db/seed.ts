@@ -34,6 +34,7 @@ import {
   notification,
   recruiterAvailability,
   finalMessageTemplate,
+  openDayAnnouncement,
 } from "./schema";
 
 type PhaseStatus = "blocked" | "todo" | "done";
@@ -101,6 +102,7 @@ async function main() {
   await db.delete(admin);
   await db.delete(account);
   await db.delete(user);
+  await db.delete(openDayAnnouncement);
   await db.delete(recruitment);
 
   // ── Helpers ──────────────────────────────────────────────────────
@@ -479,6 +481,16 @@ async function main() {
     })
     .returning({ id: recruitment.id });
 
+  await db.insert(openDayAnnouncement).values({
+    recruitmentId: pastRecruitment.id,
+    enabled: false,
+    date: new Date("2025-09-05T00:00:00.000Z"),
+    startTime: "10:00",
+    endTime: "18:00",
+    room: "B315",
+    image: "/images/B315.jpeg",
+  });
+
   await db.insert(usersToRecruitments).values({
     userId: "3",
     recruitmentId: pastRecruitment.id,
@@ -743,6 +755,16 @@ async function main() {
       end: new Date("2026-09-30T16:00:00.000Z"),
     })
     .returning({ id: recruitment.id });
+
+  await db.insert(openDayAnnouncement).values({
+    recruitmentId: currentRecruitment.id,
+    enabled: true,
+    date: new Date("2026-09-08T00:00:00.000Z"),
+    startTime: "10:00",
+    endTime: "18:00",
+    room: "B315",
+    image: "/images/B315.jpeg",
+  });
 
   for (const recruiterId of ["3", "11", "12"]) {
     await db.insert(usersToRecruitments).values({
@@ -1263,6 +1285,10 @@ async function main() {
   console.log("");
   console.log("Admin:");
   console.log("  admin@test.com       (4)  platform admin");
+  console.log("");
+  console.log("Open Day:");
+  console.log("  Past:    Disabled");
+  console.log("  Current: Enabled (2026-09-08, 10:00 - 18:00, Sala B315)");
 }
 
 main();

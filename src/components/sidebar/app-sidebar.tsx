@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { RecruitmentManagerDialog } from "@/components/recruitment/recruitment-manager-dialog";
+import { OpenDayModal } from "@/components/admin/open-day-modal";
 import {
   Sidebar,
   SidebarContent,
@@ -41,8 +42,14 @@ export function AppSidebar({
   const [managerOpen, setManagerOpen] = React.useState(false);
   const [managerMode, setManagerMode] =
     React.useState<RecruitmentManagerMode>("overview");
+  const [openDayOpen, setOpenDayOpen] = React.useState(false);
 
   const { recruitmentId, selectRecruitment } = useRecruitment();
+
+  const selectedRecruitment = React.useMemo(() => {
+    const currentId = recruitmentId ?? recruitments?.[0]?.id;
+    return recruitments?.find((r) => r.id === currentId) ?? recruitments?.[0];
+  }, [recruitmentId, recruitments]);
 
   const openManager = React.useCallback((mode: RecruitmentManagerMode) => {
     setManagerMode(mode);
@@ -63,10 +70,11 @@ export function AppSidebar({
         </SidebarHeader>
         <SidebarContent>
           <SidebarContentComponent
-            currentPath={currentPath}
+            userId={user?.id}
             isRecruiter={isRecruiter}
             isAdmin={isAdmin}
-            user={user}
+            currentRecruitmentId={selectedRecruitment?.id}
+            onOpenOpenDay={() => setOpenDayOpen(true)}
           />
         </SidebarContent>
         <SidebarFooter className="border-t border-border/60">
@@ -86,6 +94,14 @@ export function AppSidebar({
         recruitments={recruitments ?? []}
         initialMode={managerMode}
       />
+
+      {selectedRecruitment && isAdmin && (
+        <OpenDayModal
+          open={openDayOpen}
+          onOpenChange={setOpenDayOpen}
+          recruitmentId={selectedRecruitment.id}
+        />
+      )}
     </>
   );
 }

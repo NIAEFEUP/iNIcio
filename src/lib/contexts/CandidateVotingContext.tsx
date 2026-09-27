@@ -7,7 +7,7 @@ import React, {
   SetStateAction,
 } from "react";
 import { RecruiterVote, VotingPhase } from "../db";
-import { CandidateWithMetadata } from "../candidate";
+import { CandidateVotingMetadata } from "../candidate";
 
 interface CandidateVotingContextType {
   candidates: any[];
@@ -27,10 +27,8 @@ interface CandidateVotingContextType {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
-  currentCandidate: CandidateWithMetadata & { isFinished: boolean };
-  setCurrentCandidate: Dispatch<
-    SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
-  >;
+  currentCandidate: CandidateVotingMetadata;
+  setCurrentCandidate: Dispatch<SetStateAction<CandidateVotingMetadata>>;
 }
 
 interface CandidateVotingProviderProps {
@@ -52,10 +50,8 @@ interface CandidateVotingProviderProps {
     candidateId: string,
   ) => Promise<boolean>;
   recruiterVotes: RecruiterVote[];
-  currentCandidate: CandidateWithMetadata & { isFinished: boolean };
-  setCurrentCandidate: Dispatch<
-    SetStateAction<CandidateWithMetadata & { isFinished: boolean }>
-  >;
+  currentCandidate: CandidateVotingMetadata;
+  setCurrentCandidate: Dispatch<SetStateAction<CandidateVotingMetadata>>;
 }
 
 export const CandidateVotingContext =

@@ -14,7 +14,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SocialLinks } from "@/components/profile/social-links";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateAcademicInfo from "../card/candidate-academic-info";
 import CandidateDepartmentInterestInfo from "../card/candidate-department-interest-info";
 import CandidateIdentityInfo from "../card/candidate-identity-info";
@@ -25,12 +25,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface CandidateQuickInfoProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
   friendCheckboxActive?: boolean;
   selectActionActive?: boolean;
   selectActionHandler?: (
     checked: boolean,
-    candidate: CandidateWithMetadata,
+    candidate: CandidateListMetadata,
   ) => void;
   candidateSelected?: boolean;
   friends?: Array<RecruiterToCandidate>;

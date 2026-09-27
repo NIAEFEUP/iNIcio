@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import type { RecruitmentOption } from "@/components/sidebar/sidebar-header";
 import { isAdmin } from "@/lib/admin";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getRecruitmentIdsForUser, getRecruitments } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 import { getSelectedRecruitmentId } from "@/lib/selected-recruitment";
@@ -12,9 +12,7 @@ export async function DashboardShell({ children }: { children: ReactNode }) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const userId = session?.user?.id;
 

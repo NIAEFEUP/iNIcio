@@ -1,11 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import Link from "next/link";
 
 interface CandidateIdentityInfoProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
   fullDetails?: boolean;
 }
 

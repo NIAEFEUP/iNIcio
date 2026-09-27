@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 import { db } from "@/lib/db";
 
@@ -15,9 +14,7 @@ import { isAdmin } from "@/lib/admin";
 import { getActiveRecruitment } from "@/lib/recruitment";
 
 export async function PUT(req: Request) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 });

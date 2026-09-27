@@ -1,7 +1,6 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
-import { headers } from "next/headers";
 import { PageHeader } from "@/components/layout/page-header";
 
 import { db } from "@/lib/db";
@@ -17,7 +16,7 @@ import { eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/action-guard";
 
 export default async function AdminTemplates() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const acceptedTemplate = await getAcceptedMessageTemplate();
   const rejectedTemplate = await getRejectedMessageTemplate();

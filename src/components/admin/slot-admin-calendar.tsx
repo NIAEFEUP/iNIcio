@@ -19,10 +19,10 @@ import SlotConfigPanel from "../slot/slot-config-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChooseBookingSlot from "../slot/choose-booking-slot";
 import { SlotAdminStats } from "./slot-admin-stats";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 
 interface SlotAdminCalendarProps {
-  candidates: Array<CandidateWithMetadata>;
+  candidates: Array<CandidateListMetadata>;
   recruitmentId: number;
   existingSlots?: {
     interview: Slot[];

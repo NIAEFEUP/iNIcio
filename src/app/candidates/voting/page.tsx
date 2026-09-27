@@ -5,12 +5,11 @@ import CandidateVotingStartButton from "@/components/candidate/voting/candidate-
 import { PageHeader } from "@/components/layout/page-header";
 import { getVotingPhases } from "@/lib/voting";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 
 export default async function CandidatesVotingPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const admin = await isAdmin(session?.user.id);
 

@@ -6,8 +6,7 @@ import {
 import { ClientContainer } from "@/calendar/components/client-container";
 import { PageHeader } from "@/components/layout/page-header";
 import type { TCalendarView } from "@/calendar/types";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import { getRole } from "@/lib/role";
@@ -18,7 +17,7 @@ export default async function AvailabilitiesCalendarShell({
 }: {
   view: TCalendarView;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!(await isAdmin(session?.user.id))) redirect("/");
 
   const targetId = await getTargetRecruitmentId();

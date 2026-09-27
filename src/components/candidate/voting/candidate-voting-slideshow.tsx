@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateVotingMetadata } from "@/lib/candidate";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 import CandidateVotingSlideshowArrows from "@/components/candidate/voting/candidate-voting-slideshow-arrows";
 import CandidateVotingOptions from "./candidate-voting-options";
@@ -15,7 +15,7 @@ import CandidateVotingPhaseStatusList from "./candidate-voting-phase-status-list
 import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
 
 interface CandidateVotingSlideshowProps {
-  candidates: Array<CandidateWithMetadata & { isFinished: boolean }>;
+  candidates: Array<CandidateVotingMetadata>;
   admin: boolean;
   currentVotingPhase?: VotingPhase | null;
   submitVoteAction: (
@@ -68,9 +68,8 @@ export function CandidateVotingSlideshow({
   const [alreadyVotedForCurrentCandidate, setAlreadyVotedForCurrentCandidate] =
     useState<boolean>(false);
 
-  const [currentCandidate, setCurrentCandidate] = useState<
-    CandidateWithMetadata & { isFinished: boolean }
-  >(candidates[currentIndex]);
+  const [currentCandidate, setCurrentCandidate] =
+    useState<CandidateVotingMetadata>(candidates[currentIndex]);
 
   const [candidateFinished, setCandidateFinished] = useState<boolean>(
     currentCandidate?.isFinished || false,

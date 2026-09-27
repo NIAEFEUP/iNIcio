@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/accordion";
 
 import { getEvents, getUsers } from "@/calendar/requests";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import { getRole } from "@/lib/role";
@@ -31,7 +30,7 @@ export default async function Layout({
 }) {
   const { id } = await params;
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!(await isAdmin(session?.user.id)) && session?.user.id !== id)
     redirect("/");
 

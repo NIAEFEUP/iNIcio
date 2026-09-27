@@ -1,13 +1,12 @@
 import RecruiterResources from "@/components/recruiter/recruiter-resources";
 import { PageHeader } from "@/components/layout/page-header";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function RecruiterPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
 
   const targetId = await getTargetRecruitmentId();
 
