@@ -14,6 +14,7 @@
     "seed": "node --import tsx ./src/db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:bundle": "esbuild src/db/migrate.ts --bundle --platform=node --target=node22 --external:pg-native --outfile=dist/migrate.cjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
