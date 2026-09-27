@@ -5,11 +5,9 @@ import { useSWRConfig } from "swr";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
-import { CandidateLinksCard } from "@/components/candidate/candidate-links-card";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateGridCard from "@/components/candidates/candidate-grid-card";
-import CandidateVotingStatus from "@/components/candidate/candidate-voting-status";
+import { CandidateModularInfo } from "@/components/candidate/card";
 import CommentFrame from "@/components/comments/comment-frame";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -95,20 +93,12 @@ export default function CandidatePage() {
         />
       }
       sidebar={
-        <>
-          <CandidateGridCard
-            candidate={candidate}
-            friends={candidate.knownRecruiters}
-            authUser={user ? { id: user.id } : null}
-            showContactInfo
-          />
-          <CandidateLinksCard
-            githubUrl={candidate.application?.github}
-            linkedinUrl={candidate.application?.linkedIn}
-            websiteUrl={candidate.application?.personalWebsite}
-          />
-          <CandidateVotingStatus votingDecision={candidate.votingDecision} />
-        </>
+        <CandidateModularInfo
+          candidate={candidate}
+          friends={candidate.knownRecruiters}
+          authUser={user ? { id: user.id } : null}
+          recruitmentId={recruitmentId}
+        />
       }
     >
       <EvaluationTabs

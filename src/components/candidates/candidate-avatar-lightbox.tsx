@@ -11,7 +11,7 @@ interface CandidateAvatarLightboxProps {
   picture?: string;
   name: string;
   initials: string;
-  size?: "default" | "sm";
+  size?: "default" | "sm" | "lg" | "xl";
   className?: string;
 }
 
@@ -29,6 +29,24 @@ export function CandidateAvatarLightbox({
 }: CandidateAvatarLightboxProps) {
   const [open, setOpen] = useState(false);
   const isSmall = size === "sm";
+  const isLarge = size === "lg";
+  const isXLarge = size === "xl";
+
+  const avatarClasses = isSmall
+    ? "size-8 ring-1 ring-border/60"
+    : isLarge
+      ? "size-20 ring-4 ring-muted/80 shadow-sm"
+      : isXLarge
+        ? "size-24 ring-4 ring-muted/80 shadow-md"
+        : "size-14 ring-2 ring-border/60";
+
+  const fallbackTextClass = isSmall
+    ? "text-[10px]"
+    : isLarge
+      ? "text-xl font-bold"
+      : isXLarge
+        ? "text-2xl font-bold"
+        : "text-base font-bold";
 
   return (
     <>
@@ -39,16 +57,15 @@ export function CandidateAvatarLightbox({
           setOpen(true);
         }}
         className={cn(
-          "cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "cursor-pointer rounded-full outline-none transition-transform hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           className,
         )}
         aria-label={`Ver foto de ${name}`}
       >
         <Avatar
-          size={isSmall ? "sm" : undefined}
           className={cn(
-            "shrink-0",
-            isSmall ? "ring-1 ring-border/60" : "size-14 ring-2 ring-border/60",
+            "shrink-0 transition-opacity hover:opacity-95",
+            avatarClasses,
           )}
         >
           <AvatarImage src={picture} alt={name} className="object-cover" />
@@ -56,7 +73,7 @@ export function CandidateAvatarLightbox({
             <InitialsAvatar
               className={cn(
                 "size-full rounded-full font-bold",
-                isSmall ? "text-[10px]" : "text-base",
+                fallbackTextClass,
               )}
               initials={initials}
             />
