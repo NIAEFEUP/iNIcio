@@ -4,7 +4,12 @@ import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
-import { dynamic, interview } from "@/db/schema";
+import {
+  dynamic,
+  dynamicTemplate as dynamicTemplateTable,
+  interview,
+  interviewTemplate as interviewTemplateTable,
+} from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/action-guard";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
@@ -55,8 +60,6 @@ export default async function AdminTemplates() {
     ) {
       const currentTpl = await getInterviewTemplate();
       contentToPush = currentTpl.content;
-    } else {
-      await addInterviewTemplate(contentToPush);
     }
 
     if (
@@ -67,15 +70,35 @@ export default async function AdminTemplates() {
     }
 
     try {
-      await db
-        .update(interview)
-        .set({ content: contentToPush })
-        .where(
-          and(
-            eq(interview.recruitmentId, target.id),
-            eq(interview.locked, false),
-          ),
-        );
+      await db.transaction(async (tx) => {
+        if (update && (!Array.isArray(update) || update.length > 0)) {
+          const [template] = await tx
+            .select()
+            .from(interviewTemplateTable)
+            .limit(1);
+
+          if (template) {
+            await tx
+              .update(interviewTemplateTable)
+              .set({ content: contentToPush })
+              .where(eq(interviewTemplateTable.id, template.id));
+          } else {
+            await tx
+              .insert(interviewTemplateTable)
+              .values({ content: contentToPush });
+          }
+        }
+
+        await tx
+          .update(interview)
+          .set({ content: contentToPush })
+          .where(
+            and(
+              eq(interview.recruitmentId, target.id),
+              eq(interview.locked, false),
+            ),
+          );
+      });
     } catch (error) {
       console.error("Error overriding interview template:", error);
       throw error;
@@ -98,8 +121,6 @@ export default async function AdminTemplates() {
     ) {
       const currentTpl = await getDynamicTemplate();
       contentToPush = currentTpl.content;
-    } else {
-      await addDynamicTemplate(contentToPush);
     }
 
     if (
@@ -110,12 +131,35 @@ export default async function AdminTemplates() {
     }
 
     try {
-      await db
-        .update(dynamic)
-        .set({ content: contentToPush })
-        .where(
-          and(eq(dynamic.recruitmentId, target.id), eq(dynamic.locked, false)),
-        );
+      await db.transaction(async (tx) => {
+        if (update && (!Array.isArray(update) || update.length > 0)) {
+          const [template] = await tx
+            .select()
+            .from(dynamicTemplateTable)
+            .limit(1);
+
+          if (template) {
+            await tx
+              .update(dynamicTemplateTable)
+              .set({ content: contentToPush })
+              .where(eq(dynamicTemplateTable.id, template.id));
+          } else {
+            await tx
+              .insert(dynamicTemplateTable)
+              .values({ content: contentToPush });
+          }
+        }
+
+        await tx
+          .update(dynamic)
+          .set({ content: contentToPush })
+          .where(
+            and(
+              eq(dynamic.recruitmentId, target.id),
+              eq(dynamic.locked, false),
+            ),
+          );
+      });
     } catch (error) {
       console.error("Error overriding dynamic template:", error);
       throw error;
