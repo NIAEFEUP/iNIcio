@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 
+import { Button } from "@/components/ui/button";
 import type { Application } from "@/lib/db";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -61,6 +63,24 @@ export default function CandidateCurriculum({
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto bg-muted/30 p-4">
+      <div className="mb-4 flex justify-end">
+        <Button
+          nativeButton={false}
+          variant="outline"
+          size="sm"
+          render={
+            <a
+              href={source}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Abrir currículo no leitor do dispositivo"
+            />
+          }
+        >
+          <ExternalLink />
+          Abrir no leitor do dispositivo
+        </Button>
+      </div>
       <Document
         file={source}
         className="flex flex-col items-center gap-4"
