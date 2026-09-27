@@ -176,9 +176,11 @@ export default function RealTimeEditor({
     if (!entity?.content || !editor || !isReady.current) return;
 
     const stringified = JSON.stringify(entity.content);
+    const currentEditorContent = JSON.stringify(editor.document);
     if (
       lastEntityContentRef.current !== null &&
-      lastEntityContentRef.current !== stringified
+      lastEntityContentRef.current !== stringified &&
+      currentEditorContent !== stringified
     ) {
       editor.replaceBlocks(editor.document, entity.content);
       setCurrentContent(JSON.stringify(editor.document));
