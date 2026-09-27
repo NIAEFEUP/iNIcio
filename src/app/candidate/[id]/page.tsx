@@ -20,7 +20,10 @@ import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
 import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
 import { DataErrorState } from "@/components/data-table/data-state-view";
 
-import { saveApplicationComment } from "@/app/candidate/actions";
+import {
+  editApplicationComment,
+  saveApplicationComment,
+} from "@/app/candidate/actions";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { useAuth } from "@/hooks/use-auth";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
@@ -60,7 +63,15 @@ export default function CandidatePage() {
   const answeredCount = applicationAnswerCount(candidate.application);
 
   const saveComment = async (content: Array<unknown>) => {
-    const ok = await saveApplicationComment(id, content);
+    const result = await saveApplicationComment(id, content);
+    if (result.success) {
+      mutate(applicationCommentsKey(id, recruitmentId));
+    }
+    return result;
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    const ok = await editApplicationComment(id, commentId, content);
     if (ok) {
       mutate(applicationCommentsKey(id, recruitmentId));
     }
@@ -135,6 +146,7 @@ export default function CandidatePage() {
                   type="application"
                   comments={comments}
                   saveToDatabase={saveComment}
+                  onEditComment={editComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>

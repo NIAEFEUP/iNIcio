@@ -263,12 +263,55 @@ export async function createDynamicComment(
   dynamicId: number,
   content: Array<any>,
   authorId: string,
-) {
-  await db.insert(dynamicComment).values({
-    content: content,
-    dynamicId: dynamicId,
-    authorId: authorId,
+): Promise<number | null> {
+  return await db.transaction(async (trx) => {
+    try {
+      const inserted = await trx
+        .insert(dynamicComment)
+        .values({
+          content: content,
+          dynamicId: dynamicId,
+          authorId: authorId,
+        })
+        .returning({ id: dynamicComment.id });
+
+      return inserted[0]?.id ?? null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   });
+}
+
+export async function updateDynamicComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+  dynamicId: number,
+  recruitmentId: number,
+): Promise<boolean> {
+  const d = await db
+    .select({ id: dynamic.id })
+    .from(dynamic)
+    .where(
+      and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, recruitmentId)),
+    );
+
+  if (d.length === 0) return false;
+
+  const updated = await db
+    .update(dynamicComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(dynamicComment.id, commentId),
+        eq(dynamicComment.authorId, authorId),
+        eq(dynamicComment.dynamicId, d[0].id),
+      ),
+    )
+    .returning({ id: dynamicComment.id });
+
+  return updated.length > 0;
 }
 
 export async function getAllCandidatesWithDynamic(

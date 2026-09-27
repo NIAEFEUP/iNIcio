@@ -27,6 +27,40 @@ export async function addApplicationComment(
   return id;
 }
 
+export async function updateApplicationComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+  candidateId: string,
+  recruitmentId: number,
+): Promise<boolean> {
+  const app = await db
+    .select({ id: application.id })
+    .from(application)
+    .where(
+      and(
+        eq(application.candidateId, candidateId),
+        eq(application.recruitmentId, recruitmentId),
+      ),
+    );
+
+  if (app.length === 0) return false;
+
+  const updated = await db
+    .update(applicationComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(applicationComment.id, commentId),
+        eq(applicationComment.authorId, authorId),
+        eq(applicationComment.applicationId, app[0].id),
+      ),
+    )
+    .returning({ id: applicationComment.id });
+
+  return updated.length > 0;
+}
+
 export async function getApplicationComments(
   candidateId: string,
   recruitmentId?: number,
@@ -86,6 +120,7 @@ export async function getDynamicComments(dynamicId: number) {
         id: e.id,
         content: e.content,
         createdAt: e.createdAt,
+        editedAt: e.editedAt,
         dynamicId: e.dynamicId,
         authorId: e.authorId,
       },

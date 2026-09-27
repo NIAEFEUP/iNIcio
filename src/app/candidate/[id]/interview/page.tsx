@@ -24,6 +24,7 @@ import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-inf
 
 import {
   classifyInterview,
+  editInterviewComment,
   saveInterviewComment,
   updateInterviewContent,
 } from "@/app/candidate/actions";
@@ -78,7 +79,15 @@ export default function InterviewPage() {
   };
 
   const saveComment = async (content: Array<unknown>) => {
-    const ok = await saveInterviewComment(id, content);
+    const result = await saveInterviewComment(id, content);
+    if (result.success) {
+      mutate(interviewKey(id, recruitmentId));
+    }
+    return result;
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    const ok = await editInterviewComment(id, commentId, content);
     if (ok) {
       mutate(interviewKey(id, recruitmentId));
     }
@@ -185,6 +194,7 @@ export default function InterviewPage() {
                   type="interview"
                   comments={comments}
                   saveToDatabase={saveComment}
+                  onEditComment={editComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>

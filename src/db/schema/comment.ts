@@ -16,6 +16,7 @@ export const interviewComment = pgTable("interview_comment", {
   id: serial("id").primaryKey(),
   content: jsonb("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  editedAt: timestamp("edited_at"),
   interviewId: integer("interview_id")
     .notNull()
     .references(() => interview.id, { onDelete: "cascade" }),
@@ -42,6 +43,7 @@ export const dynamicComment = pgTable("dynamic_comment", {
   id: serial("id").primaryKey(),
   content: jsonb("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  editedAt: timestamp("edited_at"),
   dynamicId: integer("dynamic_id")
     .notNull()
     .references(() => dynamic.id, { onDelete: "cascade" }),
@@ -65,6 +67,7 @@ export const applicationComment = pgTable("application_comment", {
   id: serial("id").primaryKey(),
   content: jsonb("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  editedAt: timestamp("edited_at"),
   applicationId: integer("application_id")
     .notNull()
     .references(() => application.id, { onDelete: "cascade" }),

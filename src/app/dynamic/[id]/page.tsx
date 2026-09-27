@@ -21,6 +21,7 @@ import RecruiterAssignedInfo from "@/components/recruiter/recruiter-assigned-inf
 
 import {
   classifyDynamic,
+  editDynamicComment,
   saveDynamicComment,
   updateDynamicContent,
 } from "@/app/candidate/actions";
@@ -72,7 +73,15 @@ export default function DynamicPage() {
   };
 
   const saveComment = async (content: Array<unknown>) => {
-    const ok = await saveDynamicComment(dynamicId, content);
+    const result = await saveDynamicComment(dynamicId, content);
+    if (result.success) {
+      mutate(dynamicKey(dynamicId, recruitmentId));
+    }
+    return result;
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    const ok = await editDynamicComment(dynamicId, commentId, content);
     if (ok) {
       mutate(dynamicKey(dynamicId, recruitmentId));
     }
@@ -171,6 +180,7 @@ export default function DynamicPage() {
                   type="dynamic"
                   comments={comments}
                   saveToDatabase={saveComment}
+                  onEditComment={editComment}
                   recruiters={recruiters}
                 />
               </CommentFrame>
