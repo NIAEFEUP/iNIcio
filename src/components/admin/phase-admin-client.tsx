@@ -506,17 +506,19 @@ export default function PhaseAdminClient({
         }
         actions={
           <>
-            <DataTableColumnToggle
-              table={table}
-              columnLabels={{
-                title: "Título",
-                description: "Descrição",
-                start: "Início",
-                end: "Fim",
-                state: "Estado",
-                role: "Papel",
-              }}
-            />
+            {viewMode === "list" && (
+              <DataTableColumnToggle
+                table={table}
+                columnLabels={{
+                  title: "Título",
+                  description: "Descrição",
+                  start: "Início",
+                  end: "Fim",
+                  state: "Estado",
+                  role: "Papel",
+                }}
+              />
+            )}
             <Button
               type="button"
               onClick={() => {

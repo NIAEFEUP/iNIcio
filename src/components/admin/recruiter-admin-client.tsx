@@ -317,10 +317,12 @@ export default function RecruiterAdminClient({
         }
         actions={
           <>
-            <DataTableColumnToggle
-              table={table}
-              columnLabels={{ name: "Nome", email: "Email" }}
-            />
+            {viewMode === "list" && (
+              <DataTableColumnToggle
+                table={table}
+                columnLabels={{ name: "Nome", email: "Email" }}
+              />
+            )}
             <Button
               type="button"
               onClick={() => setIsAddOpen(true)}

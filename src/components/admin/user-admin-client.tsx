@@ -494,14 +494,16 @@ export default function UserAdminClient({
           </div>
         }
         actions={
-          <DataTableColumnToggle
-            table={table}
-            columnLabels={{
-              name: "Nome",
-              email: "Email",
-              createdAt: "Data de Registo",
-            }}
-          />
+          viewMode === "list" ? (
+            <DataTableColumnToggle
+              table={table}
+              columnLabels={{
+                name: "Nome",
+                email: "Email",
+                createdAt: "Data de Registo",
+              }}
+            />
+          ) : undefined
         }
         filters={
           <>

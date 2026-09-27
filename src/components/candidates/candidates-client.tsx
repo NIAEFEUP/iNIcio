@@ -509,18 +509,20 @@ export default function CandidatesClient({
           </div>
         }
         actions={
-          <DataTableColumnToggle
-            table={table}
-            columnLabels={{
-              name: "Nome",
-              course: "Curso",
-              year: "Ano",
-              departments: "Departamentos",
-              interviewClassification: "Entrevista",
-              dynamicClassification: "Dinâmica",
-              decision: "Decisão",
-            }}
-          />
+          viewMode === "list" ? (
+            <DataTableColumnToggle
+              table={table}
+              columnLabels={{
+                name: "Nome",
+                course: "Curso",
+                year: "Ano",
+                departments: "Departamentos",
+                interviewClassification: "Entrevista",
+                dynamicClassification: "Dinâmica",
+                decision: "Decisão",
+              }}
+            />
+          ) : undefined
         }
         filters={
           <>
