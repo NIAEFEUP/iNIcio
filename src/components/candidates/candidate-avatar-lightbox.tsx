@@ -5,11 +5,14 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { cn } from "@/lib/utils";
 
 interface CandidateAvatarLightboxProps {
   picture?: string;
   name: string;
   initials: string;
+  size?: "default" | "sm";
+  className?: string;
 }
 
 /**
@@ -21,22 +24,40 @@ export function CandidateAvatarLightbox({
   picture,
   name,
   initials,
+  size = "default",
+  className,
 }: CandidateAvatarLightboxProps) {
   const [open, setOpen] = useState(false);
+  const isSmall = size === "sm";
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className={cn(
+          "cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          className,
+        )}
         aria-label={`Ver foto de ${name}`}
       >
-        <Avatar className="size-14 shrink-0 ring-2 ring-border/60">
+        <Avatar
+          size={isSmall ? "sm" : undefined}
+          className={cn(
+            "shrink-0",
+            isSmall ? "ring-1 ring-border/60" : "size-14 ring-2 ring-border/60",
+          )}
+        >
           <AvatarImage src={picture} alt={name} className="object-cover" />
           <AvatarFallback>
             <InitialsAvatar
-              className="size-full rounded-full text-base font-bold"
+              className={cn(
+                "size-full rounded-full font-bold",
+                isSmall ? "text-[10px]" : "text-base",
+              )}
               initials={initials}
             />
           </AvatarFallback>

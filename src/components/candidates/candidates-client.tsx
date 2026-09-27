@@ -14,11 +14,16 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Search } from "lucide-react";
+import { History, Search } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTableView } from "@/components/data-table/data-table-view";
 import { DataTableColumnToggle } from "@/components/data-table/data-table-column-toggle";
@@ -39,7 +44,9 @@ import { getInitials } from "@/lib/utils";
 
 import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateGridCard from "./candidate-grid-card";
+import { CandidateAvatarLightbox } from "./candidate-avatar-lightbox";
 import { ClassificationText, DecisionText } from "./candidate-text";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 
 import {
   availableClassifications,
@@ -93,7 +100,8 @@ export default function CandidatesClient({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    email: false,
+    previousApplications: false,
+    departments: false,
   });
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
@@ -123,37 +131,55 @@ export default function CandidatesClient({
         header: ({ column }) => (
           <DataTableSortableHeader column={column} title="Nome" />
         ),
-        cell: ({ row }) => (
-          <DataTableEntityCell
-            image={row.original.image || undefined}
-            imageAlt={row.original.name}
-            name={
-              <Link
-                href={`/candidate/${row.original.id}`}
-                className="transition-colors hover:text-primary"
-              >
-                {row.original.name || "Sem nome"}
-              </Link>
-            }
-            initials={getInitials(row.original.name)}
-            subtitle={
-              row.original.application?.studentNumber
-                ? `nº ${row.original.application.studentNumber}`
-                : undefined
-            }
-          />
-        ),
-      },
-      {
-        accessorKey: "email",
-        header: ({ column }) => (
-          <DataTableSortableHeader column={column} title="Email" />
-        ),
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.email ?? "-"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const previousApplicationYears =
+            row.original.previousApplicationYears ?? [];
+          const picture = getStableImageUrl(row.original.image);
+          const name = row.original.name || "Sem nome";
+          const initials = getInitials(row.original.name);
+
+          return (
+            <DataTableEntityCell
+              avatar={
+                <CandidateAvatarLightbox
+                  picture={picture}
+                  name={name}
+                  initials={initials}
+                  size="sm"
+                />
+              }
+              name={
+                <Link
+                  href={`/candidate/${row.original.id}`}
+                  className="transition-colors hover:text-primary"
+                >
+                  {name}
+                </Link>
+              }
+              badge={
+                previousApplicationYears.length > 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      className="-ml-0.5 inline-flex shrink-0 cursor-help items-center text-muted-foreground"
+                      aria-label={`Candidatou-se anteriormente em ${previousApplicationYears.join(", ")}`}
+                    >
+                      <History className="size-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Candidatou-se anteriormente em{" "}
+                      {previousApplicationYears.join(", ")}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : undefined
+              }
+              subtitle={
+                row.original.application?.studentNumber
+                  ? `nº ${row.original.application.studentNumber}`
+                  : undefined
+              }
+            />
+          );
+        },
       },
       {
         id: "course",
@@ -197,16 +223,7 @@ export default function CandidatesClient({
       {
         id: "previousApplications",
         accessorFn: (c) => (c.previousApplicationYears ?? []).join(", "),
-        header: "Recandidatura",
-        enableSorting: false,
-        cell: ({ row }) => {
-          const years = row.original.previousApplicationYears ?? [];
-          return (
-            <span className="text-sm text-foreground">
-              {years.length > 0 ? years.join(", ") : "-"}
-            </span>
-          );
-        },
+        enableHiding: false,
         filterFn: (row, _id, value: string[]) => {
           if (!value || value.length === 0) return true;
           const applied =
@@ -496,10 +513,8 @@ export default function CandidatesClient({
             table={table}
             columnLabels={{
               name: "Nome",
-              email: "Email",
               course: "Curso",
               year: "Ano",
-              previousApplications: "Recandidatura",
               departments: "Departamentos",
               interviewClassification: "Entrevista",
               dynamicClassification: "Dinâmica",

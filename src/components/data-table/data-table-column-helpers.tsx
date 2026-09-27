@@ -135,6 +135,7 @@ export interface DataTableEntityCellProps {
   initials?: string;
   image?: string;
   imageAlt?: string;
+  avatar?: React.ReactNode;
   badge?: React.ReactNode;
   subtitle?: React.ReactNode;
   className?: string;
@@ -145,6 +146,7 @@ export function DataTableEntityCell({
   initials,
   image,
   imageAlt,
+  avatar,
   badge,
   subtitle,
   className,
@@ -156,7 +158,9 @@ export function DataTableEntityCell({
         className,
       )}
     >
-      {image ? (
+      {avatar ? (
+        avatar
+      ) : image ? (
         <Avatar size="sm" className="ring-1 ring-border/60">
           <AvatarImage src={getStableImageUrl(image)} alt={imageAlt} />
           <AvatarFallback>
