@@ -344,7 +344,7 @@ export async function addDynamicTemplate(content: Array<any>) {
   if (content.length === 0) return;
 
   await db.transaction(async (trx) => {
-    const template = await trx.query.dynamicTemplate.findFirst();
+    const [template] = await trx.select().from(dynamicTemplate).limit(1);
 
     if (template) {
       await trx
@@ -359,8 +359,7 @@ export async function addDynamicTemplate(content: Array<any>) {
 }
 
 export async function getDynamicTemplate(): Promise<DynamicTemplate> {
-  const template =
-    (await db.query.dynamicTemplate.findFirst()) as DynamicTemplate;
+  const [template] = await db.select().from(dynamicTemplate).limit(1);
 
   if (!template) {
     return {

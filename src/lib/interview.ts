@@ -216,7 +216,7 @@ export async function addInterviewTemplate(content: Array<any>) {
   if (content.length === 0) return;
 
   await db.transaction(async (trx) => {
-    const template = await trx.query.interviewTemplate.findFirst();
+    const [template] = await trx.select().from(interviewTemplate).limit(1);
 
     if (template) {
       await trx
@@ -230,8 +230,7 @@ export async function addInterviewTemplate(content: Array<any>) {
 }
 
 export async function getInterviewTemplate(): Promise<InterviewTemplate> {
-  const template =
-    (await db.query.interviewTemplate.findFirst()) as InterviewTemplate;
+  const [template] = await db.select().from(interviewTemplate).limit(1);
 
   if (!template) {
     return {

@@ -8,7 +8,6 @@ import { dynamic, interview } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/action-guard";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
-import { resetWebSocketRooms } from "@/lib/websocket";
 
 export default async function AdminTemplates() {
   const session = await getSession();
@@ -66,16 +65,6 @@ export default async function AdminTemplates() {
     }
 
     try {
-      const unlockedInterviews = await db
-        .select({ candidateId: interview.candidateId })
-        .from(interview)
-        .where(
-          and(
-            eq(interview.recruitmentId, target.id),
-            eq(interview.locked, false),
-          ),
-        );
-
       await db
         .update(interview)
         .set({ content: contentToPush })
@@ -85,11 +74,6 @@ export default async function AdminTemplates() {
             eq(interview.locked, false),
           ),
         );
-
-      const roomNames = unlockedInterviews.map(
-        (i) => `interview-${i.candidateId}`,
-      );
-      await resetWebSocketRooms(roomNames);
     } catch (error) {
       console.error("Error overriding interview template:", error);
       throw error;
@@ -122,22 +106,12 @@ export default async function AdminTemplates() {
     }
 
     try {
-      const unlockedDynamics = await db
-        .select({ id: dynamic.id })
-        .from(dynamic)
-        .where(
-          and(eq(dynamic.recruitmentId, target.id), eq(dynamic.locked, false)),
-        );
-
       await db
         .update(dynamic)
         .set({ content: contentToPush })
         .where(
           and(eq(dynamic.recruitmentId, target.id), eq(dynamic.locked, false)),
         );
-
-      const roomNames = unlockedDynamics.map((d) => `dynamic-${d.id}`);
-      await resetWebSocketRooms(roomNames);
     } catch (error) {
       console.error("Error overriding dynamic template:", error);
       throw error;

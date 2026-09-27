@@ -128,7 +128,7 @@ export default function AdminTemplateClient({
               >
                 <DialogTrigger
                   render={
-                    <Button variant="outline" size="sm">
+                    <Button>
                       <RotateCcw className="size-3.5" />
                       Forçar Substituição
                     </Button>
@@ -180,7 +180,7 @@ export default function AdminTemplateClient({
               >
                 <DialogTrigger
                   render={
-                    <Button variant="outline" size="sm">
+                    <Button>
                       <RotateCcw className="size-3.5" />
                       Forçar Substituição
                     </Button>

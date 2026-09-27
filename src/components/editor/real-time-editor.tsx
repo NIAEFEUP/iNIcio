@@ -44,7 +44,6 @@ interface RealTimeEditorProps {
   boxed?: boolean;
   editable?: boolean;
   onSaveStatusChange?: (status: SaveStatus) => void;
-  onRoomReset?: () => void;
 }
 
 export default function RealTimeEditor({
@@ -61,7 +60,6 @@ export default function RealTimeEditor({
   boxed = true,
   editable = true,
   onSaveStatusChange,
-  onRoomReset,
 }: RealTimeEditorProps) {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
@@ -80,6 +78,7 @@ export default function RealTimeEditor({
   const hasSeededContent = useRef(false);
   const isReady = useRef(!collab);
   const isSaving = useRef(false);
+  const lastEntityContentRef = useRef<string | null>(null);
 
   const provider = useMemo(
     () =>
@@ -130,12 +129,16 @@ export default function RealTimeEditor({
     const seedDocument = () => {
       if (hasSeededContent.current) return;
 
-      // Let the websocket deliver the shared document before seeding it from
-      // the database. This prevents a late joiner from overwriting edits.
-      if (collab && fragment && fragment.length > 0) {
+      const hasOtherPeers = Boolean(
+        provider && provider.awareness.getStates().size > 1,
+      );
+
+      // If other users are active in the collaborative session, preserve the shared room content.
+      if (collab && fragment && fragment.length > 0 && hasOtherPeers) {
         hasSeededContent.current = true;
         isReady.current = true;
         setCurrentContent(JSON.stringify(editor.document));
+        lastEntityContentRef.current = JSON.stringify(editor.document);
         onSaveStatusChange?.("saved");
         return;
       }
@@ -154,6 +157,7 @@ export default function RealTimeEditor({
       hasSeededContent.current = true;
       isReady.current = true;
       setCurrentContent(JSON.stringify(editor.document));
+      lastEntityContentRef.current = JSON.stringify(editor.document);
       onSaveStatusChange?.("saved");
     };
 
@@ -170,24 +174,6 @@ export default function RealTimeEditor({
     provider.on("sync", seedDocument);
     return () => provider.off("sync", seedDocument);
   }, [collab, editor, entity?.content, fragment, provider, onSaveStatusChange]);
-
-  useEffect(() => {
-    if (!provider) return;
-
-    const handleConnectionClose = (event: any) => {
-      if (event?.code === 4000) {
-        hasSeededContent.current = false;
-        onRoomReset?.();
-      }
-    };
-
-    provider.on("connection-close", handleConnectionClose);
-    return () => {
-      provider.off("connection-close", handleConnectionClose);
-    };
-  }, [provider, onRoomReset]);
-
-  const lastEntityContentRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!entity?.content || !editor || !isReady.current) return;

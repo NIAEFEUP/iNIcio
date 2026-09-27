@@ -223,7 +223,6 @@ export default function InterviewPage() {
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
                   editable={!interview.locked}
-                  onRoomReset={() => mutate(interviewKey(id, recruitmentId))}
                 />
               </EvaluationPanel>
             ),
