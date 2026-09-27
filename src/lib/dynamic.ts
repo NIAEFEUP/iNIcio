@@ -259,8 +259,18 @@ export async function updateDynamic(dynamicId: number, content: unknown) {
   await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
 }
 
-export async function toggleDynamicLock(dynamicId: number, locked: boolean) {
-  await db.update(dynamic).set({ locked }).where(eq(dynamic.id, dynamicId));
+export async function toggleDynamicLock(
+  dynamicId: number,
+  locked: boolean,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return;
+
+  await db
+    .update(dynamic)
+    .set({ locked })
+    .where(and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, targetId)));
 }
 
 export async function createDynamicComment(

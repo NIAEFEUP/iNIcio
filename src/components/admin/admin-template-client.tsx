@@ -19,8 +19,6 @@ import { RotateCcw, Loader2 } from "lucide-react";
 import { DynamicTemplate, InterviewTemplate } from "@/lib/db";
 import InterviewTemplateEditor from "./interview-template-editor";
 import DynamicTemplateEditor from "./dynamic-template-editor";
-import { SaveStatusIndicator } from "../editor/save-status-indicator";
-import type { SaveStatus } from "../editor/real-time-editor";
 
 interface AdminTemplateClientProps {
   interviewOverrideAction: (update: Array<any>) => Promise<void>;
@@ -54,12 +52,6 @@ export default function AdminTemplateClient({
     id: dynamicTemplate.id,
     content: dynamicTemplate.content,
   });
-
-  const [interviewSaveStatus, setInterviewSaveStatus] =
-    useState<SaveStatus | null>(null);
-  const [dynamicSaveStatus, setDynamicSaveStatus] = useState<SaveStatus | null>(
-    null,
-  );
 
   const [dynamicDialogOpen, setDynamicDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
@@ -114,13 +106,6 @@ export default function AdminTemplateClient({
         title="Modelos"
         actions={
           <div className="flex items-center gap-3">
-            <SaveStatusIndicator
-              status={
-                activeTab === "interview"
-                  ? interviewSaveStatus
-                  : dynamicSaveStatus
-              }
-            />
             {activeTab === "interview" ? (
               <Dialog
                 open={interviewDialogOpen}
@@ -243,7 +228,6 @@ export default function AdminTemplateClient({
             user={session?.user}
             templateState={interviewTemplateState}
             setTemplateState={setInterviewTemplate}
-            onSaveStatusChange={setInterviewSaveStatus}
           />
         </TabsContent>
         <TabsContent value="dynamic" className="flex flex-col gap-2 pt-2">
@@ -252,7 +236,6 @@ export default function AdminTemplateClient({
             user={session?.user}
             templateState={dynamicTemplateState}
             setTemplateState={setDynamicTemplate}
-            onSaveStatusChange={setDynamicSaveStatus}
           />
         </TabsContent>
       </Tabs>

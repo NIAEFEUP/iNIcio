@@ -205,7 +205,9 @@ export default function RealTimeEditor({
         try {
           await saveHandler(editor.document);
           setCurrentContent(stringEditorDocument);
-          onSaveStatusChange?.("saved");
+          const stillMatches =
+            JSON.stringify(editor.document) === stringEditorDocument;
+          onSaveStatusChange?.(stillMatches ? "saved" : "unsaved");
         } catch (err) {
           console.error("Error saving document:", err);
           onSaveStatusChange?.("error");

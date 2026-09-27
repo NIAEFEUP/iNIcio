@@ -44,7 +44,9 @@ export default async function AdminTemplates() {
     await requireAdminSession();
 
     const target = await getTargetRecruitment();
-    if (!target) return;
+    if (!target) {
+      throw new Error("Nenhum recrutamento ativo ou selecionado.");
+    }
 
     let contentToPush = update;
     if (
@@ -85,7 +87,9 @@ export default async function AdminTemplates() {
     await requireAdminSession();
 
     const target = await getTargetRecruitment();
-    if (!target) return;
+    if (!target) {
+      throw new Error("Nenhum recrutamento ativo ou selecionado.");
+    }
 
     let contentToPush = update;
     if (

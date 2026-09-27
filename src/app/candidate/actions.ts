@@ -275,7 +275,7 @@ export async function setDynamicLocked(dynamicId: number, locked: boolean) {
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  await toggleDynamicLock(dynamicId, locked);
+  await toggleDynamicLock(dynamicId, locked, targetId);
 }
 
 async function classifyCandidate(
