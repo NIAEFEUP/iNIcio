@@ -115,7 +115,13 @@ export default function RealTimeEditor({
             showCursorLabels: "activity",
           },
         })
-      : { schema },
+      : {
+          schema,
+          initialContent:
+            Array.isArray(entity?.content) && entity.content.length > 0
+              ? (entity.content as any)
+              : undefined,
+        },
   );
 
   useEffect(() => {
@@ -134,8 +140,16 @@ export default function RealTimeEditor({
         return;
       }
 
-      if (entity?.content) {
-        editor.replaceBlocks(editor.document, entity.content);
+      if (
+        entity?.content &&
+        Array.isArray(entity.content) &&
+        entity.content.length > 0
+      ) {
+        if (
+          JSON.stringify(editor.document) !== JSON.stringify(entity.content)
+        ) {
+          editor.replaceBlocks(editor.document, entity.content);
+        }
       }
       hasSeededContent.current = true;
       isReady.current = true;

@@ -1,8 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
 import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
-import { generateJWT } from "@/lib/jwt";
-import { getRole } from "@/lib/role";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
@@ -146,12 +144,6 @@ export default async function AdminTemplates() {
     }
   };
 
-  const jwt = await generateJWT(
-    session?.user.id,
-    await getRole(session?.user.id),
-    ["interview-template-room", "dynamic-template-room"],
-  );
-
   return (
     <AdminTemplateClient
       interviewOverrideAction={interviewOverrideAction}
@@ -159,7 +151,6 @@ export default async function AdminTemplates() {
       addInterviewTemplateAction={addInterviewTemplateAction}
       addDynamicTemplateAction={addDynamicTemplateAction}
       session={session}
-      jwt={jwt}
       interviewTemplate={interviewTemplate}
       dynamicTemplate={dynamicTemplate}
     />

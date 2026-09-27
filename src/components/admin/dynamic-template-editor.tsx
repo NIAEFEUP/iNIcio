@@ -7,7 +7,7 @@ import type { SaveStatus } from "../editor/real-time-editor";
 
 interface DynamicTemplateEditorProps {
   user: User;
-  token: string;
+  token?: string;
   addDynamicTemplateAction: (update: Array<any>) => Promise<void>;
   templateState: DynamicTemplate;
   setTemplateState: Dispatch<SetStateAction<DynamicTemplate>>;
@@ -16,7 +16,6 @@ interface DynamicTemplateEditorProps {
 
 export default function DynamicTemplateEditor({
   user,
-  token,
   addDynamicTemplateAction,
   templateState,
   setTemplateState,
@@ -24,11 +23,10 @@ export default function DynamicTemplateEditor({
 }: DynamicTemplateEditorProps) {
   return (
     <RealTimeEditor
-      token={token}
       key="dynamic-template-editor"
       docId="dynamic-template-editor"
-      roomId="dynamic-template-room"
       userName={user?.name || "Anonymous"}
+      collab={false}
       onChange={(editor) => {
         setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}

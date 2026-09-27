@@ -28,7 +28,6 @@ interface AdminTemplateClientProps {
   addInterviewTemplateAction: (update: Array<any>) => Promise<void>;
   addDynamicTemplateAction: (update: Array<any>) => Promise<void>;
   session: any;
-  jwt: string;
   interviewTemplate: InterviewTemplate;
   dynamicTemplate: DynamicTemplate;
 }
@@ -39,7 +38,6 @@ export default function AdminTemplateClient({
   addInterviewTemplateAction,
   addDynamicTemplateAction,
   session,
-  jwt,
   interviewTemplate,
   dynamicTemplate,
 }: AdminTemplateClientProps) {
@@ -243,7 +241,6 @@ export default function AdminTemplateClient({
           <InterviewTemplateEditor
             addInterviewTemplateAction={addInterviewTemplateAction}
             user={session?.user}
-            token={jwt}
             templateState={interviewTemplateState}
             setTemplateState={setInterviewTemplate}
             onSaveStatusChange={setInterviewSaveStatus}
@@ -253,7 +250,6 @@ export default function AdminTemplateClient({
           <DynamicTemplateEditor
             addDynamicTemplateAction={addDynamicTemplateAction}
             user={session?.user}
-            token={jwt}
             templateState={dynamicTemplateState}
             setTemplateState={setDynamicTemplate}
             onSaveStatusChange={setDynamicSaveStatus}

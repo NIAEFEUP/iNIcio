@@ -7,7 +7,7 @@ import type { SaveStatus } from "../editor/real-time-editor";
 
 interface InterviewTemplateEditorProps {
   user: User;
-  token: string;
+  token?: string;
   addInterviewTemplateAction: (update: Array<any>) => Promise<void>;
   templateState: InterviewTemplate;
   setTemplateState: Dispatch<SetStateAction<InterviewTemplate>>;
@@ -16,7 +16,6 @@ interface InterviewTemplateEditorProps {
 
 export default function InterviewTemplateEditor({
   user,
-  token,
   addInterviewTemplateAction,
   templateState,
   setTemplateState,
@@ -24,11 +23,10 @@ export default function InterviewTemplateEditor({
 }: InterviewTemplateEditorProps) {
   return (
     <RealTimeEditor
-      token={token}
       key="interview-template-editor"
       docId="interview-template-editor"
-      roomId="interview-template-room"
       userName={user?.name || "Anonymous"}
+      collab={false}
       onChange={(editor) => {
         setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
