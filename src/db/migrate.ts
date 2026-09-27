@@ -2,6 +2,7 @@ import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
+import { resolve } from "node:path";
 
 async function runMigrations() {
   if (!process.env.DATABASE_URL) {
@@ -13,13 +14,16 @@ async function runMigrations() {
     max: 1,
   });
 
-  const db = drizzle(pool);
+  try {
+    const db = drizzle(pool);
+    const migrationsFolder = resolve(__dirname, "drizzle");
 
-  console.log("Running database migrations...");
-  await migrate(db, { migrationsFolder: "./drizzle" });
-  console.log("Database migrations completed successfully.");
-
-  await pool.end();
+    console.log("Running database migrations...");
+    await migrate(db, { migrationsFolder });
+    console.log("Database migrations completed successfully.");
+  } finally {
+    await pool.end();
+  }
 }
 
 runMigrations().catch((err) => {
