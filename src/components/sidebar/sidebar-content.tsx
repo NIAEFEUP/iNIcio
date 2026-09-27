@@ -113,7 +113,7 @@ export function SidebarContentComponent({
   ];
 
   const platformSections: NavItem[] = [
-    { title: "Documentos", path: "/admin/templates", icon: FileText },
+    { title: "Modelos", path: "/admin/templates", icon: FileText },
     {
       title: "Mensagens Finais",
       path: "/admin/final-messages",

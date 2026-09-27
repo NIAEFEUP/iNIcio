@@ -3,7 +3,6 @@ import { addDynamicTemplate, getDynamicTemplate } from "@/lib/dynamic";
 import { getInterviewTemplate, addInterviewTemplate } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRole } from "@/lib/role";
-import { PageHeader } from "@/components/layout/page-header";
 
 import AdminTemplateClient from "@/components/admin/admin-template-client";
 import { db } from "@/lib/db";
@@ -76,7 +75,9 @@ export default async function AdminTemplates() {
       await db
         .update(dynamic)
         .set({ content: update })
-        .where(eq(dynamic.recruitmentId, target.id));
+        .where(
+          and(eq(dynamic.recruitmentId, target.id), eq(dynamic.locked, false)),
+        );
     } catch (error) {
       console.error("Error saving dynamic template:", error);
       throw error;
@@ -86,22 +87,19 @@ export default async function AdminTemplates() {
   const jwt = await generateJWT(
     session?.user.id,
     await getRole(session?.user.id),
-    ["interview-template-room"],
+    ["interview-template-room", "dynamic-template-room"],
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Documentos" />
-      <AdminTemplateClient
-        interviewOverrideAction={interviewOverrideAction}
-        dynamicOverrideAction={dynamicOverrideAction}
-        addInterviewTemplateAction={addInterviewTemplateAction}
-        addDynamicTemplateAction={addDynamicTemplateAction}
-        session={session}
-        jwt={jwt}
-        interviewTemplate={interviewTemplate}
-        dynamicTemplate={dynamicTemplate}
-      />
-    </div>
+    <AdminTemplateClient
+      interviewOverrideAction={interviewOverrideAction}
+      dynamicOverrideAction={dynamicOverrideAction}
+      addInterviewTemplateAction={addInterviewTemplateAction}
+      addDynamicTemplateAction={addDynamicTemplateAction}
+      session={session}
+      jwt={jwt}
+      interviewTemplate={interviewTemplate}
+      dynamicTemplate={dynamicTemplate}
+    />
   );
 }

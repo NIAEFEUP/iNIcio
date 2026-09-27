@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSWRConfig } from "swr";
+import { Lock, Unlock, Loader2 } from "lucide-react";
 
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import CandidateGridCard from "@/components/candidates/candidate-grid-card";
@@ -10,6 +11,8 @@ import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import {
   EvaluationLayout,
   EvaluationPanel,
@@ -23,6 +26,7 @@ import {
   classifyDynamic,
   editDynamicComment,
   saveDynamicComment,
+  setDynamicLocked,
   updateDynamicContent,
 } from "@/app/candidate/actions";
 import { useAuth } from "@/hooks/use-auth";
@@ -41,6 +45,7 @@ export default function DynamicPage() {
   const { user } = useAuth();
   const { mutate } = useSWRConfig();
   const { recruitmentId } = useRecruitment();
+  const [isLocking, setIsLocking] = useState(false);
 
   const candidatesFromData = data?.dynamic.candidates;
 
@@ -103,6 +108,43 @@ export default function DynamicPage() {
     );
   };
 
+  const handleToggleLock = async () => {
+    if (!dynamic) return;
+    setIsLocking(true);
+    const newLocked = !dynamic.locked;
+    try {
+      await setDynamicLocked(dynamicId, newLocked);
+      await mutate(
+        dynamicKey(dynamicId, recruitmentId),
+        (current: any) =>
+          current
+            ? {
+                ...current,
+                dynamic: {
+                  ...current.dynamic,
+                  locked: newLocked,
+                },
+              }
+            : current,
+        { revalidate: false },
+      );
+      toast.add({
+        type: "success",
+        title: newLocked
+          ? "Dinâmica bloqueada com sucesso"
+          : "Dinâmica desbloqueada com sucesso",
+      });
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title: "Erro ao alterar estado de bloqueio da dinâmica",
+      });
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
   return (
     <EvaluationLayout
       header={
@@ -118,6 +160,28 @@ export default function DynamicPage() {
                 {dynamic.candidates.length === 1 ? "candidato" : "candidatos"}
               </Badge>
             </div>
+          }
+          actions={
+            <Button
+              variant={dynamic.locked ? "secondary" : "outline"}
+              size="sm"
+              disabled={isLocking}
+              onClick={handleToggleLock}
+              className={
+                dynamic.locked
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                  : ""
+              }
+            >
+              {isLocking ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : dynamic.locked ? (
+                <Lock className="size-3.5" />
+              ) : (
+                <Unlock className="size-3.5" />
+              )}
+              <span>{dynamic.locked ? "Bloqueada" : "Bloquear"}</span>
+            </Button>
           }
         />
       }
@@ -165,6 +229,7 @@ export default function DynamicPage() {
                   entity={dynamic}
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
+                  editable={!dynamic.locked}
                 />
               </EvaluationPanel>
             ),

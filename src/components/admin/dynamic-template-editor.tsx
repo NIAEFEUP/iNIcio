@@ -1,35 +1,39 @@
 "use client";
 
-import { InterviewTemplate, User } from "@/lib/db";
+import { DynamicTemplate, User } from "@/lib/db";
 import { RealTimeEditor } from "../editor/real-time-editor-dynamic-import";
 import { Dispatch, SetStateAction } from "react";
+import type { SaveStatus } from "../editor/real-time-editor";
 
 interface DynamicTemplateEditorProps {
   user: User;
   token: string;
-  addInterviewTemplateAction: (update: Array<any>) => Promise<void>;
-  templateState: InterviewTemplate;
-  setTemplateState: Dispatch<SetStateAction<InterviewTemplate>>;
+  addDynamicTemplateAction: (update: Array<any>) => Promise<void>;
+  templateState: DynamicTemplate;
+  setTemplateState: Dispatch<SetStateAction<DynamicTemplate>>;
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
 export default function DynamicTemplateEditor({
   user,
   token,
-  addInterviewTemplateAction,
+  addDynamicTemplateAction,
   templateState,
   setTemplateState,
+  onSaveStatusChange,
 }: DynamicTemplateEditorProps) {
   return (
     <RealTimeEditor
       token={token}
-      key="interview-editor"
-      docId="interview-template-editor"
-      roomId="interview-template-room"
-      userName={user.name || "Anonymous"}
+      key="dynamic-template-editor"
+      docId="dynamic-template-editor"
+      roomId="dynamic-template-room"
+      userName={user?.name || "Anonymous"}
       onChange={(editor) => {
         setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
-      saveHandler={addInterviewTemplateAction}
+      onSaveStatusChange={onSaveStatusChange}
+      saveHandler={addDynamicTemplateAction}
       saveHandlerTimeout={1000}
       entity={templateState}
     />

@@ -259,6 +259,10 @@ export async function updateDynamic(dynamicId: number, content: unknown) {
   await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
 }
 
+export async function toggleDynamicLock(dynamicId: number, locked: boolean) {
+  await db.update(dynamic).set({ locked }).where(eq(dynamic.id, dynamicId));
+}
+
 export async function createDynamicComment(
   dynamicId: number,
   content: Array<any>,

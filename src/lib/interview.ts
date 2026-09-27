@@ -276,3 +276,22 @@ export async function getInterviewComments(
     })),
   );
 }
+
+export async function toggleInterviewLock(
+  candidateId: string,
+  locked: boolean,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return;
+
+  await db
+    .update(interview)
+    .set({ locked })
+    .where(
+      and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, targetId),
+      ),
+    );
+}

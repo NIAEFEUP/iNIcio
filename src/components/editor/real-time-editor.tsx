@@ -24,8 +24,11 @@ import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
+
+export type SaveStatus = "saved" | "saving" | "unsaved" | "error";
 
 interface RealTimeEditorProps {
   token?: string;
@@ -39,6 +42,8 @@ interface RealTimeEditorProps {
   onChange?: (e: any) => void;
   collab?: boolean;
   boxed?: boolean;
+  editable?: boolean;
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
 export default function RealTimeEditor({
@@ -53,6 +58,8 @@ export default function RealTimeEditor({
   mentionItems = [],
   collab = true,
   boxed = true,
+  editable = true,
+  onSaveStatusChange,
 }: RealTimeEditorProps) {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
@@ -128,6 +135,7 @@ export default function RealTimeEditor({
       }
       hasSeededContent.current = true;
       isReady.current = true;
+      onSaveStatusChange?.("saved");
     };
 
     if (!collab || !provider) {
@@ -142,22 +150,27 @@ export default function RealTimeEditor({
 
     provider.on("sync", seedDocument);
     return () => provider.off("sync", seedDocument);
-  }, [collab, editor, entity?.content, fragment, provider]);
+  }, [collab, editor, entity?.content, fragment, provider, onSaveStatusChange]);
 
   useEffect(() => {
     if (!saveHandler || !editor) return;
 
     const timeout = setInterval(() => {
       void (async () => {
-        if (!isReady.current || isSaving.current) return;
+        if (!isReady.current || isSaving.current || !editable) return;
 
         const stringEditorDocument = JSON.stringify(editor.document);
         if (currentContent === stringEditorDocument) return;
 
         isSaving.current = true;
+        onSaveStatusChange?.("saving");
         try {
           await saveHandler(editor.document);
           setCurrentContent(stringEditorDocument);
+          onSaveStatusChange?.("saved");
+        } catch (err) {
+          console.error("Error saving document:", err);
+          onSaveStatusChange?.("error");
         } finally {
           isSaving.current = false;
         }
@@ -167,7 +180,14 @@ export default function RealTimeEditor({
     return () => {
       clearInterval(timeout);
     };
-  }, [editor, saveHandler, saveHandlerTimeout, currentContent]);
+  }, [
+    editor,
+    saveHandler,
+    saveHandlerTimeout,
+    currentContent,
+    editable,
+    onSaveStatusChange,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -180,12 +200,25 @@ export default function RealTimeEditor({
       theme={editorTheme}
       className={
         boxed
-          ? "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
-          : "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+          ? cn(
+              "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap",
+              !editable &&
+                "opacity-90 bg-muted/20 cursor-not-allowed select-text",
+            )
+          : cn(
+              "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap",
+              !editable &&
+                "opacity-90 bg-muted/20 cursor-not-allowed select-text",
+            )
       }
       editor={editor}
-      editable={true}
-      onChange={onChange}
+      editable={editable}
+      onChange={(editor) => {
+        if (isReady.current && editable) {
+          onSaveStatusChange?.("unsaved");
+        }
+        onChange(editor);
+      }}
     >
       <SuggestionMenuController
         triggerCharacter={"@"}

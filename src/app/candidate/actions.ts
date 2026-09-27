@@ -22,6 +22,7 @@ import {
   getAllCandidatesWithDynamic,
   updateDynamic,
   updateDynamicComment,
+  toggleDynamicLock,
 } from "@/lib/dynamic";
 import {
   addInterviewComment,
@@ -30,6 +31,7 @@ import {
   getInterviewers,
   updateInterview,
   updateInterviewComment,
+  toggleInterviewLock,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
@@ -236,7 +238,19 @@ export async function updateInterviewContent(
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
+  const existing = await getInterview(candidateId, targetId);
+  if (existing?.locked) {
+    throw new Error("A entrevista está bloqueada para edição.");
+  }
+
   await updateInterview(candidateId, content, targetId);
+}
+
+export async function setInterviewLocked(candidateId: string, locked: boolean) {
+  const targetId = await getTargetRecruitmentId();
+  await requireRecruiterSession(targetId);
+
+  await toggleInterviewLock(candidateId, locked, targetId);
 }
 
 export async function updateDynamicContent(
@@ -250,7 +264,18 @@ export async function updateDynamicContent(
   if (!dynamic)
     throw new Error("Dynamic not found in the selected recruitment");
 
+  if (dynamic.locked) {
+    throw new Error("A dinâmica está bloqueada para edição.");
+  }
+
   await updateDynamic(dynamicId, content);
+}
+
+export async function setDynamicLocked(dynamicId: number, locked: boolean) {
+  const targetId = await getTargetRecruitmentId();
+  await requireRecruiterSession(targetId);
+
+  await toggleDynamicLock(dynamicId, locked);
 }
 
 async function classifyCandidate(

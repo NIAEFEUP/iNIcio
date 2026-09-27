@@ -1,0 +1,1 @@
+ALTER TABLE "dynamic" ADD COLUMN "locked" boolean DEFAULT false NOT NULL;
