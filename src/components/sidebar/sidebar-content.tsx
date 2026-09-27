@@ -119,7 +119,7 @@ export function SidebarContentComponent({
       path: "/admin/final-messages",
       icon: MessageSquare,
     },
-    { title: "Utilizadores", icon: UsersRound, disabled: true },
+    { title: "Utilizadores", path: "/admin/users", icon: UsersRound },
   ];
 
   const renderGroup = (label: string, items: NavItem[]) => (
