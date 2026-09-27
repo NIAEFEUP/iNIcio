@@ -129,12 +129,9 @@ export default function RealTimeEditor({
     const seedDocument = () => {
       if (hasSeededContent.current) return;
 
-      const hasOtherPeers = Boolean(
-        provider && provider.awareness.getStates().size > 1,
-      );
-
-      // If other users are active in the collaborative session, preserve the shared room content.
-      if (collab && fragment && fragment.length > 0 && hasOtherPeers) {
+      // Preserve synchronized room content instead of replacing it with the
+      // database snapshot when reconnecting without other active peers.
+      if (collab && fragment && fragment.length > 0) {
         hasSeededContent.current = true;
         isReady.current = true;
         setCurrentContent(JSON.stringify(editor.document));
