@@ -9,6 +9,7 @@ import {
   primaryKey,
   unique,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { dynamicComment } from "./comment";
@@ -26,6 +27,7 @@ export const dynamic = pgTable(
     slot: integer("slot_id")
       .notNull()
       .references(() => slot.id),
+    locked: boolean("locked").notNull().default(false),
   },
   (table) => [
     unique("dynamic_id_recruitment_unique").on(table.id, table.recruitmentId),

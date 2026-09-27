@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSWRConfig } from "swr";
+import { Lock, Unlock, Loader2 } from "lucide-react";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
@@ -13,6 +14,8 @@ import CandidateVotingStatus from "@/components/candidate/candidate-voting-statu
 import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import {
   EvaluationLayout,
   EvaluationPanel,
@@ -26,6 +29,7 @@ import {
   classifyInterview,
   editInterviewComment,
   saveInterviewComment,
+  setInterviewLocked,
   updateInterviewContent,
 } from "@/app/candidate/actions";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
@@ -45,6 +49,7 @@ export default function InterviewPage() {
   const { user } = useAuth();
   const { mutate } = useSWRConfig();
   const { recruitmentId } = useRecruitment();
+  const [isLocking, setIsLocking] = useState(false);
 
   const candidateFromData = data?.candidate;
 
@@ -109,6 +114,43 @@ export default function InterviewPage() {
     );
   };
 
+  const handleToggleLock = async () => {
+    if (!interview) return;
+    setIsLocking(true);
+    const newLocked = !interview.locked;
+    try {
+      await setInterviewLocked(id, newLocked);
+      await mutate(
+        interviewKey(id, recruitmentId),
+        (current: any) =>
+          current
+            ? {
+                ...current,
+                interview: {
+                  ...current.interview,
+                  locked: newLocked,
+                },
+              }
+            : current,
+        { revalidate: false },
+      );
+      toast.add({
+        type: "success",
+        title: newLocked
+          ? "Entrevista bloqueada com sucesso"
+          : "Entrevista desbloqueada com sucesso",
+      });
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title: "Erro ao alterar estado de bloqueio da entrevista",
+      });
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
   return (
     <EvaluationLayout
       header={
@@ -116,11 +158,33 @@ export default function InterviewPage() {
           backHref={`/candidate/${id}`}
           title={candidate.name}
           actions={
-            <CandidateHeaderActions
-              candidateId={candidate.id}
-              currentPage="interview"
-              dynamicId={candidate.dynamic?.dynamicId}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={interview.locked ? "secondary" : "outline"}
+                size="sm"
+                disabled={isLocking}
+                onClick={handleToggleLock}
+                className={
+                  interview.locked
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                    : ""
+                }
+              >
+                {isLocking ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : interview.locked ? (
+                  <Lock className="size-3.5" />
+                ) : (
+                  <Unlock className="size-3.5" />
+                )}
+                <span>{interview.locked ? "Bloqueada" : "Bloquear"}</span>
+              </Button>
+              <CandidateHeaderActions
+                candidateId={candidate.id}
+                currentPage="interview"
+                dynamicId={candidate.dynamic?.dynamicId}
+              />
+            </div>
           }
         />
       }
@@ -158,6 +222,7 @@ export default function InterviewPage() {
                   entity={interview}
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
+                  editable={!interview.locked}
                 />
               </EvaluationPanel>
             ),
