@@ -14,9 +14,9 @@ export function DecisionText({
       className={cn(
         "font-medium",
         approve
-          ? "text-green-600"
+          ? "text-emerald-600/80 dark:text-emerald-400/80"
           : reject
-            ? "text-red-600"
+            ? "text-rose-600/80 dark:text-rose-400/80"
             : "text-muted-foreground",
         className,
       )}
@@ -35,12 +35,10 @@ export function ClassificationText({
 }) {
   const classNameByLevel =
     level === "muito fraco"
-      ? "text-red-600"
+      ? "text-rose-600/80 dark:text-rose-400/80"
       : level === "muito forte"
-        ? "text-emerald-600"
-        : level === "normal"
-          ? "text-amber-600"
-          : "text-muted-foreground";
+        ? "text-emerald-600/80 dark:text-emerald-400/80"
+        : "text-muted-foreground";
   const label =
     level === "muito fraco"
       ? "Muito fraco"
@@ -48,7 +46,7 @@ export function ClassificationText({
         ? "Muito forte"
         : level === "normal"
           ? "Normal"
-          : "Não classificado";
+          : "—";
   return (
     <span className={cn("font-medium", classNameByLevel, className)}>
       {label}
