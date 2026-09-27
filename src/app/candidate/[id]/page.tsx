@@ -98,6 +98,8 @@ export default function CandidatePage() {
           friends={candidate.knownRecruiters}
           authUser={user ? { id: user.id } : null}
           recruitmentId={recruitmentId}
+          readOnlyDynamic={true}
+          readOnlyInterview={true}
         />
       }
     >
