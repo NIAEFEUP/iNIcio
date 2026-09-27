@@ -182,7 +182,7 @@ function CandidateGridCard({
   );
   const contactLines = [
     candidate.application?.studentNumber
-      ? `nº ${candidate.application.studentNumber}`
+      ? `${candidate.application.studentNumber}`
       : null,
     candidate.application?.phone,
     candidate.email,
@@ -235,7 +235,7 @@ function CandidateGridCard({
             ))}
           </span>
         ) : candidate.application?.studentNumber ? (
-          `nº ${candidate.application.studentNumber}`
+          `${candidate.application.studentNumber}`
         ) : (
           "\u00A0"
         )

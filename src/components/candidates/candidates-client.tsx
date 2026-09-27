@@ -174,7 +174,7 @@ export default function CandidatesClient({
               }
               subtitle={
                 row.original.application?.studentNumber
-                  ? `nº ${row.original.application.studentNumber}`
+                  ? `${row.original.application.studentNumber}`
                   : undefined
               }
             />
