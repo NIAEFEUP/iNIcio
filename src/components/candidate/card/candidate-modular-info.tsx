@@ -28,6 +28,15 @@ export interface CandidateModularInfoProps {
   onClassifyInterview?: (value: string) => Promise<void> | void;
   onClassifyDynamic?: (value: string) => Promise<void> | void;
   readOnly?: boolean;
+  readOnlyInterview?: boolean;
+  readOnlyDynamic?: boolean;
+  showKnownCheckbox?: boolean;
+  showContactInfo?: boolean;
+  showLinks?: boolean;
+  showAcademicStatus?: boolean;
+  showDepartmentInterests?: boolean;
+  showClassifications?: boolean;
+  showResultVoting?: boolean;
   className?: string;
 }
 
@@ -40,6 +49,15 @@ export function CandidateModularInfo({
   onClassifyInterview,
   onClassifyDynamic,
   readOnly = false,
+  readOnlyInterview,
+  readOnlyDynamic,
+  showKnownCheckbox = true,
+  showContactInfo = true,
+  showLinks = true,
+  showAcademicStatus = true,
+  showDepartmentInterests = true,
+  showClassifications = true,
+  showResultVoting = true,
   className,
 }: CandidateModularInfoProps) {
   const { mutate } = useSWRConfig();
@@ -71,44 +89,59 @@ export function CandidateModularInfo({
         authUser={authUser}
         recruitmentId={recruitmentId}
         onToggleKnown={onToggleKnown}
+        showKnownCheckbox={showKnownCheckbox}
       />
 
       {/* 2. Contact Information */}
-      <CandidateContactInfoCard
-        email={candidate.email}
-        phone={candidate.application?.phone}
-      />
+      {showContactInfo && (
+        <CandidateContactInfoCard
+          email={candidate.email}
+          phone={candidate.application?.phone}
+        />
+      )}
 
       {/* Links Information */}
-      <CandidateLinksCard
-        githubUrl={candidate.application?.github}
-        linkedinUrl={candidate.application?.linkedIn}
-        websiteUrl={candidate.application?.personalWebsite}
-      />
+      {showLinks && (
+        <CandidateLinksCard
+          githubUrl={candidate.application?.github}
+          linkedinUrl={candidate.application?.linkedIn}
+          websiteUrl={candidate.application?.personalWebsite}
+        />
+      )}
 
       {/* 3. Academic Status */}
-      <CandidateAcademicStatusCard
-        course={candidate.application?.degree}
-        year={candidate.application?.curricularYear}
-      />
+      {showAcademicStatus && (
+        <CandidateAcademicStatusCard
+          course={candidate.application?.degree}
+          year={candidate.application?.curricularYear}
+        />
+      )}
 
       {/* 4. Department Interests */}
-      <CandidateDepartmentInterestsCard
-        interests={candidate.application?.interests}
-      />
+      {showDepartmentInterests && (
+        <CandidateDepartmentInterestsCard
+          interests={candidate.application?.interests}
+        />
+      )}
 
       {/* 5. Interview and Dynamic Classification */}
-      <CandidateClassificationsCard
-        candidateId={candidate.id}
-        interviewClassification={candidate.interviewClassification}
-        dynamicClassification={candidate.dynamicClassification}
-        onClassifyInterview={handleClassifyInterview}
-        onClassifyDynamic={handleClassifyDynamic}
-        readOnly={readOnly}
-      />
+      {showClassifications && (
+        <CandidateClassificationsCard
+          candidateId={candidate.id}
+          interviewClassification={candidate.interviewClassification}
+          dynamicClassification={candidate.dynamicClassification}
+          onClassifyInterview={handleClassifyInterview}
+          onClassifyDynamic={handleClassifyDynamic}
+          readOnly={readOnly}
+          readOnlyInterview={readOnlyInterview}
+          readOnlyDynamic={readOnlyDynamic}
+        />
+      )}
 
       {/* 6. Result and Voting Status */}
-      <CandidateResultVotingCard votingDecision={candidate.votingDecision} />
+      {showResultVoting && (
+        <CandidateResultVotingCard votingDecision={candidate.votingDecision} />
+      )}
     </div>
   );
 }

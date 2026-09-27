@@ -6,7 +6,7 @@ import { useSWRConfig } from "swr";
 import { Lock, Unlock, Loader2 } from "lucide-react";
 
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import CandidateGridCard from "@/components/candidates/candidate-grid-card";
+import { CandidateModularInfo } from "@/components/candidate/card";
 import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { Badge } from "@/components/ui/badge";
@@ -187,27 +187,40 @@ export default function DynamicPage() {
       }
       sidebar={
         <>
-          <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Candidatos
-            </h3>
-            <div className="flex flex-col gap-4">
-              {dynamic.candidates.map((candidate) => (
-                <CandidateGridCard
-                  key={candidate.id}
-                  candidate={candidate}
-                  friends={candidate.knownRecruiters}
-                  authUser={user ? { id: user.id } : null}
-                  classifyDynamic={handleClassifyDynamic}
-                />
-              ))}
-            </div>
-          </div>
-
           <RecruiterAssignedInfo
             interviewers={interviewers}
             title="Recrutadores"
           />
+
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+              Candidatos
+            </h3>
+            <div className="flex flex-col gap-4">
+              {dynamic.candidates.map((candidate, idx) => (
+                <div
+                  key={candidate.id}
+                  className={"bg-neutral-900/50 p-3 rounded-2xl"}
+                >
+                  <CandidateModularInfo
+                    candidate={candidate}
+                    friends={candidate.knownRecruiters}
+                    authUser={user ? { id: user.id } : null}
+                    recruitmentId={recruitmentId}
+                    showKnownCheckbox={false}
+                    showContactInfo={false}
+                    showLinks={false}
+                    showDepartmentInterests={false}
+                    showResultVoting={false}
+                    onClassifyDynamic={(value) =>
+                      handleClassifyDynamic(candidate.id, value)
+                    }
+                    readOnlyInterview={true}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       }
     >

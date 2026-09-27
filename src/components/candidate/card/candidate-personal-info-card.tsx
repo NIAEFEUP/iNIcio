@@ -24,6 +24,7 @@ export interface CandidatePersonalInfoCardProps {
   authUser?: { id?: string } | null;
   recruitmentId?: number | null;
   onToggleKnown?: (known: boolean) => void | Promise<void>;
+  showKnownCheckbox?: boolean;
   className?: string;
 }
 
@@ -45,6 +46,7 @@ export function CandidatePersonalInfoCard({
   authUser = null,
   recruitmentId,
   onToggleKnown,
+  showKnownCheckbox = true,
   className,
 }: CandidatePersonalInfoCardProps) {
   const candidateFriends = candidate.knownRecruiters ?? friends;
@@ -144,21 +146,23 @@ export function CandidatePersonalInfoCard({
               {studentNumber ? `${studentNumber}` : "Sem número de estudante"}
             </p>
 
-            <div className="pt-1.5">
-              <label
-                htmlFor={`knows-candidate-${candidate.id}`}
-                className="flex cursor-pointer select-none items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Checkbox
-                  id={`knows-candidate-${candidate.id}`}
-                  checked={known}
-                  disabled={isUpdating}
-                  onCheckedChange={toggleKnown}
-                  className="size-4"
-                />
-                <span>Conheço o candidato</span>
-              </label>
-            </div>
+            {showKnownCheckbox && (
+              <div className="pt-1.5">
+                <label
+                  htmlFor={`knows-candidate-${candidate.id}`}
+                  className="flex cursor-pointer select-none items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Checkbox
+                    id={`knows-candidate-${candidate.id}`}
+                    checked={known}
+                    disabled={isUpdating}
+                    onCheckedChange={toggleKnown}
+                    className="size-4"
+                  />
+                  <span>Conheço o candidato</span>
+                </label>
+              </div>
+            )}
           </div>
         </div>
       </div>
