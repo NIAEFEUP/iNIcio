@@ -15,6 +15,7 @@ import {
   getSlotForCell,
 } from "@/lib/date";
 import SlotConfigPanel from "../slot/slot-config-panel";
+import WeekNavigation from "../slot/week-navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChooseBookingSlot from "../slot/choose-booking-slot";
@@ -83,6 +84,7 @@ export default function SlotAdminCalendar({
   const [selectedSlot] = useState<Slot | null>(null);
 
   const tableRef = useRef<HTMLTableElement>(null);
+  const [weekStart, setWeekStart] = useState(() => generateDates()[0]);
 
   const timeSlots = generateTimeSlots(
     slotConfig[slotType].startHour,
@@ -90,7 +92,16 @@ export default function SlotAdminCalendar({
     slotConfig[slotType].duration,
   );
 
-  const dates = generateDates();
+  const dates = generateDates(weekStart);
+  const weekEnd = dates[dates.length - 1];
+
+  const moveWeek = (amount: number) => {
+    setWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(next.getDate() + amount * 7);
+      return next;
+    });
+  };
 
   const cellStart = ({ date, time }: SlotCell) => {
     const [hours, minutes] = time.split(":").map(Number);
@@ -179,6 +190,13 @@ export default function SlotAdminCalendar({
         slotType={slotType}
         setSlotType={setSlotType}
         handleSaveSlots={handleSaveSlots}
+      />
+      <WeekNavigation
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+        onPrevious={() => moveWeek(-1)}
+        onNext={() => moveWeek(1)}
+        onToday={() => setWeekStart(generateDates()[0])}
       />
       <SlotAdminStats
         slots={slots}
