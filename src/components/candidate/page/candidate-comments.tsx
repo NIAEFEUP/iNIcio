@@ -18,6 +18,7 @@ import { useState } from "react";
 
 import { commentCreationMap } from "@/lib/comment-format";
 import { CandidateWithMetadata } from "@/lib/candidate";
+import { isDocumentEmpty } from "@/lib/text-editor";
 
 type CommentType = "application" | "interview" | "dynamic";
 
@@ -78,7 +79,7 @@ export default function CandidateComments({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!commentValue) return;
+    if (!commentValue || isDocumentEmpty(commentValue)) return;
 
     const prevComment = commentValue;
 

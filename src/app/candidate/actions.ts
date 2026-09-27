@@ -141,6 +141,7 @@ export async function saveApplicationComment(
   content: Array<unknown>,
 ): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
   const id = await submitApplicationComment(
@@ -158,6 +159,7 @@ export async function editApplicationComment(
   content: Array<unknown>,
 ): Promise<boolean> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
   const user = await requireRecruiterSession(targetId);
 
   return updateApplicationComment(
@@ -174,6 +176,7 @@ export async function saveInterviewComment(
   content: Array<unknown>,
 ): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
   const id = await addInterviewComment(user.id, content, candidateId, targetId);
@@ -186,6 +189,7 @@ export async function editInterviewComment(
   content: Array<unknown>,
 ): Promise<boolean> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
   const user = await requireRecruiterSession(targetId);
 
   return updateInterviewComment(
@@ -202,6 +206,7 @@ export async function saveDynamicComment(
   content: Array<unknown>,
 ): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
   const dynamic = await getDynamic(dynamicId, targetId);
@@ -218,6 +223,7 @@ export async function editDynamicComment(
   content: Array<unknown>,
 ): Promise<boolean> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
   const user = await requireRecruiterSession(targetId);
 
   return updateDynamicComment(commentId, content, user.id, dynamicId, targetId);

@@ -6,6 +6,7 @@ import RealTimeEditor from "@/components/editor/real-time-editor";
 import { toast } from "@/components/ui/toast";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
+import { isDocumentEmpty } from "@/lib/text-editor";
 import { Pencil } from "lucide-react";
 import { useRef, useState } from "react";
 import type { BlockNoteEditor } from "@blocknote/core";
@@ -70,7 +71,7 @@ export function CommentDisplay({
     const content = editEditorRef.current?.document;
     // No captured editor (untouched or empty document) or cleared content:
     // nothing to save, close silently
-    if (!content || content.length === 0) {
+    if (!content || isDocumentEmpty(content)) {
       closeEditor();
       return;
     }
