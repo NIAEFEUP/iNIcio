@@ -33,13 +33,17 @@ function PdfFallback({ source }: { source: string }) {
   );
 }
 
+const PAGE_BATCH_SIZE = 3;
+
 export default function CandidateCurriculum({
   application,
   candidateId,
 }: CandidateCurriculumProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [pageWidth, setPageWidth] = useState<number>();
   const [pageCount, setPageCount] = useState<number>();
+  const [renderedPageCount, setRenderedPageCount] = useState(PAGE_BATCH_SIZE);
   const source = `/api/candidate/${candidateId}/curriculum`;
 
   useEffect(() => {
@@ -56,6 +60,27 @@ export default function CandidateCurriculum({
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    const container = containerRef.current;
+    if (!sentinel || !container || !pageCount) return;
+    if (renderedPageCount >= pageCount) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRenderedPageCount((current) =>
+            Math.min(current + PAGE_BATCH_SIZE, pageCount),
+          );
+        }
+      },
+      { root: container, rootMargin: "400px 0px" },
+    );
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [pageCount, renderedPageCount]);
 
   if (!application?.curriculum) {
     return <p className="text-center">Não tem currículo.</p>;
@@ -90,16 +115,22 @@ export default function CandidateCurriculum({
       >
         {pageWidth &&
           pageCount &&
-          Array.from({ length: pageCount }, (_, index) => (
-            <Page
-              key={index + 1}
-              pageNumber={index + 1}
-              width={pageWidth}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="shadow-md"
-            />
-          ))}
+          Array.from(
+            { length: Math.min(pageCount, renderedPageCount) },
+            (_, index) => (
+              <Page
+                key={index + 1}
+                pageNumber={index + 1}
+                width={pageWidth}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-md"
+              />
+            ),
+          )}
+        {pageWidth && pageCount && renderedPageCount < pageCount && (
+          <div ref={loadMoreRef} />
+        )}
       </Document>
     </div>
   );
