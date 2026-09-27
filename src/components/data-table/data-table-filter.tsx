@@ -99,36 +99,56 @@ export function DataTableFilter({
   const plural = pluralTitle || `${title}s`;
   const defaultAllLabel = allLabel || `All ${plural}`;
 
+  const isFiltered = selectedValues.length > 0;
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger
         render={
           <Button
             type="button"
-            variant="outline"
+            variant={isFiltered ? "default" : "outline"}
             role="combobox"
             aria-expanded={isOpen}
             className={cn(
-              "h-8 justify-between font-normal px-3 text-xs border-input hover:bg-accent/50 gap-1.5",
+              "h-8 justify-between font-normal px-3 text-xs gap-1.5",
+              isFiltered
+                ? "border-primary hover:bg-primary/90 text-primary-foreground"
+                : "border-input hover:bg-accent/50",
               className,
             )}
             disabled={disabled || options.length === 0}
           >
-            <span className="text-muted-foreground">Filtrar por {title}</span>
+            <span
+              className={
+                isFiltered
+                  ? "text-primary-foreground/80"
+                  : "text-muted-foreground"
+              }
+            >
+              Filtrar por {title}
+            </span>
             {selectedValues.length === 0 ? (
               <span className="font-medium text-foreground">
                 {defaultAllLabel}
               </span>
             ) : selectedValues.length === 1 ? (
-              <span className="truncate max-w-40 font-medium text-foreground">
+              <span className="truncate max-w-40 font-medium text-primary-foreground">
                 {selectedOptions[0]?.label || selectedValues[0]}
               </span>
             ) : (
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-primary-foreground">
                 {selectedValues.length} selected
               </span>
             )}
-            <ChevronsUpDown className="size-3.5 shrink-0 opacity-50 ml-1" />
+            <ChevronsUpDown
+              className={cn(
+                "size-3.5 shrink-0 ml-1",
+                isFiltered
+                  ? "text-primary-foreground opacity-80"
+                  : "opacity-50",
+              )}
+            />
           </Button>
         }
       />
