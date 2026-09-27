@@ -32,6 +32,7 @@ interface ChooseCustomSlotProps {
     month: string;
   };
   headerAction?: ReactNode;
+  weekNavigation?: ReactNode;
   legend?: ReactNode;
 }
 
@@ -55,6 +56,7 @@ export default function ChooseCustomSlot({
   getTypeColor,
   formatDateHeader,
   headerAction,
+  weekNavigation,
   legend,
 }: ChooseCustomSlotProps) {
   const [shape, setShape] = useState<Shape>("paint");
@@ -189,7 +191,7 @@ export default function ChooseCustomSlot({
           <Calendar className="h-5 w-5" />
           Calendário
         </CardTitle>
-        <CardAction className="flex items-center gap-2">
+        <CardAction className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -208,6 +210,7 @@ export default function ChooseCustomSlot({
               Área
             </Button>
           </div>
+          {weekNavigation}
           {headerAction}
         </CardAction>
       </CardHeader>
