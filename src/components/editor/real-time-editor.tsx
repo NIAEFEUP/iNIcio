@@ -24,8 +24,11 @@ import { Mention } from "./mentions";
 import { getMentionMenuItems } from "@/lib/text-editor";
 import { User } from "@/lib/db";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
+
+export type SaveStatus = "saved" | "saving" | "unsaved" | "error";
 
 interface RealTimeEditorProps {
   token?: string;
@@ -39,6 +42,8 @@ interface RealTimeEditorProps {
   onChange?: (e: any) => void;
   collab?: boolean;
   boxed?: boolean;
+  editable?: boolean;
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
 export default function RealTimeEditor({
@@ -53,6 +58,8 @@ export default function RealTimeEditor({
   mentionItems = [],
   collab = true,
   boxed = true,
+  editable = true,
+  onSaveStatusChange,
 }: RealTimeEditorProps) {
   const { resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
@@ -71,6 +78,7 @@ export default function RealTimeEditor({
   const hasSeededContent = useRef(false);
   const isReady = useRef(!collab);
   const isSaving = useRef(false);
+  const lastEntityContentRef = useRef<string | null>(null);
 
   const provider = useMemo(
     () =>
@@ -106,7 +114,13 @@ export default function RealTimeEditor({
             showCursorLabels: "activity",
           },
         })
-      : { schema },
+      : {
+          schema,
+          initialContent:
+            Array.isArray(entity?.content) && entity.content.length > 0
+              ? (entity.content as any)
+              : undefined,
+        },
   );
 
   useEffect(() => {
@@ -115,19 +129,33 @@ export default function RealTimeEditor({
     const seedDocument = () => {
       if (hasSeededContent.current) return;
 
-      // Let the websocket deliver the shared document before seeding it from
-      // the database. This prevents a late joiner from overwriting edits.
+      // Preserve synchronized room content instead of replacing it with the
+      // database snapshot when reconnecting without other active peers.
       if (collab && fragment && fragment.length > 0) {
         hasSeededContent.current = true;
         isReady.current = true;
+        setCurrentContent(JSON.stringify(editor.document));
+        lastEntityContentRef.current = JSON.stringify(editor.document);
+        onSaveStatusChange?.("saved");
         return;
       }
 
-      if (entity?.content) {
-        editor.replaceBlocks(editor.document, entity.content);
+      if (
+        entity?.content &&
+        Array.isArray(entity.content) &&
+        entity.content.length > 0
+      ) {
+        if (
+          JSON.stringify(editor.document) !== JSON.stringify(entity.content)
+        ) {
+          editor.replaceBlocks(editor.document, entity.content);
+        }
       }
       hasSeededContent.current = true;
       isReady.current = true;
+      setCurrentContent(JSON.stringify(editor.document));
+      lastEntityContentRef.current = JSON.stringify(editor.document);
+      onSaveStatusChange?.("saved");
     };
 
     if (!collab || !provider) {
@@ -142,22 +170,46 @@ export default function RealTimeEditor({
 
     provider.on("sync", seedDocument);
     return () => provider.off("sync", seedDocument);
-  }, [collab, editor, entity?.content, fragment, provider]);
+  }, [collab, editor, entity?.content, fragment, provider, onSaveStatusChange]);
+
+  useEffect(() => {
+    if (!entity?.content || !editor || !isReady.current) return;
+
+    const stringified = JSON.stringify(entity.content);
+    const currentEditorContent = JSON.stringify(editor.document);
+    if (
+      lastEntityContentRef.current !== null &&
+      lastEntityContentRef.current !== stringified &&
+      currentEditorContent !== stringified
+    ) {
+      editor.replaceBlocks(editor.document, entity.content);
+      setCurrentContent(JSON.stringify(editor.document));
+      onSaveStatusChange?.("saved");
+    }
+    lastEntityContentRef.current = stringified;
+  }, [editor, entity?.content, onSaveStatusChange]);
 
   useEffect(() => {
     if (!saveHandler || !editor) return;
 
     const timeout = setInterval(() => {
       void (async () => {
-        if (!isReady.current || isSaving.current) return;
+        if (!isReady.current || isSaving.current || !editable) return;
 
         const stringEditorDocument = JSON.stringify(editor.document);
         if (currentContent === stringEditorDocument) return;
 
         isSaving.current = true;
+        onSaveStatusChange?.("saving");
         try {
           await saveHandler(editor.document);
           setCurrentContent(stringEditorDocument);
+          const stillMatches =
+            JSON.stringify(editor.document) === stringEditorDocument;
+          onSaveStatusChange?.(stillMatches ? "saved" : "unsaved");
+        } catch (err) {
+          console.error("Error saving document:", err);
+          onSaveStatusChange?.("error");
         } finally {
           isSaving.current = false;
         }
@@ -167,7 +219,14 @@ export default function RealTimeEditor({
     return () => {
       clearInterval(timeout);
     };
-  }, [editor, saveHandler, saveHandlerTimeout, currentContent]);
+  }, [
+    editor,
+    saveHandler,
+    saveHandlerTimeout,
+    currentContent,
+    editable,
+    onSaveStatusChange,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -180,12 +239,25 @@ export default function RealTimeEditor({
       theme={editorTheme}
       className={
         boxed
-          ? "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
-          : "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap"
+          ? cn(
+              "h-full w-full min-h-32 rounded-xl border border-input bg-background px-2 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap",
+              !editable &&
+                "opacity-90 bg-muted/20 cursor-not-allowed select-text",
+            )
+          : cn(
+              "w-full min-h-32 rounded-xl bg-muted/40 px-1 py-1.5 text-base transition-colors outline-none hover:bg-muted/50 focus-within:ring-3 focus-within:ring-ring/50 overflow-y-auto break-words whitespace-pre-wrap",
+              !editable &&
+                "opacity-90 bg-muted/20 cursor-not-allowed select-text",
+            )
       }
       editor={editor}
-      editable={true}
-      onChange={onChange}
+      editable={editable}
+      onChange={(editor) => {
+        if (isReady.current && editable) {
+          onSaveStatusChange?.("unsaved");
+        }
+        onChange(editor);
+      }}
     >
       <SuggestionMenuController
         triggerCharacter={"@"}
