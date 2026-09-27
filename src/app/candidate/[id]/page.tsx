@@ -131,7 +131,10 @@ export default function CandidatePage() {
             hidden: !candidate.application?.curriculum,
             content: (
               <EvaluationPanel>
-                <CandidateCurriculum application={candidate.application} />
+                <CandidateCurriculum
+                  application={candidate.application}
+                  candidateId={candidate.id}
+                />
               </EvaluationPanel>
             ),
           },
