@@ -22,6 +22,12 @@ export async function sendPasswordResetEmail({
   const from = process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        `\n[DEV] Password reset email for ${email} (${name}):\nReset URL: ${url}\n`,
+      );
+      return;
+    }
     throw new Error("RESEND_API_KEY e EMAIL_FROM têm de estar configurados");
   }
 
