@@ -255,8 +255,41 @@ export async function getCandidateDynamic(
   });
 }
 
-export async function updateDynamic(dynamicId: number, content: unknown) {
-  await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
+export async function updateDynamic(
+  dynamicId: number,
+  content: unknown,
+  recruitmentId?: number,
+): Promise<boolean> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return false;
+
+  const updated = await db
+    .update(dynamic)
+    .set({ content })
+    .where(
+      and(
+        eq(dynamic.id, dynamicId),
+        eq(dynamic.recruitmentId, targetId),
+        eq(dynamic.locked, false),
+      ),
+    )
+    .returning({ id: dynamic.id });
+
+  return updated.length > 0;
+}
+
+export async function toggleDynamicLock(
+  dynamicId: number,
+  locked: boolean,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return;
+
+  await db
+    .update(dynamic)
+    .set({ locked })
+    .where(and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, targetId)));
 }
 
 export async function createDynamicComment(
@@ -340,10 +373,13 @@ export async function addDynamicTemplate(content: Array<any>) {
   if (content.length === 0) return;
 
   await db.transaction(async (trx) => {
-    const template = await trx.query.dynamicTemplate.findFirst();
+    const [template] = await trx.select().from(dynamicTemplate).limit(1);
 
     if (template) {
-      await trx.update(dynamicTemplate).set({ content: content });
+      await trx
+        .update(dynamicTemplate)
+        .set({ content: content })
+        .where(eq(dynamicTemplate.id, template.id));
       return;
     }
 
@@ -352,8 +388,7 @@ export async function addDynamicTemplate(content: Array<any>) {
 }
 
 export async function getDynamicTemplate(): Promise<DynamicTemplate> {
-  const template =
-    (await db.query.dynamicTemplate.findFirst()) as DynamicTemplate;
+  const [template] = await db.select().from(dynamicTemplate).limit(1);
 
   if (!template) {
     return {
