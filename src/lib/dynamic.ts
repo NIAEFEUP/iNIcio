@@ -255,8 +255,27 @@ export async function getCandidateDynamic(
   });
 }
 
-export async function updateDynamic(dynamicId: number, content: unknown) {
-  await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
+export async function updateDynamic(
+  dynamicId: number,
+  content: unknown,
+  recruitmentId?: number,
+): Promise<boolean> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return false;
+
+  const updated = await db
+    .update(dynamic)
+    .set({ content })
+    .where(
+      and(
+        eq(dynamic.id, dynamicId),
+        eq(dynamic.recruitmentId, targetId),
+        eq(dynamic.locked, false),
+      ),
+    )
+    .returning({ id: dynamic.id });
+
+  return updated.length > 0;
 }
 
 export async function toggleDynamicLock(

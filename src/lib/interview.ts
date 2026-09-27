@@ -120,21 +120,25 @@ export async function updateInterview(
   candidateId: string,
   content: unknown,
   recruitmentId?: number,
-) {
+): Promise<boolean> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return;
+  if (!targetId) return false;
 
-  await db.transaction(async (trx) => {
-    await trx
+  const updated = await db.transaction(async (trx) => {
+    return trx
       .update(interview)
       .set({ content: content })
       .where(
         and(
           eq(interview.candidateId, candidateId),
           eq(interview.recruitmentId, targetId),
+          eq(interview.locked, false),
         ),
-      );
+      )
+      .returning({ id: interview.id });
   });
+
+  return updated.length > 0;
 }
 
 export async function addInterviewComment(

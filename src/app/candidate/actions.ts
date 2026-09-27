@@ -238,12 +238,10 @@ export async function updateInterviewContent(
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  const existing = await getInterview(candidateId, targetId);
-  if (existing?.locked) {
-    throw new Error("A entrevista está bloqueada para edição.");
+  const updated = await updateInterview(candidateId, content, targetId);
+  if (!updated) {
+    throw new Error("A entrevista está bloqueada ou não existe.");
   }
-
-  await updateInterview(candidateId, content, targetId);
 }
 
 export async function setInterviewLocked(candidateId: string, locked: boolean) {
@@ -260,15 +258,10 @@ export async function updateDynamicContent(
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  const dynamic = await getDynamic(dynamicId, targetId);
-  if (!dynamic)
-    throw new Error("Dynamic not found in the selected recruitment");
-
-  if (dynamic.locked) {
-    throw new Error("A dinâmica está bloqueada para edição.");
+  const updated = await updateDynamic(dynamicId, content, targetId);
+  if (!updated) {
+    throw new Error("A dinâmica está bloqueada ou não existe.");
   }
-
-  await updateDynamic(dynamicId, content);
 }
 
 export async function setDynamicLocked(dynamicId: number, locked: boolean) {
