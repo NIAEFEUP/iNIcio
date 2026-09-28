@@ -5,6 +5,7 @@ import { useSWRConfig } from "swr";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
+import { CandidateNavigation } from "@/components/candidate/candidate-navigation";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { CandidateModularInfo } from "@/components/candidate/card";
@@ -82,7 +83,8 @@ export default function CandidatePage() {
         <PageHeader
           backHref="/candidates"
           title={candidate.name}
-          actions={
+          inlineOnMobile
+          viewModeToggle={
             <CandidateHeaderActions
               candidateId={candidate.id}
               currentPage="candidate"
@@ -90,7 +92,16 @@ export default function CandidatePage() {
               hasInterview={Boolean(candidate.interview)}
             />
           }
-        />
+          actions={<CandidateNavigation currentCandidateId={candidate.id} />}
+        >
+          <CandidateHeaderActions
+            candidateId={candidate.id}
+            currentPage="candidate"
+            dynamicId={candidate.dynamic?.dynamicId}
+            hasInterview={Boolean(candidate.interview)}
+            mobile
+          />
+        </PageHeader>
       }
       sidebar={
         <CandidateModularInfo
