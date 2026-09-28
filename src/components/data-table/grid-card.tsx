@@ -14,6 +14,8 @@ export interface GridCardProps {
   children?: React.ReactNode;
   onEdit?: () => void;
   onDelete?: () => void;
+  editLabel?: string;
+  deleteLabel?: string;
   actions?: React.ReactNode;
   className?: string;
 }
@@ -28,6 +30,8 @@ export function GridCard({
   children,
   onEdit,
   onDelete,
+  editLabel = "Edit",
+  deleteLabel = "Delete",
   actions,
   className,
 }: GridCardProps) {
@@ -79,7 +83,7 @@ export function GridCard({
                 onClick={onEdit}
               >
                 <Edit2 className="size-3 mr-1.5" />
-                Edit
+                {editLabel}
               </Button>
             )}
             {onDelete && (
@@ -90,7 +94,7 @@ export function GridCard({
                 onClick={onDelete}
               >
                 <Trash2 className="size-3 mr-1.5" />
-                Delete
+                {deleteLabel}
               </Button>
             )}
           </>

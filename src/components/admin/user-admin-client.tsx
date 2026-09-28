@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -49,15 +49,24 @@ import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { toast } from "@/components/ui/toast";
+import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
 import type { AdminUserItem } from "@/lib/admin";
 import type { Recruitment } from "@/lib/db";
 
 interface Props {
   users: AdminUserItem[];
   recruitments: Recruitment[];
+  currentUserId?: string;
   updateUser: (formData: FormData) => Promise<{
     success: boolean;
     user?: Partial<AdminUserItem>;
+    error?: string;
+  }>;
+  deleteUser: (
+    userId: string,
+    adminPassword: string,
+  ) => Promise<{
+    success: boolean;
     error?: string;
   }>;
   sendPasswordResetEmail: (userId: string) => Promise<{
@@ -84,7 +93,9 @@ function formatDate(dateStr?: string) {
 export default function UserAdminClient({
   users,
   recruitments,
+  currentUserId,
   updateUser,
+  deleteUser,
   sendPasswordResetEmail,
 }: Props) {
   const [list, setList] = useState<AdminUserItem[]>(users || []);
@@ -115,12 +126,14 @@ export default function UserAdminClient({
   const [isSendingResetInModal, setIsSendingResetInModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [deletingUser, setDeletingUser] = useState<AdminUserItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const isMountedRef = useRef(false);
   useEffect(() => {
     isMountedRef.current = true;
   }, []);
 
-  // Filter options for recruitments
   const recruitmentOptions = useMemo(() => {
     return recruitments.map((r) => ({
       value: String(r.id),
@@ -131,7 +144,6 @@ export default function UserAdminClient({
     }));
   }, [recruitments]);
 
-  // Helpers for column filter state
   const setFilter = (id: string, values: string[]) => {
     setColumnFilters((prev) => {
       const next = prev.filter((f) => f.id !== id);
@@ -156,17 +168,15 @@ export default function UserAdminClient({
     return (filter?.value as string[]) || [];
   }, [columnFilters]);
 
-  // Open Edit User Modal
-  const openEditModal = (targetUser: AdminUserItem) => {
+  const openEditModal = useCallback((targetUser: AdminUserItem) => {
     setEditingUser(targetUser);
     setEditName(targetUser.name);
     setEditEmail(targetUser.email);
     setAvatarFile(null);
     setAvatarPreview(targetUser.image || null);
     setRemoveAvatar(false);
-  };
+  }, []);
 
-  // Close Edit User Modal and cleanup preview URL
   const closeEditModal = () => {
     if (avatarPreview && avatarPreview.startsWith("blob:")) {
       URL.revokeObjectURL(avatarPreview);
@@ -175,6 +185,69 @@ export default function UserAdminClient({
     setAvatarFile(null);
     setAvatarPreview(null);
     setRemoveAvatar(false);
+  };
+
+  const openDeleteModal = useCallback(
+    (targetUser: AdminUserItem) => {
+      if (currentUserId && targetUser.id === currentUserId) {
+        toast.add({
+          type: "error",
+          title: "Ação não permitida",
+          description:
+            "Não podes eliminar a tua própria conta de administrador.",
+        });
+        return;
+      }
+      setDeletingUser(targetUser);
+    },
+    [currentUserId],
+  );
+
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setDeletingUser(null);
+  };
+
+  const handleConfirmDelete = async (adminPassword: string) => {
+    if (!deletingUser) return false;
+    setIsDeleting(true);
+    try {
+      const res = await deleteUser(deletingUser.id, adminPassword);
+      if (!res.success) {
+        throw new Error(res.error || "Falha ao eliminar utilizador");
+      }
+
+      const deletedId = deletingUser.id;
+      setList((prev) => prev.filter((u) => u.id !== deletedId));
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        delete next[deletedId];
+        return next;
+      });
+      if (editingUser?.id === deletedId) {
+        closeEditModal();
+      }
+      setDeletingUser(null);
+      toast.add({
+        type: "success",
+        title: "Utilizador eliminado",
+        description:
+          "O utilizador e todos os registos associados foram eliminados com sucesso.",
+      });
+      return true;
+    } catch (err) {
+      toast.add({
+        type: "error",
+        title: "Erro ao eliminar utilizador",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Não foi possível eliminar o utilizador.",
+      });
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,6 +474,7 @@ export default function UserAdminClient({
       },
       getActionsColumn<AdminUserItem>({
         onEdit: (user) => openEditModal(user),
+        onDelete: (user) => openDeleteModal(user),
       }),
       // Filter accessor columns (hidden from display)
       {
@@ -428,7 +502,7 @@ export default function UserAdminClient({
         },
       },
     ],
-    [],
+    [openEditModal, openDeleteModal],
   );
 
   const table = useReactTable({
@@ -574,6 +648,9 @@ export default function UserAdminClient({
                   isSelected={isSelected}
                   onSelectChange={(val) => row?.toggleSelected(val)}
                   onEdit={() => openEditModal(r)}
+                  onDelete={() => openDeleteModal(r)}
+                  editLabel="Editar"
+                  deleteLabel="Eliminar"
                 >
                   <p className="text-xs text-muted-foreground">
                     Registado em {formatDate(r.createdAt)}
@@ -741,23 +818,48 @@ export default function UserAdminClient({
                 </div>
               </div>
 
-              <DialogFooter className="gap-2 sm:gap-0 space-x-2">
+              <DialogFooter className="flex items-center justify-between gap-2 sm:gap-0">
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={closeEditModal}
+                  variant="ghost"
+                  onClick={() => {
+                    const u = editingUser;
+                    closeEditModal();
+                    openDeleteModal(u);
+                  }}
                   disabled={isSaving}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
                 >
-                  Cancelar
+                  <Trash2 className="size-3.5 mr-1.5" />
+                  Eliminar utilizador
                 </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? "A guardar..." : "Guardar Alterações"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeEditModal}
+                    disabled={isSaving}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? "A guardar..." : "Guardar Alterações"}
+                  </Button>
+                </div>
               </DialogFooter>
             </form>
           )}
         </DialogContent>
       </Dialog>
+
+      <DeleteUserDialog
+        key={deletingUser?.id ?? "none"}
+        open={deletingUser !== null}
+        onOpenChange={(open) => !open && closeDeleteModal()}
+        user={deletingUser}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
