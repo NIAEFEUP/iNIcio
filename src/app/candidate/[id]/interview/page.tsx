@@ -156,16 +156,19 @@ export default function InterviewPage() {
         <PageHeader
           backHref={`/candidate/${id}`}
           title={candidate.name}
+          inlineOnMobile
+          viewModeToggle={
+            <CandidateHeaderActions
+              candidateId={candidate.id}
+              currentPage="interview"
+              dynamicId={candidate.dynamic?.dynamicId}
+            />
+          }
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <RecruiterAssignedHeader
                 interviewers={interviewers}
                 title="Entrevistadores"
-              />
-              <CandidateHeaderActions
-                candidateId={candidate.id}
-                currentPage="interview"
-                dynamicId={candidate.dynamic?.dynamicId}
               />
               <Button
                 variant={interview.locked ? "secondary" : "outline"}
@@ -188,7 +191,14 @@ export default function InterviewPage() {
               </Button>
             </div>
           }
-        />
+        >
+          <CandidateHeaderActions
+            candidateId={candidate.id}
+            currentPage="interview"
+            dynamicId={candidate.dynamic?.dynamicId}
+            mobile
+          />
+        </PageHeader>
       }
       sidebar={
         <CandidateModularInfo

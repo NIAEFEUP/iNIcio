@@ -8,6 +8,7 @@ interface CandidateHeaderActionsProps {
   currentPage: "candidate" | "interview" | "dynamic";
   dynamicId?: string | number | null;
   hasInterview?: boolean;
+  mobile?: boolean;
 }
 
 export function CandidateHeaderActions({
@@ -15,16 +16,53 @@ export function CandidateHeaderActions({
   currentPage,
   dynamicId,
   hasInterview,
+  mobile,
 }: CandidateHeaderActionsProps) {
+  if (mobile) {
+    return (
+      <div className="flex w-full flex-col gap-2 md:hidden">
+        {currentPage !== "dynamic" && dynamicId && (
+          <Button
+            nativeButton={false}
+            variant="secondary"
+            className="w-full justify-start"
+            render={<Link href={`/dynamic/${dynamicId}`} target="_blank" />}
+          >
+            <ExternalLink className="mr-2 size-4" />
+            Dinâmica
+          </Button>
+        )}
+
+        {currentPage !== "interview" && candidateId && hasInterview && (
+          <Button
+            nativeButton={false}
+            variant="secondary"
+            className="w-full justify-start"
+            render={
+              <Link
+                href={`/candidate/${candidateId}/interview`}
+                target="_blank"
+              />
+            }
+          >
+            <ExternalLink className="mr-2 size-4" />
+            Entrevista
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="hidden items-center gap-2 md:flex">
       {currentPage !== "dynamic" && dynamicId && (
         <Button
           nativeButton={false}
-          variant="outline"
+          variant="secondary"
+          size="sm"
           render={<Link href={`/dynamic/${dynamicId}`} target="_blank" />}
         >
-          <ExternalLink />
+          <ExternalLink className="mr-1.5 size-4" />
           Dinâmica
         </Button>
       )}
@@ -32,7 +70,8 @@ export function CandidateHeaderActions({
       {currentPage !== "interview" && candidateId && hasInterview && (
         <Button
           nativeButton={false}
-          variant="outline"
+          variant="secondary"
+          size="sm"
           render={
             <Link
               href={`/candidate/${candidateId}/interview`}
@@ -40,7 +79,7 @@ export function CandidateHeaderActions({
             />
           }
         >
-          <ExternalLink />
+          <ExternalLink className="mr-1.5 size-4" />
           Entrevista
         </Button>
       )}
