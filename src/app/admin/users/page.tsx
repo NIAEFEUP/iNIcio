@@ -1,5 +1,6 @@
 import UserAdminClient from "@/components/admin/user-admin-client";
 import {
+  deleteAdminUser,
   getAllAdminUsers,
   sendAdminUserPasswordReset,
   updateAdminUserProfile,
@@ -13,7 +14,7 @@ export const metadata = {
 };
 
 export default async function AdminUsersPage() {
-  await requireAdminSession();
+  const currentAdmin = await requireAdminSession();
 
   const [users, recruitments] = await Promise.all([
     getAllAdminUsers(),
@@ -74,11 +75,37 @@ export default async function AdminUsersPage() {
     }
   }
 
+  async function deleteUserAction(targetUserId: string, adminPassword: string) {
+    "use server";
+    const adminUser = await requireAdminSession();
+
+    try {
+      await deleteAdminUser({
+        adminUserId: adminUser.id,
+        targetUserId,
+        adminPassword,
+      });
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      return {
+        success: false,
+        error:
+          err instanceof Error
+            ? err.message
+            : "Ocorreu um erro ao eliminar o utilizador",
+      };
+    }
+  }
+
   return (
     <UserAdminClient
       users={users}
       recruitments={recruitments}
+      currentUserId={currentAdmin.id}
       updateUser={updateUserAction}
+      deleteUser={deleteUserAction}
       sendPasswordResetEmail={sendResetPasswordEmailAction}
     />
   );
