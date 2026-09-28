@@ -37,7 +37,6 @@ export function AppSidebar({
   isAdmin = false,
   isRecruiter = false,
   onLogout,
-  currentPath = "",
   recruitments,
 }: AppSidebarProps) {
   const [managerOpen, setManagerOpen] = React.useState(false);
