@@ -61,13 +61,17 @@ function useIsMac() {
   );
 }
 
-interface SidebarFooterProps {
+export interface SidebarFooterProps {
   user?: UserType | null;
   isAuthenticated?: boolean;
   onLogout?: () => Promise<void>;
 }
 
-export function SidebarFooterComponent(props?: SidebarFooterProps) {
+export function SidebarFooterComponent({
+  user: propUser,
+  isAuthenticated: propIsAuthenticated,
+  onLogout,
+}: SidebarFooterProps = {}) {
   const { isMobile } = useSidebar();
   const auth = useAuth();
   const router = useRouter();
@@ -78,23 +82,23 @@ export function SidebarFooterComponent(props?: SidebarFooterProps) {
   const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
-  const user = props?.user !== undefined ? props.user : auth.user;
+  const user = propUser !== undefined ? propUser : auth.user;
   const isAuthenticated =
-    props?.isAuthenticated !== undefined
-      ? props.isAuthenticated
+    propIsAuthenticated !== undefined
+      ? propIsAuthenticated
       : auth.isAuthenticated;
 
   const [signedImageUrl] = useSignedProfilePictureUrl(user?.image);
 
   const handleLogout = React.useCallback(async () => {
     setIsOpen(false);
-    if (props?.onLogout) {
-      await props.onLogout();
+    if (onLogout) {
+      await onLogout();
     } else {
       await auth.logout();
       router.push("/login");
     }
-  }, [props, auth, router]);
+  }, [onLogout, auth, router]);
 
   const handleCopyEmail = async (e: React.MouseEvent) => {
     e.preventDefault();

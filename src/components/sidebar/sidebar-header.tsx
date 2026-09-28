@@ -2,6 +2,7 @@
 
 import { Briefcase, Check, ChevronsUpDown, Plus, Search } from "lucide-react";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -51,6 +52,7 @@ export function SidebarHeaderComponent({
 }: SidebarHeaderProps) {
   const { isMobile } = useSidebar();
   const { user } = useAuth();
+  const router = useRouter();
 
   const isAdmin = isAdminProp ?? user?.isAdmin ?? false;
 
@@ -98,9 +100,12 @@ export function SidebarHeaderComponent({
     (id: number) => {
       setInternalSelectedId(id);
       onSelectRecruitment?.(id);
+      const dashboardHome = isAdmin ? "/admin" : "/recruiter";
+      router.push(dashboardHome);
+      router.refresh();
       setIsOpen(false);
     },
-    [onSelectRecruitment],
+    [onSelectRecruitment, isAdmin, router],
   );
 
   const activeRecruitment = React.useMemo(

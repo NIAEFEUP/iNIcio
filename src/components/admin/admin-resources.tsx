@@ -24,12 +24,6 @@ export default function AdminResources({
         />
 
         <ResourceCard
-          title="Recrutamentos"
-          quantityText="Gerir recrutamentos"
-          href="/admin/recruitments"
-        />
-
-        <ResourceCard
           title="Fases de Recrutamento"
           quantityText="Gerir fases"
           href="/admin/phases"
