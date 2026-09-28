@@ -66,7 +66,7 @@ export function PageHeader({
     <div className={cn("flex flex-col gap-4", className)}>
       <div
         className={cn(
-          "flex justify-between gap-4",
+          "flex flex-wrap justify-between gap-4",
           inlineOnMobile
             ? "flex-row items-center"
             : "flex-col lg:flex-row lg:items-center",

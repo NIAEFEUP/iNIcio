@@ -19,11 +19,21 @@ export function CandidateNavigation({
   if (isLoading || !candidates || candidates.length === 0) {
     return (
       <div className="flex items-center gap-2">
-        <Button variant="outline" disabled className="px-2 md:px-4">
+        <Button
+          variant="outline"
+          disabled
+          className="px-2 md:px-4"
+          aria-label="Anterior"
+        >
           <ChevronLeft className="size-4 md:mr-1" />
           <span className="hidden md:inline">Anterior</span>
         </Button>
-        <Button variant="outline" disabled className="px-2 md:px-4">
+        <Button
+          variant="outline"
+          disabled
+          className="px-2 md:px-4"
+          aria-label="Próximo"
+        >
           <span className="hidden md:inline">Próximo</span>
           <ChevronRight className="size-4 md:ml-1" />
         </Button>
@@ -47,6 +57,7 @@ export function CandidateNavigation({
           variant="outline"
           render={<Link href={`/candidate/${prevCandidate.id}`} />}
           title={`Anterior: ${prevCandidate.name}`}
+          aria-label={`Anterior: ${prevCandidate.name}`}
           className="max-w-[200px] px-2 md:px-4"
         >
           <ChevronLeft className="size-4 md:mr-1" />
@@ -55,7 +66,12 @@ export function CandidateNavigation({
           </span>
         </Button>
       ) : (
-        <Button variant="outline" disabled className="px-2 md:px-4">
+        <Button
+          variant="outline"
+          disabled
+          className="px-2 md:px-4"
+          aria-label="Anterior"
+        >
           <ChevronLeft className="size-4 md:mr-1" />
           <span className="hidden md:inline">Anterior</span>
         </Button>
@@ -67,6 +83,7 @@ export function CandidateNavigation({
           variant="outline"
           render={<Link href={`/candidate/${nextCandidate.id}`} />}
           title={`Próximo: ${nextCandidate.name}`}
+          aria-label={`Próximo: ${nextCandidate.name}`}
           className="max-w-[200px] px-2 md:px-4"
         >
           <span className="hidden truncate md:inline">
@@ -75,7 +92,12 @@ export function CandidateNavigation({
           <ChevronRight className="size-4 md:ml-1" />
         </Button>
       ) : (
-        <Button variant="outline" disabled className="px-2 md:px-4">
+        <Button
+          variant="outline"
+          disabled
+          className="px-2 md:px-4"
+          aria-label="Próximo"
+        >
           <span className="hidden md:inline">Próximo</span>
           <ChevronRight className="size-4 md:ml-1" />
         </Button>
