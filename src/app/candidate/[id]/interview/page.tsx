@@ -7,7 +7,6 @@ import { Lock, Unlock, Loader2 } from "lucide-react";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
-import { CandidateNavigation } from "@/components/candidate/candidate-navigation";
 import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { CandidateModularInfo } from "@/components/candidate/card";
@@ -190,7 +189,6 @@ export default function InterviewPage() {
                 )}
                 <span>{interview.locked ? "Bloqueada" : "Bloquear"}</span>
               </Button>
-              <CandidateNavigation currentCandidateId={candidate.id} />
             </div>
           }
         >
