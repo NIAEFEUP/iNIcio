@@ -339,15 +339,8 @@ export async function deleteAdminUser({
     throw new Error("Utilizador não encontrado");
   }
 
-  const userApplications = await db.query.application.findMany({
-    where: eq(application.candidateId, targetUserId),
-    columns: { id: true, curriculum: true },
-  });
-  const appIds = userApplications.map((a) => a.id);
-  const cvPathsToDelete = userApplications
-    .map((a) => a.curriculum)
-    .filter((c): c is string => !!c);
   const avatarPathToDelete = targetUser.image;
+  let cvPathsToDelete: string[] = [];
 
   const candidateInterviews = await db.query.interview.findMany({
     where: eq(interview.candidateId, targetUserId),
@@ -355,39 +348,48 @@ export async function deleteAdminUser({
   });
   const interviewIds = candidateInterviews.map((i) => i.id);
 
-  const userAuthoredAppComments = await db.query.applicationComment.findMany({
-    where: eq(applicationComment.authorId, targetUserId),
-    columns: { id: true },
-  });
-  const authoredAppCommentIds = userAuthoredAppComments.map((c) => c.id);
-
-  let candidateAppCommentIds: number[] = [];
-  if (appIds.length > 0) {
-    const commentsOnCandidateApps = await db.query.applicationComment.findMany({
-      where: inArray(applicationComment.applicationId, appIds),
-      columns: { id: true },
-    });
-    candidateAppCommentIds = commentsOnCandidateApps.map((c) => c.id);
-  }
-
-  const allCommentIdsToDelete = Array.from(
-    new Set([...authoredAppCommentIds, ...candidateAppCommentIds]),
-  );
-
   await db.transaction(async (tx) => {
+    await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, targetUserId))
+      .for("update");
+
+    const userApplications = await tx
+      .select({ id: application.id, curriculum: application.curriculum })
+      .from(application)
+      .where(eq(application.candidateId, targetUserId))
+      .for("update");
+
+    const appIds = userApplications.map((a) => a.id);
+    cvPathsToDelete = userApplications
+      .map((a) => a.curriculum)
+      .filter((c): c is string => !!c);
+
     await tx.delete(notification).where(eq(notification.userId, targetUserId));
 
-    if (allCommentIdsToDelete.length > 0) {
-      const commentIdStrings = allCommentIdsToDelete.map(String);
-      await tx
-        .delete(notification)
-        .where(
-          and(
-            eq(notification.type, "mention"),
-            inArray(sql`${notification.data}->>'commentId'`, commentIdStrings),
-          ),
-        );
-    }
+    const commentSubquery = tx
+      .select({ id: sql`CAST(${applicationComment.id} AS text)` })
+      .from(applicationComment)
+      .leftJoin(
+        application,
+        eq(application.id, applicationComment.applicationId),
+      )
+      .where(
+        or(
+          eq(applicationComment.authorId, targetUserId),
+          eq(application.candidateId, targetUserId),
+        ),
+      );
+
+    await tx
+      .delete(notification)
+      .where(
+        and(
+          eq(notification.type, "mention"),
+          inArray(sql`(${notification.data}->>'commentId')`, commentSubquery),
+        ),
+      );
 
     if (appIds.length > 0) {
       await tx
@@ -500,7 +502,12 @@ export async function deleteAdminUser({
 
   if (avatarPathToDelete) {
     try {
-      await deleteFile(fromFullUrlToPath(avatarPathToDelete));
+      const deleted = await deleteFile(fromFullUrlToPath(avatarPathToDelete));
+      if (!deleted) {
+        console.error(
+          `Erro ao apagar imagem de perfil no caminho: ${avatarPathToDelete}`,
+        );
+      }
     } catch (err) {
       console.error("Erro ao apagar imagem de perfil:", err);
     }
@@ -508,7 +515,10 @@ export async function deleteAdminUser({
 
   for (const cvPath of cvPathsToDelete) {
     try {
-      await deleteFile(fromFullUrlToPath(cvPath));
+      const deleted = await deleteFile(fromFullUrlToPath(cvPath));
+      if (!deleted) {
+        console.error(`Erro ao apagar currículo no caminho: ${cvPath}`);
+      }
     } catch (err) {
       console.error("Erro ao apagar currículo:", err);
     }
