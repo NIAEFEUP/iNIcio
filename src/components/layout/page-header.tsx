@@ -31,6 +31,7 @@ export interface PageHeaderProps {
   onBack?: () => void;
   showBack?: boolean;
   backLabel?: string;
+  inlineOnMobile?: boolean;
 }
 
 export function PageHeader({
@@ -46,6 +47,7 @@ export function PageHeader({
   onBack,
   showBack,
   backLabel,
+  inlineOnMobile,
 }: PageHeaderProps) {
   const router = useRouter();
   const sidebar = useSafeSidebar();
@@ -62,7 +64,14 @@ export function PageHeader({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+      <div
+        className={cn(
+          "flex justify-between gap-4",
+          inlineOnMobile
+            ? "flex-row items-center"
+            : "flex-col lg:flex-row lg:items-center",
+        )}
+      >
         <div className="flex flex-1 items-center gap-2">
           {canShowTrigger && (
             <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
@@ -109,7 +118,7 @@ export function PageHeader({
           )}
 
           {typeof title === "string" ? (
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
               {title}
             </h1>
           ) : (
