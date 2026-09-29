@@ -11,18 +11,18 @@ import { getCandidateWithMetadata } from "@/lib/candidate";
 import {
   getApplicationComments,
   getDynamicComments,
-  isVoteValue,
   updateApplicationComment,
   voteApplicationComment as libVoteApplicationComment,
   voteInterviewComment as libVoteInterviewComment,
   voteDynamicComment as libVoteDynamicComment,
 } from "@/lib/comment";
 import { db, User } from "@/lib/db";
-import type {
-  Comment,
-  CommentVoteSummary,
-  VoteValue,
-} from "@/components/candidate/page/candidate-comments";
+import type { Comment } from "@/components/candidate/page/candidate-comments";
+import {
+  isVoteValue,
+  type CommentVoteSummary,
+  type VoteValue,
+} from "@/lib/comment-vote";
 import {
   createDynamicComment,
   getDynamic,
@@ -239,23 +239,33 @@ export async function editDynamicComment(
   return updateDynamicComment(commentId, content, user.id, dynamicId, targetId);
 }
 
+// Shared guard for the three vote actions: resolve the recruitment, reject
+// malformed vote values, require a recruiter session, and exclude admins.
+async function authorizeCommentVote(value: unknown) {
+  const recruitmentId = await getTargetRecruitmentId();
+  if (recruitmentId === undefined) return null;
+  if (!isVoteValue(value)) return null;
+
+  const user = await requireRecruiterSession(recruitmentId);
+  if (user.role === "admin") return null;
+
+  return { value, userId: user.id, recruitmentId };
+}
+
 export async function voteApplicationComment(
   candidateId: string,
   commentId: number,
   value: VoteValue,
 ): Promise<CommentVoteSummary | null> {
-  const targetId = await getTargetRecruitmentId();
-  if (targetId === undefined) return null;
-  if (!isVoteValue(value)) return null;
-  const user = await requireRecruiterSession(targetId);
-  if (user.role === "admin") return null;
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
 
   return libVoteApplicationComment(
     commentId,
-    user.id,
-    value,
+    vote.userId,
+    vote.value,
     candidateId,
-    targetId,
+    vote.recruitmentId,
   );
 }
 
@@ -264,18 +274,15 @@ export async function voteInterviewComment(
   commentId: number,
   value: VoteValue,
 ): Promise<CommentVoteSummary | null> {
-  const targetId = await getTargetRecruitmentId();
-  if (targetId === undefined) return null;
-  if (!isVoteValue(value)) return null;
-  const user = await requireRecruiterSession(targetId);
-  if (user.role === "admin") return null;
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
 
   return libVoteInterviewComment(
     commentId,
-    user.id,
-    value,
+    vote.userId,
+    vote.value,
     candidateId,
-    targetId,
+    vote.recruitmentId,
   );
 }
 
@@ -284,13 +291,16 @@ export async function voteDynamicComment(
   commentId: number,
   value: VoteValue,
 ): Promise<CommentVoteSummary | null> {
-  const targetId = await getTargetRecruitmentId();
-  if (targetId === undefined) return null;
-  if (!isVoteValue(value)) return null;
-  const user = await requireRecruiterSession(targetId);
-  if (user.role === "admin") return null;
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
 
-  return libVoteDynamicComment(commentId, user.id, value, dynamicId, targetId);
+  return libVoteDynamicComment(
+    commentId,
+    vote.userId,
+    vote.value,
+    dynamicId,
+    vote.recruitmentId,
+  );
 }
 
 export async function updateInterviewContent(

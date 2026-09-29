@@ -13,7 +13,8 @@ import type { BlockNoteEditor } from "@blocknote/core";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
 import { CommentVoteButtons } from "./comment-vote-buttons";
-import { Comment, VoteValue } from "../candidate/page/candidate-comments";
+import { Comment } from "../candidate/page/candidate-comments";
+import type { VoteValue } from "@/lib/comment-vote";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { User } from "@/lib/db";
 

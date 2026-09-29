@@ -2,7 +2,7 @@
 
 import { Toggle } from "@/components/ui/toggle";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import type { VoteValue } from "@/components/candidate/page/candidate-comments";
+import type { VoteValue } from "@/lib/comment-vote";
 
 interface CommentVoteButtonsProps {
   upvotes: number;

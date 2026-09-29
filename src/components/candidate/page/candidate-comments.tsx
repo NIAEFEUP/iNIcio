@@ -20,16 +20,9 @@ import { useState } from "react";
 import { commentCreationMap } from "@/lib/comment-format";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { isDocumentEmpty } from "@/lib/text-editor";
+import type { CommentVoteSummary, VoteValue } from "@/lib/comment-vote";
 
 type CommentType = "application" | "interview" | "dynamic";
-
-export type VoteValue = 1 | -1 | null;
-
-export type CommentVoteSummary = {
-  upvotes: number;
-  downvotes: number;
-  userVote: VoteValue;
-};
 
 export type Comment = {
   user: User | null;

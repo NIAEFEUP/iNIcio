@@ -11,13 +11,16 @@ import {
   user,
 } from "@/db/schema";
 import { db } from "./db";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
+import { Comment } from "@/components/candidate/page/candidate-comments";
 import {
-  Comment,
-  CommentVoteSummary,
-  VoteValue,
-} from "@/components/candidate/page/candidate-comments";
+  applyCommentVote,
+  EMPTY_COMMENT_VOTE,
+  loadCommentVotes,
+  type CommentVoteSummary,
+  type VoteValue,
+} from "./comment-vote";
 import { getActiveRecruitment } from "./recruitment";
 
 export async function addApplicationComment(
@@ -95,34 +98,13 @@ export async function getApplicationComments(
     .fullJoin(user, eq(applicationComment.authorId, user.id))
     .orderBy(desc(applicationComment.createdAt), desc(applicationComment.id));
 
-  const commentIds = results
-    .map((e) => e.application_comment.id)
-    .filter((id): id is number => id != null);
-
-  const votes =
-    commentIds.length > 0
-      ? await db
-          .select()
-          .from(applicationCommentVote)
-          .where(inArray(applicationCommentVote.commentId, commentIds))
-      : [];
-
-  const countsById = new Map<number, { upvotes: number; downvotes: number }>();
-  const userVotesById = new Map<number, VoteValue>();
-
-  for (const v of votes) {
-    const current = countsById.get(v.commentId) ?? {
-      upvotes: 0,
-      downvotes: 0,
-    };
-    if (v.value === 1) current.upvotes += 1;
-    else if (v.value === -1) current.downvotes += 1;
-    countsById.set(v.commentId, current);
-
-    if (v.userId === userId) {
-      userVotesById.set(v.commentId, v.value as VoteValue);
-    }
-  }
+  const votes = await loadCommentVotes(
+    applicationCommentVote,
+    results
+      .map((e) => e.application_comment.id)
+      .filter((id): id is number => id != null),
+    userId,
+  );
 
   return await Promise.all(
     results.map(async (e): Promise<Comment> => ({
@@ -134,9 +116,7 @@ export async function getApplicationComments(
         ...e.application_comment,
       },
       type: "application",
-      upvotes: countsById.get(e.application_comment.id)?.upvotes ?? 0,
-      downvotes: countsById.get(e.application_comment.id)?.downvotes ?? 0,
-      userVote: userVotesById.get(e.application_comment.id) ?? null,
+      ...(votes.get(e.application_comment.id) ?? EMPTY_COMMENT_VOTE),
     })),
   );
 }
@@ -156,32 +136,11 @@ export async function getDynamicComments(
     },
   });
 
-  const commentIds = results.map((e) => e.id);
-
-  const votes =
-    commentIds.length > 0
-      ? await db
-          .select()
-          .from(dynamicCommentVote)
-          .where(inArray(dynamicCommentVote.commentId, commentIds))
-      : [];
-
-  const countsById = new Map<number, { upvotes: number; downvotes: number }>();
-  const userVotesById = new Map<number, VoteValue>();
-
-  for (const v of votes) {
-    const current = countsById.get(v.commentId) ?? {
-      upvotes: 0,
-      downvotes: 0,
-    };
-    if (v.value === 1) current.upvotes += 1;
-    else if (v.value === -1) current.downvotes += 1;
-    countsById.set(v.commentId, current);
-
-    if (v.userId === userId) {
-      userVotesById.set(v.commentId, v.value as VoteValue);
-    }
-  }
+  const votes = await loadCommentVotes(
+    dynamicCommentVote,
+    results.map((e) => e.id),
+    userId,
+  );
 
   return await Promise.all(
     results.map(async (e): Promise<Comment> => ({
@@ -198,17 +157,9 @@ export async function getDynamicComments(
         authorId: e.authorId,
       },
       type: "dynamic",
-      upvotes: countsById.get(e.id)?.upvotes ?? 0,
-      downvotes: countsById.get(e.id)?.downvotes ?? 0,
-      userVote: userVotesById.get(e.id) ?? null,
+      ...(votes.get(e.id) ?? EMPTY_COMMENT_VOTE),
     })),
   );
-}
-
-// `VoteValue` is erased at build time, so server actions cannot rely on it to
-// reject malformed runtime input. Validate before persisting anything.
-export function isVoteValue(value: unknown): value is VoteValue {
-  return value === 1 || value === -1 || value === null;
 }
 
 export async function voteApplicationComment(
@@ -246,39 +197,7 @@ export async function voteApplicationComment(
   if (comment.length === 0) return null;
   if (comment[0].authorId === userId) return null;
 
-  return db.transaction(async (tx) => {
-    if (value === null) {
-      await tx
-        .delete(applicationCommentVote)
-        .where(
-          and(
-            eq(applicationCommentVote.commentId, commentId),
-            eq(applicationCommentVote.userId, userId),
-          ),
-        );
-    } else {
-      await tx
-        .insert(applicationCommentVote)
-        .values({ commentId, userId, value })
-        .onConflictDoUpdate({
-          target: [
-            applicationCommentVote.commentId,
-            applicationCommentVote.userId,
-          ],
-          set: { value },
-        });
-    }
-
-    const votes = await tx
-      .select()
-      .from(applicationCommentVote)
-      .where(eq(applicationCommentVote.commentId, commentId));
-
-    const upvotes = votes.filter((v) => v.value === 1).length;
-    const downvotes = votes.filter((v) => v.value === -1).length;
-
-    return { upvotes, downvotes, userVote: value };
-  });
+  return applyCommentVote(applicationCommentVote, commentId, userId, value);
 }
 
 export async function voteInterviewComment(
@@ -313,36 +232,7 @@ export async function voteInterviewComment(
   if (comment.length === 0) return null;
   if (comment[0].authorId === userId) return null;
 
-  return db.transaction(async (tx) => {
-    if (value === null) {
-      await tx
-        .delete(interviewCommentVote)
-        .where(
-          and(
-            eq(interviewCommentVote.commentId, commentId),
-            eq(interviewCommentVote.userId, userId),
-          ),
-        );
-    } else {
-      await tx
-        .insert(interviewCommentVote)
-        .values({ commentId, userId, value })
-        .onConflictDoUpdate({
-          target: [interviewCommentVote.commentId, interviewCommentVote.userId],
-          set: { value },
-        });
-    }
-
-    const votes = await tx
-      .select()
-      .from(interviewCommentVote)
-      .where(eq(interviewCommentVote.commentId, commentId));
-
-    const upvotes = votes.filter((v) => v.value === 1).length;
-    const downvotes = votes.filter((v) => v.value === -1).length;
-
-    return { upvotes, downvotes, userVote: value };
-  });
+  return applyCommentVote(interviewCommentVote, commentId, userId, value);
 }
 
 export async function voteDynamicComment(
@@ -374,34 +264,5 @@ export async function voteDynamicComment(
   if (comment.length === 0) return null;
   if (comment[0].authorId === userId) return null;
 
-  return db.transaction(async (tx) => {
-    if (value === null) {
-      await tx
-        .delete(dynamicCommentVote)
-        .where(
-          and(
-            eq(dynamicCommentVote.commentId, commentId),
-            eq(dynamicCommentVote.userId, userId),
-          ),
-        );
-    } else {
-      await tx
-        .insert(dynamicCommentVote)
-        .values({ commentId, userId, value })
-        .onConflictDoUpdate({
-          target: [dynamicCommentVote.commentId, dynamicCommentVote.userId],
-          set: { value },
-        });
-    }
-
-    const votes = await tx
-      .select()
-      .from(dynamicCommentVote)
-      .where(eq(dynamicCommentVote.commentId, commentId));
-
-    const upvotes = votes.filter((v) => v.value === 1).length;
-    const downvotes = votes.filter((v) => v.value === -1).length;
-
-    return { upvotes, downvotes, userVote: value };
-  });
+  return applyCommentVote(dynamicCommentVote, commentId, userId, value);
 }
