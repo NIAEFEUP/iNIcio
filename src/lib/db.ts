@@ -32,6 +32,11 @@ export type InterviewComment = typeof schema.interviewComment.$inferSelect;
 export type DynamicComment = typeof schema.dynamicComment.$inferSelect;
 export type NewInterviewComment = typeof schema.interviewComment.$inferInsert;
 export type NewDynamicComment = typeof schema.dynamicComment.$inferInsert;
+export type ApplicationCommentVote =
+  typeof schema.applicationCommentVote.$inferSelect;
+export type InterviewCommentVote =
+  typeof schema.interviewCommentVote.$inferSelect;
+export type DynamicCommentVote = typeof schema.dynamicCommentVote.$inferSelect;
 export type VotingPhaseStatus = typeof schema.votingPhaseStatus.$inferSelect;
 export type VotingPhase = typeof schema.votingPhase.$inferSelect & {
   status: VotingPhaseStatus;

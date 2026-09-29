@@ -22,11 +22,19 @@ import { isDocumentEmpty } from "@/lib/text-editor";
 
 type CommentType = "application" | "interview" | "dynamic";
 
+export type VoteValue = 1 | -1 | null;
+
+export type CommentVoteSummary = {
+  upvotes: number;
+  downvotes: number;
+  userVote: VoteValue;
+};
+
 export type Comment = {
   user: User | null;
   comment: ApplicationComment | InterviewComment | DynamicComment | null;
   type: CommentType;
-};
+} & CommentVoteSummary;
 
 interface CandidateCommentsProps {
   candidate: CandidateWithMetadata | Array<CandidateWithMetadata>;
@@ -99,6 +107,9 @@ export default function CandidateComments({
         session ? session.user.id : "",
       ) as ApplicationComment | InterviewComment | DynamicComment,
       type: type,
+      upvotes: 0,
+      downvotes: 0,
+      userVote: null,
     };
 
     setCommentsState((prev) => [optimisticComment, ...prev]);
