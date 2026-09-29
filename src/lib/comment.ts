@@ -2,8 +2,12 @@ import {
   application,
   applicationComment,
   applicationCommentVote,
+  dynamic,
   dynamicComment,
   dynamicCommentVote,
+  interview,
+  interviewComment,
+  interviewCommentVote,
   user,
 } from "@/db/schema";
 import { db } from "./db";
@@ -11,6 +15,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import {
   Comment,
+  CommentVoteSummary,
   VoteValue,
 } from "@/components/candidate/page/candidate-comments";
 import { getActiveRecruitment } from "./recruitment";
@@ -198,4 +203,193 @@ export async function getDynamicComments(
       userVote: userVotesById.get(e.id) ?? null,
     })),
   );
+}
+
+export async function voteApplicationComment(
+  commentId: number,
+  userId: string,
+  value: VoteValue,
+  candidateId: string,
+  recruitmentId: number,
+): Promise<CommentVoteSummary | null> {
+  const app = await db
+    .select({ id: application.id })
+    .from(application)
+    .where(
+      and(
+        eq(application.candidateId, candidateId),
+        eq(application.recruitmentId, recruitmentId),
+      ),
+    );
+
+  if (app.length === 0) return null;
+
+  const comment = await db
+    .select({ id: applicationComment.id })
+    .from(applicationComment)
+    .where(
+      and(
+        eq(applicationComment.id, commentId),
+        eq(applicationComment.applicationId, app[0].id),
+      ),
+    );
+
+  if (comment.length === 0) return null;
+
+  return db.transaction(async (tx) => {
+    if (value === null) {
+      await tx
+        .delete(applicationCommentVote)
+        .where(
+          and(
+            eq(applicationCommentVote.commentId, commentId),
+            eq(applicationCommentVote.userId, userId),
+          ),
+        );
+    } else {
+      await tx
+        .insert(applicationCommentVote)
+        .values({ commentId, userId, value })
+        .onConflictDoUpdate({
+          target: [
+            applicationCommentVote.commentId,
+            applicationCommentVote.userId,
+          ],
+          set: { value },
+        });
+    }
+
+    const votes = await tx
+      .select()
+      .from(applicationCommentVote)
+      .where(eq(applicationCommentVote.commentId, commentId));
+
+    const upvotes = votes.filter((v) => v.value === 1).length;
+    const downvotes = votes.filter((v) => v.value === -1).length;
+
+    return { upvotes, downvotes, userVote: value };
+  });
+}
+
+export async function voteInterviewComment(
+  commentId: number,
+  userId: string,
+  value: VoteValue,
+  candidateId: string,
+  recruitmentId: number,
+): Promise<CommentVoteSummary | null> {
+  const i = await db
+    .select({ id: interview.id })
+    .from(interview)
+    .where(
+      and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, recruitmentId),
+      ),
+    );
+
+  if (i.length === 0) return null;
+
+  const comment = await db
+    .select({ id: interviewComment.id })
+    .from(interviewComment)
+    .where(
+      and(
+        eq(interviewComment.id, commentId),
+        eq(interviewComment.interviewId, i[0].id),
+      ),
+    );
+
+  if (comment.length === 0) return null;
+
+  return db.transaction(async (tx) => {
+    if (value === null) {
+      await tx
+        .delete(interviewCommentVote)
+        .where(
+          and(
+            eq(interviewCommentVote.commentId, commentId),
+            eq(interviewCommentVote.userId, userId),
+          ),
+        );
+    } else {
+      await tx
+        .insert(interviewCommentVote)
+        .values({ commentId, userId, value })
+        .onConflictDoUpdate({
+          target: [interviewCommentVote.commentId, interviewCommentVote.userId],
+          set: { value },
+        });
+    }
+
+    const votes = await tx
+      .select()
+      .from(interviewCommentVote)
+      .where(eq(interviewCommentVote.commentId, commentId));
+
+    const upvotes = votes.filter((v) => v.value === 1).length;
+    const downvotes = votes.filter((v) => v.value === -1).length;
+
+    return { upvotes, downvotes, userVote: value };
+  });
+}
+
+export async function voteDynamicComment(
+  commentId: number,
+  userId: string,
+  value: VoteValue,
+  dynamicId: number,
+  recruitmentId: number,
+): Promise<CommentVoteSummary | null> {
+  const dyn = await db
+    .select({ id: dynamic.id })
+    .from(dynamic)
+    .where(
+      and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, recruitmentId)),
+    );
+
+  if (dyn.length === 0) return null;
+
+  const comment = await db
+    .select({ id: dynamicComment.id })
+    .from(dynamicComment)
+    .where(
+      and(
+        eq(dynamicComment.id, commentId),
+        eq(dynamicComment.dynamicId, dyn[0].id),
+      ),
+    );
+
+  if (comment.length === 0) return null;
+
+  return db.transaction(async (tx) => {
+    if (value === null) {
+      await tx
+        .delete(dynamicCommentVote)
+        .where(
+          and(
+            eq(dynamicCommentVote.commentId, commentId),
+            eq(dynamicCommentVote.userId, userId),
+          ),
+        );
+    } else {
+      await tx
+        .insert(dynamicCommentVote)
+        .values({ commentId, userId, value })
+        .onConflictDoUpdate({
+          target: [dynamicCommentVote.commentId, dynamicCommentVote.userId],
+          set: { value },
+        });
+    }
+
+    const votes = await tx
+      .select()
+      .from(dynamicCommentVote)
+      .where(eq(dynamicCommentVote.commentId, commentId));
+
+    const upvotes = votes.filter((v) => v.value === 1).length;
+    const downvotes = votes.filter((v) => v.value === -1).length;
+
+    return { upvotes, downvotes, userVote: value };
+  });
 }
