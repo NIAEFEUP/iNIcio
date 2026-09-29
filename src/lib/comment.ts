@@ -1,13 +1,18 @@
 import {
   application,
   applicationComment,
+  applicationCommentVote,
   dynamicComment,
+  dynamicCommentVote,
   user,
 } from "@/db/schema";
 import { db } from "./db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
-import { Comment } from "@/components/candidate/page/candidate-comments";
+import {
+  Comment,
+  VoteValue,
+} from "@/components/candidate/page/candidate-comments";
 import { getActiveRecruitment } from "./recruitment";
 
 export async function addApplicationComment(
@@ -63,6 +68,7 @@ export async function updateApplicationComment(
 
 export async function getApplicationComments(
   candidateId: string,
+  userId: string,
   recruitmentId?: number,
 ): Promise<Array<Comment>> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
@@ -84,6 +90,35 @@ export async function getApplicationComments(
     .fullJoin(user, eq(applicationComment.authorId, user.id))
     .orderBy(desc(applicationComment.createdAt), desc(applicationComment.id));
 
+  const commentIds = results
+    .map((e) => e.application_comment.id)
+    .filter((id): id is number => id != null);
+
+  const votes =
+    commentIds.length > 0
+      ? await db
+          .select()
+          .from(applicationCommentVote)
+          .where(inArray(applicationCommentVote.commentId, commentIds))
+      : [];
+
+  const countsById = new Map<number, { upvotes: number; downvotes: number }>();
+  const userVotesById = new Map<number, VoteValue>();
+
+  for (const v of votes) {
+    const current = countsById.get(v.commentId) ?? {
+      upvotes: 0,
+      downvotes: 0,
+    };
+    if (v.value === 1) current.upvotes += 1;
+    else if (v.value === -1) current.downvotes += 1;
+    countsById.set(v.commentId, current);
+
+    if (v.userId === userId) {
+      userVotesById.set(v.commentId, v.value as VoteValue);
+    }
+  }
+
   return await Promise.all(
     results.map(async (e): Promise<Comment> => ({
       user: {
@@ -94,11 +129,17 @@ export async function getApplicationComments(
         ...e.application_comment,
       },
       type: "application",
+      upvotes: countsById.get(e.application_comment.id)?.upvotes ?? 0,
+      downvotes: countsById.get(e.application_comment.id)?.downvotes ?? 0,
+      userVote: userVotesById.get(e.application_comment.id) ?? null,
     })),
   );
 }
 
-export async function getDynamicComments(dynamicId: number) {
+export async function getDynamicComments(
+  dynamicId: number,
+  userId: string,
+): Promise<Array<Comment>> {
   const results = await db.query.dynamicComment.findMany({
     where: eq(dynamicComment.dynamicId, dynamicId),
     with: {
@@ -109,6 +150,33 @@ export async function getDynamicComments(dynamicId: number) {
       },
     },
   });
+
+  const commentIds = results.map((e) => e.id);
+
+  const votes =
+    commentIds.length > 0
+      ? await db
+          .select()
+          .from(dynamicCommentVote)
+          .where(inArray(dynamicCommentVote.commentId, commentIds))
+      : [];
+
+  const countsById = new Map<number, { upvotes: number; downvotes: number }>();
+  const userVotesById = new Map<number, VoteValue>();
+
+  for (const v of votes) {
+    const current = countsById.get(v.commentId) ?? {
+      upvotes: 0,
+      downvotes: 0,
+    };
+    if (v.value === 1) current.upvotes += 1;
+    else if (v.value === -1) current.downvotes += 1;
+    countsById.set(v.commentId, current);
+
+    if (v.userId === userId) {
+      userVotesById.set(v.commentId, v.value as VoteValue);
+    }
+  }
 
   return await Promise.all(
     results.map(async (e): Promise<Comment> => ({
@@ -125,6 +193,9 @@ export async function getDynamicComments(dynamicId: number) {
         authorId: e.authorId,
       },
       type: "dynamic",
+      upvotes: countsById.get(e.id)?.upvotes ?? 0,
+      downvotes: countsById.get(e.id)?.downvotes ?? 0,
+      userVote: userVotesById.get(e.id) ?? null,
     })),
   );
 }

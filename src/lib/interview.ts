@@ -1,14 +1,18 @@
 import {
   interview,
   interviewComment,
+  interviewCommentVote,
   interviewTemplate,
   slot,
   recruiterToInterview,
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
-import { Comment } from "@/components/candidate/page/candidate-comments";
+import {
+  Comment,
+  VoteValue,
+} from "@/components/candidate/page/candidate-comments";
 import { getActiveRecruitment } from "./recruitment";
 
 export default async function addInterviewWithSlot(
@@ -252,6 +256,7 @@ export function getCandidateInterviewLink(candidateId: string) {
 
 export async function getInterviewComments(
   interviewId: number,
+  userId: string,
 ): Promise<Array<Comment>> {
   const comments = await db.query.interviewComment.findMany({
     where: eq(interviewComment.interviewId, interviewId),
@@ -263,6 +268,33 @@ export async function getInterviewComments(
       },
     },
   });
+
+  const commentIds = comments.map((c) => c.id);
+
+  const votes =
+    commentIds.length > 0
+      ? await db
+          .select()
+          .from(interviewCommentVote)
+          .where(inArray(interviewCommentVote.commentId, commentIds))
+      : [];
+
+  const countsById = new Map<number, { upvotes: number; downvotes: number }>();
+  const userVotesById = new Map<number, VoteValue>();
+
+  for (const v of votes) {
+    const current = countsById.get(v.commentId) ?? {
+      upvotes: 0,
+      downvotes: 0,
+    };
+    if (v.value === 1) current.upvotes += 1;
+    else if (v.value === -1) current.downvotes += 1;
+    countsById.set(v.commentId, current);
+
+    if (v.userId === userId) {
+      userVotesById.set(v.commentId, v.value as VoteValue);
+    }
+  }
 
   return await Promise.all(
     comments.map(async (c): Promise<Comment> => ({
@@ -279,6 +311,9 @@ export async function getInterviewComments(
         authorId: c.authorId,
       },
       type: "interview",
+      upvotes: countsById.get(c.id)?.upvotes ?? 0,
+      downvotes: countsById.get(c.id)?.downvotes ?? 0,
+      userVote: userVotesById.get(c.id) ?? null,
     })),
   );
 }
