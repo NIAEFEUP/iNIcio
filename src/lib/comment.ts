@@ -225,7 +225,10 @@ export async function voteApplicationComment(
   if (app.length === 0) return null;
 
   const comment = await db
-    .select({ id: applicationComment.id })
+    .select({
+      id: applicationComment.id,
+      authorId: applicationComment.authorId,
+    })
     .from(applicationComment)
     .where(
       and(
@@ -235,6 +238,7 @@ export async function voteApplicationComment(
     );
 
   if (comment.length === 0) return null;
+  if (comment[0].authorId === userId) return null;
 
   return db.transaction(async (tx) => {
     if (value === null) {
@@ -291,7 +295,7 @@ export async function voteInterviewComment(
   if (i.length === 0) return null;
 
   const comment = await db
-    .select({ id: interviewComment.id })
+    .select({ id: interviewComment.id, authorId: interviewComment.authorId })
     .from(interviewComment)
     .where(
       and(
@@ -301,6 +305,7 @@ export async function voteInterviewComment(
     );
 
   if (comment.length === 0) return null;
+  if (comment[0].authorId === userId) return null;
 
   return db.transaction(async (tx) => {
     if (value === null) {
@@ -351,7 +356,7 @@ export async function voteDynamicComment(
   if (dyn.length === 0) return null;
 
   const comment = await db
-    .select({ id: dynamicComment.id })
+    .select({ id: dynamicComment.id, authorId: dynamicComment.authorId })
     .from(dynamicComment)
     .where(
       and(
@@ -361,6 +366,7 @@ export async function voteDynamicComment(
     );
 
   if (comment.length === 0) return null;
+  if (comment[0].authorId === userId) return null;
 
   return db.transaction(async (tx) => {
     if (value === null) {
