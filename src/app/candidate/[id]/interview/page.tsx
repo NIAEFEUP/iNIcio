@@ -30,6 +30,7 @@ import {
   saveInterviewComment,
   setInterviewLocked,
   updateInterviewContent,
+  voteInterviewComment,
 } from "@/app/candidate/actions";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { useAuth } from "@/hooks/use-auth";
@@ -274,6 +275,7 @@ export default function InterviewPage() {
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
+                  onVoteComment={voteInterviewComment.bind(null, candidate.id)}
                   recruiters={recruiters}
                 />
               </CommentFrame>

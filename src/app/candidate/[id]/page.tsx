@@ -22,6 +22,7 @@ import { DataErrorState } from "@/components/data-table/data-state-view";
 import {
   editApplicationComment,
   saveApplicationComment,
+  voteApplicationComment,
 } from "@/app/candidate/actions";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { useAuth } from "@/hooks/use-auth";
@@ -153,6 +154,10 @@ export default function CandidatePage() {
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
+                  onVoteComment={voteApplicationComment.bind(
+                    null,
+                    candidate.id,
+                  )}
                   recruiters={recruiters}
                 />
               </CommentFrame>

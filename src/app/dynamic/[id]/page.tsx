@@ -28,6 +28,7 @@ import {
   saveDynamicComment,
   setDynamicLocked,
   updateDynamicContent,
+  voteDynamicComment,
 } from "@/app/candidate/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
@@ -254,6 +255,7 @@ export default function DynamicPage() {
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
+                  onVoteComment={voteDynamicComment.bind(null, dynamic.id)}
                   recruiters={recruiters}
                 />
               </CommentFrame>
