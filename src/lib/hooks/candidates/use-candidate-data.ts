@@ -12,6 +12,7 @@ import {
 } from "@/app/candidate/actions";
 import type { User } from "@/lib/db";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import { useAuth } from "@/hooks/use-auth";
 
 export const candidatesKey = (recruitmentId?: number | null) => [
   "candidates",
@@ -31,17 +32,25 @@ export const recruitersKey = (recruitmentId?: number | null) => [
 export const applicationCommentsKey = (
   candidateId: string,
   recruitmentId?: number | null,
-) => ["application-comments", recruitmentId ?? null, candidateId];
+  userId?: string,
+) => [
+  "application-comments",
+  recruitmentId ?? null,
+  candidateId,
+  userId ?? null,
+];
 
 export const interviewKey = (
   candidateId: string,
   recruitmentId?: number | null,
-) => ["interview", recruitmentId ?? null, candidateId];
+  userId?: string,
+) => ["interview", recruitmentId ?? null, candidateId, userId ?? null];
 
 export const dynamicKey = (
   dynamicId: number,
   recruitmentId?: number | null,
-) => ["dynamic", recruitmentId ?? null, dynamicId];
+  userId?: string,
+) => ["dynamic", recruitmentId ?? null, dynamicId, userId ?? null];
 
 export function useCandidatesData() {
   const { recruitmentId } = useRecruitment();
@@ -64,22 +73,25 @@ export function useRecruiters() {
 
 export function useApplicationComments(candidateId: string) {
   const { recruitmentId } = useRecruitment();
+  const { user } = useAuth();
   return useSWR<Array<Comment>>(
-    applicationCommentsKey(candidateId, recruitmentId),
+    applicationCommentsKey(candidateId, recruitmentId, user?.id),
     () => loadApplicationComments(candidateId),
   );
 }
 
 export function useInterviewData(candidateId: string) {
   const { recruitmentId } = useRecruitment();
-  return useSWR(interviewKey(candidateId, recruitmentId), () =>
+  const { user } = useAuth();
+  return useSWR(interviewKey(candidateId, recruitmentId, user?.id), () =>
     loadInterview(candidateId),
   );
 }
 
 export function useDynamicData(dynamicId: number) {
   const { recruitmentId } = useRecruitment();
-  return useSWR(dynamicKey(dynamicId, recruitmentId), () =>
+  const { user } = useAuth();
+  return useSWR(dynamicKey(dynamicId, recruitmentId, user?.id), () =>
     loadDynamic(dynamicId),
   );
 }

@@ -65,7 +65,7 @@ export default function CandidatePage() {
   const saveComment = async (content: Array<unknown>) => {
     const result = await saveApplicationComment(id, content);
     if (result.success) {
-      mutate(applicationCommentsKey(id, recruitmentId));
+      mutate(applicationCommentsKey(id, recruitmentId, user?.id));
     }
     return result;
   };
@@ -73,7 +73,7 @@ export default function CandidatePage() {
   const editComment = async (commentId: number, content: Array<any>) => {
     const ok = await editApplicationComment(id, commentId, content);
     if (ok) {
-      mutate(applicationCommentsKey(id, recruitmentId));
+      mutate(applicationCommentsKey(id, recruitmentId, user?.id));
     }
     return ok;
   };
