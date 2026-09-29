@@ -43,6 +43,7 @@ import {
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
 import { getRole } from "@/lib/role";
+import { isAdmin } from "@/lib/admin";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 export interface InterviewData {
@@ -246,6 +247,7 @@ export async function voteApplicationComment(
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
   const user = await requireRecruiterSession(targetId);
+  if (await isAdmin(user.id)) return null;
 
   return libVoteApplicationComment(
     commentId,
@@ -264,6 +266,7 @@ export async function voteInterviewComment(
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
   const user = await requireRecruiterSession(targetId);
+  if (await isAdmin(user.id)) return null;
 
   return libVoteInterviewComment(
     commentId,
@@ -282,6 +285,7 @@ export async function voteDynamicComment(
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
   const user = await requireRecruiterSession(targetId);
+  if (await isAdmin(user.id)) return null;
 
   return libVoteDynamicComment(commentId, user.id, value, dynamicId, targetId);
 }
