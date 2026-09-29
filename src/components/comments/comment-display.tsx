@@ -12,7 +12,8 @@ import { useRef, useState } from "react";
 import type { BlockNoteEditor } from "@blocknote/core";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
-import { Comment } from "../candidate/page/candidate-comments";
+import { CommentVoteButtons } from "./comment-vote-buttons";
+import { Comment, VoteValue } from "../candidate/page/candidate-comments";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { User } from "@/lib/db";
 
@@ -21,6 +22,7 @@ interface CommentDisplayProps {
   comment: Comment;
   currentUserId?: string;
   onSaveEdit?: (commentId: number, content: Array<any>) => Promise<boolean>;
+  onVoteComment?: (commentId: number, value: VoteValue) => void;
   recruiters?: Array<User>;
 }
 
@@ -29,6 +31,7 @@ export function CommentDisplay({
   comment,
   currentUserId,
   onSaveEdit,
+  onVoteComment,
   recruiters = [],
 }: CommentDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -183,6 +186,20 @@ export function CommentDisplay({
           ) : (
             <div className="text-sm text-foreground">
               <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
+            </div>
+          )}
+          {!isEditing && currentUserId && onVoteComment && (
+            <div className="flex items-center gap-1 pt-1">
+              <CommentVoteButtons
+                upvotes={comment.upvotes}
+                downvotes={comment.downvotes}
+                userVote={comment.userVote}
+                onVote={(value) => {
+                  if (comment.comment?.id != null) {
+                    onVoteComment(comment.comment.id, value);
+                  }
+                }}
+              />
             </div>
           )}
         </div>
