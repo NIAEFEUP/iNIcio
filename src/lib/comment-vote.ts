@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   applicationCommentVote,
   dynamicCommentVote,
@@ -32,33 +32,38 @@ type CommentVoteTable =
   | typeof interviewCommentVote
   | typeof dynamicCommentVote;
 
-type CommentVoteRow = {
-  commentId: number;
-  userId: string;
-  value: number;
-};
+type DbClient = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-function tally(
-  rows: Array<CommentVoteRow>,
+// Aggregate in the database so callers transfer one row per comment instead
+// of every vote row.
+async function countCommentVotes(
+  client: DbClient,
+  table: CommentVoteTable,
+  commentIds: number[],
   userId: string,
-): Map<number, CommentVoteSummary> {
+): Promise<Map<number, CommentVoteSummary>> {
+  if (commentIds.length === 0) return new Map();
+
+  const rows = await client
+    .select({
+      commentId: table.commentId,
+      upvotes: sql<number>`count(*) filter (where ${table.value} = 1)`,
+      downvotes: sql<number>`count(*) filter (where ${table.value} = -1)`,
+      userVote: sql<
+        number | null
+      >`max(case when ${table.userId} = ${userId} then ${table.value} end)`,
+    })
+    .from(table)
+    .where(inArray(table.commentId, commentIds))
+    .groupBy(table.commentId);
+
   const summaries = new Map<number, CommentVoteSummary>();
-
   for (const row of rows) {
-    const summary = summaries.get(row.commentId) ?? {
-      upvotes: 0,
-      downvotes: 0,
-      userVote: null,
-    };
-
-    if (row.value === 1) summary.upvotes += 1;
-    else if (row.value === -1) summary.downvotes += 1;
-
-    if (row.userId === userId) {
-      summary.userVote = row.value as VoteValue;
-    }
-
-    summaries.set(row.commentId, summary);
+    summaries.set(row.commentId, {
+      upvotes: Number(row.upvotes),
+      downvotes: Number(row.downvotes),
+      userVote: (row.userVote ?? null) as VoteValue,
+    });
   }
 
   return summaries;
@@ -69,14 +74,7 @@ export async function loadCommentVotes(
   commentIds: number[],
   userId: string,
 ): Promise<Map<number, CommentVoteSummary>> {
-  if (commentIds.length === 0) return new Map();
-
-  const rows = (await db
-    .select()
-    .from(table)
-    .where(inArray(table.commentId, commentIds))) as Array<CommentVoteRow>;
-
-  return tally(rows, userId);
+  return countCommentVotes(db, table, commentIds, userId);
 }
 
 export async function applyCommentVote(
@@ -100,11 +98,8 @@ export async function applyCommentVote(
         });
     }
 
-    const rows = (await tx
-      .select()
-      .from(table)
-      .where(eq(table.commentId, commentId))) as Array<CommentVoteRow>;
+    const votes = await countCommentVotes(tx, table, [commentId], userId);
 
-    return tally(rows, userId).get(commentId) ?? EMPTY_COMMENT_VOTE;
+    return votes.get(commentId) ?? EMPTY_COMMENT_VOTE;
   });
 }
