@@ -12,9 +12,16 @@ import {
   getApplicationComments,
   getDynamicComments,
   updateApplicationComment,
+  voteApplicationComment as libVoteApplicationComment,
+  voteInterviewComment as libVoteInterviewComment,
+  voteDynamicComment as libVoteDynamicComment,
 } from "@/lib/comment";
 import { db, User } from "@/lib/db";
-import type { Comment } from "@/components/candidate/page/candidate-comments";
+import type {
+  Comment,
+  CommentVoteSummary,
+  VoteValue,
+} from "@/components/candidate/page/candidate-comments";
 import {
   createDynamicComment,
   getDynamic,
@@ -87,9 +94,9 @@ export async function loadApplicationComments(
   candidateId: string,
 ): Promise<Array<Comment>> {
   const targetId = await getTargetRecruitmentId();
-  await requireRecruiterSession(targetId);
+  const user = await requireRecruiterSession(targetId);
 
-  return getApplicationComments(candidateId, targetId);
+  return getApplicationComments(candidateId, user.id, targetId);
 }
 
 export async function loadInterview(
@@ -107,7 +114,7 @@ export async function loadInterview(
 
   const [interviewers, comments, recruiters] = await Promise.all([
     getInterviewers(interview.id),
-    getInterviewComments(interview.id),
+    getInterviewComments(interview.id, user.id),
     getRecruiters(targetId),
   ]);
 
@@ -127,7 +134,7 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
 
   const [interviewers, comments, recruiters] = await Promise.all([
     getDynamicInterviewers(dynamic.id),
-    getDynamicComments(dynamic.id),
+    getDynamicComments(dynamic.id, user.id),
     getRecruiters(targetId),
   ]);
 
@@ -229,6 +236,54 @@ export async function editDynamicComment(
   const user = await requireRecruiterSession(targetId);
 
   return updateDynamicComment(commentId, content, user.id, dynamicId, targetId);
+}
+
+export async function voteApplicationComment(
+  candidateId: string,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return null;
+  const user = await requireRecruiterSession(targetId);
+
+  return libVoteApplicationComment(
+    commentId,
+    user.id,
+    value,
+    candidateId,
+    targetId,
+  );
+}
+
+export async function voteInterviewComment(
+  candidateId: string,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return null;
+  const user = await requireRecruiterSession(targetId);
+
+  return libVoteInterviewComment(
+    commentId,
+    user.id,
+    value,
+    candidateId,
+    targetId,
+  );
+}
+
+export async function voteDynamicComment(
+  dynamicId: number,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return null;
+  const user = await requireRecruiterSession(targetId);
+
+  return libVoteDynamicComment(commentId, user.id, value, dynamicId, targetId);
 }
 
 export async function updateInterviewContent(
