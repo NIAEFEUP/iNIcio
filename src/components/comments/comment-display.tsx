@@ -24,7 +24,7 @@ interface CommentDisplayProps {
   currentUserId?: string;
   isAdmin?: boolean;
   onSaveEdit?: (commentId: number, content: Array<any>) => Promise<boolean>;
-  onVoteComment?: (commentId: number, value: VoteValue) => void;
+  onVoteComment?: (commentId: number, value: VoteValue) => void | Promise<void>;
   recruiters?: Array<User>;
 }
 
@@ -207,7 +207,7 @@ export function CommentDisplay({
                 userVote={comment.userVote}
                 onVote={(value) => {
                   if (comment.comment?.id != null) {
-                    onVoteComment(comment.comment.id, value);
+                    return onVoteComment(comment.comment.id, value);
                   }
                 }}
               />
