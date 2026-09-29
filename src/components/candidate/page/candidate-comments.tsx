@@ -252,6 +252,7 @@ export default function CandidateComments({
               comment={comment}
               candidate={candidate}
               currentUserId={session?.user?.id}
+              isAdmin={session?.user?.role === "admin"}
               onSaveEdit={onEditComment ? handleEditComment : undefined}
               onVoteComment={onVoteComment ? handleVoteComment : undefined}
               recruiters={recruiters}

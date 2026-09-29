@@ -21,6 +21,7 @@ interface CommentDisplayProps {
   candidate: CandidateWithMetadata | Array<CandidateWithMetadata>;
   comment: Comment;
   currentUserId?: string;
+  isAdmin?: boolean;
   onSaveEdit?: (commentId: number, content: Array<any>) => Promise<boolean>;
   onVoteComment?: (commentId: number, value: VoteValue) => void;
   recruiters?: Array<User>;
@@ -30,6 +31,7 @@ export function CommentDisplay({
   candidate,
   comment,
   currentUserId,
+  isAdmin,
   onSaveEdit,
   onVoteComment,
   recruiters = [],
@@ -56,6 +58,14 @@ export function CommentDisplay({
     // them would send an undefined id to the server
     comment.comment.id != null &&
     comment.comment.authorId === currentUserId,
+  );
+
+  const canVote = Boolean(
+    !isEditing &&
+    currentUserId &&
+    onVoteComment &&
+    comment.comment?.authorId !== currentUserId &&
+    !isAdmin,
   );
 
   const closeEditor = () => {
@@ -188,7 +198,7 @@ export function CommentDisplay({
               <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
             </div>
           )}
-          {!isEditing && currentUserId && onVoteComment && (
+          {canVote && (
             <div className="flex items-center gap-1 pt-1">
               <CommentVoteButtons
                 upvotes={comment.upvotes}
