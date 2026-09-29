@@ -100,12 +100,11 @@ export function SidebarHeaderComponent({
     (id: number) => {
       setInternalSelectedId(id);
       onSelectRecruitment?.(id);
-      const dashboardHome = isAdmin ? "/admin" : "/recruiter";
-      router.push(dashboardHome);
+      router.push("/candidates");
       router.refresh();
       setIsOpen(false);
     },
-    [onSelectRecruitment, isAdmin, router],
+    [onSelectRecruitment, router],
   );
 
   const activeRecruitment = React.useMemo(

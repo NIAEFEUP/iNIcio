@@ -10,7 +10,6 @@ import {
   DoorOpen,
   FileText,
   Layers,
-  LayoutDashboard,
   ListChecks,
   MessageSquare,
   UserCheck,
@@ -66,16 +65,6 @@ export function SidebarContentComponent({
   const canRecruit = isRecruiter || isAdmin;
 
   const personalSections: NavItem[] = [
-    ...(!isAdmin
-      ? [
-          {
-            title: "Dashboard",
-            path: "/recruiter",
-            icon: LayoutDashboard,
-            exact: true,
-          },
-        ]
-      : []),
     ...(userId
       ? [
           {
@@ -104,7 +93,6 @@ export function SidebarContentComponent({
   ];
 
   const recruitmentManagementSections: NavItem[] = [
-    { title: "Dashboard", path: "/admin", icon: LayoutDashboard, exact: true },
     { title: "Fases", path: "/admin/phases", icon: Layers },
     { title: "Recrutadores", path: "/admin/recruiters", icon: UserCog },
     {

@@ -177,34 +177,7 @@ export function RecruiterProgressView({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title={
-          <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              Progresso do Recrutador
-            </h1>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal">
-              <span className="font-medium text-foreground">
-                {recruitment.title || `Recrutamento ${recruitment.lectiveYear}`}
-              </span>
-              {recruitment.semester && (
-                <span>· {recruitment.semester}º Semestre</span>
-              )}
-              <span className="inline-flex items-center gap-1.5 ml-1">
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full shrink-0",
-                    recruitment.active
-                      ? "bg-emerald-500"
-                      : "bg-muted-foreground/40",
-                  )}
-                />
-                {recruitment.active ? "Ativo" : "Inativo"}
-              </span>
-            </div>
-          </div>
-        }
-      />
+      <PageHeader title="Progresso do Recrutador" />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
