@@ -205,6 +205,12 @@ export async function getDynamicComments(
   );
 }
 
+// `VoteValue` is erased at build time, so server actions cannot rely on it to
+// reject malformed runtime input. Validate before persisting anything.
+export function isVoteValue(value: unknown): value is VoteValue {
+  return value === 1 || value === -1 || value === null;
+}
+
 export async function voteApplicationComment(
   commentId: number,
   userId: string,

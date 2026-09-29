@@ -11,6 +11,7 @@ import { getCandidateWithMetadata } from "@/lib/candidate";
 import {
   getApplicationComments,
   getDynamicComments,
+  isVoteValue,
   updateApplicationComment,
   voteApplicationComment as libVoteApplicationComment,
   voteInterviewComment as libVoteInterviewComment,
@@ -43,7 +44,6 @@ import {
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
 import { getRole } from "@/lib/role";
-import { isAdmin } from "@/lib/admin";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 export interface InterviewData {
@@ -246,8 +246,9 @@ export async function voteApplicationComment(
 ): Promise<CommentVoteSummary | null> {
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
+  if (!isVoteValue(value)) return null;
   const user = await requireRecruiterSession(targetId);
-  if (await isAdmin(user.id)) return null;
+  if (user.role === "admin") return null;
 
   return libVoteApplicationComment(
     commentId,
@@ -265,8 +266,9 @@ export async function voteInterviewComment(
 ): Promise<CommentVoteSummary | null> {
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
+  if (!isVoteValue(value)) return null;
   const user = await requireRecruiterSession(targetId);
-  if (await isAdmin(user.id)) return null;
+  if (user.role === "admin") return null;
 
   return libVoteInterviewComment(
     commentId,
@@ -284,8 +286,9 @@ export async function voteDynamicComment(
 ): Promise<CommentVoteSummary | null> {
   const targetId = await getTargetRecruitmentId();
   if (targetId === undefined) return null;
+  if (!isVoteValue(value)) return null;
   const user = await requireRecruiterSession(targetId);
-  if (await isAdmin(user.id)) return null;
+  if (user.role === "admin") return null;
 
   return libVoteDynamicComment(commentId, user.id, value, dynamicId, targetId);
 }
