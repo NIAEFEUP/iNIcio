@@ -1,8 +1,14 @@
 import RecruiterAvailabilityClient, {
   AvailabilityOperation,
 } from "@/components/recruiter/recruiter-availability-progress";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -63,26 +69,32 @@ export default async function RecruiterAvailabilityPage() {
     targetRecruitment?.id,
   );
 
+  if (!targetRecruitment) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Marca as tuas disponibilidades" />
+        <Empty className="border-border">
+          <EmptyMedia variant="icon">
+            <Calendar className="size-4" />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>Não existe um recrutamento ativo</EmptyTitle>
+            <EmptyDescription>
+              De momento não existe um recrutamento selecionado para marcar
+              disponibilidades.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Marca as tuas disponibilidades" />
-      {targetRecruitment ? (
-        <RecruiterAvailabilityClient
-          currentAvailabilities={currentAvailabilities}
-          saveAvailabilities={confirm}
-          recruiterId={session?.user.id}
-          recruitmentId={targetRecruitment.id}
-        />
-      ) : (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              Não existe um recrutamento ativo
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <RecruiterAvailabilityClient
+      currentAvailabilities={currentAvailabilities}
+      saveAvailabilities={confirm}
+      recruiterId={session?.user.id ?? ""}
+      recruitmentId={targetRecruitment.id}
+    />
   );
 }
