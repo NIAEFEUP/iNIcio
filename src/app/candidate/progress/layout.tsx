@@ -14,7 +14,7 @@ export default async function CandidateProgressLayout({
   }
 
   if (await isRecruiter(session.user.id)) {
-    return redirect("/recruiter");
+    return redirect("/candidates");
   }
 
   return <>{children}</>;

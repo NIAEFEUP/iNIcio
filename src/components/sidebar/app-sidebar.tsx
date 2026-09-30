@@ -19,6 +19,7 @@ import {
   type RecruitmentManagerMode,
   type RecruitmentOption,
 } from "./sidebar-header";
+import { SendCandidatesEmailButton } from "./send-candidates-email-button";
 
 export interface AppSidebarProps {
   user?: UserType | null;
@@ -36,7 +37,6 @@ export function AppSidebar({
   isAdmin = false,
   isRecruiter = false,
   onLogout,
-  currentPath = "",
   recruitments,
 }: AppSidebarProps) {
   const [managerOpen, setManagerOpen] = React.useState(false);
@@ -76,6 +76,13 @@ export function AppSidebar({
             currentRecruitmentId={selectedRecruitment?.id}
             onOpenOpenDay={() => setOpenDayOpen(true)}
           />
+          {(isRecruiter || isAdmin) && (
+            <div className="mt-auto p-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+              <SendCandidatesEmailButton
+                currentRecruitmentId={selectedRecruitment?.id}
+              />
+            </div>
+          )}
         </SidebarContent>
         <SidebarFooter className="border-t border-border/60">
           <SidebarFooterComponent
