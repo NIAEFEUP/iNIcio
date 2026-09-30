@@ -8,7 +8,6 @@ export function BookingSlotBox({
   existingSlot,
   isSlotSelected,
   getTypeColor,
-  bookings,
 }) {
   return (
     <>
@@ -32,7 +31,7 @@ export function BookingSlotBox({
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                <span>{bookings?.length}</span>
+                <span>{booking.candidates?.length ?? existingSlot.length}</span>
               </div>
             </div>
 

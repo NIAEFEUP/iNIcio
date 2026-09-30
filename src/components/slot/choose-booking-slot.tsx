@@ -83,7 +83,6 @@ export default function ChooseBookingSlot({
                         className="p-1"
                       >
                         <BookingSlotBox
-                          bookings={bookings}
                           existingSlot={existingSlot}
                           slotType={slotType}
                           isSlotSelected={isSlotSelected}
