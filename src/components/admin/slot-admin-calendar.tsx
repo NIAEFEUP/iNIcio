@@ -81,8 +81,6 @@ export default function SlotAdminCalendar({
     },
   });
 
-  const [selectedSlot] = useState<Slot | null>(null);
-
   const tableRef = useRef<HTMLTableElement>(null);
   const [weekStart, setWeekStart] = useState(() => generateDates()[0]);
 
@@ -216,7 +214,6 @@ export default function SlotAdminCalendar({
             timeSlots={timeSlots}
             getSlotForCell={getSlotForCell}
             getCellKey={getCellKey}
-            selectedSlot={selectedSlot}
             onCellsChange={onCellsChange}
             getTypeColor={getTypeColor}
             formatDateHeader={formatDateHeader}
@@ -229,7 +226,6 @@ export default function SlotAdminCalendar({
             timeSlots={timeSlots}
             getSlotForCell={getBookingsForCell}
             getCellKey={getCellKey}
-            selectedSlot={selectedSlot}
             getTypeColor={getTypeColor}
             formatDateHeader={formatDateHeader}
             slotType={slotType}

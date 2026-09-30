@@ -11,7 +11,6 @@ export default function ChooseBookingSlot({
   timeSlots,
   getSlotForCell,
   getCellKey,
-  selectedSlot,
   getTypeColor,
   formatDateHeader,
   bookings,
@@ -68,10 +67,6 @@ export default function ChooseBookingSlot({
                   {dates.map((date: Date) => {
                     const cellKey = getCellKey(date, time);
                     const existingSlot = getSlotForCell(date, time, bookings);
-                    const isSlotSelected =
-                      selectedSlot &&
-                      existingSlot &&
-                      selectedSlot === existingSlot;
 
                     return (
                       <td
@@ -85,7 +80,6 @@ export default function ChooseBookingSlot({
                         <BookingSlotBox
                           existingSlot={existingSlot}
                           slotType={slotType}
-                          isSlotSelected={isSlotSelected}
                           getTypeColor={getTypeColor}
                         />
                       </td>

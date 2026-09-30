@@ -3,12 +3,7 @@ import { Clock, Users } from "lucide-react";
 
 import BookingSlotDialog from "./booking-slot-dialog";
 
-export function BookingSlotBox({
-  slotType,
-  existingSlot,
-  isSlotSelected,
-  getTypeColor,
-}) {
+export function BookingSlotBox({ slotType, existingSlot, getTypeColor }) {
   return (
     <>
       {existingSlot.map((booking) => (
@@ -17,10 +12,7 @@ export function BookingSlotBox({
           className={cn(
             "w-full border-2 border-dashed border-gray-200 dark:border-muted-foreground/35 rounded cursor-pointer",
             "hover:border-gray-300 dark:hover:border-muted-foreground/60",
-            !isSlotSelected &&
-              `${getTypeColor(booking.slot.type)} border-solid border-transparent text-white`,
-            isSlotSelected &&
-              `${getTypeColor(booking.slot.type)} border-solid border-yellow-400 border-4 text-white shadow-lg ring-2 ring-yellow-200`,
+            `${getTypeColor(booking.slot.type)} border-solid border-transparent text-white`,
           )}
         >
           <div className="h-full flex flex-col p-2 gap-1.5" key={booking.id}>
@@ -47,10 +39,6 @@ export function BookingSlotBox({
                 />
               </div>
             </div>
-
-            {isSlotSelected && (
-              <div className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            )}
           </div>
         </div>
       ))}
