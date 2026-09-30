@@ -28,6 +28,7 @@ import {
   saveDynamicComment,
   setDynamicLocked,
   updateDynamicContent,
+  voteDynamicComment,
 } from "@/app/candidate/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
@@ -80,7 +81,7 @@ export default function DynamicPage() {
   const saveComment = async (content: Array<unknown>) => {
     const result = await saveDynamicComment(dynamicId, content);
     if (result.success) {
-      mutate(dynamicKey(dynamicId, recruitmentId));
+      mutate(dynamicKey(dynamicId, recruitmentId, user?.id));
     }
     return result;
   };
@@ -88,7 +89,7 @@ export default function DynamicPage() {
   const editComment = async (commentId: number, content: Array<any>) => {
     const ok = await editDynamicComment(dynamicId, commentId, content);
     if (ok) {
-      mutate(dynamicKey(dynamicId, recruitmentId));
+      mutate(dynamicKey(dynamicId, recruitmentId, user?.id));
     }
     return ok;
   };
@@ -115,7 +116,7 @@ export default function DynamicPage() {
     try {
       await setDynamicLocked(dynamicId, newLocked);
       await mutate(
-        dynamicKey(dynamicId, recruitmentId),
+        dynamicKey(dynamicId, recruitmentId, user?.id),
         (current: any) =>
           current
             ? {
@@ -254,6 +255,7 @@ export default function DynamicPage() {
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
+                  onVoteComment={voteDynamicComment.bind(null, dynamic.id)}
                   recruiters={recruiters}
                 />
               </CommentFrame>

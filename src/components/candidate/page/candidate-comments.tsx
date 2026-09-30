@@ -5,6 +5,7 @@ import RealTimeEditor from "@/components/editor/real-time-editor";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/toast";
 
 import { useSession } from "@/lib/use-session";
 import {
@@ -19,6 +20,7 @@ import { useState } from "react";
 import { commentCreationMap } from "@/lib/comment-format";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { isDocumentEmpty } from "@/lib/text-editor";
+import type { CommentVoteSummary, VoteValue } from "@/lib/comment-vote";
 
 type CommentType = "application" | "interview" | "dynamic";
 
@@ -26,7 +28,7 @@ export type Comment = {
   user: User | null;
   comment: ApplicationComment | InterviewComment | DynamicComment | null;
   type: CommentType;
-};
+} & CommentVoteSummary;
 
 interface CandidateCommentsProps {
   candidate: CandidateWithMetadata | Array<CandidateWithMetadata>;
@@ -36,6 +38,10 @@ interface CandidateCommentsProps {
     content: Array<any>,
   ) => Promise<{ success: boolean; id?: number }>;
   onEditComment?: (commentId: number, content: Array<any>) => Promise<boolean>;
+  onVoteComment?: (
+    commentId: number,
+    value: VoteValue,
+  ) => Promise<CommentVoteSummary | null>;
   recruiters?: Array<User>;
 }
 
@@ -46,6 +52,7 @@ export default function CandidateComments({
   comments,
   saveToDatabase,
   onEditComment,
+  onVoteComment,
 }: CandidateCommentsProps) {
   const { data: session, isPending } = useSession();
 
@@ -76,6 +83,60 @@ export default function CandidateComments({
     return ok;
   };
 
+  const handleVoteComment = async (commentId: number, value: VoteValue) => {
+    if (!onVoteComment) return;
+
+    const previous = commentsState.find((c) => c.comment?.id === commentId);
+    if (!previous || !previous.comment) return;
+
+    const previousVote = previous.userVote;
+    const optimistic: CommentVoteSummary = {
+      upvotes:
+        previous.upvotes + (value === 1 ? 1 : 0) - (previousVote === 1 ? 1 : 0),
+      downvotes:
+        previous.downvotes +
+        (value === -1 ? 1 : 0) -
+        (previousVote === -1 ? 1 : 0),
+      userVote: value,
+    };
+
+    setCommentsState((prev) =>
+      prev.map((c) =>
+        c.comment?.id === commentId ? { ...c, ...optimistic } : c,
+      ),
+    );
+
+    try {
+      const result = await onVoteComment(commentId, value);
+      if (result) {
+        setCommentsState((prev) =>
+          prev.map((c) =>
+            c.comment?.id === commentId ? { ...c, ...result } : c,
+          ),
+        );
+      } else {
+        throw new Error("Vote failed");
+      }
+    } catch {
+      setCommentsState((prev) =>
+        prev.map((c) =>
+          c.comment?.id === commentId
+            ? {
+                ...c,
+                upvotes: previous.upvotes,
+                downvotes: previous.downvotes,
+                userVote: previous.userVote,
+              }
+            : c,
+        ),
+      );
+      toast.add({
+        type: "error",
+        title: "Não foi possível registar o voto.",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -99,6 +160,9 @@ export default function CandidateComments({
         session ? session.user.id : "",
       ) as ApplicationComment | InterviewComment | DynamicComment,
       type: type,
+      upvotes: 0,
+      downvotes: 0,
+      userVote: null,
     };
 
     setCommentsState((prev) => [optimisticComment, ...prev]);
@@ -181,7 +245,9 @@ export default function CandidateComments({
               comment={comment}
               candidate={candidate}
               currentUserId={session?.user?.id}
+              isAdmin={session?.user?.role === "admin"}
               onSaveEdit={onEditComment ? handleEditComment : undefined}
+              onVoteComment={onVoteComment ? handleVoteComment : undefined}
               recruiters={recruiters}
             />
           ))}

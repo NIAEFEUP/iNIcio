@@ -30,6 +30,7 @@ import {
   saveInterviewComment,
   setInterviewLocked,
   updateInterviewContent,
+  voteInterviewComment,
 } from "@/app/candidate/actions";
 import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { useAuth } from "@/hooks/use-auth";
@@ -85,7 +86,7 @@ export default function InterviewPage() {
   const saveComment = async (content: Array<unknown>) => {
     const result = await saveInterviewComment(id, content);
     if (result.success) {
-      mutate(interviewKey(id, recruitmentId));
+      mutate(interviewKey(id, recruitmentId, user?.id));
     }
     return result;
   };
@@ -93,7 +94,7 @@ export default function InterviewPage() {
   const editComment = async (commentId: number, content: Array<any>) => {
     const ok = await editInterviewComment(id, commentId, content);
     if (ok) {
-      mutate(interviewKey(id, recruitmentId));
+      mutate(interviewKey(id, recruitmentId, user?.id));
     }
     return ok;
   };
@@ -120,7 +121,7 @@ export default function InterviewPage() {
     try {
       await setInterviewLocked(id, newLocked);
       await mutate(
-        interviewKey(id, recruitmentId),
+        interviewKey(id, recruitmentId, user?.id),
         (current: any) =>
           current
             ? {
@@ -274,6 +275,7 @@ export default function InterviewPage() {
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
+                  onVoteComment={voteInterviewComment.bind(null, candidate.id)}
                   recruiters={recruiters}
                 />
               </CommentFrame>

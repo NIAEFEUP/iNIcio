@@ -1,6 +1,7 @@
 import {
   interview,
   interviewComment,
+  interviewCommentVote,
   interviewTemplate,
   slot,
   recruiterToInterview,
@@ -9,6 +10,7 @@ import { db, InterviewTemplate, Slot } from "./db";
 import { and, eq, gt } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
+import { EMPTY_COMMENT_VOTE, loadCommentVotes } from "./comment-vote";
 import { getActiveRecruitment } from "./recruitment";
 
 export default async function addInterviewWithSlot(
@@ -252,6 +254,7 @@ export function getCandidateInterviewLink(candidateId: string) {
 
 export async function getInterviewComments(
   interviewId: number,
+  userId: string,
 ): Promise<Array<Comment>> {
   const comments = await db.query.interviewComment.findMany({
     where: eq(interviewComment.interviewId, interviewId),
@@ -263,6 +266,12 @@ export async function getInterviewComments(
       },
     },
   });
+
+  const votes = await loadCommentVotes(
+    interviewCommentVote,
+    comments.map((c) => c.id),
+    userId,
+  );
 
   return await Promise.all(
     comments.map(async (c): Promise<Comment> => ({
@@ -279,6 +288,7 @@ export async function getInterviewComments(
         authorId: c.authorId,
       },
       type: "interview",
+      ...(votes.get(c.id) ?? EMPTY_COMMENT_VOTE),
     })),
   );
 }

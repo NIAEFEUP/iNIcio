@@ -71,6 +71,13 @@
       "when": 1790509236213,
       "tag": "0009_numerous_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790695471715,
+      "tag": "0010_familiar_iron_monger",
+      "breakpoints": true
     }
   ]
 }

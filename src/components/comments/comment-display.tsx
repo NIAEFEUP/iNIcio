@@ -12,7 +12,9 @@ import { useRef, useState } from "react";
 import type { BlockNoteEditor } from "@blocknote/core";
 
 import { ReadOnlyBlocks } from "../editor/read-only-blocks";
+import { CommentVoteButtons } from "./comment-vote-buttons";
 import { Comment } from "../candidate/page/candidate-comments";
+import type { VoteValue } from "@/lib/comment-vote";
 import { CandidateWithMetadata } from "@/lib/candidate";
 import { User } from "@/lib/db";
 
@@ -20,7 +22,9 @@ interface CommentDisplayProps {
   candidate: CandidateWithMetadata | Array<CandidateWithMetadata>;
   comment: Comment;
   currentUserId?: string;
+  isAdmin?: boolean;
   onSaveEdit?: (commentId: number, content: Array<any>) => Promise<boolean>;
+  onVoteComment?: (commentId: number, value: VoteValue) => void | Promise<void>;
   recruiters?: Array<User>;
 }
 
@@ -28,7 +32,9 @@ export function CommentDisplay({
   candidate,
   comment,
   currentUserId,
+  isAdmin,
   onSaveEdit,
+  onVoteComment,
   recruiters = [],
 }: CommentDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +59,14 @@ export function CommentDisplay({
     // them would send an undefined id to the server
     comment.comment.id != null &&
     comment.comment.authorId === currentUserId,
+  );
+
+  const canVote = Boolean(
+    !isEditing &&
+    currentUserId &&
+    onVoteComment &&
+    comment.comment?.authorId !== currentUserId &&
+    !isAdmin,
   );
 
   const closeEditor = () => {
@@ -183,6 +197,20 @@ export function CommentDisplay({
           ) : (
             <div className="text-sm text-foreground">
               <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
+            </div>
+          )}
+          {canVote && (
+            <div className="flex items-center gap-1 pt-1">
+              <CommentVoteButtons
+                upvotes={comment.upvotes}
+                downvotes={comment.downvotes}
+                userVote={comment.userVote}
+                onVote={(value) => {
+                  if (comment.comment?.id != null) {
+                    return onVoteComment(comment.comment.id, value);
+                  }
+                }}
+              />
             </div>
           )}
         </div>
