@@ -179,7 +179,7 @@ export function RecruiterProgressView({
     <div className="flex flex-col gap-6">
       <PageHeader title="Progresso do Recrutador" />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardDescription className="text-xs uppercase tracking-wider font-medium">
@@ -218,32 +218,6 @@ export function RecruiterProgressView({
           <CardContent>
             <p className="text-xs text-muted-foreground">
               Inscrições neste recrutamento
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription className="text-xs uppercase tracking-wider font-medium">
-              Fases de Recrutador
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">
-              {completedPhases}{" "}
-              <span className="text-sm font-normal text-muted-foreground">
-                / {totalPhases}
-              </span>
-            </CardTitle>
-            <CardAction>
-              <div className="rounded-lg p-2 bg-muted text-muted-foreground">
-                <Layers className="size-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              {totalPhases > 0
-                ? `${progressPercent}% das etapas concluídas`
-                : "Nenhuma fase configurada"}
             </p>
           </CardContent>
         </Card>
