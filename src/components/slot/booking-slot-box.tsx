@@ -28,9 +28,7 @@ export function BookingSlotBox({
             <div className="flex items-center justify-between text-xs text-white/90">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span className="font-medium">
-                  {existingSlot?.slot?.duration}m
-                </span>
+                <span className="font-medium">{booking.slot.duration} min</span>
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
