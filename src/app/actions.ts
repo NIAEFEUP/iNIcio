@@ -1,11 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
   notification,
   recruiterAvailability,
   recruiterToDynamic,
   recruiterToInterview,
+  usersToRecruitments,
 } from "@/db/schema";
 import { db, getAllCandidateUsers, User } from "@/lib/db";
 import { and, asc, eq, gt, lt, sql } from "drizzle-orm";
@@ -108,6 +110,51 @@ export async function getAvailableRecruiters(
   return [...new Map(r.map((r) => [r.id, r])).values()];
 }
 
+export async function getAllTeamRecruiters(
+  recruitmentId?: number,
+): Promise<User[]> {
+  await requireRecruiterSession(recruitmentId);
+
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
+
+  const results = await db.query.usersToRecruitments.findMany({
+    where: eq(usersToRecruitments.recruitmentId, targetId),
+    with: {
+      user: {
+        with: {
+          recruiter: {
+            with: {
+              knownCandidates: true,
+              interviews: {
+                with: {
+                  interview: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
+              dynamics: {
+                with: {
+                  dynamic: {
+                    with: {
+                      slot: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const users = results.map((r) => r.user);
+  return [...new Map(users.map((u) => [u.id, u])).values()];
+}
+
 export async function assignRecruiter(
   interviewId: number,
   userId: string,
@@ -126,6 +173,8 @@ export async function assignRecruiter(
       dynamicId: interviewId,
     });
   }
+
+  revalidatePath("/admin/bookings");
 }
 
 export async function unassignRecruiter(
@@ -154,6 +203,8 @@ export async function unassignRecruiter(
         ),
       );
   }
+
+  revalidatePath("/admin/bookings");
 }
 
 export async function getSignedProfilePictureUrl(targetPictureUrl: string) {

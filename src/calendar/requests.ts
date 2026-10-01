@@ -10,8 +10,11 @@ import {
   getAllRecruiters,
 } from "@/lib/recruiter";
 import { getFilenameUrl } from "@/lib/file-upload";
+import type { IUser } from "./interfaces";
 
 import { getActiveRecruitment } from "@/lib/recruitment";
+
+const UNASSIGNED_USER: IUser = { id: "", name: "", picturePath: null };
 
 export const getEventAvailabilities = async (recruitmentId?: number) => {
   const calendarEvents: IEvent[] = [];
@@ -138,7 +141,11 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
 
     const assignedRecruiter =
       interviewItem.recruiters.length > 0
-        ? interviewItem.recruiters[0].recruiter.user
+        ? {
+            id: interviewItem.recruiters[0].recruiter.user.id,
+            name: interviewItem.recruiters[0].recruiter.user.name,
+            picturePath: interviewItem.recruiters[0].recruiter.user.image,
+          }
         : null;
 
     calendarEvents.push({
@@ -148,10 +155,7 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
       title: "Entrevista",
       description: "Entrevista",
       color: COLORS[index % COLORS.length],
-      user: {
-        ...(assignedRecruiter ?? {}),
-        picturePath: assignedRecruiter?.image,
-      },
+      user: assignedRecruiter ?? UNASSIGNED_USER,
       link: getCandidateInterviewLink(interviewItem.candidateId),
       assigned: interviewItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
@@ -165,7 +169,11 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
 
     const assignedRecruiter =
       dynamicItem.recruiters.length > 0
-        ? dynamicItem.recruiters[0].recruiter.user
+        ? {
+            id: dynamicItem.recruiters[0].recruiter.user.id,
+            name: dynamicItem.recruiters[0].recruiter.user.name,
+            picturePath: dynamicItem.recruiters[0].recruiter.user.image,
+          }
         : null;
 
     calendarEvents.push({
@@ -175,10 +183,7 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
       title: "Dinâmica",
       description: "Dinâmica",
       color: COLORS[calendarEvents.length % COLORS.length],
-      user: {
-        ...(assignedRecruiter ?? {}),
-        picturePath: assignedRecruiter?.image,
-      },
+      user: assignedRecruiter ?? UNASSIGNED_USER,
       link: getDynamicLink(dynamicItem.id),
       assigned: dynamicItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
