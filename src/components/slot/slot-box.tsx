@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 
 export default function SlotBox({
   existingSlot,
-  isSlotSelected,
   getTypeColor,
   preview = null,
 }) {
@@ -12,10 +11,7 @@ export default function SlotBox({
         "w-full h-12 border-2 border-dashed border-gray-200 dark:border-muted-foreground/35 rounded cursor-pointer",
         "hover:border-gray-300 dark:hover:border-muted-foreground/60",
         existingSlot &&
-          !isSlotSelected &&
           `${getTypeColor(existingSlot.type)} border-solid border-transparent text-white`,
-        isSlotSelected &&
-          `${getTypeColor(existingSlot.type)} border-solid border-yellow-400 border-4 text-white shadow-lg ring-2 ring-yellow-200`,
         preview === "select" && "ring-2 ring-inset ring-emerald-400",
         preview === "deselect" && "ring-2 ring-inset ring-red-400 opacity-60",
         preview === "select" && !existingSlot && "bg-emerald-50",
@@ -23,11 +19,8 @@ export default function SlotBox({
     >
       {existingSlot && (
         <div className="h-full flex flex-col items-center justify-center text-xs relative">
-          <span className="font-medium">{existingSlot.duration}m</span>
+          <span className="font-medium">{existingSlot.duration} min</span>
           <span className="opacity-80">×{existingSlot.quantity}</span>
-          {isSlotSelected && (
-            <div className="absolute top-1 right-1 w-2 h-2 bg-yellow-300 rounded-full"></div>
-          )}
         </div>
       )}
     </div>

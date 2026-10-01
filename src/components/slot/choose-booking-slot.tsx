@@ -11,7 +11,6 @@ export default function ChooseBookingSlot({
   timeSlots,
   getSlotForCell,
   getCellKey,
-  selectedSlot,
   getTypeColor,
   formatDateHeader,
   bookings,
@@ -31,7 +30,7 @@ export default function ChooseBookingSlot({
             <thead>
               <tr>
                 <th className="text-left p-3 border-b font-medium text-muted-foreground min-w-[100px]">
-                  Time
+                  Hora
                 </th>
                 {dates.map((date) => {
                   const dateInfo = formatDateHeader(date);
@@ -58,7 +57,7 @@ export default function ChooseBookingSlot({
             </thead>
             <tbody>
               {timeSlots.map((time: string) => (
-                <tr key={crypto.randomUUID()} className="border-b">
+                <tr key={time} className="border-b">
                   <td className="p-3 font-medium text-sm">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
@@ -68,10 +67,6 @@ export default function ChooseBookingSlot({
                   {dates.map((date: Date) => {
                     const cellKey = getCellKey(date, time);
                     const existingSlot = getSlotForCell(date, time, bookings);
-                    const isSlotSelected =
-                      selectedSlot &&
-                      existingSlot &&
-                      selectedSlot === existingSlot;
 
                     return (
                       <td
@@ -83,10 +78,8 @@ export default function ChooseBookingSlot({
                         className="p-1"
                       >
                         <BookingSlotBox
-                          bookings={bookings}
                           existingSlot={existingSlot}
                           slotType={slotType}
-                          isSlotSelected={isSlotSelected}
                           getTypeColor={getTypeColor}
                         />
                       </td>

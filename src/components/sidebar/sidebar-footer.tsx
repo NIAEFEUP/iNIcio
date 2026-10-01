@@ -183,15 +183,16 @@ export function SidebarFooterComponent({
       setCopied(true);
       toast.add({
         type: "success",
-        title: "Email copied",
-        description: "Email address copied to clipboard.",
+        title: "Email copiado",
+        description: "Endereço de email copiado para a área de transferência.",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.add({
         type: "error",
-        title: "Failed to copy",
-        description: "Could not copy email to clipboard.",
+        title: "Falha ao copiar",
+        description:
+          "Não foi possível copiar o email para a área de transferência.",
       });
     }
   };
@@ -222,7 +223,7 @@ export function SidebarFooterComponent({
           <SidebarMenuButton
             size="lg"
             render={<Link href="/login" />}
-            tooltip="Sign in"
+            tooltip="Iniciar sessão"
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar className="h-8 w-8 rounded-lg after:rounded-lg">
@@ -231,9 +232,9 @@ export function SidebarFooterComponent({
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">Sign in</span>
+              <span className="truncate font-medium">Iniciar sessão</span>
               <span className="truncate text-xs text-muted-foreground">
-                Access your account
+                Acede à tua conta
               </span>
             </div>
           </SidebarMenuButton>
@@ -282,7 +283,7 @@ export function SidebarFooterComponent({
             >
               <DropdownMenuGroup>
                 <div className="flex items-center justify-between px-1.5 py-1">
-                  <DropdownMenuLabel className="p-0">Account</DropdownMenuLabel>
+                  <DropdownMenuLabel className="p-0">Conta</DropdownMenuLabel>
                   {user.isAdmin && (
                     <span className="text-[10px] text-muted-foreground">
                       Administrator
@@ -404,7 +405,7 @@ export function SidebarFooterComponent({
               </DropdownMenuGroup>
 
               <DropdownMenuGroup>
-                <DropdownMenuLabel>Preferences</DropdownMenuLabel>
+                <DropdownMenuLabel>Preferências</DropdownMenuLabel>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
@@ -418,7 +419,7 @@ export function SidebarFooterComponent({
                         )}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium text-xs truncate">Theme</span>
+                    <span className="font-medium text-xs truncate">Tema</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-40 p-1 rounded-lg">
                     <DropdownMenuRadioGroup
@@ -433,7 +434,7 @@ export function SidebarFooterComponent({
                             <Sun className="h-3.5 w-3.5" />
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-xs">Light</span>
+                        <span className="font-medium text-xs">Claro</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value="dark">
                         <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
@@ -441,7 +442,7 @@ export function SidebarFooterComponent({
                             <Moon className="h-3.5 w-3.5" />
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-xs">Dark</span>
+                        <span className="font-medium text-xs">Escuro</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value="system">
                         <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
@@ -449,7 +450,7 @@ export function SidebarFooterComponent({
                             <Monitor className="h-3.5 w-3.5" />
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-xs">System</span>
+                        <span className="font-medium text-xs">Sistema</span>
                       </DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                   </DropdownMenuSubContent>

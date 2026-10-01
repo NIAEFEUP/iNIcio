@@ -51,6 +51,10 @@ export function generateDates(weekStart?: Date) {
   return dates;
 }
 
+// NOTE: this steps minutes by `duration` within each hour, so durations that
+// do not divide 60 (e.g. 45) produce an irregular, overlapping grid
+// (09:00, 09:45, 10:00, 10:45, ...). Kept as-is for now; changing it would
+// shift the admin slot grid times.
 export function generateTimeSlots(startHour, endHour, duration) {
   const times = [];
   for (let hour = startHour; hour <= endHour; hour++) {

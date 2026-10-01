@@ -568,7 +568,7 @@ export function RecruiterAvailabilityCalendar({
                                   </span>
                                   {isSingle && (
                                     <span className="text-[9px] font-normal opacity-85">
-                                      30m
+                                      {slotMinutes}m
                                     </span>
                                   )}
                                 </div>

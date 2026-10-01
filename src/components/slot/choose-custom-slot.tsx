@@ -23,7 +23,6 @@ interface ChooseCustomSlotProps {
   timeSlots: string[];
   getSlotForCell: (date: Date, time: string, slots: any[]) => any;
   getCellKey: (date: Date, time: string) => Date;
-  selectedSlot: any;
   onCellsChange: (cells: SlotCell[], selected: boolean) => void;
   getTypeColor: (type: any) => string;
   formatDateHeader: (date: Date) => {
@@ -51,7 +50,6 @@ export default function ChooseCustomSlot({
   timeSlots,
   getSlotForCell,
   getCellKey,
-  selectedSlot,
   onCellsChange,
   getTypeColor,
   formatDateHeader,
@@ -227,7 +225,7 @@ export default function ChooseCustomSlot({
             <thead>
               <tr>
                 <th className="text-left p-3 border-b font-medium text-muted-foreground min-w-[100px]">
-                  Time
+                  Hora
                 </th>
                 {dates.map((date) => {
                   const dateInfo = formatDateHeader(date);
@@ -264,10 +262,6 @@ export default function ChooseCustomSlot({
                   {dates.map((date: Date, col: number) => {
                     const cellKey = getCellKey(date, time);
                     const existingSlot = getSlotForCell(date, time, slots);
-                    const isSlotSelected =
-                      selectedSlot &&
-                      existingSlot &&
-                      selectedSlot === existingSlot;
 
                     return (
                       <td
@@ -279,7 +273,6 @@ export default function ChooseCustomSlot({
                       >
                         <SlotBox
                           existingSlot={existingSlot}
-                          isSlotSelected={isSlotSelected}
                           getTypeColor={getTypeColor}
                           preview={previewFor(col, row)}
                         />

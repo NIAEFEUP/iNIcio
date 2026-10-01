@@ -61,7 +61,9 @@ export function CandidateVotingSlideshow({
   const [rejectedCount, setRejectedCount] = useState<number>(
     currentVotingPhase?.status.rejected_candidates || 0,
   );
-  const [finishedCandidates, setFinishedCandidates] = useState<number>(0);
+  const [finishedCandidates, setFinishedCandidates] = useState<number>(
+    candidates.filter((c) => c.isFinished).length,
+  );
 
   const [, setDirection] = useState<"next" | "prev">("next");
 
