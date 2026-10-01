@@ -22,6 +22,11 @@ export default function CandidateVotingShowResults() {
   const rejectedCount = votes
     ? votes.filter((v) => v.decision === "reject").length
     : 0;
+  const totalVotes = approvedCount + rejectedCount;
+  const approvedPercent =
+    totalVotes > 0 ? Math.round((approvedCount / totalVotes) * 100) : 0;
+  const rejectedPercent =
+    totalVotes > 0 ? Math.round((rejectedCount / totalVotes) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-2">
@@ -37,9 +42,7 @@ export default function CandidateVotingShowResults() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">A favor</p>
-                <p className="text-xs">
-                  {(approvedCount / (approvedCount + rejectedCount)) * 100}%
-                </p>
+                <p className="text-xs">{approvedPercent}%</p>
               </div>
             </div>
             <div className="text-center">
@@ -51,9 +54,7 @@ export default function CandidateVotingShowResults() {
               </div>
               <div>
                 <p className="text-xs text-destructive/80">Contra</p>
-                <p className="text-xs">
-                  {(rejectedCount / (approvedCount + rejectedCount)) * 100}%
-                </p>
+                <p className="text-xs">{rejectedPercent}%</p>
               </div>
             </div>
           </div>
