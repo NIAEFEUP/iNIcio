@@ -141,7 +141,7 @@ export function BookingPicker({
               {selectedRecruiters?.map((interviewer) => {
                 return (
                   <div
-                    key={crypto.randomUUID()}
+                    key={interviewer.id}
                     className="flex items-center gap-2 rounded-lg border bg-card p-2"
                   >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">

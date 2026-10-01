@@ -57,7 +57,7 @@ export default function ChooseBookingSlot({
             </thead>
             <tbody>
               {timeSlots.map((time: string) => (
-                <tr key={crypto.randomUUID()} className="border-b">
+                <tr key={time} className="border-b">
                   <td className="p-3 font-medium text-sm">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
