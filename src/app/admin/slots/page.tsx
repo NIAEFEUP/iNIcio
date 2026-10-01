@@ -1,11 +1,20 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { revalidatePath } from "next/cache";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Calendar } from "lucide-react";
-import SlotAdminCalendar from "@/components/admin/slot-admin-calendar";
+import SlotAdminCalendar, {
+  type SlotOperation,
+} from "@/components/admin/slot-admin-calendar";
 
 import { getLatestRecruitment } from "@/lib/recruitment";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
-import { db, NewSlot, Slot } from "@/lib/db";
+import { db } from "@/lib/db";
 
 import { slot } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -13,11 +22,6 @@ import getExistingSlots from "@/lib/slot";
 import { getBookings } from "@/lib/booking";
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
 import { requireAdminSession } from "@/lib/action-guard";
-
-export type SlotOperation = {
-  type: "add" | "remove";
-  slot: Slot | NewSlot;
-};
 
 const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
   const opMap = new Map<string, SlotOperation>();
@@ -44,7 +48,7 @@ const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
   return Array.from(opMap.values());
 };
 
-export default async function SlotsPage() {
+export default async function SlotsAdminPage() {
   const currentRecruitment =
     (await getTargetRecruitment()) ?? (await getLatestRecruitment());
 
@@ -91,6 +95,10 @@ export default async function SlotsPage() {
           }
         }
       });
+
+      revalidatePath("/admin/slots");
+      revalidatePath("/admin/bookings");
+      revalidatePath("/candidate/progress");
     }
 
     return getExistingSlots(currentRecruitment?.id);
@@ -100,32 +108,33 @@ export default async function SlotsPage() {
   const bookings = await getBookings(currentRecruitment?.id);
   const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);
 
+  if (!currentRecruitment) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Gestão de horários & slots" />
+        <Empty className="border-border">
+          <EmptyMedia variant="icon">
+            <Calendar className="size-4" />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>Não existe um recrutamento ativo</EmptyTitle>
+            <EmptyDescription>
+              De momento não existe um recrutamento selecionado para gerir
+              horários e slots.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Gestão de slots" />
-
-      {currentRecruitment && (
-        <>
-          <SlotAdminCalendar
-            candidates={candidates}
-            bookings={bookings}
-            recruitmentId={currentRecruitment.id}
-            existingSlots={existingSlots}
-            saveSlots={saveSlots}
-          />
-        </>
-      )}
-
-      {!currentRecruitment && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              Não existe nenhum período de recrutamento ativo
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <SlotAdminCalendar
+      candidates={candidates}
+      bookings={bookings}
+      recruitmentId={currentRecruitment.id}
+      existingSlots={existingSlots}
+      saveSlots={saveSlots}
+    />
   );
 }

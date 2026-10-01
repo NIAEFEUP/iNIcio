@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Calendar,
+  CalendarCheck,
   CalendarClock,
   CalendarRange,
   Clock,
@@ -100,7 +101,8 @@ export function SidebarContentComponent({
       path: "/admin/availabilities",
       icon: CalendarRange,
     },
-    { title: "Horários & Slots", path: "/admin/interviews", icon: Clock },
+    { title: "Horários & Slots", path: "/admin/slots", icon: Clock },
+    { title: "Marcações", path: "/admin/bookings", icon: CalendarCheck },
     { title: "Modelos", path: "/admin/templates", icon: FileText },
     {
       title: "Mensagens Finais",

@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/admin/interviews",
+        destination: "/admin/bookings",
+        permanent: false,
+      },
+      {
         source: "/recruiter",
         destination: "/candidates",
         permanent: false,

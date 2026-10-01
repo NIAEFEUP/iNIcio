@@ -1,71 +1,113 @@
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import { Calendar, Users, UserCheck, UserX } from "lucide-react";
+import type { SlotType } from "./slot-admin-calendar";
 
 interface StatsGridProps {
   slots: {
-    [key: string]: Array<{ quantity: number }>;
+    interview?: Array<{ start: Date; duration: number; quantity: number }>;
+    dynamic?: Array<{ start: Date; duration: number; quantity: number }>;
+    [key: string]:
+      Array<{ start?: Date; duration?: number; quantity?: number }> | undefined;
   };
-  slotType: string;
+  slotType?: SlotType | string;
   candidates: Array<CandidateListMetadata>;
+  weekStart?: Date;
+  weekEnd?: Date;
 }
 
 export function SlotAdminStats({
   slots,
-  slotType,
   candidates,
+  weekStart,
+  weekEnd,
 }: StatsGridProps) {
+  const interviewSlots = slots.interview ?? [];
+  const dynamicSlots = slots.dynamic ?? [];
+
+  const filterWeek = (
+    items: Array<{ start?: Date; duration?: number; quantity?: number }>,
+  ) => {
+    if (!weekStart || !weekEnd) return [];
+    const s = new Date(weekStart);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(weekEnd);
+    e.setHours(23, 59, 59, 999);
+    return items.filter((item) => {
+      if (!item.start) return false;
+      const d = new Date(item.start);
+      return d >= s && d <= e;
+    });
+  };
+
+  const weekInterviewSlots = filterWeek(interviewSlots);
+  const weekDynamicSlots = filterWeek(dynamicSlots);
+
+  const interviewVacancies = interviewSlots.reduce(
+    (acc, s) => acc + (s.quantity || 1),
+    0,
+  );
+  const dynamicVacancies = dynamicSlots.reduce(
+    (acc, s) => acc + (s.quantity || 1),
+    0,
+  );
+
+  const unmarkedInterviews = candidates.filter((c) => !c.interview).length;
+  const unmarkedDynamics = candidates.filter((c) => !c.dynamic).length;
+
   const stats = [
     {
-      label: "Total criados",
-      value: slots[slotType].length,
+      label: "Slots de Entrevista",
+      value: `${interviewSlots.length}`,
+      description: `${interviewVacancies} vagas • ${weekInterviewSlots.length} nesta semana`,
       icon: Calendar,
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-950/30",
     },
     {
-      label: "Slots disponíveis",
-      value: slots[slotType].filter((c) => c.quantity > 0).length,
-      icon: UserCheck,
-      color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-950/30",
-    },
-    {
-      label: "Entrevista não marcada",
-      value: candidates.filter((c) => !c.interview).length,
+      label: "Slots de Dinâmica",
+      value: `${dynamicSlots.length}`,
+      description: `${dynamicVacancies} vagas • ${weekDynamicSlots.length} nesta semana`,
       icon: Users,
-      color: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-50 dark:bg-orange-950/30",
     },
     {
-      label: "Dinâmica não marcada",
-      value: candidates.filter((c) => !c.dynamic).length,
+      label: "Entrevistas por Marcar",
+      value: `${unmarkedInterviews}`,
+      description: `${candidates.length - unmarkedInterviews} de ${candidates.length} já agendadas`,
+      icon: UserCheck,
+    },
+    {
+      label: "Dinâmicas por Marcar",
+      value: `${unmarkedDynamics}`,
+      description: `${candidates.length - unmarkedDynamics} de ${candidates.length} já agendadas`,
       icon: UserX,
-      color: "text-red-600 dark:text-red-400",
-      bgColor: "bg-red-50 dark:bg-red-950/30",
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Card key={stat.label} className="overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  <p className="text-3xl font-bold tracking-tight">
-                    {stat.value}
-                  </p>
+          <Card key={stat.label}>
+            <CardHeader>
+              <CardDescription className="text-xs uppercase tracking-wider font-medium">
+                {stat.label}
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold">{stat.value}</CardTitle>
+              <CardAction>
+                <div className="rounded-lg p-2 bg-muted text-muted-foreground">
+                  <Icon className="size-4" />
                 </div>
-                <div className={`rounded-full p-3 ${stat.bgColor}`}>
-                  <Icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-              </div>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="pt-0 text-xs text-muted-foreground">
+              {stat.description}
             </CardContent>
           </Card>
         );
