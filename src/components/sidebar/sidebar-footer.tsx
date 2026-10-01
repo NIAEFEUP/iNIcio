@@ -1,14 +1,12 @@
 import {
-  Check,
   ChevronsUpDown,
-  Copy,
   LogIn,
   LogOut,
   Monitor,
   Moon,
   Plus,
+  Settings,
   Sun,
-  User as UserIcon,
 } from "lucide-react";
 import * as React from "react";
 import Link from "next/link";
@@ -21,14 +19,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -42,7 +32,7 @@ import { type User as UserType, useAuth } from "@/hooks/use-auth";
 import { useDeviceSessions } from "@/hooks/use-device-sessions";
 import { useSession } from "@/lib/use-session";
 import { useSignedProfilePictureUrl } from "@/hooks/use-signed-profile-picture-url";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { AccountSettingsModal } from "@/components/profile/account-settings-modal";
 
 function canAccessRoute(role: string, pathname: string) {
@@ -98,7 +88,6 @@ export function SidebarFooterComponent({
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
-  const [copied, setCopied] = React.useState(false);
 
   const user = propUser !== undefined ? propUser : auth.user;
   const isAuthenticated =
@@ -164,39 +153,6 @@ export function SidebarFooterComponent({
     }
   }, [onLogout, sessionData, revokeAccount, auth, router]);
 
-  const handleLogout = React.useCallback(async () => {
-    setIsOpen(false);
-    if (onLogout) {
-      await onLogout();
-    } else {
-      await auth.logout();
-      router.push("/login");
-    }
-  }, [onLogout, auth, router]);
-
-  const handleCopyEmail = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user?.email) return;
-    try {
-      await navigator.clipboard.writeText(user.email);
-      setCopied(true);
-      toast.add({
-        type: "success",
-        title: "Email copiado",
-        description: "Endereço de email copiado para a área de transferência.",
-      });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.add({
-        type: "error",
-        title: "Falha ao copiar",
-        description:
-          "Não foi possível copiar o email para a área de transferência.",
-      });
-    }
-  };
-
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -207,14 +163,14 @@ export function SidebarFooterComponent({
       ) {
         if (isAuthenticated && user) {
           event.preventDefault();
-          handleLogout();
+          handleLogoutCurrent();
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isAuthenticated, user, handleLogout]);
+  }, [isAuthenticated, user, handleLogoutCurrent]);
 
   if (!isAuthenticated || !user) {
     return (
@@ -276,213 +232,175 @@ export function SidebarFooterComponent({
               }
             />
             <DropdownMenuContent
-              className="w-72 min-w-64 p-2 rounded-lg"
+              className="w-80 p-0 rounded-2xl overflow-hidden shadow-lg border border-border"
               align="start"
               side={isMobile ? "bottom" : "right"}
-              sideOffset={4}
+              sideOffset={8}
             >
-              <DropdownMenuGroup>
-                <div className="flex items-center justify-between px-1.5 py-1">
-                  <DropdownMenuLabel className="p-0">Conta</DropdownMenuLabel>
-                  {user.isAdmin && (
-                    <span className="text-[10px] text-muted-foreground">
-                      Administrator
-                    </span>
-                  )}
-                </div>
+              {/* Active Account Section */}
+              <div className="flex flex-col items-center text-center p-5 bg-muted/20">
+                <Avatar className="size-16 rounded-full ring-2 ring-background shadow-xs mb-3">
+                  <AvatarImage
+                    src={signedImageUrl || undefined}
+                    alt={user.name}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
 
-                <div className="flex items-center gap-2.5 py-1.5 px-2 rounded-md">
-                  <Avatar className="h-8 w-8 rounded-lg shrink-0 after:rounded-lg">
-                    <AvatarImage
-                      src={signedImageUrl || undefined}
-                      alt={user.name}
-                    />
-                    <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
-                      {userInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="font-medium text-xs truncate">
-                      {user.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {user.email}
-                    </span>
+                <span className="font-semibold text-sm truncate text-foreground max-w-full">
+                  {user.name}
+                </span>
+
+                <span className="text-xs text-muted-foreground truncate max-w-full mt-0.5">
+                  {user.email}
+                </span>
+              </div>
+
+              {/* Other Accounts Section */}
+              {otherSessions.length > 0 && (
+                <div className="border-t border-border/50 py-1">
+                  <div className="px-3 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Outras contas
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={handleCopyEmail}
-                    className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                    title={copied ? "Copied email!" : "Copy email"}
-                    aria-label="Copy email"
-                  >
-                    {copied ? (
-                      <Check className="size-3 text-primary" />
-                    ) : (
-                      <Copy className="size-3" />
-                    )}
-                  </Button>
+                  <DropdownMenuGroup className="flex flex-col px-1">
+                    {otherSessions.map((deviceSession) => {
+                      const initials = getInitials(
+                        deviceSession.user.name,
+                        "U",
+                      );
+                      return (
+                        <DropdownMenuItem
+                          key={deviceSession.session.token}
+                          onClick={() =>
+                            handleSwitchAccount(
+                              deviceSession.session.token,
+                              deviceSession.user.role,
+                            )
+                          }
+                          className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer"
+                        >
+                          <Avatar className="size-8 rounded-full shrink-0">
+                            <AvatarImage
+                              src={deviceSession.user.image ?? undefined}
+                              alt={deviceSession.user.name}
+                            />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className="font-medium text-xs truncate text-foreground">
+                              {deviceSession.user.name}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate">
+                              {deviceSession.user.email}
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuGroup>
                 </div>
-                <DropdownMenuSeparator />
-              </DropdownMenuGroup>
+              )}
 
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => setIsProfileModalOpen(true)}
-                  className="cursor-pointer"
-                >
-                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                      <UserIcon className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-xs truncate">
-                    Definições de Perfil
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </DropdownMenuGroup>
-
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Contas</DropdownMenuLabel>
-                {otherSessions.length === 0 ? (
-                  <DropdownMenuItem disabled>
-                    <span className="text-muted-foreground text-xs truncate">
-                      Sem outras contas
+              {/* Menu Actions: Settings & Add Account */}
+              <div className="border-t border-border/50 p-1">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer"
+                  >
+                    <div className="size-8 rounded-full border border-border flex items-center justify-center shrink-0 text-muted-foreground bg-muted/40">
+                      <Settings className="size-4" />
+                    </div>
+                    <span className="font-medium text-xs">
+                      Definições de perfil
                     </span>
                   </DropdownMenuItem>
-                ) : (
-                  otherSessions.map((deviceSession) => {
-                    const initials = getInitials(deviceSession.user.name, "U");
-                    return (
-                      <DropdownMenuItem
-                        key={deviceSession.session.token}
-                        onClick={() =>
-                          handleSwitchAccount(
-                            deviceSession.session.token,
-                            deviceSession.user.role,
-                          )
-                        }
-                        className="cursor-pointer"
-                      >
-                        <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                          <AvatarImage
-                            src={deviceSession.user.image ?? undefined}
-                            alt={deviceSession.user.name}
-                          />
-                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="font-medium text-xs truncate">
-                            {deviceSession.user.name}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground truncate">
-                            {deviceSession.user.email}
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })
-                )}
-                <DropdownMenuItem
-                  onClick={handleAddAccount}
-                  className="cursor-pointer"
+                  <DropdownMenuItem
+                    onClick={handleAddAccount}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer"
+                  >
+                    <div className="size-8 rounded-full border border-dashed border-border flex items-center justify-center shrink-0 text-muted-foreground">
+                      <Plus className="size-4" />
+                    </div>
+                    <span className="font-medium text-xs">
+                      Adicionar outra conta
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </div>
+
+              {/* Footer: Theme toggle & Sign out */}
+              <div className="border-t border-border/50 p-2 bg-muted/20 flex items-center justify-between gap-2">
+                {/* 3-icon Theme Switcher */}
+                <div className="flex items-center bg-muted/60 p-0.5 rounded-md border border-border/40">
+                  <button
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    className={cn(
+                      "p-1.5 rounded-sm transition-colors cursor-pointer",
+                      theme === "light"
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    title="Claro"
+                    aria-label="Tema claro"
+                  >
+                    <Sun className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    className={cn(
+                      "p-1.5 rounded-sm transition-colors cursor-pointer",
+                      theme === "dark"
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    title="Escuro"
+                    aria-label="Tema escuro"
+                  >
+                    <Moon className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("system")}
+                    className={cn(
+                      "p-1.5 rounded-sm transition-colors cursor-pointer",
+                      theme === "system"
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    title="Sistema"
+                    aria-label="Tema do sistema"
+                  >
+                    <Monitor className="size-3.5" />
+                  </button>
+                </div>
+
+                {/* Sign Out Action */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogoutCurrent}
+                  className="text-xs text-muted-foreground hover:text-foreground cursor-pointer h-7 px-2"
+                  title={
+                    isMac
+                      ? "Terminar sessão (⇧⌘Q)"
+                      : "Terminar sessão (Ctrl+Shift+Q)"
+                  }
                 >
-                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                      <Plus className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-xs truncate">
-                    Adicionar conta
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </DropdownMenuGroup>
-
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Preferências</DropdownMenuLabel>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                      <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                        {theme === "light" ? (
-                          <Sun className="h-3.5 w-3.5" />
-                        ) : theme === "dark" ? (
-                          <Moon className="h-3.5 w-3.5" />
-                        ) : (
-                          <Monitor className="h-3.5 w-3.5" />
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium text-xs truncate">Tema</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-40 p-1 rounded-lg">
-                    <DropdownMenuRadioGroup
-                      value={theme}
-                      onValueChange={(val) =>
-                        setTheme(val as "light" | "dark" | "system")
-                      }
-                    >
-                      <DropdownMenuRadioItem value="light">
-                        <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                            <Sun className="h-3.5 w-3.5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-xs">Claro</span>
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="dark">
-                        <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                            <Moon className="h-3.5 w-3.5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-xs">Escuro</span>
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="system">
-                        <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                            <Monitor className="h-3.5 w-3.5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-xs">Sistema</span>
-                      </DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-              </DropdownMenuGroup>
-
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={handleLogoutCurrent}>
-                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                      <LogOut className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-xs truncate">
-                    Terminar sessão
-                  </span>
-                  <DropdownMenuShortcut>
-                    {isMac ? "⇧⌘Q" : "Ctrl+Shift+Q"}
-                  </DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                    <AvatarFallback className="rounded-sm bg-destructive/10 text-destructive text-[10px] font-semibold">
-                      <LogOut className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-xs truncate">
-                    Terminar sessão em todas as contas
-                  </span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
+                  <LogOut className="size-3.5 mr-1" />
+                  Terminar sessão
+                </Button>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
