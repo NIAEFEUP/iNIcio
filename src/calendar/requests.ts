@@ -138,9 +138,7 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
 
     const assignedRecruiter =
       interviewItem.recruiters.length > 0
-        ? interviewItem.recruiters[
-            Math.floor(Math.random() * interviewItem.recruiters.length)
-          ].recruiter.user
+        ? interviewItem.recruiters[0].recruiter.user
         : null;
 
     calendarEvents.push({
@@ -150,7 +148,10 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
       title: "Entrevista",
       description: "Entrevista",
       color: COLORS[index % COLORS.length],
-      user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
+      user: {
+        ...(assignedRecruiter ?? {}),
+        picturePath: assignedRecruiter?.image,
+      },
       link: getCandidateInterviewLink(interviewItem.candidateId),
       assigned: interviewItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
@@ -164,9 +165,7 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
 
     const assignedRecruiter =
       dynamicItem.recruiters.length > 0
-        ? dynamicItem.recruiters[
-            Math.floor(Math.random() * dynamicItem.recruiters.length)
-          ].recruiter.user
+        ? dynamicItem.recruiters[0].recruiter.user
         : null;
 
     calendarEvents.push({
@@ -176,7 +175,10 @@ export const getEvents = async (userId: string, recruitmentId?: number) => {
       title: "Dinâmica",
       description: "Dinâmica",
       color: COLORS[calendarEvents.length % COLORS.length],
-      user: { ...assignedRecruiter, picturePath: assignedRecruiter.image },
+      user: {
+        ...(assignedRecruiter ?? {}),
+        picturePath: assignedRecruiter?.image,
+      },
       link: getDynamicLink(dynamicItem.id),
       assigned: dynamicItem.recruiters.map((r) => r.recruiter?.user?.name),
     });
