@@ -19,7 +19,7 @@ export default function SlotBox({
     >
       {existingSlot && (
         <div className="h-full flex flex-col items-center justify-center text-xs relative">
-          <span className="font-medium">{existingSlot.duration}m</span>
+          <span className="font-medium">{existingSlot.duration} min</span>
           <span className="opacity-80">×{existingSlot.quantity}</span>
         </div>
       )}
