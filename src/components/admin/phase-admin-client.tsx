@@ -5,22 +5,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
-import { CalendarDays, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -46,16 +43,11 @@ import {
   getActionsColumn,
   getSelectColumn,
 } from "@/components/data-table/data-table-column-helpers";
-import {
-  ViewModeToggle,
-  type ViewMode,
-} from "@/components/data-table/view-mode-toggle";
-import { GridView } from "@/components/data-table/grid-view";
-import { GridCard } from "@/components/data-table/grid-card";
 import { BulkActions } from "@/components/data-table/bulk-actions";
 import { toast } from "@/components/ui/toast";
 import { RecruitmentPhase } from "@/lib/db";
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
+import { cn } from "@/lib/utils";
 
 const PHASE_STATE_LABELS: Record<PhaseState, string> = {
   upcoming: "Futura",
@@ -63,18 +55,30 @@ const PHASE_STATE_LABELS: Record<PhaseState, string> = {
   closed: "Terminada",
 };
 
-const PHASE_STATE_BADGE_CLASSES: Record<PhaseState, string> = {
-  open: "bg-primary text-primary-foreground",
-  upcoming: "bg-secondary text-secondary-foreground",
-  closed: "bg-secondary text-secondary-foreground",
+const STATE_DOT_CLASSES: Record<PhaseState, string> = {
+  open: "bg-emerald-500",
+  upcoming: "bg-amber-500",
+  closed: "bg-muted-foreground/40",
 };
+
+const STATE_TEXT_CLASSES: Record<PhaseState, string> = {
+  open: "text-emerald-600 dark:text-emerald-400 font-medium",
+  upcoming: "text-amber-600 dark:text-amber-400 font-medium",
+  closed: "text-muted-foreground font-normal",
+};
+
+function formatDate(value: Date | string | null | undefined) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("pt-PT", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
 
 const ROLE_LABELS: Record<string, string> = {
   candidate: "Candidato",
   recruiter: "Recrutador",
 };
-
-const PAGE_SIZE = 6;
 
 interface PhaseAdminClientProps {
   phases: RecruitmentPhase[];
@@ -107,14 +111,9 @@ export default function PhaseAdminClient({
     recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
 
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -224,14 +223,6 @@ export default function PhaseAdminClient({
   );
 
   const columns = useMemo<ColumnDef<RecruitmentPhase>[]>(() => {
-    const symlessDate = (value: Date | null) =>
-      value
-        ? new Date(value).toLocaleString("pt-PT", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })
-        : "-";
-
     return [
       getSelectColumn<RecruitmentPhase>(),
       {
@@ -240,6 +231,17 @@ export default function PhaseAdminClient({
           <DataTableSortableHeader column={column} title="Título" />
         ),
         cell: ({ row }) => <DataTableEntityCell name={row.original.title} />,
+      },
+      {
+        accessorKey: "clientIdentifier",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Identificador" />
+        ),
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.clientIdentifier || "-"}
+          </span>
+        ),
       },
       {
         id: "description",
@@ -260,7 +262,7 @@ export default function PhaseAdminClient({
         ),
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
-            {symlessDate(row.original.start)}
+            {formatDate(row.original.start)}
           </span>
         ),
       },
@@ -271,26 +273,30 @@ export default function PhaseAdminClient({
         ),
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
-            {symlessDate(row.original.end)}
+            {formatDate(row.original.end)}
           </span>
         ),
       },
       {
         id: "state",
         accessorFn: (p) => getPhaseState(p, now),
-        header: "Estado",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Estado" />
+        ),
         cell: ({ row }) => {
           const state = getPhaseState(row.original, now);
           return (
-            <div className="flex flex-col items-start gap-1">
-              <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
+            <div className="flex items-center gap-2 text-sm">
+              <span
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  STATE_DOT_CLASSES[state],
+                )}
+                aria-hidden="true"
+              />
+              <span className={STATE_TEXT_CLASSES[state]}>
                 {PHASE_STATE_LABELS[state]}
-              </Badge>
-              {state === "open" && row.original.end && (
-                <span className="text-xs text-muted-foreground">
-                  termina {new Date(row.original.end).toLocaleString("pt-PT")}
-                </span>
-              )}
+              </span>
             </div>
           );
         },
@@ -302,12 +308,19 @@ export default function PhaseAdminClient({
       },
       {
         accessorKey: "role",
-        header: "Papel",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Papel" />
+        ),
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {ROLE_LABELS[row.original.role] ?? row.original.role}
           </span>
         ),
+        sortingFn: (rowA, rowB) => {
+          const a = ROLE_LABELS[rowA.original.role] ?? rowA.original.role;
+          const b = ROLE_LABELS[rowB.original.role] ?? rowB.original.role;
+          return a.localeCompare(b, "pt");
+        },
         filterFn: (row, _id, value: string[]) => {
           if (!value || value.length === 0) return true;
           return value.includes(row.original.role);
@@ -326,8 +339,7 @@ export default function PhaseAdminClient({
   const table = useReactTable({
     data: phasesState,
     columns,
-    state: { sorting, columnFilters, globalFilter, pagination, rowSelection },
-    autoResetPageIndex: false,
+    state: { sorting, columnFilters, globalFilter, rowSelection },
     onSortingChange: (u) => {
       if (isMountedRef.current) setSorting(u);
     },
@@ -337,16 +349,12 @@ export default function PhaseAdminClient({
     onGlobalFilterChange: (u) => {
       if (isMountedRef.current) setGlobalFilter(u);
     },
-    onPaginationChange: (u) => {
-      if (isMountedRef.current) setPagination(u);
-    },
     onRowSelectionChange: (u) => {
       if (isMountedRef.current) setRowSelection(u);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const selectedStates =
@@ -444,55 +452,10 @@ export default function PhaseAdminClient({
     }
   };
 
-  const renderCard = (p: RecruitmentPhase) => {
-    const state = getPhaseState(p, now);
-    const row = table
-      .getRowModel()
-      .rows.find((row) => row.original.id === p.id);
-    const isSelected = row ? row.getIsSelected() : false;
-
-    return (
-      <GridCard
-        title={p.title}
-        subtitle={p.clientIdentifier}
-        badge={
-          <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
-            {PHASE_STATE_LABELS[state]}
-          </Badge>
-        }
-        isSelected={isSelected}
-        onSelectChange={(val) => row?.toggleSelected(val)}
-        onEdit={() => handleEdit(p)}
-        onDelete={() => {
-          if (p.id != null) handleDelete(p.id);
-        }}
-      >
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <CalendarDays className="size-3.5" />
-          <span>
-            {p.start ? new Date(p.start).toLocaleString("pt-PT") : "Sem início"}{" "}
-            — {p.end ? new Date(p.end).toLocaleString("pt-PT") : "sem fim"}
-          </span>
-        </div>
-        <div className="text-muted-foreground">
-          {ROLE_LABELS[p.role] ?? p.role}
-        </div>
-      </GridCard>
-    );
-  };
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Fases"
-        viewModeToggle={
-          <ViewModeToggle
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            listLabel="Lista"
-            gridLabel="Grelha"
-          />
-        }
         search={
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -506,19 +469,18 @@ export default function PhaseAdminClient({
         }
         actions={
           <>
-            {viewMode === "list" && (
-              <DataTableColumnToggle
-                table={table}
-                columnLabels={{
-                  title: "Título",
-                  description: "Descrição",
-                  start: "Início",
-                  end: "Fim",
-                  state: "Estado",
-                  role: "Papel",
-                }}
-              />
-            )}
+            <DataTableColumnToggle
+              table={table}
+              columnLabels={{
+                title: "Título",
+                clientIdentifier: "Identificador",
+                description: "Descrição",
+                start: "Início",
+                end: "Fim",
+                state: "Estado",
+                role: "Papel",
+              }}
+            />
             <Button
               type="button"
               onClick={() => {
@@ -565,16 +527,9 @@ export default function PhaseAdminClient({
 
       <DataTableView
         table={table}
-        viewMode={viewMode}
+        showPagination={false}
         emptyTitle="Sem fases"
         emptyDescription="Adiciona fases para este período de recrutamento."
-        renderGrid={(t) => (
-          <GridView
-            table={t}
-            getItemKey={(p) => String(p.id)}
-            renderCard={renderCard}
-          />
-        )}
       />
 
       {/* Add phase dialog */}
