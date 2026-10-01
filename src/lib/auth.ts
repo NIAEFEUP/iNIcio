@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { multiSession } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/email";
 import * as schema from "../db/schema/auth";
@@ -22,6 +23,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  plugins: [multiSession()],
   user: {
     additionalFields: {
       role: {
