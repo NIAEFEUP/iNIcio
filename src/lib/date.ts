@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { Slot } from "./db";
 
 export const dateOptions = {
@@ -31,6 +33,32 @@ export function getTimeString(date: Date) {
     minute: "2-digit",
     hour12: false,
   });
+}
+
+export function getMonday(d: Date = new Date()): Date {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+export function formatWeekRange(start: Date, end: Date): string {
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const startMonth = format(start, "MMM", { locale: pt });
+  const endMonth = format(end, "MMM", { locale: pt });
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+
+  if (startYear !== endYear) {
+    return `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
+  }
+  if (startMonth !== endMonth) {
+    return `${startDay} ${startMonth} — ${endDay} ${endMonth} ${endYear}`;
+  }
+  return `${startDay} — ${endDay} ${startMonth} ${startYear}`;
 }
 
 export function generateDates(weekStart?: Date) {

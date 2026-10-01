@@ -3,19 +3,13 @@
 import React, { useMemo, useState } from "react";
 import { addDays, format, isToday } from "date-fns";
 import { pt } from "date-fns/locale";
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Users,
-} from "lucide-react";
+import { AlertCircle, Filter, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { generateTimeSlots } from "@/lib/date";
+import { generateTimeSlots, getMonday } from "@/lib/date";
+import { WeekNavigator } from "@/components/calendar/week-navigator";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
 import type { CandidateListMetadata } from "@/lib/candidate";
 
@@ -23,6 +17,7 @@ import BookingSlotDialog from "../slot/booking-slot-dialog";
 import { BookingAdminStats } from "./booking-admin-stats";
 import { SlotType } from "./slot-admin-calendar";
 
+/** @deprecated Weekends are deprecated; all calendars use 5 working days */
 export type ViewDaysMode = "workdays" | "fullweek";
 
 interface BookingManagementClientProps {
@@ -50,32 +45,6 @@ interface BookingManagementClientProps {
   };
 }
 
-function getMonday(d: Date = new Date()): Date {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function formatWeekRange(start: Date, end: Date): string {
-  const startDay = start.getDate();
-  const endDay = end.getDate();
-  const startMonth = format(start, "MMM", { locale: pt });
-  const endMonth = format(end, "MMM", { locale: pt });
-  const startYear = start.getFullYear();
-  const endYear = end.getFullYear();
-
-  if (startYear !== endYear) {
-    return `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
-  }
-  if (startMonth !== endMonth) {
-    return `${startDay} ${startMonth} — ${endDay} ${endMonth} ${endYear}`;
-  }
-  return `${startDay} — ${endDay} ${startMonth} ${startYear}`;
-}
-
 export default function BookingManagementClient({
   candidates,
   existingSlots = {
@@ -88,25 +57,10 @@ export default function BookingManagementClient({
   const [slotType, setSlotType] = useState<SlotType>(SlotType.interview);
   const [onlyMissingRecruiters, setOnlyMissingRecruiters] = useState(false);
 
-  const [viewDaysMode, setViewDaysMode] = useState<ViewDaysMode>(() => {
-    const all = [
-      ...existingSlots.interview,
-      ...existingSlots.dynamic,
-      ...(bookings.interview?.map((b) => b.slot) || []),
-      ...(bookings.dynamic?.map((b) => b.slot) || []),
-    ];
-    const hasWeekend = all.some((s) => {
-      if (!s?.start) return false;
-      const day = new Date(s.start).getDay();
-      return day === 0 || day === 6;
-    });
-    return hasWeekend ? "fullweek" : "workdays";
-  });
-
+  // Always 5 working days (Monday to Friday)
   const dates = useMemo(() => {
-    const daysCount = viewDaysMode === "workdays" ? 5 : 7;
-    return Array.from({ length: daysCount }, (_, i) => addDays(weekStart, i));
-  }, [weekStart, viewDaysMode]);
+    return Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+  }, [weekStart]);
 
   const weekEnd = dates[dates.length - 1];
 
@@ -119,6 +73,7 @@ export default function BookingManagementClient({
       ...(bookings.interview?.map((b) => b.slot) || []),
       ...(bookings.dynamic?.map((b) => b.slot) || []),
     ];
+
     for (const item of all) {
       if (!item?.start) continue;
       const h = new Date(item.start).getHours();
@@ -137,18 +92,18 @@ export default function BookingManagementClient({
     return `${datePart}-${time}`;
   };
 
-  const slotMap = useMemo(() => {
+  const currentSlots = useMemo(() => {
     const map = new Map<string, Slot>();
-    for (const item of existingSlots[slotType] || []) {
-      const d = new Date(item.start);
+    for (const slot of existingSlots[slotType] || []) {
+      const d = new Date(slot.start);
       const timePart = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
       const key = formatCellKey(d, timePart);
-      map.set(key, item);
+      map.set(key, slot);
     }
     return map;
   }, [existingSlots, slotType]);
 
-  const bookingsMap = useMemo(() => {
+  const currentBookings = useMemo(() => {
     const map = new Map<string, any[]>();
     const list = bookings[slotType] || [];
     for (const item of list) {
@@ -164,14 +119,6 @@ export default function BookingManagementClient({
     return map;
   }, [bookings, slotType]);
 
-  const moveWeek = (amount: number) => {
-    setWeekStart((current) => {
-      const next = new Date(current);
-      next.setDate(next.getDate() + amount * 7);
-      return next;
-    });
-  };
-
   const isInterview = slotType === SlotType.interview;
 
   return (
@@ -180,40 +127,7 @@ export default function BookingManagementClient({
         title="Marcações & Entrevistas"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg border bg-card p-[0.5] shadow-2xs">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setWeekStart(getMonday(new Date()))}
-              >
-                Hoje
-              </Button>
-              <Separator orientation="vertical" className="h-4" />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => moveWeek(-1)}
-                aria-label="Semana anterior"
-                title="Semana anterior"
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <span className="min-w-28 text-center text-xs font-medium text-muted-foreground px-2 select-none">
-                {formatWeekRange(weekStart, weekEnd)}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => moveWeek(1)}
-                aria-label="Semana seguinte"
-                title="Semana seguinte"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
+            <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
           </div>
         }
       />
@@ -264,25 +178,6 @@ export default function BookingManagementClient({
                 <Button
                   type="button"
                   size="sm"
-                  variant={viewDaysMode === "workdays" ? "secondary" : "ghost"}
-                  onClick={() => setViewDaysMode("workdays")}
-                >
-                  Dias úteis
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={viewDaysMode === "fullweek" ? "secondary" : "ghost"}
-                  onClick={() => setViewDaysMode("fullweek")}
-                >
-                  Semana inteira
-                </Button>
-              </div>
-
-              <div className="flex items-center rounded-lg border bg-background p-0.5 shadow-2xs">
-                <Button
-                  type="button"
-                  size="sm"
                   variant={onlyMissingRecruiters ? "destructive" : "ghost"}
                   onClick={() =>
                     setOnlyMissingRecruiters(!onlyMissingRecruiters)
@@ -312,177 +207,155 @@ export default function BookingManagementClient({
           </div>
         </div>
 
-        <div className="p-0">
-          <div className="relative w-full overflow-x-auto touch-pan-x">
-            <table className="w-full border-collapse select-none text-left">
-              <thead>
-                <tr className="border-b border-border bg-muted/15">
-                  <th className="sticky left-0 top-0 z-30 w-20 border-r border-border bg-card p-2 text-center text-xs font-semibold text-muted-foreground shadow-[1px_0_0_0_var(--border)]" />
-
+        {/* Grid Table */}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[700px] border-collapse text-left">
+            <thead>
+              <tr className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground">
+                <th className="sticky left-0 z-20 w-18 border-r bg-muted/40 px-3 py-2 text-center">
+                  Hora
+                </th>
+                {dates.map((date) => {
+                  const today = isToday(date);
+                  return (
+                    <th
+                      key={date.toISOString()}
+                      className={cn(
+                        "border-r px-3 py-2 text-center transition-colors last:border-r-0",
+                        today ? "bg-primary/10 text-primary font-bold" : "",
+                      )}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-0.5">
+                        <span className="text-[11px] uppercase tracking-wider font-semibold">
+                          {format(date, "EEE", { locale: pt })}
+                        </span>
+                        <span
+                          className={cn(
+                            "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
+                            today
+                              ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                              : "text-foreground",
+                          )}
+                        >
+                          {format(date, "d")}
+                        </span>
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-xs">
+              {timeSlots.map((time) => (
+                <tr
+                  key={time}
+                  className="group hover:bg-muted/10 transition-colors"
+                >
+                  <td className="sticky left-0 z-10 w-18 border-r bg-background/95 px-2 py-1 text-center font-mono text-[11px] text-muted-foreground select-none">
+                    {time}
+                  </td>
                   {dates.map((date) => {
-                    const today = isToday(date);
-                    const dayName = format(date, "EEE", {
-                      locale: pt,
-                    }).replace(".", "");
+                    const cellKey = formatCellKey(date, time);
+                    const currentSlot = currentSlots.get(cellKey);
+                    const cellBookings = currentBookings.get(cellKey) || [];
+
+                    const filteredBookings = onlyMissingRecruiters
+                      ? cellBookings.filter(
+                          (b: any) => (b.recruiters?.length || 0) === 0,
+                        )
+                      : cellBookings;
 
                     return (
-                      <th
-                        key={date.toISOString()}
+                      <td
+                        key={`${date.toISOString()}-${time}`}
                         className={cn(
-                          "min-w-[140px] border-r border-border py-2.5 px-2 text-center transition-colors select-none",
-                          today && "bg-primary/5",
+                          "relative min-h-12 p-1 border-r border-border/40 transition-colors align-top last:border-r-0",
+                          isToday(date) && "bg-primary/2",
                         )}
                       >
-                        <div className="flex flex-col items-center justify-center gap-1">
-                          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                            {dayName}
-                          </span>
-                          <span
-                            className={cn(
-                              "inline-flex size-6 items-center justify-center text-sm font-semibold text-foreground",
-                              today &&
-                                "rounded-full bg-primary text-xs font-bold text-primary-foreground",
-                            )}
-                          >
-                            {format(date, "d")}
-                          </span>
+                        <div className="h-full w-full space-y-1">
+                          {filteredBookings.length > 0 ? (
+                            filteredBookings.map((booking: any) => {
+                              const title =
+                                booking.candidate?.user?.name ||
+                                `Dinâmica #${booking.id}`;
+                              const recruitersCount =
+                                booking.recruiters?.length || 0;
+                              const isMissingRecruiter = recruitersCount === 0;
+
+                              return (
+                                <div
+                                  key={booking.id}
+                                  className={cn(
+                                    "rounded-md border p-2 shadow-2xs text-left space-y-1.5 transition-all",
+                                    isMissingRecruiter
+                                      ? "border-destructive/60 bg-destructive/5 text-destructive dark:bg-destructive/10"
+                                      : isInterview
+                                        ? "border-blue-200 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100"
+                                        : "border-emerald-200 dark:border-emerald-900 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100",
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-xs font-semibold truncate leading-tight">
+                                      {title}
+                                    </span>
+                                  </div>
+
+                                  <BookingSlotDialog
+                                    booking={booking}
+                                    slotType={slotType}
+                                    existingSlot={booking}
+                                    trigger={
+                                      <Button
+                                        type="button"
+                                        variant={
+                                          isMissingRecruiter
+                                            ? "destructive"
+                                            : "outline"
+                                        }
+                                        size="xs"
+                                        className={cn(
+                                          "w-full h-5 text-[10px] px-1.5 justify-between font-medium",
+                                          !isMissingRecruiter &&
+                                            "bg-background/80 hover:bg-background",
+                                        )}
+                                      >
+                                        <span className="flex items-center gap-1">
+                                          {isMissingRecruiter ? (
+                                            <AlertCircle className="size-2.5" />
+                                          ) : (
+                                            <Users className="size-2.5 opacity-60" />
+                                          )}
+                                          <span>Recrutadores</span>
+                                        </span>
+                                        <span className="font-semibold tabular-nums">
+                                          {recruitersCount}
+                                        </span>
+                                      </Button>
+                                    }
+                                  />
+                                </div>
+                              );
+                            })
+                          ) : !onlyMissingRecruiters && currentSlot ? (
+                            <div className="h-[calc(100%-4px)] my-0.5 rounded-md border border-dashed border-border/80 bg-muted/20 p-1.5 flex flex-col justify-between text-muted-foreground select-none">
+                              <div className="flex items-center justify-between text-[10px] font-medium leading-none">
+                                <span>{time}</span>
+                                <span>{currentSlot.duration}m</span>
+                              </div>
+                              <span className="text-[9px] text-muted-foreground/75 font-normal leading-none mt-1">
+                                Livre · 0/{currentSlot.quantity} vagas
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
-                      </th>
+                      </td>
                     );
                   })}
                 </tr>
-              </thead>
-
-              <tbody>
-                {timeSlots.map((time) => {
-                  const isHour = time.endsWith(":00");
-
-                  return (
-                    <tr
-                      key={time}
-                      className={cn(
-                        "transition-colors",
-                        isHour
-                          ? "border-t border-border/80"
-                          : "border-t border-border/20 border-dashed",
-                      )}
-                    >
-                      <td
-                        className={cn(
-                          "sticky left-0 z-20 w-20 border-r border-border bg-card p-1 text-center font-medium shadow-[1px_0_0_0_var(--border)] select-none",
-                          isHour
-                            ? "text-xs font-semibold text-foreground"
-                            : "text-[11px] text-muted-foreground/75",
-                        )}
-                      >
-                        {time}
-                      </td>
-
-                      {dates.map((date) => {
-                        const cellKey = formatCellKey(date, time);
-                        const currentSlot = slotMap.get(cellKey);
-                        const cellBookings = bookingsMap.get(cellKey) || [];
-
-                        const filteredBookings = onlyMissingRecruiters
-                          ? cellBookings.filter(
-                              (b: any) => (b.recruiters?.length || 0) === 0,
-                            )
-                          : cellBookings;
-
-                        return (
-                          <td
-                            key={`${date.toISOString()}-${time}`}
-                            className={cn(
-                              "relative min-h-12 p-1 border-r border-border/40 transition-colors align-top",
-                              isToday(date) && "bg-primary/2",
-                            )}
-                          >
-                            <div className="h-full w-full space-y-1">
-                              {filteredBookings.length > 0 ? (
-                                filteredBookings.map((booking: any) => {
-                                  const title =
-                                    booking.candidate?.user?.name ||
-                                    `Dinâmica #${booking.id}`;
-                                  const recruitersCount =
-                                    booking.recruiters?.length || 0;
-                                  const isMissingRecruiter =
-                                    recruitersCount === 0;
-
-                                  return (
-                                    <div
-                                      key={booking.id}
-                                      className={cn(
-                                        "rounded-md border p-2 shadow-2xs text-left space-y-1.5 transition-all",
-                                        isMissingRecruiter
-                                          ? "border-destructive/60 bg-destructive/5 text-destructive dark:bg-destructive/10"
-                                          : isInterview
-                                            ? "border-blue-200 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100"
-                                            : "border-emerald-200 dark:border-emerald-900 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100",
-                                      )}
-                                    >
-                                      <div className="flex items-center justify-between gap-1">
-                                        <span className="text-xs font-semibold truncate leading-tight">
-                                          {title}
-                                        </span>
-                                      </div>
-
-                                      <BookingSlotDialog
-                                        booking={booking}
-                                        slotType={slotType}
-                                        existingSlot={booking}
-                                        trigger={
-                                          <Button
-                                            type="button"
-                                            variant={
-                                              isMissingRecruiter
-                                                ? "destructive"
-                                                : "outline"
-                                            }
-                                            size="xs"
-                                            className={cn(
-                                              "w-full h-5 text-[10px] px-1.5 justify-between font-medium",
-                                              !isMissingRecruiter &&
-                                                "bg-background/80 hover:bg-background",
-                                            )}
-                                          >
-                                            <span className="flex items-center gap-1">
-                                              {isMissingRecruiter ? (
-                                                <AlertCircle className="size-2.5" />
-                                              ) : (
-                                                <Users className="size-2.5 opacity-60" />
-                                              )}
-                                              <span>Recrutadores</span>
-                                            </span>
-                                            <span className="font-semibold tabular-nums">
-                                              {recruitersCount}
-                                            </span>
-                                          </Button>
-                                        }
-                                      />
-                                    </div>
-                                  );
-                                })
-                              ) : !onlyMissingRecruiters && currentSlot ? (
-                                <div className="h-[calc(100%-4px)] my-0.5 rounded-md border border-dashed border-border/80 bg-muted/20 p-1.5 flex flex-col justify-between text-muted-foreground select-none">
-                                  <div className="flex items-center justify-between text-[10px] font-medium leading-none">
-                                    <span>{time}</span>
-                                    <span>{currentSlot.duration}m</span>
-                                  </div>
-                                  <span className="text-[9px] text-muted-foreground/75 font-normal leading-none mt-1">
-                                    Livre · 0/{currentSlot.quantity} vagas
-                                  </span>
-                                </div>
-                              ) : null}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

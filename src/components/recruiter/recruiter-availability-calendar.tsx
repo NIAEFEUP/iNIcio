@@ -3,33 +3,9 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { format, isToday } from "date-fns";
 import { pt } from "date-fns/locale";
-import {
-  Paintbrush,
-  SquareDashed,
-  ChevronDown,
-  Clock,
-  Sun,
-  Sunset,
-  Copy,
-  ArrowLeft,
-  ArrowRight,
-  Trash2,
-  Sparkles,
-} from "lucide-react";
+import { Paintbrush, SquareDashed } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { NewRecruiterAvailability } from "@/lib/db";
 
@@ -39,6 +15,7 @@ export interface SlotCell {
 }
 
 export type PaintShape = "paint" | "rect";
+/** @deprecated Weekends are deprecated; all calendars use 5 working days */
 export type ViewDaysMode = "workdays" | "fullweek";
 
 interface CellPos {
@@ -51,11 +28,10 @@ interface RecruiterAvailabilityCalendarProps {
   timeSlots: string[];
   availabilities: NewRecruiterAvailability[];
   onCellsChange: (cells: SlotCell[], selected: boolean) => void;
-  onApplyPreset: (type: string, targetDate?: Date) => void;
   shape: PaintShape;
   onShapeChange: (shape: PaintShape) => void;
-  viewDaysMode: ViewDaysMode;
-  onViewDaysModeChange: (mode: ViewDaysMode) => void;
+  viewDaysMode?: ViewDaysMode;
+  onViewDaysModeChange?: (mode: ViewDaysMode) => void;
   slotMinutes?: number;
 }
 
@@ -74,11 +50,8 @@ export function RecruiterAvailabilityCalendar({
   timeSlots,
   availabilities,
   onCellsChange,
-  onApplyPreset,
   shape,
   onShapeChange,
-  viewDaysMode,
-  onViewDaysModeChange,
   slotMinutes = 30,
 }: RecruiterAvailabilityCalendarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,25 +68,24 @@ export function RecruiterAvailabilityCalendar({
   } | null>(null);
 
   const [hoveredCell, setHoveredCell] = useState<CellPos | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const formatCellKey = (date: Date, time: string) => {
+    const d = new Date(date);
+    const datePart = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+    return `${datePart}-${time}`;
+  };
 
   const availabilityMap = useMemo(() => {
-    const map = new Set<string>();
+    const map = new Map<string, NewRecruiterAvailability>();
     for (const item of availabilities) {
       const d = new Date(item.start);
-      const datePart = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
       const timePart = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-      map.add(`${datePart}-${timePart}`);
+      const key = formatCellKey(d, timePart);
+      map.set(key, item);
     }
     return map;
   }, [availabilities]);
-
-  const hasSlot = useCallback(
-    (date: Date, time: string): boolean => {
-      const datePart = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
-      return availabilityMap.has(`${datePart}-${time}`);
-    },
-    [availabilityMap],
-  );
 
   const cellFromPoint = (x: number, y: number): CellPos | null => {
     const el = document.elementFromPoint(x, y);
@@ -130,69 +102,79 @@ export function RecruiterAvailabilityCalendar({
     time: timeSlots[row],
   });
 
-  const getRectCells = (anchor: CellPos, current: CellPos): SlotCell[] => {
-    const minCol = Math.min(anchor.col, current.col);
-    const maxCol = Math.max(anchor.col, current.col);
-    const minRow = Math.min(anchor.row, current.row);
-    const maxRow = Math.max(anchor.row, current.row);
+  const getCellKey = (cell: CellPos): string => {
+    const slotCell = toSlotCell(cell);
+    return formatCellKey(slotCell.date, slotCell.time);
+  };
+
+  const isCellAvailable = useCallback(
+    (cell: CellPos) => {
+      const key = getCellKey(cell);
+      return availabilityMap.has(key);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [availabilityMap, dates, timeSlots],
+  );
+
+  const getRectCells = (start: CellPos, end: CellPos): SlotCell[] => {
+    const minCol = Math.min(start.col, end.col);
+    const maxCol = Math.max(start.col, end.col);
+    const minRow = Math.min(start.row, end.row);
+    const maxRow = Math.max(start.row, end.row);
 
     const cells: SlotCell[] = [];
-    for (let col = minCol; col <= maxCol; col++) {
-      for (let row = minRow; row <= maxRow; row++) {
-        cells.push(toSlotCell({ col, row }));
+    for (let c = minCol; c <= maxCol; c++) {
+      for (let r = minRow; r <= maxRow; r++) {
+        cells.push(toSlotCell({ col: c, row: r }));
       }
     }
     return cells;
   };
 
-  const getPreviewFor = (
-    col: number,
-    row: number,
-  ): "select" | "deselect" | null => {
-    if (!rect) return null;
-    const { anchor, current } = rect;
-    const inCol =
-      col >= Math.min(anchor.col, current.col) &&
-      col <= Math.max(anchor.col, current.col);
-    const inRow =
-      row >= Math.min(anchor.row, current.row) &&
-      row <= Math.max(anchor.row, current.row);
-    return inCol && inRow ? rect.mode : null;
+  const isCellInRect = (cell: CellPos) => {
+    if (!rect) return false;
+    const minCol = Math.min(rect.anchor.col, rect.current.col);
+    const maxCol = Math.max(rect.anchor.col, rect.current.col);
+    const minRow = Math.min(rect.anchor.row, rect.current.row);
+    const maxRow = Math.max(rect.anchor.row, rect.current.row);
+    return (
+      cell.col >= minCol &&
+      cell.col <= maxCol &&
+      cell.row >= minRow &&
+      cell.row <= maxRow
+    );
   };
 
-  const handlePointerDown = (
-    date: Date,
-    time: string,
-    col: number,
-    row: number,
-  ) => {
-    return (e: React.PointerEvent) => {
-      if (e.button !== 0) return;
-      const isSelected = hasSlot(date, time);
-      const mode = isSelected ? "deselect" : "select";
-      dragRef.current = { mode, shape, lastCell: { col, row } };
+  const handlePointerDown = (cell: CellPos, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
 
-      containerRef.current?.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
-      if (shape === "paint") {
-        onCellsChange([{ date, time }], mode === "select");
-      } else {
-        setRect({ anchor: { col, row }, current: { col, row }, mode });
-      }
-    };
+    const mode = isCellAvailable(cell) ? "deselect" : "select";
+    dragRef.current = { mode, shape, lastCell: cell };
+    setIsDragging(true);
+
+    if (shape === "rect") {
+      setRect({ anchor: cell, current: cell, mode });
+    } else {
+      onCellsChange([toSlotCell(cell)], mode === "select");
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     const drag = dragRef.current;
-    if (!drag) {
-      const cell = cellFromPoint(e.clientX, e.clientY);
-      setHoveredCell(cell);
-      return;
+    const cell = cellFromPoint(e.clientX, e.clientY);
+
+    if (cell) {
+      setHoveredCell((prev) =>
+        prev?.col === cell.col && prev?.row === cell.row ? prev : cell,
+      );
+    } else {
+      setHoveredCell(null);
     }
 
-    const cell = cellFromPoint(e.clientX, e.clientY);
-    if (!cell) return;
-    setHoveredCell(cell);
+    if (!drag || !cell) return;
 
     if (drag.shape === "rect") {
       setRect((prev) =>
@@ -217,6 +199,7 @@ export function RecruiterAvailabilityCalendar({
 
   const handlePointerEnd = () => {
     const drag = dragRef.current;
+    setIsDragging(false);
     if (!drag) return;
     dragRef.current = null;
 
@@ -231,9 +214,11 @@ export function RecruiterAvailabilityCalendar({
 
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-xs">
+      {/* Calendar Toolbar */}
       <div className="border-b bg-muted/20 px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Drawing mode toggles */}
+          <div className="flex items-center gap-2">
             <div className="flex items-center rounded-lg border bg-background p-0.5 shadow-2xs">
               <Button
                 type="button"
@@ -242,6 +227,7 @@ export function RecruiterAvailabilityCalendar({
                 onClick={() => {
                   dragRef.current = null;
                   setRect(null);
+                  setIsDragging(false);
                   onShapeChange("paint");
                 }}
               >
@@ -255,6 +241,7 @@ export function RecruiterAvailabilityCalendar({
                 onClick={() => {
                   dragRef.current = null;
                   setRect(null);
+                  setIsDragging(false);
                   onShapeChange("rect");
                 }}
               >
@@ -262,29 +249,10 @@ export function RecruiterAvailabilityCalendar({
                 <span>Área</span>
               </Button>
             </div>
-
-            <div className="flex items-center rounded-lg border bg-background p-0.5 shadow-2xs">
-              <Button
-                type="button"
-                size="sm"
-                variant={viewDaysMode === "workdays" ? "secondary" : "ghost"}
-                onClick={() => onViewDaysModeChange("workdays")}
-              >
-                Dias úteis
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={viewDaysMode === "fullweek" ? "secondary" : "ghost"}
-                onClick={() => onViewDaysModeChange("fullweek")}
-              >
-                Semana inteira
-              </Button>
-            </div>
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-2">
-            <div className="hidden lg:flex items-center gap-3 text-xs text-muted-foreground mr-1">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mr-1">
               <div className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-primary" />
                 <span>Disponível</span>
@@ -294,318 +262,114 @@ export function RecruiterAvailabilityCalendar({
                 <span>Indisponível</span>
               </div>
             </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <span>Predefinições</span>
-                    <ChevronDown className="size-3.5 opacity-60" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="w-64 p-1.5">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
-                    Preencher semana
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => onApplyPreset("workdays-full")}
-                    className="flex items-center justify-between cursor-pointer py-1.5 px-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Clock className="size-4 text-primary" />
-                      <span>Dias úteis</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      09:00 – 18:00
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onApplyPreset("workdays-morning")}
-                    className="flex items-center justify-between cursor-pointer py-1.5 px-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sun className="size-4 text-amber-500" />
-                      <span>Manhãs</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      09:00 – 13:00
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onApplyPreset("workdays-afternoon")}
-                    className="flex items-center justify-between cursor-pointer py-1.5 px-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sunset className="size-4 text-orange-500" />
-                      <span>Tardes</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      14:00 – 18:00
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator className="my-1" />
-
-                <DropdownMenuGroup>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2">
-                      <Copy className="size-4 mr-2 text-muted-foreground" />
-                      <span>Copiar semana</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-56 p-1">
-                      <DropdownMenuItem
-                        onClick={() => onApplyPreset("copy-previous-week")}
-                        className="cursor-pointer py-1.5"
-                      >
-                        <ArrowLeft className="size-4 mr-2 text-muted-foreground" />
-                        <span>Da semana anterior</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onApplyPreset("copy-to-next-week")}
-                        className="cursor-pointer py-1.5"
-                      >
-                        <ArrowRight className="size-4 mr-2 text-muted-foreground" />
-                        <span>Para a próxima semana</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer py-1.5 px-2 text-destructive hover:text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/10">
-                      <Trash2 className="size-4 mr-2 text-destructive" />
-                      <span>Limpar</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-52 p-1">
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => onApplyPreset("clear-week")}
-                        className="cursor-pointer py-1.5"
-                      >
-                        <Trash2 className="size-4 mr-2" />
-                        <span>Semana atual</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => onApplyPreset("clear-all")}
-                        className="cursor-pointer py-1.5"
-                      >
-                        <Trash2 className="size-4 mr-2" />
-                        <span>Todas as disponibilidades</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
 
-      <div className="p-0">
-        <div
-          ref={containerRef}
-          className="relative w-full overflow-x-auto touch-pan-x"
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerEnd}
-          onPointerCancel={handlePointerEnd}
-          onLostPointerCapture={handlePointerEnd}
-        >
-          <table className="w-full border-collapse select-none text-left">
-            <thead>
-              <tr className="border-b border-border bg-muted/15">
-                <th className="sticky left-0 top-0 z-30 w-20 border-r border-border bg-card p-2 text-center text-xs font-semibold text-muted-foreground shadow-[1px_0_0_0_var(--border)]" />
-
-                {/* Day headers */}
-                {dates.map((date) => {
+      {/* Calendar Grid Table */}
+      <div
+        ref={containerRef}
+        className="w-full overflow-x-auto select-none"
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+      >
+        <table className="w-full min-w-[700px] border-collapse text-left">
+          <thead>
+            <tr className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground">
+              <th className="sticky left-0 z-20 w-18 border-r bg-muted/40 px-3 py-2 text-center">
+                Hora
+              </th>
+              {dates.map((date) => {
+                const today = isToday(date);
+                return (
+                  <th
+                    key={date.toISOString()}
+                    className={cn(
+                      "border-r px-3 py-2 text-center transition-colors last:border-r-0",
+                      today ? "bg-primary/10 text-primary font-bold" : "",
+                    )}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-0.5">
+                      <span className="text-[11px] uppercase tracking-wider font-semibold">
+                        {format(date, "EEE", { locale: pt })}
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
+                          today
+                            ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                            : "text-foreground",
+                        )}
+                      >
+                        {format(date, "d")}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border text-xs">
+            {timeSlots.map((time, rowIndex) => (
+              <tr
+                key={time}
+                className="group hover:bg-muted/10 transition-colors"
+              >
+                <td className="sticky left-0 z-10 w-18 border-r bg-background/95 px-2 py-1 text-center font-mono text-[11px] text-muted-foreground select-none">
+                  {time}
+                </td>
+                {dates.map((date, colIndex) => {
+                  const cell: CellPos = { col: colIndex, row: rowIndex };
+                  const key = getCellKey(cell);
+                  const isAvailable = availabilityMap.has(key);
+                  const inRect = isCellInRect(cell);
+                  const isHovered =
+                    hoveredCell?.col === colIndex &&
+                    hoveredCell?.row === rowIndex;
                   const today = isToday(date);
-                  const dayName = format(date, "EEE", { locale: pt }).replace(
-                    ".",
-                    "",
-                  );
+
+                  let cellBg = "";
+                  if (inRect && rect) {
+                    cellBg =
+                      rect.mode === "select"
+                        ? "bg-primary/40 ring-1 ring-primary inset-0"
+                        : "bg-destructive/30 ring-1 ring-destructive inset-0";
+                  } else if (isAvailable) {
+                    cellBg =
+                      "bg-primary/20 text-primary-foreground border-primary/30";
+                  } else if (isHovered && !isDragging) {
+                    cellBg = "bg-muted/60";
+                  }
 
                   return (
-                    <th
-                      key={date.toISOString()}
+                    <td
+                      key={key}
+                      data-cell-col={colIndex}
+                      data-cell-row={rowIndex}
+                      onPointerDown={(e) => handlePointerDown(cell, e)}
                       className={cn(
-                        "min-w-[110px] border-r border-border py-2.5 px-2 text-center transition-colors select-none",
-                        today && "bg-primary/5",
+                        "relative h-10 min-w-28 cursor-pointer border-r p-1 text-center transition-all last:border-r-0 touch-none",
+                        today && !isAvailable && !inRect
+                          ? "bg-primary/[0.03]"
+                          : "",
+                        cellBg,
                       )}
                     >
-                      <div className="flex flex-col items-center justify-center gap-1">
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                          {dayName}
-                        </span>
-                        <span
-                          className={cn(
-                            "inline-flex size-6 items-center justify-center text-sm font-semibold text-foreground",
-                            today &&
-                              "rounded-full bg-primary text-xs font-bold text-primary-foreground",
-                          )}
-                        >
-                          {format(date, "d")}
-                        </span>
-                      </div>
-                    </th>
+                      {isAvailable && (
+                        <div className="flex flex-col h-full w-full justify-center p-0.5 text-[10px] text-foreground">
+                          <span className="font-semibold text-primary">
+                            {time} – {getEndTimeString(time, slotMinutes)}
+                          </span>
+                        </div>
+                      )}
+                    </td>
                   );
                 })}
               </tr>
-            </thead>
-
-            <tbody>
-              {timeSlots.map((time, row) => {
-                const isHour = time.endsWith(":00");
-
-                return (
-                  <tr
-                    key={time}
-                    className={cn(
-                      "transition-colors",
-                      isHour
-                        ? "border-t border-border/80"
-                        : "border-t border-border/20 border-dashed",
-                    )}
-                  >
-                    <td
-                      className={cn(
-                        "sticky left-0 z-20 w-20 border-r border-border bg-card p-1 text-center font-medium shadow-[1px_0_0_0_var(--border)] select-none",
-                        isHour
-                          ? "text-xs font-semibold text-foreground"
-                          : "text-[11px] text-muted-foreground/75",
-                      )}
-                    >
-                      {time}
-                    </td>
-
-                    {dates.map((date, col) => {
-                      const selected = hasSlot(date, time);
-                      const preview = getPreviewFor(col, row);
-
-                      const prevSelected =
-                        row > 0 && hasSlot(date, timeSlots[row - 1]);
-                      const nextSelected =
-                        row < timeSlots.length - 1 &&
-                        hasSlot(date, timeSlots[row + 1]);
-
-                      const isTop = selected && !prevSelected;
-                      const isBottom = selected && !nextSelected;
-                      const isMiddle = selected && prevSelected && nextSelected;
-                      const isSingle =
-                        selected && !prevSelected && !nextSelected;
-
-                      let blockDurationStr = "";
-                      let blockEndTimeStr = "";
-                      if (isBottom) {
-                        let blockStartRow = row;
-                        while (
-                          blockStartRow > 0 &&
-                          hasSlot(date, timeSlots[blockStartRow - 1])
-                        ) {
-                          blockStartRow--;
-                        }
-                        const blockSlotsCount = row - blockStartRow + 1;
-                        const blockTotalMin = blockSlotsCount * slotMinutes;
-                        const bHours = Math.floor(blockTotalMin / 60);
-                        const bMins = blockTotalMin % 60;
-                        blockDurationStr =
-                          bHours > 0
-                            ? `${bHours}h${bMins > 0 ? ` ${bMins}m` : ""}`
-                            : `${bMins}m`;
-                        blockEndTimeStr = getEndTimeString(time, slotMinutes);
-                      }
-
-                      const isCellHovered =
-                        hoveredCell?.col === col && hoveredCell?.row === row;
-
-                      return (
-                        <td
-                          key={`${date.toISOString()}-${time}`}
-                          data-cell-col={col}
-                          data-cell-row={row}
-                          className={cn(
-                            "relative h-10 p-0 border-r border-border/40 touch-none transition-colors",
-                            !selected &&
-                              !preview &&
-                              "hover:bg-primary/8 cursor-pointer",
-                            isToday(date) &&
-                              !selected &&
-                              !preview &&
-                              "bg-primary/2",
-                            preview === "select" &&
-                              "bg-primary/20 ring-2 ring-inset ring-primary/80 z-10",
-                            preview === "deselect" &&
-                              "bg-destructive/20 ring-2 ring-inset ring-destructive/80 z-10 opacity-70",
-                          )}
-                          onPointerDown={handlePointerDown(
-                            date,
-                            time,
-                            col,
-                            row,
-                          )}
-                        >
-                          {selected ? (
-                            <div
-                              className={cn(
-                                "relative flex w-full flex-col justify-between bg-primary text-primary-foreground select-none cursor-pointer transition-all",
-                                isSingle &&
-                                  "h-[calc(100%-6px)] my-0.75 mx-1 w-[calc(100%-8px)] rounded-md shadow-xs p-1",
-                                isTop &&
-                                  !isBottom &&
-                                  "h-[calc(100%-3px)] mt-0.75 mx-1 w-[calc(100%-8px)] rounded-t-md p-1 pb-0",
-                                isMiddle &&
-                                  "h-full mx-1 w-[calc(100%-8px)] rounded-none px-1",
-                                isBottom &&
-                                  !isTop &&
-                                  "h-[calc(100%-3px)] mb-0.75 mx-1 w-[calc(100%-8px)] rounded-b-md p-1 pt-0",
-                              )}
-                            >
-                              {isTop && (
-                                <div className="flex items-center justify-between gap-1 leading-none">
-                                  <span className="text-[10px] font-semibold tracking-tight">
-                                    {time}
-                                  </span>
-                                  {isSingle && (
-                                    <span className="text-[9px] font-normal opacity-85">
-                                      {slotMinutes}m
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-
-                              {isMiddle && row % 4 === 0 && (
-                                <div className="text-[9px] opacity-40 text-center select-none">
-                                  ·
-                                </div>
-                              )}
-
-                              {isBottom && !isSingle && (
-                                <div className="flex items-center justify-between gap-1 leading-none text-[9px] font-medium opacity-90 pb-0.5">
-                                  <span>até {blockEndTimeStr}</span>
-                                  <span className="font-semibold text-primary-foreground">
-                                    {blockDurationStr}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            isCellHovered &&
-                            !preview && (
-                              <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-muted-foreground/60 select-none pointer-events-none">
-                                + {time}
-                              </div>
-                            )
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -104,10 +104,8 @@ export function RecruiterAvailabilityStats({
                 </div>
               </CardAction>
             </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
+            <CardContent className="pt-0 text-xs text-muted-foreground">
+              {stat.description}
             </CardContent>
           </Card>
         );
