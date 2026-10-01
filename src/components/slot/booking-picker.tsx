@@ -203,7 +203,7 @@ export function BookingPicker({
                             candidates.find(
                               (candidate) => candidate.id === c.candidateId,
                             ),
-                          ).length > 0 && "(Conheçe)"}
+                          ).length > 0 && "(Conhece)"}
                         </span>
 
                         <span className="text-sm font-bold text-orange-400">
@@ -222,7 +222,7 @@ export function BookingPicker({
               onClick={() => setIsAddingInterviewer(true)}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Add Interviewer
+              Adicionar entrevistador
             </Button>
           )}
         </div>

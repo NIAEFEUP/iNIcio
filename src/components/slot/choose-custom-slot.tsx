@@ -225,7 +225,7 @@ export default function ChooseCustomSlot({
             <thead>
               <tr>
                 <th className="text-left p-3 border-b font-medium text-muted-foreground min-w-[100px]">
-                  Time
+                  Hora
                 </th>
                 {dates.map((date) => {
                   const dateInfo = formatDateHeader(date);
