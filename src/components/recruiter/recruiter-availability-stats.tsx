@@ -12,12 +12,14 @@ interface RecruiterAvailabilityStatsProps {
   availabilities: Array<{ start: Date; duration: number }>;
   weekStart?: Date;
   weekEnd?: Date;
+  slotMinutes?: number;
 }
 
 export function RecruiterAvailabilityStats({
   availabilities,
   weekStart,
   weekEnd,
+  slotMinutes = 30,
 }: RecruiterAvailabilityStatsProps) {
   const totalMinutes = availabilities.reduce(
     (acc, availability) => acc + availability.duration,
@@ -65,7 +67,7 @@ export function RecruiterAvailabilityStats({
     {
       label: "Disponibilidade Total",
       value: totalDurationStr,
-      description: `${availabilities.length} slots de 30m no recrutamento`,
+      description: `${availabilities.length} slots de ${slotMinutes}m no recrutamento`,
       icon: Clock,
     },
     {

@@ -522,6 +522,7 @@ export default function RecruiterAvailabilityClient({
         availabilities={availabilities}
         weekStart={weekStart}
         weekEnd={weekEnd}
+        slotMinutes={SLOT_MINUTES}
       />
 
       <RecruiterAvailabilityCalendar
