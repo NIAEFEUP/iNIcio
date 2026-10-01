@@ -6,12 +6,13 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Plus,
   Sun,
   User as UserIcon,
 } from "lucide-react";
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,18 +39,34 @@ import {
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import { type User as UserType, useAuth } from "@/hooks/use-auth";
+import { useDeviceSessions } from "@/hooks/use-device-sessions";
+import { useSession } from "@/lib/use-session";
 import { useSignedProfilePictureUrl } from "@/hooks/use-signed-profile-picture-url";
 import { getInitials } from "@/lib/utils";
 import { AccountSettingsModal } from "@/components/profile/account-settings-modal";
 
+function canAccessRoute(role: string, pathname: string) {
+  if (pathname.startsWith("/admin")) return role === "admin";
+  if (
+    pathname.startsWith("/recruiter") ||
+    pathname.startsWith("/candidates") ||
+    pathname.startsWith("/calendar") ||
+    pathname.startsWith("/dynamic")
+  )
+    return role === "admin" || role === "recruiter";
+  return true;
+}
+
 function getMacSnapshot() {
-  const platform = (
-    (navigator as unknown as { userAgentData?: { platform?: string } })
-      .userAgentData?.platform ||
-    navigator.platform ||
-    navigator.userAgent ||
-    ""
-  ).toLowerCase();
+  const platform =
+    // SAFETY: navigator.userAgentData is not typed in all TS DOM targets yet.
+    (
+      (navigator as unknown as { userAgentData?: { platform?: string } })
+        .userAgentData?.platform ||
+      navigator.platform ||
+      navigator.userAgent ||
+      ""
+    ).toLowerCase();
   return platform.includes("mac");
 }
 
@@ -75,6 +92,7 @@ export function SidebarFooterComponent({
   const { isMobile } = useSidebar();
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const isMac = useIsMac();
   const { theme, setTheme } = useTheme();
 
@@ -88,7 +106,63 @@ export function SidebarFooterComponent({
       ? propIsAuthenticated
       : auth.isAuthenticated;
 
+  const { data: sessionData } = useSession();
+  const { sessions, switchAccount, revokeAccount } = useDeviceSessions();
+
   const [signedImageUrl] = useSignedProfilePictureUrl(user?.image);
+
+  const otherSessions = React.useMemo(
+    () => sessions.filter((s) => s.user.id !== user?.id),
+    [sessions, user?.id],
+  );
+
+  const handleSwitchAccount = React.useCallback(
+    async (sessionToken: string, role: string) => {
+      setIsOpen(false);
+      try {
+        await switchAccount(sessionToken);
+        router.refresh();
+        if (!canAccessRoute(role, pathname)) {
+          router.push("/");
+        }
+      } catch (err) {
+        toast.add({
+          type: "error",
+          title: "Could not switch account",
+          description:
+            err instanceof Error ? err.message : "Something went wrong.",
+        });
+      }
+    },
+    [switchAccount, router, pathname],
+  );
+
+  const handleAddAccount = React.useCallback(() => {
+    setIsOpen(false);
+    router.push(`/login?addAccount=1&from=${encodeURIComponent(pathname)}`);
+  }, [router, pathname]);
+
+  const handleLogoutCurrent = React.useCallback(async () => {
+    setIsOpen(false);
+    try {
+      if (onLogout) {
+        await onLogout();
+      } else if (sessionData?.session?.token) {
+        await revokeAccount(sessionData.session.token);
+        router.refresh();
+      } else {
+        await auth.logout();
+        router.push("/login");
+      }
+    } catch (err) {
+      toast.add({
+        type: "error",
+        title: "Could not sign out",
+        description:
+          err instanceof Error ? err.message : "Something went wrong.",
+      });
+    }
+  }, [onLogout, sessionData, revokeAccount, auth, router]);
 
   const handleLogout = React.useCallback(async () => {
     setIsOpen(false);
@@ -272,6 +346,65 @@ export function SidebarFooterComponent({
               </DropdownMenuGroup>
 
               <DropdownMenuGroup>
+                <DropdownMenuLabel>Contas</DropdownMenuLabel>
+                {otherSessions.length === 0 ? (
+                  <DropdownMenuItem disabled>
+                    <span className="text-muted-foreground text-xs truncate">
+                      Sem outras contas
+                    </span>
+                  </DropdownMenuItem>
+                ) : (
+                  otherSessions.map((deviceSession) => {
+                    const initials = getInitials(deviceSession.user.name, "U");
+                    return (
+                      <DropdownMenuItem
+                        key={deviceSession.session.token}
+                        onClick={() =>
+                          handleSwitchAccount(
+                            deviceSession.session.token,
+                            deviceSession.user.role,
+                          )
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
+                          <AvatarImage
+                            src={deviceSession.user.image ?? undefined}
+                            alt={deviceSession.user.name}
+                          />
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-medium text-xs truncate">
+                            {deviceSession.user.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {deviceSession.user.email}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+                <DropdownMenuItem
+                  onClick={handleAddAccount}
+                  className="cursor-pointer"
+                >
+                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
+                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                      <Plus className="h-3.5 w-3.5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-xs truncate">
+                    Adicionar conta
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </DropdownMenuGroup>
+
+              <DropdownMenuGroup>
                 <DropdownMenuLabel>Preferências</DropdownMenuLabel>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -326,9 +459,9 @@ export function SidebarFooterComponent({
               </DropdownMenuGroup>
 
               <DropdownMenuGroup>
-                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                <DropdownMenuItem onClick={handleLogoutCurrent}>
                   <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                    <AvatarFallback className="rounded-sm bg-destructive/10 text-destructive text-[10px] font-semibold">
+                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
                       <LogOut className="h-3.5 w-3.5" />
                     </AvatarFallback>
                   </Avatar>
@@ -338,6 +471,16 @@ export function SidebarFooterComponent({
                   <DropdownMenuShortcut>
                     {isMac ? "⇧⌘Q" : "Ctrl+Shift+Q"}
                   </DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                  <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
+                    <AvatarFallback className="rounded-sm bg-destructive/10 text-destructive text-[10px] font-semibold">
+                      <LogOut className="h-3.5 w-3.5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-xs truncate">
+                    Terminar sessão em todas as contas
+                  </span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
