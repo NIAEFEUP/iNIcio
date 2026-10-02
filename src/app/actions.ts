@@ -6,6 +6,7 @@ import {
   dynamic,
   interview,
   notification,
+  recruiter,
   recruiterToDynamic,
   recruiterToInterview,
   usersToRecruitments,
@@ -161,55 +162,72 @@ export async function assignRecruiter(
 ) {
   await requireAdminSession();
 
-  if (slotType === "interview") {
-    const target = await db.query.interview.findFirst({
-      where: eq(interview.id, interviewId),
-      with: { slot: true },
-    });
+  await db.transaction(async (tx) => {
+    // Serialize scheduling writes for this recruiter: the row lock makes the
+    // availability check and the insert atomic, so two concurrent assignments
+    // cannot both pass the overlap check.
+    const locked = await tx
+      .select({ userId: recruiter.userId })
+      .from(recruiter)
+      .where(eq(recruiter.userId, userId))
+      .for("update");
 
-    if (!target) throw new Error("Entrevista não encontrada.");
-
-    const available = await isRecruiterAvailableForSlot(
-      userId,
-      target.recruitmentId,
-      target.slot.start,
-      target.slot.duration,
-      { excludeInterviewId: interviewId },
-    );
-
-    if (!available) {
-      throw new Error("O recrutador não está disponível neste horário.");
+    if (locked.length === 0) {
+      throw new Error("Recrutador não encontrado.");
     }
 
-    await db.insert(recruiterToInterview).values({
-      recruiterId: userId,
-      interviewId,
-    });
-  } else {
-    const target = await db.query.dynamic.findFirst({
-      where: eq(dynamic.id, interviewId),
-      with: { slot: true },
-    });
+    if (slotType === "interview") {
+      const target = await tx.query.interview.findFirst({
+        where: eq(interview.id, interviewId),
+        with: { slot: true },
+      });
 
-    if (!target) throw new Error("Dinâmica não encontrada.");
+      if (!target) throw new Error("Entrevista não encontrada.");
 
-    const available = await isRecruiterAvailableForSlot(
-      userId,
-      target.recruitmentId,
-      target.slot.start,
-      target.slot.duration,
-      { excludeDynamicId: interviewId },
-    );
+      const available = await isRecruiterAvailableForSlot(
+        userId,
+        target.recruitmentId,
+        target.slot.start,
+        target.slot.duration,
+        { excludeInterviewId: interviewId },
+        tx,
+      );
 
-    if (!available) {
-      throw new Error("O recrutador não está disponível neste horário.");
+      if (!available) {
+        throw new Error("O recrutador não está disponível neste horário.");
+      }
+
+      await tx.insert(recruiterToInterview).values({
+        recruiterId: userId,
+        interviewId,
+      });
+    } else {
+      const target = await tx.query.dynamic.findFirst({
+        where: eq(dynamic.id, interviewId),
+        with: { slot: true },
+      });
+
+      if (!target) throw new Error("Dinâmica não encontrada.");
+
+      const available = await isRecruiterAvailableForSlot(
+        userId,
+        target.recruitmentId,
+        target.slot.start,
+        target.slot.duration,
+        { excludeDynamicId: interviewId },
+        tx,
+      );
+
+      if (!available) {
+        throw new Error("O recrutador não está disponível neste horário.");
+      }
+
+      await tx.insert(recruiterToDynamic).values({
+        recruiterId: userId,
+        dynamicId: interviewId,
+      });
     }
-
-    await db.insert(recruiterToDynamic).values({
-      recruiterId: userId,
-      dynamicId: interviewId,
-    });
-  }
+  });
 
   revalidatePath("/admin/bookings");
 }
