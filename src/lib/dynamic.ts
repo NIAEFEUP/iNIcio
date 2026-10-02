@@ -47,6 +47,12 @@ export async function tryToAddCandidateToDynamic(
     });
 
     if (candidateDynamic) {
+      // Selecting the current slot is a no-op. Deleting the now-empty dynamic
+      // below would destroy its content/comments and recruiter assignments.
+      if (candidateDynamic.dynamic.slot.id === slotParam.id) {
+        return;
+      }
+
       await trx
         .update(slot)
         .set({ quantity: candidateDynamic.dynamic.slot.quantity + 1 })
