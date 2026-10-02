@@ -87,7 +87,7 @@ export function BookingPicker({
     recruiters: availableRecruiters,
     isLoading: isLoadingAvailable,
     mutate: mutateAvailable,
-  } = useAvailableRecruiters(startDate, endDate);
+  } = useAvailableRecruiters(startDate, endDate, effectiveRecruitmentId);
 
   const { data: teamRecruiters = [], isLoading: isLoadingTeam } = useSWR(
     effectiveRecruitmentId ? ["team-recruiters", effectiveRecruitmentId] : null,
