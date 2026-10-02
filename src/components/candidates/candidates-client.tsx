@@ -70,8 +70,9 @@ function getPageIndexFromSearchParams(
 ): number {
   if (!searchParams) return 0;
   const raw = searchParams.get(PAGE_PARAM);
-  const parsed = Number.parseInt(raw ?? "1", 10);
-  if (Number.isNaN(parsed)) return 0;
+  if (!raw || !/^[1-9]\d*$/.test(raw)) return 0;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || !Number.isSafeInteger(parsed)) return 0;
   return Math.max(0, parsed - 1);
 }
 
@@ -128,6 +129,8 @@ export default function CandidatesClient({
   const isMountedRef = useRef(false);
   const lastPushedPageIndexRef = useRef<number | null>(null);
   const isInitialUrlSyncRef = useRef(true);
+  const skipUrlPushRef = useRef(false);
+  const skipUrlReadRef = useRef(false);
 
   // `user` is rebuilt on every render; keep the props and callbacks passed to
   // the memoized grid cards stable so they can bail out.
@@ -141,24 +144,15 @@ export default function CandidatesClient({
     isMountedRef.current = true;
   }, []);
 
-  // Sync URL ?page= -> table state on back/forward and hydration.
-  useEffect(() => {
-    const urlPageIndex = getPageIndexFromSearchParams(searchParams);
-    if (lastPushedPageIndexRef.current === urlPageIndex) {
-      lastPushedPageIndexRef.current = null;
-      return;
-    }
-    lastPushedPageIndexRef.current = null;
-
-    setPagination((prev) =>
-      prev.pageIndex === urlPageIndex
-        ? prev
-        : { ...prev, pageIndex: urlPageIndex },
-    );
-  }, [searchParams]);
-
   // Sync table state -> URL ?page= when the user navigates pages.
   useEffect(() => {
+    if (skipUrlPushRef.current) {
+      skipUrlPushRef.current = false;
+      if (isInitialUrlSyncRef.current) {
+        isInitialUrlSyncRef.current = false;
+      }
+      return;
+    }
     if (isInitialUrlSyncRef.current) {
       isInitialUrlSyncRef.current = false;
       return;
@@ -400,7 +394,10 @@ export default function CandidatesClient({
       if (isMountedRef.current) setGlobalFilter(updater);
     },
     onPaginationChange: (updater) => {
-      if (isMountedRef.current) setPagination(updater);
+      if (isMountedRef.current) {
+        skipUrlReadRef.current = true;
+        setPagination(updater);
+      }
     },
     onRowSelectionChange: (updater) => {
       if (isMountedRef.current) setRowSelection(updater);
@@ -422,6 +419,53 @@ export default function CandidatesClient({
       );
     },
   });
+
+  const pageCount = table.getPageCount();
+
+  // Sync URL ?page= -> table state on back/forward and hydration.
+  // Clamp to the last available page so an out-of-range URL never shows an
+  // empty view while filtered rows remain.
+  useEffect(() => {
+    if (skipUrlReadRef.current) {
+      skipUrlReadRef.current = false;
+      return;
+    }
+
+    const urlPageIndex = getPageIndexFromSearchParams(searchParams);
+    const maxPageIndex = Math.max(0, pageCount - 1);
+    const targetPageIndex = Math.min(urlPageIndex, maxPageIndex);
+
+    if (lastPushedPageIndexRef.current === targetPageIndex) {
+      lastPushedPageIndexRef.current = null;
+      return;
+    }
+    lastPushedPageIndexRef.current = null;
+
+    let willChange = false;
+    setPagination((prev) => {
+      if (prev.pageIndex === targetPageIndex) return prev;
+      willChange = true;
+      return { ...prev, pageIndex: targetPageIndex };
+    });
+    if (willChange) {
+      skipUrlPushRef.current = true;
+    }
+  }, [searchParams, pageCount]);
+
+  // Clamp pagination when filtering reduces the number of available pages.
+  useEffect(() => {
+    const maxPageIndex = Math.max(0, pageCount - 1);
+
+    let willChange = false;
+    setPagination((prev) => {
+      if (prev.pageIndex <= maxPageIndex) return prev;
+      willChange = true;
+      return { ...prev, pageIndex: maxPageIndex };
+    });
+    if (willChange) {
+      skipUrlPushRef.current = true;
+    }
+  }, [pageCount]);
 
   const selectedCourses =
     (columnFilters.find((f) => f.id === "course")?.value as
