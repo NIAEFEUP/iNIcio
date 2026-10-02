@@ -425,6 +425,17 @@ export function BookingPicker({
                       >
                         Ocupado
                       </Button>
+                    ) : !isAvailable ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="ghost"
+                        disabled
+                        className="h-7 text-xs text-muted-foreground"
+                        title="Recrutador sem disponibilidade declarada para este horário"
+                      >
+                        Indisponível
+                      </Button>
                     ) : (
                       <Button
                         type="button"
