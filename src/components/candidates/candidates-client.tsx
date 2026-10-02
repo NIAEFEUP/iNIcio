@@ -74,6 +74,12 @@ const DECISION_OPTIONS = [
   { value: "pending", label: "Pendente" },
 ];
 
+const SCHEDULING_OPTIONS = [
+  { value: "sem-entrevista", label: "Sem entrevista" },
+  { value: "sem-dinamica", label: "Sem dinâmica" },
+  { value: "sem-ambas", label: "Sem ambas" },
+];
+
 const multiIncludes = (
   row: { original: CandidateListMetadata },
   value: string | string[] | undefined,
@@ -287,6 +293,58 @@ export default function CandidatesClient({
           ),
       },
       {
+        id: "scheduling",
+        accessorFn: (c) =>
+          `${c.interview ? "interview" : "none"}-${c.dynamic ? "dynamic" : "none"}`,
+        header: "Marcação",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const hasInterview = Boolean(row.original.interview);
+          const hasDynamic = Boolean(row.original.dynamic);
+
+          if (hasInterview && hasDynamic) {
+            return (
+              <Badge variant="secondary" className="text-[10px]">
+                Agendado
+              </Badge>
+            );
+          }
+
+          const missing = [
+            !hasInterview ? "Sem entrevista" : null,
+            !hasDynamic ? "Sem dinâmica" : null,
+          ].filter(Boolean) as string[];
+
+          return (
+            <div className="flex flex-wrap gap-1">
+              {missing.map((label) => (
+                <Badge
+                  key={label}
+                  variant="outline"
+                  className="text-[10px] text-muted-foreground"
+                >
+                  {label}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+        filterFn: (row, _id, value: string[]) => {
+          if (!value || value.length === 0) return true;
+          const hasInterview = Boolean(row.original.interview);
+          const hasDynamic = Boolean(row.original.dynamic);
+          return value.some((v) =>
+            v === "sem-entrevista"
+              ? !hasInterview
+              : v === "sem-dinamica"
+                ? !hasDynamic
+                : v === "sem-ambas"
+                  ? !hasInterview && !hasDynamic
+                  : false,
+          );
+        },
+      },
+      {
         id: "decision",
         accessorFn: (c) =>
           c.votingDecision?.decision === "approve"
@@ -387,6 +445,9 @@ export default function CandidatesClient({
       string[] | undefined) ?? [];
   const selectedDecisions =
     (columnFilters.find((f) => f.id === "decision")?.value as
+      string[] | undefined) ?? [];
+  const selectedScheduling =
+    (columnFilters.find((f) => f.id === "scheduling")?.value as
       string[] | undefined) ?? [];
 
   const setFilter = (id: string, values: string[]) => {
@@ -519,6 +580,7 @@ export default function CandidatesClient({
                 departments: "Departamentos",
                 interviewClassification: "Entrevista",
                 dynamicClassification: "Dinâmica",
+                scheduling: "Marcação",
                 decision: "Decisão",
               }}
             />
@@ -618,6 +680,16 @@ export default function CandidatesClient({
               options={DECISION_OPTIONS}
               selectedValues={selectedDecisions}
               onSelectedValuesChange={(values) => setFilter("decision", values)}
+            />
+            <DataTableFilter
+              title="Marcação"
+              pluralTitle="Marcações"
+              allLabel="Todas as marcações"
+              options={SCHEDULING_OPTIONS}
+              selectedValues={selectedScheduling}
+              onSelectedValuesChange={(values) =>
+                setFilter("scheduling", values)
+              }
             />
           </>
         }
