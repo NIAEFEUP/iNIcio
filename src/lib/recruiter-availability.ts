@@ -47,6 +47,8 @@ function slotOverlapCondition(start: Date, end: Date) {
 /**
  * A recruiter can cover a session only if they declared availability that
  * overlaps it and have no other interview or dynamic at an overlapping time.
+ * Availability is scoped to the recruitment, but conflicts are checked across
+ * every recruitment since a recruiter cannot be in two places at once.
  */
 export async function isRecruiterAvailableForSlot(
   recruiterId: string,
@@ -79,7 +81,6 @@ export async function isRecruiterAvailableForSlot(
       .where(
         and(
           eq(recruiterToInterview.recruiterId, recruiterId),
-          eq(interview.recruitmentId, recruitmentId),
           slotOverlapCondition(slotStart, slotEnd),
           options.excludeInterviewId !== undefined
             ? ne(interview.id, options.excludeInterviewId)
@@ -95,7 +96,6 @@ export async function isRecruiterAvailableForSlot(
       .where(
         and(
           eq(recruiterToDynamic.recruiterId, recruiterId),
-          eq(dynamic.recruitmentId, recruitmentId),
           slotOverlapCondition(slotStart, slotEnd),
           options.excludeDynamicId !== undefined
             ? ne(dynamic.id, options.excludeDynamicId)
