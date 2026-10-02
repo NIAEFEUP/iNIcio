@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
+  dynamic,
+  interview,
   notification,
   recruiterAvailability,
   recruiterToDynamic,
@@ -20,6 +22,7 @@ import { getActiveRecruitment } from "@/lib/recruitment";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { deliverPendingNotifications } from "@/lib/notification-service";
+import { isRecruiterAvailableForSlot } from "@/lib/recruiter-availability";
 
 export async function markNotificationAsRead(id: number) {
   const user = await getSessionUser();
@@ -163,11 +166,49 @@ export async function assignRecruiter(
   await requireAdminSession();
 
   if (slotType === "interview") {
+    const target = await db.query.interview.findFirst({
+      where: eq(interview.id, interviewId),
+      with: { slot: true },
+    });
+
+    if (!target) throw new Error("Entrevista não encontrada.");
+
+    const available = await isRecruiterAvailableForSlot(
+      userId,
+      target.recruitmentId,
+      target.slot.start,
+      target.slot.duration,
+      { excludeInterviewId: interviewId },
+    );
+
+    if (!available) {
+      throw new Error("O recrutador não está disponível neste horário.");
+    }
+
     await db.insert(recruiterToInterview).values({
       recruiterId: userId,
       interviewId,
     });
   } else {
+    const target = await db.query.dynamic.findFirst({
+      where: eq(dynamic.id, interviewId),
+      with: { slot: true },
+    });
+
+    if (!target) throw new Error("Dinâmica não encontrada.");
+
+    const available = await isRecruiterAvailableForSlot(
+      userId,
+      target.recruitmentId,
+      target.slot.start,
+      target.slot.duration,
+      { excludeDynamicId: interviewId },
+    );
+
+    if (!available) {
+      throw new Error("O recrutador não está disponível neste horário.");
+    }
+
     await db.insert(recruiterToDynamic).values({
       recruiterId: userId,
       dynamicId: interviewId,
