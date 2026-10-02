@@ -59,6 +59,7 @@ interface CandidatesClientProps {
   candidates: Array<CandidateListMetadata>;
   availableDepartments: Array<string>;
   initialViewMode?: ViewMode;
+  initialScheduling?: string[];
 }
 
 const PAGE_SIZE = 48;
@@ -97,6 +98,7 @@ export default function CandidatesClient({
   candidates,
   availableDepartments,
   initialViewMode = "grid",
+  initialScheduling = [],
 }: CandidatesClientProps) {
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
   const setViewMode = (mode: ViewMode) => {
@@ -104,7 +106,11 @@ export default function CandidatesClient({
     setCandidatesViewMode(mode);
   };
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
+    initialScheduling.length > 0
+      ? [{ id: "scheduling", value: initialScheduling }]
+      : [],
+  );
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     previousApplications: false,
     departments: false,

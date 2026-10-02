@@ -6,9 +6,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
+
 import type { CandidateListMetadata } from "@/lib/candidate";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
-import { AlertCircle, CalendarCheck, CheckCircle2, Users } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarCheck,
+  CheckCircle2,
+  UserRoundX,
+  Users,
+} from "lucide-react";
 
 interface BookingAdminStatsProps {
   bookings: {
@@ -66,13 +74,17 @@ export function BookingAdminStats({
   const totalMissingRecruiters =
     interviewsMissingRecruiters + dynamicsMissingRecruiters;
 
-  const unmarkedInterviews = candidates.filter((c) => !c.interview).length;
+  const candidatesWithoutInterview = candidates.filter((c) => !c.interview);
+  const candidatesWithoutDynamic = candidates.filter((c) => !c.dynamic);
+  const candidatesWithoutEither = candidates.filter(
+    (c) => !c.interview || !c.dynamic,
+  );
 
   const stats = [
     {
       label: "Entrevistas Agendadas",
       value: `${interviews.length}`,
-      description: `${weekInterviews.length} nesta semana • ${candidates.length - unmarkedInterviews} candidatos`,
+      description: `${weekInterviews.length} nesta semana • ${candidates.length - candidatesWithoutInterview.length} candidatos`,
       icon: CalendarCheck,
     },
     {
@@ -91,14 +103,22 @@ export function BookingAdminStats({
       icon: totalMissingRecruiters > 0 ? AlertCircle : CheckCircle2,
       alert: totalMissingRecruiters > 0,
     },
+    {
+      label: "Sem Marcação",
+      value: `${candidatesWithoutEither.length}`,
+      description: `${candidatesWithoutInterview.length} sem entrevista • ${candidatesWithoutDynamic.length} sem dinâmica`,
+      icon: candidatesWithoutEither.length > 0 ? UserRoundX : CheckCircle2,
+      alert: candidatesWithoutEither.length > 0,
+      href: "/candidates?scheduling=sem-entrevista,sem-dinamica",
+    },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
-        return (
-          <Card key={stat.label}>
+        const card = (
+          <Card key={stat.label} className="h-full">
             <CardHeader>
               <CardDescription className="text-xs uppercase tracking-wider font-medium">
                 {stat.label}
@@ -120,6 +140,18 @@ export function BookingAdminStats({
               {stat.description}
             </CardContent>
           </Card>
+        );
+
+        if (!stat.href) return card;
+
+        return (
+          <Link
+            key={stat.label}
+            href={stat.href}
+            className="rounded-xl transition-colors hover:bg-accent/40"
+          >
+            {card}
+          </Link>
         );
       })}
     </div>
