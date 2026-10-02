@@ -17,6 +17,34 @@ export interface RecruiterSlotCheck {
 }
 
 /**
+ * Predicate matching declared availability windows that overlap
+ * `[start, end)` for a recruitment, optionally for a single recruiter.
+ */
+export function availabilityOverlapCondition(
+  start: Date,
+  end: Date,
+  recruitmentId: number,
+  recruiterId?: string,
+) {
+  return and(
+    lt(recruiterAvailability.start, end),
+    sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${sql.param(start, recruiterAvailability.start)}`,
+    eq(recruiterAvailability.recruitmentId, recruitmentId),
+    recruiterId !== undefined
+      ? eq(recruiterAvailability.recruiterId, recruiterId)
+      : undefined,
+  );
+}
+
+/** Predicate matching `slot` rows whose window overlaps `[start, end)`. */
+function slotOverlapCondition(start: Date, end: Date) {
+  return and(
+    lt(slot.start, end),
+    sql`${slot.start} + make_interval(mins => ${slot.duration}) > ${sql.param(start, slot.start)}`,
+  );
+}
+
+/**
  * A recruiter can cover a session only if they declared availability that
  * overlaps it and have no other interview or dynamic at an overlapping time.
  */
@@ -35,11 +63,11 @@ export async function isRecruiterAvailableForSlot(
       .select({ id: recruiterAvailability.id })
       .from(recruiterAvailability)
       .where(
-        and(
-          eq(recruiterAvailability.recruiterId, recruiterId),
-          eq(recruiterAvailability.recruitmentId, recruitmentId),
-          lt(recruiterAvailability.start, slotEnd),
-          sql`${recruiterAvailability.start} + make_interval(mins => ${recruiterAvailability.duration}) > ${sql.param(slotStart, recruiterAvailability.start)}`,
+        availabilityOverlapCondition(
+          slotStart,
+          slotEnd,
+          recruitmentId,
+          recruiterId,
         ),
       )
       .limit(1),
@@ -52,8 +80,7 @@ export async function isRecruiterAvailableForSlot(
         and(
           eq(recruiterToInterview.recruiterId, recruiterId),
           eq(interview.recruitmentId, recruitmentId),
-          lt(slot.start, slotEnd),
-          sql`${slot.start} + make_interval(mins => ${slot.duration}) > ${sql.param(slotStart, slot.start)}`,
+          slotOverlapCondition(slotStart, slotEnd),
           options.excludeInterviewId !== undefined
             ? ne(interview.id, options.excludeInterviewId)
             : undefined,
@@ -69,8 +96,7 @@ export async function isRecruiterAvailableForSlot(
         and(
           eq(recruiterToDynamic.recruiterId, recruiterId),
           eq(dynamic.recruitmentId, recruitmentId),
-          lt(slot.start, slotEnd),
-          sql`${slot.start} + make_interval(mins => ${slot.duration}) > ${sql.param(slotStart, slot.start)}`,
+          slotOverlapCondition(slotStart, slotEnd),
           options.excludeDynamicId !== undefined
             ? ne(dynamic.id, options.excludeDynamicId)
             : undefined,
