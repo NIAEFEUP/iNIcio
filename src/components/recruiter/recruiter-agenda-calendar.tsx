@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -96,7 +95,26 @@ export function RecruiterAgendaCalendar({
     return map;
   }, [currentWeekEvents]);
 
-  // Pre-calculate minimum and maximum hours based on events in this week
+  const eventsByDay = useMemo(() => {
+    const map = new Map<
+      string,
+      { date: Date; events: RecruiterAgendaEvent[] }
+    >();
+    const sorted = [...currentWeekEvents].sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    );
+
+    for (const evt of sorted) {
+      const key = `${evt.start.getFullYear()}-${(evt.start.getMonth() + 1).toString().padStart(2, "0")}-${evt.start.getDate().toString().padStart(2, "0")}`;
+      if (!map.has(key)) {
+        map.set(key, { date: evt.start, events: [] });
+      }
+      map.get(key)!.events.push(evt);
+    }
+
+    return Array.from(map.values());
+  }, [currentWeekEvents]);
+
   const { minHour, maxHour } = useMemo(() => {
     let min = 9;
     let max = 19;
@@ -153,6 +171,9 @@ export function RecruiterAgendaCalendar({
       <div className="flex flex-col gap-1 w-full h-full">
         {cellEvents.map((evt) => {
           const isInterview = evt.type === "interview";
+          const dynamicCandidateCount =
+            evt.candidatesCount ?? evt.candidates?.length ?? 0;
+
           return (
             <button
               key={evt.id}
@@ -161,47 +182,64 @@ export function RecruiterAgendaCalendar({
               className={cn(
                 "group flex w-full flex-col gap-1 rounded-md border p-1.5 text-left transition-all shadow-2xs hover:shadow-xs",
                 isInterview
-                  ? "border-blue-500/30 bg-blue-50/80 hover:bg-blue-100/90 dark:border-blue-800/60 dark:bg-blue-950/30 dark:hover:bg-blue-950/50"
-                  : "border-emerald-500/30 bg-emerald-50/80 hover:bg-emerald-100/90 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50",
+                  ? "border-blue-500/25 bg-blue-50/70 hover:bg-blue-100/80 dark:border-blue-800/40 dark:bg-blue-950/25 dark:hover:bg-blue-950/45"
+                  : "border-emerald-500/25 bg-emerald-50/70 hover:bg-emerald-100/80 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:hover:bg-emerald-950/45",
               )}
             >
-              <div className="flex w-full items-center justify-between gap-1">
-                <Badge
-                  variant={isInterview ? "secondary" : "outline"}
+              <div className="flex w-full items-center justify-between gap-1 leading-none">
+                <span
                   className={cn(
-                    "text-[10px] px-1 py-0 font-medium",
+                    "text-[11px] font-semibold tracking-tight",
                     isInterview
-                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200"
-                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200",
+                      ? "text-blue-700 dark:text-blue-300"
+                      : "text-emerald-700 dark:text-emerald-300",
                   )}
                 >
                   {isInterview ? "Entrevista" : "Dinâmica"}
-                </Badge>
+                </span>
                 <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                   {format(evt.start, "HH:mm")}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 min-w-0">
-                {evt.candidate && (
-                  <Avatar className="size-4 shrink-0 ring-1 ring-card">
-                    <AvatarImage
-                      src={getStableImageUrl(evt.candidate.image) || undefined}
-                      alt={evt.candidate.name}
-                    />
-                    <AvatarFallback>
-                      <InitialsAvatar
-                        initials={getInitials(evt.candidate.name)}
-                        size="sm"
-                        className="size-4 text-[7px]"
-                      />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <span className="truncate text-xs font-semibold text-foreground">
-                  {evt.title}
-                </span>
-              </div>
+              {isInterview ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {evt.candidate ? (
+                    <>
+                      <Avatar className="size-4 shrink-0 ring-1 ring-border">
+                        <AvatarImage
+                          src={
+                            getStableImageUrl(evt.candidate.image) || undefined
+                          }
+                          alt={evt.candidate.name}
+                        />
+                        <AvatarFallback>
+                          <InitialsAvatar
+                            initials={getInitials(evt.candidate.name)}
+                            size="sm"
+                            className="size-4 text-[7px]"
+                          />
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate text-xs font-medium text-foreground">
+                        {evt.candidate.name}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="truncate text-xs text-muted-foreground italic">
+                      Sem candidato
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 min-w-0 text-muted-foreground">
+                  <Users className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span className="truncate text-xs font-medium text-foreground">
+                    {dynamicCandidateCount}{" "}
+                    {dynamicCandidateCount === 1 ? "candidato" : "candidatos"}
+                  </span>
+                </div>
+              )}
             </button>
           );
         })}
@@ -262,9 +300,9 @@ export function RecruiterAgendaCalendar({
           renderCell={renderGridCell}
         />
       ) : (
-        /* List View */
-        <div className="flex flex-col gap-3">
-          {currentWeekEvents.length === 0 ? (
+        /* Timeline List View */
+        <div className="flex flex-col gap-6">
+          {eventsByDay.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
               <CalendarIcon className="size-10 text-muted-foreground mb-3 opacity-40" />
               <h3 className="font-semibold text-sm">Sem eventos agendados</h3>
@@ -273,78 +311,157 @@ export function RecruiterAgendaCalendar({
               </p>
             </div>
           ) : (
-            currentWeekEvents
-              .sort((a, b) => a.start.getTime() - b.start.getTime())
-              .map((evt) => {
-                const isInterview = evt.type === "interview";
-                return (
-                  <div
-                    key={evt.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-2xs hover:border-foreground/20 transition-colors"
-                  >
-                    <div className="flex items-start sm:items-center gap-3">
-                      <div
-                        className={cn(
-                          "flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
-                          isInterview
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                        )}
-                      >
-                        {format(evt.start, "d MMM", { locale: pt })}
-                      </div>
-
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
-                            {evt.title}
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] px-1.5 py-0 font-normal"
-                          >
-                            {isInterview ? "Entrevista" : "Dinâmica"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Clock className="size-3" />
-                            {format(evt.start, "HH:mm")} –{" "}
-                            {format(evt.end, "HH:mm")}
-                          </span>
-                          {evt.candidate && (
-                            <span>Candidato: {evt.candidate.name}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                      {evt.candidate && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          render={
-                            <Link href={`/candidate/${evt.candidate.id}`} />
-                          }
-                          className="gap-1.5 text-xs"
-                        >
-                          <ExternalLink className="size-3.5" />
-                          <span>Ver Perfil</span>
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedEvent(evt)}
-                        className="text-xs"
-                      >
-                        Detalhes
-                      </Button>
-                    </div>
+            eventsByDay.map((group) => (
+              <div
+                key={group.date.toISOString()}
+                className="flex flex-col gap-3"
+              >
+                {/* Day Date Header */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <CalendarIcon className="size-3.5 text-primary" />
+                    <span className="capitalize">
+                      {format(group.date, "EEEE, d 'de' MMMM", { locale: pt })}
+                    </span>
                   </div>
-                );
-              })
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                {/* Timeline Items */}
+                <div className="relative pl-6 space-y-3 pb-2">
+                  {group.events.length > 1 && (
+                    <div className="absolute left-[5px] top-[24px] bottom-[24px] w-0.5 bg-border" />
+                  )}
+                  {group.events.map((evt) => {
+                    const isInterview = evt.type === "interview";
+                    const dynamicCandidateCount =
+                      evt.candidatesCount ?? evt.candidates?.length ?? 0;
+
+                    return (
+                      <div key={evt.id} className="relative group">
+                        {/* Timeline dot */}
+                        <div
+                          className={cn(
+                            "absolute -left-6 top-[18px] size-3 rounded-full border-2 bg-background transition-transform group-hover:scale-125 z-10",
+                            isInterview
+                              ? "border-blue-500 ring-2 ring-blue-500/20"
+                              : "border-emerald-500 ring-2 ring-emerald-500/20",
+                          )}
+                        />
+
+                        {/* Event Card */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-2xs hover:border-foreground/20 hover:shadow-xs transition-all">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "text-xs font-semibold uppercase tracking-wider",
+                                  isInterview
+                                    ? "text-blue-700 dark:text-blue-300"
+                                    : "text-emerald-700 dark:text-emerald-300",
+                                )}
+                              >
+                                {isInterview ? "Entrevista" : "Dinâmica"}
+                              </span>
+                              <span className="text-muted-foreground/60 text-xs">
+                                •
+                              </span>
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                                <Clock className="size-3" />
+                                {format(evt.start, "HH:mm")} –{" "}
+                                {format(evt.end, "HH:mm")}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {isInterview ? (
+                                evt.candidate ? (
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="size-5 shrink-0 ring-1 ring-border">
+                                      <AvatarImage
+                                        src={
+                                          getStableImageUrl(
+                                            evt.candidate.image,
+                                          ) || undefined
+                                        }
+                                        alt={evt.candidate.name}
+                                      />
+                                      <AvatarFallback>
+                                        <InitialsAvatar
+                                          initials={getInitials(
+                                            evt.candidate.name,
+                                          )}
+                                          size="sm"
+                                          className="size-5 text-[9px]"
+                                        />
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <Link
+                                      href={`/candidate/${evt.candidate.id}`}
+                                      className="text-sm font-medium text-foreground hover:underline"
+                                    >
+                                      {evt.candidate.name}
+                                    </Link>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">
+                                    Sem candidato
+                                  </span>
+                                )
+                              ) : (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <Users className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                  <span className="text-sm font-medium text-foreground">
+                                    {dynamicCandidateCount}{" "}
+                                    {dynamicCandidateCount === 1
+                                      ? "candidato"
+                                      : "candidatos"}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-center">
+                            {isInterview ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                nativeButton={false}
+                                render={<Link href={evt.link} />}
+                                className="gap-1.5 text-xs"
+                              >
+                                <ExternalLink className="size-3.5" />
+                                <span>Abrir Entrevista</span>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                nativeButton={false}
+                                render={<Link href={evt.link} />}
+                                className="gap-1.5 text-xs"
+                              >
+                                <ExternalLink className="size-3.5" />
+                                <span>Abrir Dinâmica</span>
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedEvent(evt)}
+                              className="text-xs"
+                            >
+                              Detalhes
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
           )}
         </div>
       )}
@@ -359,97 +476,190 @@ export function RecruiterAgendaCalendar({
         {selectedEvent && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge
-                  variant={
-                    selectedEvent.type === "interview" ? "secondary" : "outline"
-                  }
-                  className={cn(
-                    "text-xs",
-                    selectedEvent.type === "interview"
-                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200"
-                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200",
-                  )}
-                >
-                  {selectedEvent.type === "interview"
-                    ? "Entrevista Individual"
-                    : "Dinâmica de Grupo"}
-                </Badge>
-              </div>
-              <DialogTitle>{selectedEvent.title}</DialogTitle>
-              <DialogDescription>
-                {format(selectedEvent.start, "EEEE, d 'de' MMMM 'de' yyyy", {
-                  locale: pt,
-                })}
+              {/* 1. Type of event */}
+              <DialogTitle className="text-base font-semibold">
+                {selectedEvent.type === "interview" ? "Entrevista" : "Dinâmica"}
+              </DialogTitle>
+              {/* 2. Date and time */}
+              <DialogDescription className="text-xs text-muted-foreground">
+                <span className="capitalize">
+                  {format(selectedEvent.start, "EEEE, d 'de' MMMM 'de' yyyy", {
+                    locale: pt,
+                  })}
+                </span>
+                {" · "}
+                <span>
+                  {format(selectedEvent.start, "HH:mm")} –{" "}
+                  {format(selectedEvent.end, "HH:mm")} ({selectedEvent.duration}{" "}
+                  min)
+                </span>
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex flex-col gap-3 py-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="size-4 text-foreground/70" />
-                <span className="font-medium text-foreground">Horário:</span>
-                <span>
-                  {format(selectedEvent.start, "HH:mm")} –{" "}
-                  {format(selectedEvent.end, "HH:mm")} (
-                  {Math.round(
-                    (selectedEvent.end.getTime() -
-                      selectedEvent.start.getTime()) /
-                      60_000,
-                  )}{" "}
-                  minutos)
+            <div className="flex flex-col gap-4">
+              {/* 3. Recruiters assigned to that event */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Recrutadores
                 </span>
+                {selectedEvent.recruiters &&
+                selectedEvent.recruiters.length > 0 ? (
+                  <div className="divide-y divide-border rounded-lg border bg-muted/20">
+                    {selectedEvent.recruiters.map((recruiter) => (
+                      <div
+                        key={recruiter.id}
+                        className="flex items-center gap-2.5 p-2.5"
+                      >
+                        <Avatar className="size-7 shrink-0">
+                          <AvatarImage
+                            src={
+                              getStableImageUrl(recruiter.image) || undefined
+                            }
+                            alt={recruiter.name}
+                          />
+                          <AvatarFallback className="text-[10px] font-medium">
+                            {getInitials(recruiter.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {recruiter.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic px-0.5">
+                    Nenhum recrutador atribuído
+                  </p>
+                )}
               </div>
 
-              {selectedEvent.candidate && (
-                <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar className="size-9">
-                      <AvatarImage
-                        src={
-                          getStableImageUrl(selectedEvent.candidate.image) ||
-                          undefined
+              {/* 4. Candidate(s) */}
+              {selectedEvent.type === "interview" ? (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Candidato
+                  </span>
+                  {selectedEvent.candidate ? (
+                    <div className="flex items-center justify-between gap-2.5 rounded-lg border bg-muted/20 p-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar className="size-8 shrink-0">
+                          <AvatarImage
+                            src={
+                              getStableImageUrl(
+                                selectedEvent.candidate.image,
+                              ) || undefined
+                            }
+                            alt={selectedEvent.candidate.name}
+                          />
+                          <AvatarFallback className="text-xs font-medium">
+                            {getInitials(selectedEvent.candidate.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-medium text-foreground truncate">
+                            {selectedEvent.candidate.name}
+                          </span>
+                          {selectedEvent.candidate.email && (
+                            <span className="text-[11px] text-muted-foreground truncate">
+                              {selectedEvent.candidate.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        nativeButton={false}
+                        render={
+                          <Link
+                            href={`/candidate/${selectedEvent.candidate.id}`}
+                          />
                         }
-                        alt={selectedEvent.candidate.name}
-                      />
-                      <AvatarFallback>
-                        <InitialsAvatar
-                          initials={getInitials(selectedEvent.candidate.name)}
-                          size="sm"
-                        />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-semibold">
-                        {selectedEvent.candidate.name}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {selectedEvent.candidate.email}
-                      </span>
+                        className="text-xs text-muted-foreground hover:text-foreground shrink-0 gap-1"
+                      >
+                        <span>Perfil</span>
+                        <ExternalLink className="size-3" />
+                      </Button>
                     </div>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    render={
-                      <Link href={`/candidate/${selectedEvent.candidate.id}`} />
-                    }
-                    className="text-xs gap-1"
-                  >
-                    <ExternalLink className="size-3" />
-                    <span>Perfil</span>
-                  </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic px-0.5">
+                      Nenhum candidato atribuído
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Candidatos (
+                    {selectedEvent.candidates?.length ??
+                      selectedEvent.candidatesCount ??
+                      0}
+                    )
+                  </span>
+                  {selectedEvent.candidates &&
+                  selectedEvent.candidates.length > 0 ? (
+                    <div className="divide-y divide-border rounded-lg border bg-muted/20 max-h-48 overflow-y-auto">
+                      {selectedEvent.candidates.map((cand) => (
+                        <div
+                          key={cand.id}
+                          className="flex items-center justify-between gap-2.5 p-2.5"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar className="size-7 shrink-0">
+                              <AvatarImage
+                                src={getStableImageUrl(cand.image) || undefined}
+                                alt={cand.name}
+                              />
+                              <AvatarFallback className="text-[10px] font-medium">
+                                {getInitials(cand.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-medium text-foreground truncate">
+                                {cand.name}
+                              </span>
+                              {cand.email && (
+                                <span className="text-[11px] text-muted-foreground truncate">
+                                  {cand.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            nativeButton={false}
+                            render={<Link href={`/candidate/${cand.id}`} />}
+                            className="text-xs text-muted-foreground hover:text-foreground shrink-0 gap-1"
+                          >
+                            <span>Perfil</span>
+                            <ExternalLink className="size-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic px-0.5">
+                      Nenhum candidato inscrito
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
             <DialogFooter>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedEvent(null)}
+                nativeButton={false}
+                render={<Link href={selectedEvent.link} />}
+                className="gap-1.5 w-full sm:w-auto"
               >
-                Fechar
+                <span>
+                  {selectedEvent.type === "interview"
+                    ? "Abrir Entrevista"
+                    : "Abrir Dinâmica"}
+                </span>
+                <ExternalLink className="size-3.5" />
               </Button>
             </DialogFooter>
           </DialogContent>
