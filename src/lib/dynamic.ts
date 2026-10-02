@@ -60,6 +60,19 @@ export async function tryToAddCandidateToDynamic(
             eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
           ),
         );
+
+      // A session with no candidates left is dead weight: drop it so its
+      // recruiters stop showing up as a phantom booking.
+      const remaining = await trx
+        .select({ candidateId: candidateToDynamic.candidateId })
+        .from(candidateToDynamic)
+        .where(eq(candidateToDynamic.dynamicId, candidateDynamic.dynamicId));
+
+      if (remaining.length === 0) {
+        await trx
+          .delete(dynamic)
+          .where(eq(dynamic.id, candidateDynamic.dynamicId));
+      }
     }
 
     const s = await trx
