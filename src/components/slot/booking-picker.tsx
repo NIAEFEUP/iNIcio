@@ -87,7 +87,7 @@ export function BookingPicker({
     recruiters: availableRecruiters,
     isLoading: isLoadingAvailable,
     mutate: mutateAvailable,
-  } = useAvailableRecruiters(startDate, endDate);
+  } = useAvailableRecruiters(startDate, endDate, effectiveRecruitmentId);
 
   const { data: teamRecruiters = [], isLoading: isLoadingTeam } = useSWR(
     effectiveRecruitmentId ? ["team-recruiters", effectiveRecruitmentId] : null,
@@ -424,6 +424,17 @@ export function BookingPicker({
                         title="Recrutador já tem outra sessão marcada neste horário"
                       >
                         Ocupado
+                      </Button>
+                    ) : !isAvailable ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="ghost"
+                        disabled
+                        className="h-7 text-xs text-muted-foreground"
+                        title="Recrutador sem disponibilidade declarada para este horário"
+                      >
+                        Indisponível
                       </Button>
                     ) : (
                       <Button

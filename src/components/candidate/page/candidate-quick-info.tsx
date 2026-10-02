@@ -95,10 +95,18 @@ export default function CandidateQuickInfo({
   };
 
   const getClassificationPlaceholder = () => {
-    if (showClassifyInterview && candidate.interviewClassification) {
+    if (
+      showClassifyInterview &&
+      candidate.interviewClassification &&
+      candidate.interviewClassification !== "none"
+    ) {
       return candidate.interviewClassification;
     }
-    if (showClassifyDynamic && candidate.dynamicClassification) {
+    if (
+      showClassifyDynamic &&
+      candidate.dynamicClassification &&
+      candidate.dynamicClassification !== "none"
+    ) {
       return candidate.dynamicClassification;
     }
 
@@ -222,6 +230,7 @@ export default function CandidateQuickInfo({
                 <SelectItem value="muito fraco">Muito fraco</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="muito forte">Muito forte</SelectItem>
+                <SelectItem value="none">Limpar</SelectItem>
               </SelectContent>
             </Select>
           </div>

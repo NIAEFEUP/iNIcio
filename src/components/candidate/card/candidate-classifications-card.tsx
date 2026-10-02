@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { SlidersHorizontal } from "lucide-react";
 
 import {
   Select,
@@ -127,6 +126,7 @@ export function CandidateClassificationsCard({
                   <SelectItem value="muito fraco">Muito fraco</SelectItem>
                   <SelectItem value="normal">Normal</SelectItem>
                   <SelectItem value="muito forte">Muito forte</SelectItem>
+                  <SelectItem value="none">Limpar</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -154,6 +154,7 @@ export function CandidateClassificationsCard({
                   <SelectItem value="muito fraco">Muito fraco</SelectItem>
                   <SelectItem value="normal">Normal</SelectItem>
                   <SelectItem value="muito forte">Muito forte</SelectItem>
+                  <SelectItem value="none">Limpar</SelectItem>
                 </SelectContent>
               </Select>
             )}

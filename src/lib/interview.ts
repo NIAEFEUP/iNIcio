@@ -3,11 +3,13 @@ import {
   interviewComment,
   interviewCommentVote,
   interviewTemplate,
+  recruiter,
   slot,
   recruiterToInterview,
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
+import { isRecruiterAvailableForSlot } from "./recruiter-availability";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
 import { EMPTY_COMMENT_VOTE, loadCommentVotes } from "./comment-vote";
@@ -65,6 +67,49 @@ export default async function addInterviewWithSlot(
           .update(interview)
           .set({ slot: slotParam.id })
           .where(eq(interview.id, i.id));
+
+        // Assigned interviewers may no longer be free at the new slot,
+        // so remove the ones that cannot cover it.
+        const assigned = await trx
+          .select({ recruiterId: recruiterToInterview.recruiterId })
+          .from(recruiterToInterview)
+          .where(eq(recruiterToInterview.interviewId, i.id));
+
+        // Lock the assigned recruiters before re-validating, in a stable order
+        // so a concurrent reschedule/assignment cannot slip through the check.
+        const recruiterIds = [
+          ...new Set(assigned.map((a) => a.recruiterId)),
+        ].sort();
+        if (recruiterIds.length > 0) {
+          await trx
+            .select({ userId: recruiter.userId })
+            .from(recruiter)
+            .where(inArray(recruiter.userId, recruiterIds))
+            .orderBy(recruiter.userId)
+            .for("update");
+        }
+
+        for (const { recruiterId } of assigned) {
+          const stillAvailable = await isRecruiterAvailableForSlot(
+            recruiterId,
+            targetRecruitmentId,
+            s[0].start,
+            s[0].duration,
+            { excludeInterviewId: i.id },
+            trx,
+          );
+
+          if (!stillAvailable) {
+            await trx
+              .delete(recruiterToInterview)
+              .where(
+                and(
+                  eq(recruiterToInterview.interviewId, i.id),
+                  eq(recruiterToInterview.recruiterId, recruiterId),
+                ),
+              );
+          }
+        }
       } else {
         const interviewTemplate = await trx.query.interviewTemplate.findFirst();
 

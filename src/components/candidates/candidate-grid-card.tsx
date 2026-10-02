@@ -102,6 +102,7 @@ function ClassificationSelect({
         <SelectItem value="muito fraco">Muito fraco</SelectItem>
         <SelectItem value="normal">Normal</SelectItem>
         <SelectItem value="muito forte">Muito forte</SelectItem>
+        <SelectItem value="none">Limpar</SelectItem>
       </SelectContent>
     </Select>
   );
