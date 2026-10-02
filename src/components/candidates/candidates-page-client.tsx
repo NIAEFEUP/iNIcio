@@ -19,8 +19,10 @@ import CandidatesClient from "./candidates-client";
 
 export default function CandidatesPageClient({
   initialViewMode = "grid",
+  initialScheduling = [],
 }: {
   initialViewMode?: ViewMode;
+  initialScheduling?: string[];
 }) {
   const { data, isLoading, error } = useCandidatesData();
   const { mutate } = useSWRConfig();
@@ -55,6 +57,7 @@ export default function CandidatesPageClient({
       availableDepartments={data?.availableDepartments ?? []}
       authUser={user ? { id: user.id } : null}
       initialViewMode={initialViewMode}
+      initialScheduling={initialScheduling}
     />
   );
 }

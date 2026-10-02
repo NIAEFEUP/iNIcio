@@ -48,6 +48,20 @@ interface RecruiterRow {
   userId: string;
   name?: string;
   email?: string;
+  availabilityMinutes?: number;
+  availabilitySlots?: number;
+  interviews?: number;
+  dynamics?: number;
+}
+
+function formatAvailability(minutes?: number) {
+  const total = minutes ?? 0;
+  if (total <= 0) return "—";
+  const hours = Math.floor(total / 60);
+  const rest = total % 60;
+  if (hours === 0) return `${rest}m`;
+  if (rest === 0) return `${hours}h`;
+  return `${hours}h ${rest}m`;
 }
 
 interface Props {
@@ -199,6 +213,39 @@ export default function RecruiterAdminClient({
           </span>
         ),
       },
+      {
+        accessorKey: "availabilityMinutes",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Disponibilidade" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm font-medium text-foreground tabular-nums">
+            {formatAvailability(row.original.availabilityMinutes)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "interviews",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Entrevistas" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground tabular-nums">
+            {row.original.interviews ?? 0}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "dynamics",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Dinâmicas" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground tabular-nums">
+            {row.original.dynamics ?? 0}
+          </span>
+        ),
+      },
       getActionsColumn<RecruiterRow>({
         onDelete: (r) => setPendingDeleteId(r.userId),
       }),
@@ -239,13 +286,23 @@ export default function RecruiterAdminClient({
       .rows.map((r) => r.original);
     if (selectedRows.length === 0) return;
 
-    const headers = ["ID", "Nome", "Email"];
+    const headers = [
+      "ID",
+      "Nome",
+      "Email",
+      "Disponibilidade",
+      "Entrevistas",
+      "Dinâmicas",
+    ];
 
     const rows = selectedRows.map((r) => {
       return [
         `"${r.userId}"`,
         `"${(r.name || "").replace(/"/g, '""')}"`,
         `"${(r.email || "").replace(/"/g, '""')}"`,
+        `"${formatAvailability(r.availabilityMinutes)}"`,
+        `"${r.interviews ?? 0}"`,
+        `"${r.dynamics ?? 0}"`,
       ];
     });
 
@@ -320,7 +377,13 @@ export default function RecruiterAdminClient({
             {viewMode === "list" && (
               <DataTableColumnToggle
                 table={table}
-                columnLabels={{ name: "Nome", email: "Email" }}
+                columnLabels={{
+                  name: "Nome",
+                  email: "Email",
+                  availabilityMinutes: "Disponibilidade",
+                  interviews: "Entrevistas",
+                  dynamics: "Dinâmicas",
+                }}
               />
             )}
             <Button
@@ -363,7 +426,28 @@ export default function RecruiterAdminClient({
                   isSelected={isSelected}
                   onSelectChange={(val) => row?.toggleSelected(val)}
                   onDelete={() => setPendingDeleteId(r.userId)}
-                />
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      Disponibilidade
+                    </span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {formatAvailability(r.availabilityMinutes)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Entrevistas</span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {r.interviews ?? 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Dinâmicas</span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {r.dynamics ?? 0}
+                    </span>
+                  </div>
+                </GridCard>
               );
             }}
           />
