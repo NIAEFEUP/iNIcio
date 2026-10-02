@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-table";
 import { History, Search } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,17 @@ interface CandidatesClientProps {
 }
 
 const PAGE_SIZE = 48;
+const PAGE_PARAM = "page";
+
+function getPageIndexFromSearchParams(
+  searchParams: URLSearchParams | null,
+): number {
+  if (!searchParams) return 0;
+  const raw = searchParams.get(PAGE_PARAM);
+  const parsed = Number.parseInt(raw ?? "1", 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.max(0, parsed - 1);
+}
 
 const PREVIOUS_APPLICATION_OPTIONS = [
   { value: "yes", label: "Já se candidatou" },
@@ -103,13 +115,19 @@ export default function CandidatesClient({
     previousApplications: false,
     departments: false,
   });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
+    pageIndex: getPageIndexFromSearchParams(searchParams),
     pageSize: PAGE_SIZE,
   });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const isMountedRef = useRef(false);
+  const lastPushedPageIndexRef = useRef<number | null>(null);
+  const isInitialUrlSyncRef = useRef(true);
 
   // `user` is rebuilt on every render; keep the props and callbacks passed to
   // the memoized grid cards stable so they can bail out.
@@ -122,6 +140,44 @@ export default function CandidatesClient({
   useEffect(() => {
     isMountedRef.current = true;
   }, []);
+
+  // Sync URL ?page= -> table state on back/forward and hydration.
+  useEffect(() => {
+    const urlPageIndex = getPageIndexFromSearchParams(searchParams);
+    if (lastPushedPageIndexRef.current === urlPageIndex) {
+      lastPushedPageIndexRef.current = null;
+      return;
+    }
+    lastPushedPageIndexRef.current = null;
+
+    setPagination((prev) =>
+      prev.pageIndex === urlPageIndex
+        ? prev
+        : { ...prev, pageIndex: urlPageIndex },
+    );
+  }, [searchParams]);
+
+  // Sync table state -> URL ?page= when the user navigates pages.
+  useEffect(() => {
+    if (isInitialUrlSyncRef.current) {
+      isInitialUrlSyncRef.current = false;
+      return;
+    }
+
+    const urlPageIndex = getPageIndexFromSearchParams(searchParams);
+    if (pagination.pageIndex === urlPageIndex) return;
+
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    const page = pagination.pageIndex + 1;
+    if (page === 1) {
+      params.delete(PAGE_PARAM);
+    } else {
+      params.set(PAGE_PARAM, String(page));
+    }
+
+    lastPushedPageIndexRef.current = pagination.pageIndex;
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pagination.pageIndex, pathname, router, searchParams]);
 
   const columns = useMemo<ColumnDef<CandidateListMetadata>[]>(
     () => [
