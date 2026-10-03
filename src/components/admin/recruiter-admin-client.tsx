@@ -14,6 +14,7 @@ import { Search, UserRoundPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +39,9 @@ import {
 import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
 import { BulkActions } from "@/components/data-table/bulk-actions";
-import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { setRecruitersViewMode } from "@/cookies/set";
 import { toast } from "@/components/ui/toast";
@@ -76,7 +76,8 @@ interface Props {
     email: string;
     image?: string | null;
   }>;
-  addRecruiter: (userId: string) => Promise<void>;
+  addRecruiter?: (userId: string) => Promise<void>;
+  addRecruiters?: (userIds: string[]) => Promise<void>;
   removeRecruiter: (userId: string) => Promise<void>;
 }
 
@@ -85,24 +86,17 @@ export default function RecruiterAdminClient({
   recruiters,
   users,
   addRecruiter,
+  addRecruiters,
   removeRecruiter,
 }: Props) {
   const [list, setList] = useState<RecruiterRow[]>(recruiters || []);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const [userId, setUserId] = useState("");
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<
-    Array<{ id: string; name: string; email: string; image?: string | null }>
-  >([]);
-  const [selected, setSelected] = useState<{
-    id: string;
-    name: string;
-    email: string;
-    image?: string | null;
-  } | null>(null);
-  const debounceRef = useRef<number | null>(null);
+  // Bulk add modal state (simple search & multi-select like filter search)
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
   const setViewMode = (mode: ViewMode) => {
@@ -120,66 +114,82 @@ export default function RecruiterAdminClient({
     isMountedRef.current = true;
   }, []);
 
-  useEffect(() => {
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => {
-      if (!query) {
-        setResults([]);
-        return;
-      }
-      const q = query.toLowerCase();
-      const filtered = (users || []).filter(
-        (u) =>
-          u.id.toLowerCase().includes(q) ||
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q),
-      );
-      setResults(filtered.slice(0, 50));
-    }, 150);
-  }, [query, users]);
+  const existingRecruiterIds = useMemo(() => {
+    return new Set(list.map((r) => r.userId));
+  }, [list]);
 
-  async function handleAdd(e?: React.FormEvent) {
-    e?.preventDefault();
-    const idToAdd = selected ? selected.id : userId;
-    if (!idToAdd)
-      return toast.add({ type: "error", title: "Escolhe um utilizador" });
-
-    try {
-      await addRecruiter(idToAdd);
-
-      if (selected) {
-        setList((s) => [
-          ...s,
-          {
-            userId: idToAdd,
-            name: selected.name,
-            email: selected.email,
-            image: selected.image,
-          },
-        ]);
-      } else {
-        const u = (users || []).find(
-          (x) =>
-            x.id === idToAdd || x.id.toLowerCase() === idToAdd.toLowerCase(),
+  const filteredUsers = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return (users || [])
+      .filter((u) => !existingRecruiterIds.has(u.id))
+      .filter((u) => {
+        if (!q) return true;
+        return (
+          (u.name || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q) ||
+          u.id.toLowerCase().includes(q)
         );
-        if (u) {
-          setList((s) => [
-            ...s,
-            { userId: idToAdd, name: u.name, email: u.email, image: u.image },
-          ]);
-        } else {
-          setList((s) => [...s, { userId: idToAdd }]);
-        }
+      });
+  }, [users, existingRecruiterIds, search]);
+
+  const toggleUser = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsAddOpen(open);
+    if (!open) {
+      setSelectedIds([]);
+      setSearch("");
+    }
+  };
+
+  async function handleAdd() {
+    if (selectedIds.length === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      if (addRecruiters) {
+        await addRecruiters(selectedIds);
+      } else if (addRecruiter) {
+        await Promise.all(selectedIds.map((id) => addRecruiter(id)));
       }
-      setUserId("");
-      setQuery("");
-      setResults([]);
-      setSelected(null);
+
+      const addedRecruiterRows: RecruiterRow[] = selectedIds.map((id) => {
+        const u = (users || []).find((x) => x.id === id);
+        return {
+          userId: id,
+          name: u?.name,
+          email: u?.email,
+          image: u?.image,
+          availabilityMinutes: 0,
+          availabilitySlots: 0,
+          interviews: 0,
+          dynamics: 0,
+        };
+      });
+
+      setList((prev) => [...prev, ...addedRecruiterRows]);
+      setSelectedIds([]);
+      setSearch("");
       setIsAddOpen(false);
-      toast.add({ type: "success", title: "Recrutador adicionado" });
+      toast.add({
+        type: "success",
+        title:
+          selectedIds.length === 1
+            ? "Recrutador adicionado com sucesso"
+            : `${selectedIds.length} recrutadores adicionados com sucesso`,
+      });
     } catch (err) {
       console.error(err);
-      toast.add({ type: "error", title: "Ocorreu um erro na submissao" });
+      toast.add({
+        type: "error",
+        title: "Ocorreu um erro ao adicionar recrutadores",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -479,80 +489,115 @@ export default function RecruiterAdminClient({
       />
 
       {/* Add recruiter dialog */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="bg-card border-border">
+      <Dialog open={isAddOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-card-foreground">
-              Adicionar Recrutador
+              Adicionar Recrutadores
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium">
-                Procurar por nome, email ou id
-              </label>
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pesquisar utilizador..."
-              />
-              <div className="mt-2 max-h-40 overflow-auto">
-                {results.map((u) => {
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Pesquisar por nome ou email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-8 pl-8 pr-2 text-xs"
+                  autoFocus
+                />
+              </div>
+              {selectedIds.length > 0 && (
+                <button
+                  type="button"
+                  className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer shrink-0 transition-colors"
+                  onClick={() => setSelectedIds([])}
+                >
+                  Limpar ({selectedIds.length})
+                </button>
+              )}
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-0.5">
+              {filteredUsers.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  {search
+                    ? "Nenhum utilizador encontrado"
+                    : "Todos os utilizadores já são recrutadores"}
+                </div>
+              ) : (
+                filteredUsers.map((u) => {
+                  const isSelected = selectedIds.includes(u.id);
                   const userPicture = getStableImageUrl(u.image);
+
                   return (
                     <div
                       key={u.id}
-                      onClick={() => {
-                        setSelected(u);
-                        setUserId(u.id);
-                        setResults([]);
-                        setQuery(`${u.name} — ${u.email}`);
-                      }}
-                      className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                      onClick={() => toggleUser(u.id)}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2.5 rounded-md p-2 transition-colors",
+                        isSelected
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-muted/80",
+                      )}
                     >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleUser(u.id)}
+                        className="size-4 pointer-events-none"
+                      />
                       {userPicture ? (
-                        <Avatar className="size-7 ring-1 ring-border/60">
-                          <AvatarImage
-                            src={userPicture}
-                            alt={u.name}
-                            className="object-cover"
-                          />
-                          <AvatarFallback>
-                            <InitialsAvatar
-                              size="sm"
-                              initials={getInitials(u.name)}
-                            />
+                        <Avatar className="h-6 w-6 rounded-sm shrink-0">
+                          <AvatarImage src={userPicture} alt={u.name} />
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                            {getInitials(u.name || u.email || u.id)}
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <InitialsAvatar
-                          size="sm"
-                          initials={getInitials(u.name)}
-                        />
+                        <Avatar className="h-6 w-6 rounded-sm shrink-0">
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                            {getInitials(u.name || u.email || u.id)}
+                          </AvatarFallback>
+                        </Avatar>
                       )}
-                      <div>
-                        <div className="text-sm font-medium">{u.name}</div>
-                        <div className="text-xs text-muted-foreground">
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="font-medium text-xs truncate">
+                          {u.name || "Sem nome"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground truncate">
                           {u.email}
-                        </div>
+                        </span>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                })
+              )}
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">Adicionar Recrutador</Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAdd}
+              disabled={selectedIds.length === 0 || isSubmitting}
+            >
+              {isSubmitting
+                ? "A adicionar..."
+                : selectedIds.length > 0
+                  ? `Adicionar (${selectedIds.length})`
+                  : "Adicionar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

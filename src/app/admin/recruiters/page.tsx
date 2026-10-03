@@ -3,6 +3,7 @@ import RecruiterAdminClient from "@/components/admin/recruiter-admin-client";
 import {
   getUsers,
   addRecruiter,
+  addRecruiters,
   deleteRecruiter,
   getRecruiters,
 } from "@/lib/recruitment";
@@ -44,6 +45,13 @@ export default async function RecruitersAdminPage() {
     await addRecruiter(userId, resolvedTargetId);
   }
 
+  async function addRecruitersAction(userIds: string[]) {
+    "use server";
+    await requireAdminSession();
+    const resolvedTargetId = await getTargetRecruitmentId();
+    await addRecruiters(userIds, resolvedTargetId);
+  }
+
   async function removeRecruiterAction(userId: string) {
     "use server";
     await requireAdminSession();
@@ -57,6 +65,7 @@ export default async function RecruitersAdminPage() {
       recruiters={recruitersWithStats}
       users={users}
       addRecruiter={addRecruiterAction}
+      addRecruiters={addRecruitersAction}
       removeRecruiter={removeRecruiterAction}
     />
   );
