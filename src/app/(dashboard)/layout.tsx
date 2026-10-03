@@ -1,12 +1,12 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
-import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { redirect } from "next/navigation";
 
 export const revalidate = 0;
 
-export default async function DynamicLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -17,9 +17,12 @@ export default async function DynamicLayout({
     redirect("/login");
   }
 
-  const targetRecruitmentId = await getTargetRecruitmentId();
+  const [userIsAdmin, userIsRecruiter] = await Promise.all([
+    isAdmin(session.user.id),
+    isRecruiter(session.user.id),
+  ]);
 
-  if (!(await isRecruiter(session.user.id, targetRecruitmentId))) {
+  if (!userIsAdmin && !userIsRecruiter) {
     redirect("/");
   }
 

@@ -5,13 +5,11 @@ import { useParams } from "next/navigation";
 import { useSWRConfig } from "swr";
 import { Lock, Unlock, Loader2 } from "lucide-react";
 
-import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
-import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
-import CandidateAnswers from "@/components/candidate/page/candidate-answers";
 import CandidateComments from "@/components/candidate/page/candidate-comments";
 import { CandidateModularInfo } from "@/components/candidate/card";
 import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -20,114 +18,111 @@ import {
   EvaluationPanel,
 } from "@/components/layout/evaluation-layout";
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
-import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
+import { PageLoading } from "@/components/layout/page-loading";
 import { DataErrorState } from "@/components/data-table/data-state-view";
 import { RecruiterAssignedHeader } from "@/components/recruiter/recruiter-assigned-header";
 
 import {
-  classifyInterview,
-  editInterviewComment,
-  saveInterviewComment,
-  setInterviewLocked,
-  updateInterviewContent,
-  voteInterviewComment,
+  classifyDynamic,
+  editDynamicComment,
+  saveDynamicComment,
+  setDynamicLocked,
+  updateDynamicContent,
+  voteDynamicComment,
 } from "@/app/candidate/actions";
-import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { useAuth } from "@/hooks/use-auth";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import {
   candidateKey,
-  interviewKey,
-  useInterviewData,
+  dynamicKey,
+  useDynamicData,
 } from "@/lib/hooks/candidates/use-candidate-data";
 
-export default function InterviewPage() {
+export default function DynamicPage() {
   const params = useParams<{ id: string }>();
-  const id = params.id;
+  const dynamicId = Number(params.id);
 
-  const { data, isLoading, error } = useInterviewData(id);
+  const { data, isLoading, error } = useDynamicData(dynamicId);
   const { user } = useAuth();
   const { mutate } = useSWRConfig();
   const { recruitmentId } = useRecruitment();
   const [isLocking, setIsLocking] = useState(false);
 
-  const candidateFromData = data?.candidate;
+  const candidatesFromData = data?.dynamic.candidates;
 
   useEffect(() => {
-    if (!candidateFromData) return;
-    mutate(
-      candidateKey(candidateFromData.id, recruitmentId),
-      candidateFromData,
-      { revalidate: false },
-    );
-  }, [candidateFromData, recruitmentId, mutate]);
+    if (!candidatesFromData) return;
+    for (const candidate of candidatesFromData) {
+      mutate(candidateKey(candidate.id, recruitmentId), candidate, {
+        revalidate: false,
+      });
+    }
+  }, [candidatesFromData, recruitmentId, mutate]);
 
   if (isLoading && !data) {
-    return <EvaluationSkeleton showInterviewers />;
+    return <PageLoading />;
   }
 
   if (error || !data) {
     return (
       <DataErrorState
-        title="Entrevista não encontrada"
+        title="Dinâmica não encontrada"
         message={error instanceof Error ? error.message : undefined}
       />
     );
   }
 
-  const { candidate, interview, interviewers, comments, recruiters, token } =
-    data;
-  const answeredCount = applicationAnswerCount(candidate.application);
+  const { dynamic, interviewers, comments, recruiters, token } = data;
 
   const saveContent = async (content: unknown) => {
-    await updateInterviewContent(id, content);
+    await updateDynamicContent(dynamicId, content);
   };
 
   const saveComment = async (content: Array<unknown>) => {
-    const result = await saveInterviewComment(id, content);
+    const result = await saveDynamicComment(dynamicId, content);
     if (result.success) {
-      mutate(interviewKey(id, recruitmentId, user?.id));
+      mutate(dynamicKey(dynamicId, recruitmentId, user?.id));
     }
     return result;
   };
 
   const editComment = async (commentId: number, content: Array<any>) => {
-    const ok = await editInterviewComment(id, commentId, content);
+    const ok = await editDynamicComment(dynamicId, commentId, content);
     if (ok) {
-      mutate(interviewKey(id, recruitmentId, user?.id));
+      mutate(dynamicKey(dynamicId, recruitmentId, user?.id));
     }
     return ok;
   };
 
-  const handleClassifyInterview = async (
+  const handleClassifyDynamic = async (
     candidateId: string,
     classification: string,
   ) => {
-    await classifyInterview(candidateId, classification);
+    await classifyDynamic(candidateId, classification);
     mutate(
       candidateKey(candidateId, recruitmentId),
       (current: any) =>
         current
-          ? { ...current, interviewClassification: classification }
+          ? { ...current, dynamicClassification: classification }
           : current,
       { revalidate: false },
     );
   };
 
   const handleToggleLock = async () => {
-    if (!interview) return;
+    if (!dynamic) return;
     setIsLocking(true);
-    const newLocked = !interview.locked;
+    const newLocked = !dynamic.locked;
     try {
-      await setInterviewLocked(id, newLocked);
+      await setDynamicLocked(dynamicId, newLocked);
       await mutate(
-        interviewKey(id, recruitmentId, user?.id),
+        dynamicKey(dynamicId, recruitmentId, user?.id),
         (current: any) =>
           current
             ? {
                 ...current,
-                interview: {
-                  ...current.interview,
+                dynamic: {
+                  ...current.dynamic,
                   locked: newLocked,
                 },
               }
@@ -137,14 +132,14 @@ export default function InterviewPage() {
       toast.add({
         type: "success",
         title: newLocked
-          ? "Entrevista bloqueada com sucesso"
-          : "Entrevista desbloqueada com sucesso",
+          ? "Dinâmica bloqueada com sucesso"
+          : "Dinâmica desbloqueada com sucesso",
       });
     } catch (err) {
       console.error(err);
       toast.add({
         type: "error",
-        title: "Erro ao alterar estado de bloqueio da entrevista",
+        title: "Erro ao alterar estado de bloqueio da dinâmica",
       });
     } finally {
       setIsLocking(false);
@@ -155,110 +150,95 @@ export default function InterviewPage() {
     <EvaluationLayout
       header={
         <PageHeader
-          backHref={`/candidate/${id}`}
-          title={candidate.name}
-          inlineOnMobile
-          viewModeToggle={
-            <CandidateHeaderActions
-              candidateId={candidate.id}
-              currentPage="interview"
-              dynamicId={candidate.dynamic?.dynamicId}
-            />
+          backHref="/candidates"
+          title={
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                Dinâmica
+              </h1>
+              <Badge variant="secondary">
+                {dynamic.candidates.length}{" "}
+                {dynamic.candidates.length === 1 ? "candidato" : "candidatos"}
+              </Badge>
+            </div>
           }
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <RecruiterAssignedHeader
                 interviewers={interviewers}
-                title="Entrevistadores"
+                title="Recrutadores"
               />
               <Button
-                variant={interview.locked ? "secondary" : "outline"}
+                variant={dynamic.locked ? "secondary" : "outline"}
                 disabled={isLocking}
                 onClick={handleToggleLock}
                 className={
-                  interview.locked
+                  dynamic.locked
                     ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
                     : ""
                 }
               >
                 {isLocking ? (
                   <Loader2 className="size-3.5 animate-spin" />
-                ) : interview.locked ? (
+                ) : dynamic.locked ? (
                   <Lock className="size-3.5" />
                 ) : (
                   <Unlock className="size-3.5" />
                 )}
-                <span>{interview.locked ? "Bloqueada" : "Bloquear"}</span>
+                <span>{dynamic.locked ? "Bloqueada" : "Bloquear"}</span>
               </Button>
             </div>
           }
-        >
-          <CandidateHeaderActions
-            candidateId={candidate.id}
-            currentPage="interview"
-            dynamicId={candidate.dynamic?.dynamicId}
-            mobile
-          />
-        </PageHeader>
+        />
       }
       sidebar={
-        <CandidateModularInfo
-          candidate={candidate}
-          friends={candidate.knownRecruiters}
-          authUser={user ? { id: user.id } : null}
-          recruitmentId={recruitmentId}
-          showResultVoting={false}
-          showKnownCheckbox={false}
-          onClassifyInterview={(value) =>
-            handleClassifyInterview(candidate.id, value)
-          }
-          readOnlyDynamic={true}
-        />
+        <div className="space-y-2">
+          <div className="flex flex-col gap-4">
+            {dynamic.candidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className={"bg-neutral-900/50 p-3 rounded-2xl"}
+              >
+                <CandidateModularInfo
+                  candidate={candidate}
+                  friends={candidate.knownRecruiters}
+                  authUser={user ? { id: user.id } : null}
+                  recruitmentId={recruitmentId}
+                  showKnownCheckbox={false}
+                  showContactInfo={false}
+                  showLinks={false}
+                  showDepartmentInterests={false}
+                  showResultVoting={false}
+                  onClassifyDynamic={(value) =>
+                    handleClassifyDynamic(candidate.id, value)
+                  }
+                  readOnlyInterview={true}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       }
     >
       <EvaluationTabs
-        defaultValue="interview"
+        defaultValue="dynamic"
         tabs={[
           {
-            id: "interview",
-            label: "Entrevista",
+            id: "dynamic",
+            label: "Dinâmica",
             content: (
               <EvaluationPanel>
                 <RealTimeEditor
                   token={token}
-                  key={`interview-editor-${id}`}
-                  roomId={`interview-${id}`}
-                  docId={`interview-${id}`}
+                  key={`dynamic-editor-${dynamicId}`}
+                  roomId={`dynamic-${dynamicId}`}
+                  docId={`dynamic-${dynamicId}`}
                   userName={user?.name ?? "Anonymous"}
                   saveHandler={saveContent}
-                  entity={interview}
+                  entity={dynamic}
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
-                  editable={!interview.locked}
-                />
-              </EvaluationPanel>
-            ),
-          },
-          {
-            id: "answers",
-            label: "Respostas",
-            count: answeredCount,
-            content: (
-              <CandidateAnswers
-                key={candidate.id}
-                application={candidate.application}
-              />
-            ),
-          },
-          {
-            id: "curriculum",
-            label: "Currículo",
-            hidden: !candidate.application?.curriculum,
-            content: (
-              <EvaluationPanel>
-                <CandidateCurriculum
-                  application={candidate.application}
-                  candidateId={candidate.id}
+                  editable={!dynamic.locked}
                 />
               </EvaluationPanel>
             ),
@@ -270,12 +250,12 @@ export default function InterviewPage() {
             content: (
               <CommentFrame>
                 <CandidateComments
-                  candidate={candidate}
-                  type="interview"
+                  candidate={dynamic.candidates}
+                  type="dynamic"
                   comments={comments}
                   saveToDatabase={saveComment}
                   onEditComment={editComment}
-                  onVoteComment={voteInterviewComment.bind(null, candidate.id)}
+                  onVoteComment={voteDynamicComment.bind(null, dynamic.id)}
                   recruiters={recruiters}
                 />
               </CommentFrame>

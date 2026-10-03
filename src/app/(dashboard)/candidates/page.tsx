@@ -1,5 +1,6 @@
 import CandidatesPageClient from "@/components/candidates/candidates-page-client";
 import { CANDIDATES_VIEW_MODE_COOKIE_NAME } from "@/constants/cookies.const";
+import { loadCandidates } from "@/app/candidate/actions";
 import { cookies } from "next/headers";
 
 export default async function CandidatesPage({
@@ -7,8 +8,9 @@ export default async function CandidatesPage({
 }: {
   searchParams: Promise<{ scheduling?: string }>;
 }) {
+  const cookieStore = await cookies();
   const initialViewMode =
-    (await cookies()).get(CANDIDATES_VIEW_MODE_COOKIE_NAME)?.value === "list"
+    cookieStore.get(CANDIDATES_VIEW_MODE_COOKIE_NAME)?.value === "list"
       ? "list"
       : "grid";
 
@@ -20,8 +22,11 @@ export default async function CandidatesPage({
         .filter(Boolean)
     : [];
 
+  const initialData = await loadCandidates();
+
   return (
     <CandidatesPageClient
+      initialData={initialData}
       initialViewMode={initialViewMode}
       initialScheduling={initialScheduling}
     />

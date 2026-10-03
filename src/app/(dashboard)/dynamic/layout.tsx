@@ -1,4 +1,3 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { redirect } from "next/navigation";
@@ -20,5 +19,5 @@ export default async function DynamicLayout({
     redirect("/");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return children;
 }

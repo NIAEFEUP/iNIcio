@@ -1,4 +1,3 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
@@ -17,5 +16,5 @@ export default async function CalendarLayout({
     redirect("/");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return children;
 }

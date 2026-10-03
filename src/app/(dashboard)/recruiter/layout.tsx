@@ -1,4 +1,3 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getSession } from "@/lib/auth";
 import { isRecruiter } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
@@ -21,5 +20,5 @@ export default async function RecruiterLayout({
     redirect("/");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  return children;
 }

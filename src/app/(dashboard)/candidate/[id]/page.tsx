@@ -16,7 +16,7 @@ import {
   EvaluationPanel,
 } from "@/components/layout/evaluation-layout";
 import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
-import { EvaluationSkeleton } from "@/components/layout/evaluation-skeleton";
+import { PageLoading } from "@/components/layout/page-loading";
 import { DataErrorState } from "@/components/data-table/data-state-view";
 
 import {
@@ -46,7 +46,7 @@ export default function CandidatePage() {
   const { recruitmentId } = useRecruitment();
 
   if (isLoading && !candidate) {
-    return <EvaluationSkeleton />;
+    return <PageLoading />;
   }
 
   if (error || !candidate) {

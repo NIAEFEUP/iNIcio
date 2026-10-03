@@ -52,9 +52,13 @@ export const dynamicKey = (
   userId?: string,
 ) => ["dynamic", recruitmentId ?? null, dynamicId, userId ?? null];
 
-export function useCandidatesData() {
+export function useCandidatesData(
+  fallbackData?: Awaited<ReturnType<typeof loadCandidates>>,
+) {
   const { recruitmentId } = useRecruitment();
-  return useSWR(candidatesKey(recruitmentId), () => loadCandidates());
+  return useSWR(candidatesKey(recruitmentId), () => loadCandidates(), {
+    fallbackData,
+  });
 }
 
 export function useCandidateData(candidateId: string) {
@@ -71,14 +75,7 @@ export function useRecruiters() {
   );
 }
 
-export function useApplicationComments(candidateId: string) {
-  const { recruitmentId } = useRecruitment();
-  const { user } = useAuth();
-  return useSWR<Array<Comment>>(
-    applicationCommentsKey(candidateId, recruitmentId, user?.id),
-    () => loadApplicationComments(candidateId),
-  );
-}
+export const useRecruitersData = useRecruiters;
 
 export function useInterviewData(candidateId: string) {
   const { recruitmentId } = useRecruitment();
@@ -94,4 +91,22 @@ export function useDynamicData(dynamicId: number) {
   return useSWR(dynamicKey(dynamicId, recruitmentId, user?.id), () =>
     loadDynamic(dynamicId),
   );
+}
+
+export function useApplicationComments(candidateId: string) {
+  const { recruitmentId } = useRecruitment();
+  const { user } = useAuth();
+  return useSWR<Array<Comment>>(
+    applicationCommentsKey(candidateId, recruitmentId, user?.id),
+    () => loadApplicationComments(candidateId),
+  );
+}
+
+export function optimisticAddComment(
+  mutate: (key: unknown, data?: unknown, shouldRevalidate?: boolean) => void,
+  key: unknown,
+  newComment: Comment,
+  currentComments: Comment[],
+) {
+  mutate(key, [...currentComments, newComment], false);
 }
