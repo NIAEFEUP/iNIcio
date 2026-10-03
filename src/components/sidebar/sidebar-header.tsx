@@ -2,7 +2,7 @@
 
 import { Briefcase, Check, ChevronsUpDown, Plus, Search } from "lucide-react";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -53,6 +53,7 @@ export function SidebarHeaderComponent({
   const { isMobile } = useSidebar();
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const isAdmin = isAdminProp ?? user?.isAdmin ?? false;
 
@@ -100,17 +101,25 @@ export function SidebarHeaderComponent({
     (id: number) => {
       setInternalSelectedId(id);
       onSelectRecruitment?.(id);
-      router.push("/candidates");
+      if (
+        pathname?.startsWith("/candidate/") ||
+        pathname?.startsWith("/dynamic/")
+      ) {
+        router.push("/candidates");
+      }
       router.refresh();
       setIsOpen(false);
     },
-    [onSelectRecruitment, router],
+    [onSelectRecruitment, router, pathname],
   );
 
-  const activeRecruitment = React.useMemo(
-    () => recruitments.find((r) => r.id === selectedId) ?? recruitments[0],
-    [recruitments, selectedId],
-  );
+  const activeRecruitment = React.useMemo(() => {
+    const found = recruitments.find((r) => r.id === selectedId);
+    if (found) return found;
+
+    const activeFallback = recruitments.find((r) => r.active);
+    return activeFallback ?? recruitments[0];
+  }, [recruitments, selectedId]);
 
   const filteredRecruitments = React.useMemo(() => {
     if (!search.trim()) return recruitments;

@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { recruiterToDynamic, recruiterToInterview } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import {
+  candidate,
+  recruiterToDynamic,
+  recruiterToInterview,
+  recruitmentPhaseStatus,
+  votingPhase,
+} from "@/db/schema";
+import { and, count, eq } from "drizzle-orm";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import { getAvailabilities, isRecruiter } from "@/lib/recruiter";
-import { getAllCandidateUsers } from "@/lib/db";
-import { getVotingPhases } from "@/lib/voting";
-import {
-  getRecruitmentPhases,
-  isRecruitmentPhaseDone,
-} from "@/lib/recruitment";
+import { getRecruitmentPhases } from "@/lib/recruitment";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -48,15 +49,31 @@ export default async function RecruiterProgress() {
   const [
     rawPhases,
     userAvailabilities,
-    candidates,
-    votingPhases,
+    [candidateCountResult],
+    [votingPhasesCountResult],
+    donePhaseStatuses,
     assignedInterviews,
     assignedDynamics,
   ] = await Promise.all([
     getRecruitmentPhases("recruiter", targetRecruitment.id),
     getAvailabilities(session.user.id, targetRecruitment.id),
-    getAllCandidateUsers(targetRecruitment.id),
-    getVotingPhases(targetRecruitment.id),
+    db
+      .select({ count: count() })
+      .from(candidate)
+      .where(eq(candidate.recruitmentId, targetRecruitment.id)),
+    db
+      .select({ count: count() })
+      .from(votingPhase)
+      .where(eq(votingPhase.recruitmentId, targetRecruitment.id)),
+    db
+      .select({ phaseId: recruitmentPhaseStatus.phaseId })
+      .from(recruitmentPhaseStatus)
+      .where(
+        and(
+          eq(recruitmentPhaseStatus.userId, session.user.id),
+          eq(recruitmentPhaseStatus.status, "done"),
+        ),
+      ),
     db.query.interview.findMany({
       where: (i, { exists, and: andWhere, eq: eqWhere }) =>
         andWhere(
@@ -73,11 +90,24 @@ export default async function RecruiterProgress() {
               ),
           ),
         ),
+      columns: {
+        id: true,
+        candidateId: true,
+      },
       with: {
         slot: true,
         candidate: {
+          columns: {
+            userId: true,
+          },
           with: {
-            user: true,
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
           },
         },
       },
@@ -98,47 +128,47 @@ export default async function RecruiterProgress() {
               ),
           ),
         ),
+      columns: {
+        id: true,
+      },
       with: {
         slot: true,
         candidates: {
-          with: {
-            candidate: {
-              with: {
-                user: true,
-              },
-            },
+          columns: {
+            candidateId: true,
+            dynamicId: true,
           },
         },
       },
     }),
   ]);
 
-  const progressPhases: RecruiterPhaseViewData[] = await Promise.all(
-    rawPhases.map(async (phase) => {
-      const ident = phase.clientIdentifier.trim().toLowerCase();
-      let checked = false;
+  const donePhaseIds = new Set(donePhaseStatuses.map((s) => s.phaseId));
 
-      if (
-        ident === "availability" ||
-        ident === "recruiter_availability" ||
-        ident === "disponibilidade"
-      ) {
-        checked = userAvailabilities.length > 0;
-      } else {
-        checked = await isRecruitmentPhaseDone(session.user.id, phase.id);
-      }
+  const progressPhases: RecruiterPhaseViewData[] = rawPhases.map((phase) => {
+    const ident = phase.clientIdentifier.trim().toLowerCase();
+    let checked = false;
 
-      return {
-        id: phase.id,
-        title: phase.title,
-        description: phase.description,
-        clientIdentifier: phase.clientIdentifier,
-        start: phase.start ? phase.start.toISOString() : null,
-        end: phase.end ? phase.end.toISOString() : null,
-        checked,
-      };
-    }),
-  );
+    if (
+      ident === "availability" ||
+      ident === "recruiter_availability" ||
+      ident === "disponibilidade"
+    ) {
+      checked = userAvailabilities.length > 0;
+    } else {
+      checked = donePhaseIds.has(phase.id);
+    }
+
+    return {
+      id: phase.id,
+      title: phase.title,
+      description: phase.description,
+      clientIdentifier: phase.clientIdentifier,
+      start: phase.start ? phase.start.toISOString() : null,
+      end: phase.end ? phase.end.toISOString() : null,
+      checked,
+    };
+  });
 
   const events: RecruiterEventData[] = [
     ...assignedInterviews
@@ -189,9 +219,9 @@ export default async function RecruiterProgress() {
       phases={progressPhases}
       events={events}
       stats={{
-        candidatesCount: candidates.length,
+        candidatesCount: candidateCountResult?.count ?? 0,
         availabilitiesCount: userAvailabilities.length,
-        votingPhasesCount: votingPhases.length,
+        votingPhasesCount: votingPhasesCountResult?.count ?? 0,
       }}
     />
   );

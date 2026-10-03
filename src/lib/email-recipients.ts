@@ -1,5 +1,5 @@
 import { and, eq, gte, notExists } from "drizzle-orm";
-import { candidate, user } from "@/db/schema";
+import { candidate, user, usersToRecruitments } from "@/db/schema";
 import { db } from "@/lib/db";
 import type { EmailTemplateType } from "@/lib/email-composer";
 
@@ -101,22 +101,45 @@ export async function getEmailRecipients({
     missingDynamic: false,
   }));
 
+  // Get recruiters for this recruitment to exclude them
+  const recruitmentRecruiters = await db.query.usersToRecruitments.findMany({
+    where: eq(usersToRecruitments.recruitmentId, recruitmentId),
+    columns: {
+      userId: true,
+    },
+  });
+  const recruiterIds = new Set(recruitmentRecruiters.map((r) => r.userId));
+
   const recipients = [...candidateRecipients, ...nonCandidateRecipients].filter(
-    (recipient) => recipient.id !== excludeUserId && Boolean(recipient.email),
+    (recipient) =>
+      recipient.id !== excludeUserId &&
+      Boolean(recipient.email) &&
+      !recruiterIds.has(recipient.id),
   );
 
   const candidatesFor = (predicate: (recipient: EmailRecipient) => boolean) =>
     candidateRecipients.filter(predicate).map((recipient) => recipient.id);
 
   const audiences: Record<EmailTemplateType, string[]> = {
-    all: candidatesFor(() => true),
+    all: candidatesFor((recipient) => !recruiterIds.has(recipient.id)),
     not_applied: nonCandidateRecipients
-      .filter((recipient) => recipient.id !== excludeUserId)
+      .filter(
+        (recipient) =>
+          recipient.id !== excludeUserId && !recruiterIds.has(recipient.id),
+      )
       .map((recipient) => recipient.id),
-    no_interview: candidatesFor((recipient) => recipient.missingInterview),
-    no_dynamic: candidatesFor((recipient) => recipient.missingDynamic),
+    no_interview: candidatesFor(
+      (recipient) =>
+        recipient.missingInterview && !recruiterIds.has(recipient.id),
+    ),
+    no_dynamic: candidatesFor(
+      (recipient) =>
+        recipient.missingDynamic && !recruiterIds.has(recipient.id),
+    ),
     no_scheduling: candidatesFor(
-      (recipient) => recipient.missingInterview || recipient.missingDynamic,
+      (recipient) =>
+        (recipient.missingInterview || recipient.missingDynamic) &&
+        !recruiterIds.has(recipient.id),
     ),
   };
 

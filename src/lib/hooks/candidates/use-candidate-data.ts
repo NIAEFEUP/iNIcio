@@ -10,6 +10,7 @@ import {
   loadInterview,
   loadRecruiters,
 } from "@/app/candidate/actions";
+import type { CandidateWithMetadata } from "@/lib/candidate";
 import type { User } from "@/lib/db";
 import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import { useAuth } from "@/hooks/use-auth";
@@ -54,24 +55,40 @@ export const dynamicKey = (
 
 export function useCandidatesData(
   fallbackData?: Awaited<ReturnType<typeof loadCandidates>>,
+  enabled: boolean = true,
 ) {
   const { recruitmentId } = useRecruitment();
-  return useSWR(candidatesKey(recruitmentId), () => loadCandidates(), {
-    fallbackData,
-  });
-}
-
-export function useCandidateData(candidateId: string) {
-  const { recruitmentId } = useRecruitment();
-  return useSWR(candidateKey(candidateId, recruitmentId), () =>
-    loadCandidate(candidateId),
+  return useSWR(
+    enabled ? candidatesKey(recruitmentId) : null,
+    () => loadCandidates(),
+    {
+      fallbackData,
+    },
   );
 }
 
-export function useRecruiters() {
+export function useCandidateData(
+  candidateId: string,
+  fallbackData?: CandidateWithMetadata,
+) {
   const { recruitmentId } = useRecruitment();
-  return useSWR<Array<User>>(recruitersKey(recruitmentId), () =>
-    loadRecruiters(),
+  return useSWR(
+    candidateKey(candidateId, recruitmentId),
+    () => loadCandidate(candidateId),
+    {
+      fallbackData,
+    },
+  );
+}
+
+export function useRecruiters(fallbackData?: Array<User>) {
+  const { recruitmentId } = useRecruitment();
+  return useSWR<Array<User>>(
+    recruitersKey(recruitmentId),
+    () => loadRecruiters(),
+    {
+      fallbackData,
+    },
   );
 }
 
@@ -93,12 +110,18 @@ export function useDynamicData(dynamicId: number) {
   );
 }
 
-export function useApplicationComments(candidateId: string) {
+export function useApplicationComments(
+  candidateId: string,
+  fallbackData?: Array<Comment>,
+) {
   const { recruitmentId } = useRecruitment();
   const { user } = useAuth();
   return useSWR<Array<Comment>>(
     applicationCommentsKey(candidateId, recruitmentId, user?.id),
     () => loadApplicationComments(candidateId),
+    {
+      fallbackData,
+    },
   );
 }
 

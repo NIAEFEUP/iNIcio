@@ -1,10 +1,11 @@
-import { application, candidate } from "@/db/schema";
+import { application, candidate, user } from "@/db/schema";
 import {
   Application,
   db,
   Dynamic,
   Interview,
   RecruiterToCandidate,
+  Slot,
   User,
 } from "./db";
 import { and, eq } from "drizzle-orm";
@@ -33,12 +34,29 @@ export type CandidateApplicationSummary = Pick<
   interests: string[];
 };
 
+export type CandidateInterviewSummary = Pick<
+  Interview,
+  "id" | "recruitmentId" | "candidateId" | "slot" | "locked"
+> & {
+  slot?: Slot;
+};
+
+export type CandidateDynamicSummary = {
+  candidateId: string;
+  dynamicId: number;
+  dynamic: Pick<Dynamic, "id" | "recruitmentId" | "slot" | "locked"> & {
+    slot?: Slot;
+  };
+};
+
 /** The list shape: the application carries only the columns list surfaces need. */
 export type CandidateListMetadata = Omit<
   CandidateWithMetadata,
-  "application"
+  "application" | "interview" | "dynamic"
 > & {
   application: CandidateApplicationSummary | null;
+  interview: CandidateInterviewSummary | null;
+  dynamic: CandidateDynamicSummary | null;
 };
 
 /** Same as `CandidateListMetadata` with the phase's per-candidate completion flag. */
@@ -134,15 +152,36 @@ export async function getCandidatesWithMetadata(
     with: {
       user: true,
       dynamic: {
+        columns: {
+          candidateId: true,
+          dynamicId: true,
+        },
         with: {
           dynamic: {
+            columns: {
+              id: true,
+              slot: true,
+              locked: true,
+              recruitmentId: true,
+            },
             with: {
               slot: true,
             },
           },
         },
       },
-      interview: true,
+      interview: {
+        columns: {
+          id: true,
+          slot: true,
+          locked: true,
+          recruitmentId: true,
+          candidateId: true,
+        },
+        with: {
+          slot: true,
+        },
+      },
       application: {
         columns: {
           id: true,
@@ -204,6 +243,51 @@ export async function getCandidatesWithMetadata(
       previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
     })),
   );
+}
+
+export async function getAdjacentCandidates(
+  candidateId: string,
+  recruitmentId?: number,
+): Promise<{
+  prev: { id: string; name: string } | null;
+  next: { id: string; name: string } | null;
+}> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return { prev: null, next: null };
+
+  const candidateList = await db
+    .select({
+      id: candidate.userId,
+      name: user.name,
+      appId: application.id,
+    })
+    .from(candidate)
+    .innerJoin(user, eq(candidate.userId, user.id))
+    .innerJoin(
+      application,
+      and(
+        eq(application.candidateId, candidate.userId),
+        eq(application.recruitmentId, targetId),
+      ),
+    )
+    .where(eq(candidate.recruitmentId, targetId))
+    .orderBy(application.id);
+
+  const index = candidateList.findIndex((c) => c.id === candidateId);
+  if (index === -1) return { prev: null, next: null };
+
+  const prevItem = index > 0 ? candidateList[index - 1] : null;
+  const nextItem =
+    index < candidateList.length - 1 ? candidateList[index + 1] : null;
+
+  return {
+    prev: prevItem
+      ? { id: prevItem.id, name: prevItem.name ?? "Candidato" }
+      : null,
+    next: nextItem
+      ? { id: nextItem.id, name: nextItem.name ?? "Candidato" }
+      : null,
+  };
 }
 
 export async function getCandidateWithMetadata(

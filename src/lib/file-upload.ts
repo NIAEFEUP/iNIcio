@@ -151,6 +151,7 @@ export async function deleteFile(fileName: string): Promise<boolean> {
     });
 
     await s3Client.send(command);
+    invalidateFileUrlCache(fileName);
     return true;
   } catch (error) {
     console.error("File deletion error:", error);
@@ -180,19 +181,62 @@ export function fromFullUrlToPath(url: string) {
   return url;
 }
 
+interface CachedSignedUrl {
+  url: string;
+  expiresAt: number;
+}
+
+const signedUrlCache = new Map<string, CachedSignedUrl>();
+const pendingSignedUrls = new Map<string, Promise<string>>();
+
+export function invalidateFileUrlCache(fileName: string) {
+  if (!fileName) return;
+  signedUrlCache.delete(fileName);
+  signedUrlCache.delete(fromFullUrlToPath(fileName));
+}
+
 export async function getFilenameUrl(
   key: string,
   expiresIn: number = 180000,
 ): Promise<string> {
   if (!key) return "";
 
-  const command = new GetObjectCommand({
-    Bucket: process.env.S3_BUCKET,
-    Key: fromFullUrlToPath(key),
-    ResponseCacheControl: "public, max-age=172800, immutable",
-  });
+  const normalizedKey = fromFullUrlToPath(key);
+  const now = Date.now();
 
-  return await getSignedUrl(s3Client, command, { expiresIn });
+  const cached = signedUrlCache.get(normalizedKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.url;
+  }
+
+  const pending = pendingSignedUrls.get(normalizedKey);
+  if (pending !== undefined) {
+    return pending;
+  }
+
+  const promise = (async () => {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: normalizedKey,
+        ResponseCacheControl: "public, max-age=172800, immutable",
+      });
+
+      const url = await getSignedUrl(s3Client, command, { expiresIn });
+      // Cache with a 60-second safety window, capped at 24 hours
+      const ttlMs = Math.max(1, Math.min(expiresIn, 86400) - 60) * 1000;
+      signedUrlCache.set(normalizedKey, {
+        url,
+        expiresAt: now + ttlMs,
+      });
+      return url;
+    } finally {
+      pendingSignedUrls.delete(normalizedKey);
+    }
+  })();
+
+  pendingSignedUrls.set(normalizedKey, promise);
+  return promise;
 }
 
 export async function replaceFile(
@@ -207,6 +251,8 @@ export async function replaceFile(
     // Delete old file if names are different
     if (uploadResult.success && oldFileName !== fileName) {
       await deleteFile(oldFileName);
+    } else if (uploadResult.success) {
+      invalidateFileUrlCache(fileName);
     }
 
     return uploadResult;

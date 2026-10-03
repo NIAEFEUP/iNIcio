@@ -6,17 +6,46 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCandidatesData } from "@/lib/hooks/candidates/use-candidate-data";
 
+export interface AdjacentCandidateSummary {
+  id: string;
+  name: string;
+}
+
 interface CandidateNavigationProps {
   currentCandidateId: string;
+  adjacentCandidates?: {
+    prev: AdjacentCandidateSummary | null;
+    next: AdjacentCandidateSummary | null;
+  };
 }
 
 export function CandidateNavigation({
   currentCandidateId,
+  adjacentCandidates,
 }: CandidateNavigationProps) {
-  const { data, isLoading } = useCandidatesData();
+  const hasAdjacent = Boolean(adjacentCandidates);
+  const { data, isLoading } = useCandidatesData(undefined, !hasAdjacent);
   const candidates = data?.candidates;
 
-  if (isLoading || !candidates || candidates.length === 0) {
+  const prevCandidate = hasAdjacent
+    ? adjacentCandidates?.prev
+    : (() => {
+        if (isLoading || !candidates) return null;
+        const idx = candidates.findIndex((c) => c.id === currentCandidateId);
+        return idx > 0 ? candidates[idx - 1] : null;
+      })();
+
+  const nextCandidate = hasAdjacent
+    ? adjacentCandidates?.next
+    : (() => {
+        if (isLoading || !candidates) return null;
+        const idx = candidates.findIndex((c) => c.id === currentCandidateId);
+        return idx >= 0 && idx < candidates.length - 1
+          ? candidates[idx + 1]
+          : null;
+      })();
+
+  if (!hasAdjacent && (isLoading || !candidates || candidates.length === 0)) {
     return (
       <div className="flex items-center gap-2">
         <Button
@@ -40,14 +69,6 @@ export function CandidateNavigation({
       </div>
     );
   }
-
-  const currentIndex = candidates.findIndex((c) => c.id === currentCandidateId);
-
-  const prevCandidate = currentIndex > 0 ? candidates[currentIndex - 1] : null;
-  const nextCandidate =
-    currentIndex >= 0 && currentIndex < candidates.length - 1
-      ? candidates[currentIndex + 1]
-      : null;
 
   return (
     <div className="flex items-center gap-2">

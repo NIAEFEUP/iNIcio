@@ -197,7 +197,7 @@ export default function DynamicPage() {
             {dynamic.candidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className={"bg-neutral-900/50 p-3 rounded-2xl"}
+                className="bg-card border border-border p-3 rounded-2xl"
               >
                 <CandidateModularInfo
                   candidate={candidate}

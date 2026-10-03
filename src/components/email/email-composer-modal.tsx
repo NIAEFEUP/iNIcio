@@ -208,17 +208,17 @@ export function EmailComposerDialogContent({
   };
 
   return (
-    <DialogContent className="sm:max-w-3xl">
+    <DialogContent className="sm:max-w-3xl sm:h-[600px] flex flex-col">
       <DialogHeader>
         <DialogTitle>Enviar email</DialogTitle>
       </DialogHeader>
 
       {isLoading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground flex-1">
           <Loader2 className="size-4 animate-spin" />A carregar candidatos...
         </div>
       ) : loadError ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 py-12 text-center flex-1">
           <AlertTriangle className="size-6 text-destructive" />
           <p className="text-sm text-muted-foreground">{loadError}</p>
           <Button type="button" variant="outline" onClick={() => void load()}>
@@ -226,9 +226,9 @@ export function EmailComposerDialogContent({
           </Button>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] flex-1 min-h-0">
           {/* Left: the email itself */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-h-0">
             <div className="grid gap-1.5">
               <Label htmlFor="email-subject">Assunto</Label>
               <Input
@@ -239,15 +239,14 @@ export function EmailComposerDialogContent({
               />
             </div>
 
-            <div className="grid gap-1.5">
+            <div className="grid gap-1.5 flex-1 min-h-0">
               <Label htmlFor="email-body">Corpo</Label>
               <Textarea
                 id="email-body"
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
                 placeholder="Corpo do email"
-                rows={12}
-                className="resize-y font-mono text-xs"
+                className="resize-none font-mono text-xs h-full"
               />
             </div>
           </div>
@@ -255,7 +254,7 @@ export function EmailComposerDialogContent({
           <Separator orientation="vertical" className="hidden md:block" />
 
           {/* Right: who to send to */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 min-h-0">
             <Select
               items={EMAIL_TEMPLATE_ITEMS}
               value={activeType}
@@ -297,7 +296,7 @@ export function EmailComposerDialogContent({
               )}
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-0.5">
+            <div className="flex-1 overflow-y-auto space-y-0.5 min-h-0">
               {visibleRecipients.length === 0 ? (
                 <div className="py-6 text-center text-xs text-muted-foreground">
                   {search
@@ -358,7 +357,7 @@ export function EmailComposerDialogContent({
         </div>
       )}
 
-      <DialogFooter className="sm:items-center sm:justify-between">
+      <DialogFooter className="sm:items-center sm:justify-between mt-auto">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Mail className="size-3.5" />
           {selectedRecipients.length} em BCC
