@@ -11,7 +11,7 @@ import {
   recruiterToInterview,
   usersToRecruitments,
 } from "@/db/schema";
-import { db, getAllCandidateUsers, User } from "@/lib/db";
+import { db, User } from "@/lib/db";
 import { and, asc, eq, gt } from "drizzle-orm";
 import {
   getSessionUser,
@@ -19,7 +19,6 @@ import {
   requireRecruiterSession,
 } from "@/lib/action-guard";
 import { getActiveRecruitment } from "@/lib/recruitment";
-import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { deliverPendingNotifications } from "@/lib/notification-service";
 import {
@@ -285,16 +284,4 @@ export async function getSignedProfilePictureUrl(targetPictureUrl: string) {
   }
 
   return await getFilenameUrl(targetPictureUrl);
-}
-
-export async function getCandidateEmails(
-  recruitmentId?: number,
-): Promise<string[]> {
-  const targetId = recruitmentId ?? (await getTargetRecruitmentId());
-  if (!targetId) return [];
-
-  await requireRecruiterSession(targetId);
-
-  const candidates = await getAllCandidateUsers(targetId);
-  return candidates.map((candidate) => candidate.email).filter(Boolean);
 }
