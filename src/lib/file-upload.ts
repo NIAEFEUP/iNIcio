@@ -180,15 +180,19 @@ export function fromFullUrlToPath(url: string) {
   return url;
 }
 
-export async function getFilenameUrl(key: string): Promise<string> {
+export async function getFilenameUrl(
+  key: string,
+  expiresIn: number = 180000,
+): Promise<string> {
   if (!key) return "";
 
   const command = new GetObjectCommand({
     Bucket: process.env.S3_BUCKET,
     Key: fromFullUrlToPath(key),
+    ResponseCacheControl: "public, max-age=172800, immutable",
   });
 
-  return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  return await getSignedUrl(s3Client, command, { expiresIn });
 }
 
 export async function replaceFile(

@@ -34,7 +34,7 @@ export function DataTableView<T>({
   emptyTitle = "No results found",
   emptyDescription = "Try resetting your filters or search query.",
   renderGrid,
-  showPagination = true,
+  showPagination = false,
 }: DataTableViewProps<T>) {
   const rows = table.getRowModel().rows;
 

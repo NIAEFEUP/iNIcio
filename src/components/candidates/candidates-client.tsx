@@ -4,12 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
   type RowSelectionState,
   type SortingState,
   type VisibilityState,
@@ -61,8 +59,6 @@ interface CandidatesClientProps {
   initialViewMode?: ViewMode;
   initialScheduling?: string[];
 }
-
-const PAGE_SIZE = 48;
 
 const PREVIOUS_APPLICATION_OPTIONS = [
   { value: "yes", label: "Já se candidatou" },
@@ -116,10 +112,6 @@ export default function CandidatesClient({
     departments: false,
   });
   const [globalFilter, setGlobalFilter] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const isMountedRef = useRef(false);
 
@@ -391,7 +383,6 @@ export default function CandidatesClient({
       columnFilters,
       columnVisibility,
       globalFilter,
-      pagination,
       rowSelection,
     },
     autoResetPageIndex: false,
@@ -407,16 +398,12 @@ export default function CandidatesClient({
     onGlobalFilterChange: (updater) => {
       if (isMountedRef.current) setGlobalFilter(updater);
     },
-    onPaginationChange: (updater) => {
-      if (isMountedRef.current) setPagination(updater);
-    },
     onRowSelectionChange: (updater) => {
       if (isMountedRef.current) setRowSelection(updater);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: (row, _columnId, value) => {
       const q = String(value ?? "")
         .toLowerCase()

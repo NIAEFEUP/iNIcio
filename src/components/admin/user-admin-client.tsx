@@ -4,12 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
   type RowSelectionState,
   type SortingState,
   type VisibilityState,
@@ -75,8 +73,6 @@ interface Props {
   }>;
 }
 
-const PAGE_SIZE = 12;
-
 function formatDate(dateStr?: string) {
   if (!dateStr) return "-";
   try {
@@ -110,10 +106,6 @@ export default function UserAdminClient({
     recruiterRecruitmentIds: false,
   });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  });
 
   // Edit User State
   const [editingUser, setEditingUser] = useState<AdminUserItem | null>(null);
@@ -514,7 +506,6 @@ export default function UserAdminClient({
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination,
     },
     autoResetPageIndex: false,
     onSortingChange: (u) => isMountedRef.current && setSorting(u),
@@ -523,7 +514,6 @@ export default function UserAdminClient({
     onColumnVisibilityChange: (u) =>
       isMountedRef.current && setColumnVisibility(u),
     onRowSelectionChange: (u) => isMountedRef.current && setRowSelection(u),
-    onPaginationChange: (u) => isMountedRef.current && setPagination(u),
     globalFilterFn: (row, columnId, filterValue: string) => {
       const q = filterValue.toLowerCase().trim();
       if (!q) return true;
@@ -537,7 +527,6 @@ export default function UserAdminClient({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const selectedCount = Object.keys(rowSelection).filter(

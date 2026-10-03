@@ -4,11 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type PaginationState,
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
@@ -71,8 +69,6 @@ interface Props {
   removeRecruiter: (userId: string) => Promise<void>;
 }
 
-const PAGE_SIZE = 6;
-
 export default function RecruiterAdminClient({
   recruiters,
   users,
@@ -98,10 +94,6 @@ export default function RecruiterAdminClient({
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -256,7 +248,7 @@ export default function RecruiterAdminClient({
   const table = useReactTable({
     data: list,
     columns,
-    state: { sorting, globalFilter, pagination, rowSelection },
+    state: { sorting, globalFilter, rowSelection },
     autoResetPageIndex: false,
     onSortingChange: (u) => {
       if (isMountedRef.current) setSorting(u);
@@ -264,16 +256,12 @@ export default function RecruiterAdminClient({
     onGlobalFilterChange: (u) => {
       if (isMountedRef.current) setGlobalFilter(u);
     },
-    onPaginationChange: (u) => {
-      if (isMountedRef.current) setPagination(u);
-    },
     onRowSelectionChange: (u) => {
       if (isMountedRef.current) setRowSelection(u);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const selectedCount = Object.keys(rowSelection).filter(
