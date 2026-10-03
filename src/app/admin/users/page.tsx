@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import UserAdminClient from "@/components/admin/user-admin-client";
 import {
   deleteAdminUser,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/admin";
 import { getRecruitments } from "@/lib/recruitment";
 import { requireAdminSession } from "@/lib/action-guard";
+import { USERS_VIEW_MODE_COOKIE_NAME } from "@/constants/cookies.const";
 
 export const metadata = {
   title: "Gestão de Utilizadores | Admin",
@@ -15,6 +17,11 @@ export const metadata = {
 
 export default async function AdminUsersPage() {
   const currentAdmin = await requireAdminSession();
+  const cookieStore = await cookies();
+  const initialViewMode =
+    cookieStore.get(USERS_VIEW_MODE_COOKIE_NAME)?.value === "grid"
+      ? "grid"
+      : "list";
 
   const [users, recruitments] = await Promise.all([
     getAllAdminUsers(),
@@ -101,6 +108,7 @@ export default async function AdminUsersPage() {
 
   return (
     <UserAdminClient
+      initialViewMode={initialViewMode}
       users={users}
       recruitments={recruitments}
       currentUserId={currentAdmin.id}

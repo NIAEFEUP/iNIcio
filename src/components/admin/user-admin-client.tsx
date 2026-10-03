@@ -46,12 +46,15 @@ import { BulkActions } from "@/components/data-table/bulk-actions";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
+import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
+import { setUsersViewMode } from "@/cookies/set";
 import { toast } from "@/components/ui/toast";
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
 import type { AdminUserItem } from "@/lib/admin";
 import type { Recruitment } from "@/lib/db";
 
 interface Props {
+  initialViewMode?: ViewMode;
   users: AdminUserItem[];
   recruitments: Recruitment[];
   currentUserId?: string;
@@ -87,6 +90,7 @@ function formatDate(dateStr?: string) {
 }
 
 export default function UserAdminClient({
+  initialViewMode = "list",
   users,
   recruitments,
   currentUserId,
@@ -95,7 +99,11 @@ export default function UserAdminClient({
   sendPasswordResetEmail,
 }: Props) {
   const [list, setList] = useState<AdminUserItem[]>(users || []);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setUsersViewMode(mode);
+  };
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
@@ -433,11 +441,20 @@ export default function UserAdminClient({
         ),
         cell: ({ row }) => {
           const u = row.original;
+          const picture = getStableImageUrl(u.image);
+          const name = u.name || "Sem nome";
+          const initials = getInitials(u.name || u.email || u.id);
           return (
             <DataTableEntityCell
-              name={u.name || "Sem nome"}
-              image={u.image || undefined}
-              initials={getInitials(u.name || u.email || u.id)}
+              avatar={
+                <CandidateAvatarLightbox
+                  picture={picture}
+                  name={name}
+                  initials={initials}
+                  size="sm"
+                />
+              }
+              name={name}
             />
           );
         },
@@ -603,39 +620,25 @@ export default function UserAdminClient({
           <GridView
             table={t}
             getItemKey={(r) => r.id}
-            renderCard={(r) => {
-              const row = t
-                .getRowModel()
-                .rows.find((row) => row.original.id === r.id);
-              const isSelected = row ? row.getIsSelected() : false;
+            renderCard={(r, { isSelected, onSelectChange }) => {
+              const picture = getStableImageUrl(r.image);
+              const name = r.name || "Sem nome";
+              const initials = getInitials(r.name || r.email || r.id);
 
               return (
                 <GridCard
                   avatar={
-                    r.image ? (
-                      <Avatar className="size-10 border border-border">
-                        <AvatarImage
-                          src={getStableImageUrl(r.image)}
-                          alt={r.name}
-                        />
-                        <AvatarFallback>
-                          <InitialsAvatar
-                            initials={getInitials(r.name || r.email || r.id)}
-                            size="md"
-                          />
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <InitialsAvatar
-                        initials={getInitials(r.name || r.email || r.id)}
-                        size="md"
-                      />
-                    )
+                    <CandidateAvatarLightbox
+                      picture={picture}
+                      name={name}
+                      initials={initials}
+                      size="md"
+                    />
                   }
-                  title={r.name || "Sem nome"}
+                  title={name}
                   subtitle={r.email}
                   isSelected={isSelected}
-                  onSelectChange={(val) => row?.toggleSelected(val)}
+                  onSelectChange={onSelectChange}
                   onEdit={() => openEditModal(r)}
                   onDelete={() => openDeleteModal(r)}
                   editLabel="Editar"

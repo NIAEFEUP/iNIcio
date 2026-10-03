@@ -10,7 +10,7 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
-import { Plus, Search, UserRoundPlus } from "lucide-react";
+import { Search, UserRoundPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,13 +39,18 @@ import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
 import { BulkActions } from "@/components/data-table/bulk-actions";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
 import { getInitials } from "@/lib/utils";
+import { getStableImageUrl } from "@/lib/stable-image-url";
+import { setRecruitersViewMode } from "@/cookies/set";
 import { toast } from "@/components/ui/toast";
 
 interface RecruiterRow {
   userId: string;
   name?: string;
   email?: string;
+  image?: string | null;
   availabilityMinutes?: number;
   availabilitySlots?: number;
   interviews?: number;
@@ -63,13 +68,20 @@ function formatAvailability(minutes?: number) {
 }
 
 interface Props {
+  initialViewMode?: ViewMode;
   recruiters: RecruiterRow[];
-  users: Array<{ id: string; name: string; email: string }>;
+  users: Array<{
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+  }>;
   addRecruiter: (userId: string) => Promise<void>;
   removeRecruiter: (userId: string) => Promise<void>;
 }
 
 export default function RecruiterAdminClient({
+  initialViewMode = "list",
   recruiters,
   users,
   addRecruiter,
@@ -82,16 +94,22 @@ export default function RecruiterAdminClient({
   const [userId, setUserId] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<
-    Array<{ id: string; name: string; email: string }>
+    Array<{ id: string; name: string; email: string; image?: string | null }>
   >([]);
   const [selected, setSelected] = useState<{
     id: string;
     name: string;
     email: string;
+    image?: string | null;
   } | null>(null);
   const debounceRef = useRef<number | null>(null);
 
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setRecruitersViewMode(mode);
+  };
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -132,7 +150,12 @@ export default function RecruiterAdminClient({
       if (selected) {
         setList((s) => [
           ...s,
-          { userId: idToAdd, name: selected.name, email: selected.email },
+          {
+            userId: idToAdd,
+            name: selected.name,
+            email: selected.email,
+            image: selected.image,
+          },
         ]);
       } else {
         const u = (users || []).find(
@@ -142,7 +165,7 @@ export default function RecruiterAdminClient({
         if (u) {
           setList((s) => [
             ...s,
-            { userId: idToAdd, name: u.name, email: u.email },
+            { userId: idToAdd, name: u.name, email: u.email, image: u.image },
           ]);
         } else {
           setList((s) => [...s, { userId: idToAdd }]);
@@ -185,14 +208,25 @@ export default function RecruiterAdminClient({
         header: ({ column }) => (
           <DataTableSortableHeader column={column} title="Nome" />
         ),
-        cell: ({ row }) => (
-          <DataTableEntityCell
-            name={row.original.name ?? "Sem nome"}
-            initials={getInitials(
-              row.original.name ?? row.original.email ?? row.original.userId,
-            )}
-          />
-        ),
+        cell: ({ row }) => {
+          const r = row.original;
+          const picture = getStableImageUrl(r.image);
+          const name = r.name ?? "Sem nome";
+          const initials = getInitials(r.name ?? r.email ?? r.userId);
+          return (
+            <DataTableEntityCell
+              avatar={
+                <CandidateAvatarLightbox
+                  picture={picture}
+                  name={name}
+                  initials={initials}
+                  size="sm"
+                />
+              }
+              name={name}
+            />
+          );
+        },
       },
       {
         accessorKey: "email",
@@ -395,25 +429,27 @@ export default function RecruiterAdminClient({
           <GridView
             table={t}
             getItemKey={(r) => r.userId}
-            renderCard={(r) => {
-              const row = t
-                .getRowModel()
-                .rows.find((row) => row.original.userId === r.userId);
-              const isSelected = row ? row.getIsSelected() : false;
+            renderCard={(r, { isSelected, onSelectChange }) => {
+              const picture = getStableImageUrl(r.image);
+              const name = r.name ?? "Sem nome";
+              const initials = getInitials(r.name ?? r.email ?? r.userId);
 
               return (
                 <GridCard
                   avatar={
-                    <InitialsAvatar
+                    <CandidateAvatarLightbox
+                      picture={picture}
+                      name={name}
+                      initials={initials}
                       size="md"
-                      initials={getInitials(r.name ?? r.email ?? r.userId)}
                     />
                   }
-                  title={r.name ?? "Sem nome"}
+                  title={name}
                   subtitle={r.email}
                   isSelected={isSelected}
-                  onSelectChange={(val) => row?.toggleSelected(val)}
+                  onSelectChange={onSelectChange}
                   onDelete={() => setPendingDeleteId(r.userId)}
+                  deleteLabel="Remover"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">
@@ -461,106 +497,113 @@ export default function RecruiterAdminClient({
                 placeholder="Pesquisar utilizador..."
               />
               <div className="mt-2 max-h-40 overflow-auto">
-                {results.map((u) => (
-                  <div
-                    key={u.id}
-                    onClick={() => {
-                      setSelected(u);
-                      setUserId(u.id);
-                      setResults([]);
-                      setQuery(`${u.name} — ${u.email}`);
-                    }}
-                    className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
-                  >
-                    <InitialsAvatar size="sm" initials={getInitials(u.name)} />
-                    <div>
-                      <div className="text-sm font-medium">{u.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {u.email}
+                {results.map((u) => {
+                  const userPicture = getStableImageUrl(u.image);
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => {
+                        setSelected(u);
+                        setUserId(u.id);
+                        setResults([]);
+                        setQuery(`${u.name} — ${u.email}`);
+                      }}
+                      className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                    >
+                      {userPicture ? (
+                        <Avatar className="size-7 ring-1 ring-border/60">
+                          <AvatarImage
+                            src={userPicture}
+                            alt={u.name}
+                            className="object-cover"
+                          />
+                          <AvatarFallback>
+                            <InitialsAvatar
+                              size="sm"
+                              initials={getInitials(u.name)}
+                            />
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <InitialsAvatar
+                          size="sm"
+                          initials={getInitials(u.name)}
+                        />
+                      )}
+                      <div>
+                        <div className="text-sm font-medium">{u.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {u.email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
             <DialogFooter>
-              <Button type="submit">
-                <Plus className="size-4" />
-                Adicionar
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddOpen(false)}
+              >
+                Cancelar
               </Button>
+              <Button type="submit">Adicionar Recrutador</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Confirm remove dialog */}
+      {/* Single delete confirmation dialog */}
       <Dialog
-        open={pendingDeleteId !== null}
+        open={Boolean(pendingDeleteId)}
         onOpenChange={(open) => !open && setPendingDeleteId(null)}
       >
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-card-foreground">
-              Tens a certeza que queres remover?
+              Remover Recrutador
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              O utilizador deixará de ser recrutador deste período de
-              recrutamento.
+            <DialogDescription>
+              Tens a certeza de que pretendes remover este recrutador deste
+              recrutamento? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPendingDeleteId(null)}
-            >
+            <Button variant="outline" onClick={() => setPendingDeleteId(null)}>
               Cancelar
             </Button>
-            <Button type="button" variant="destructive" onClick={confirmRemove}>
+            <Button variant="destructive" onClick={confirmRemove}>
               Remover
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk actions toolbar */}
-      <BulkActions
-        selectedCount={selectedCount}
-        entityLabel="recrutador"
-        entityPluralLabel="recrutadores"
-        onExport={handleBulkExportCSV}
-        onDelete={() => setIsBulkDeleteOpen(true)}
-        onClear={() => table.toggleAllRowsSelected(false)}
-      />
-
-      {/* Confirm bulk remove dialog */}
-      <Dialog
-        open={isBulkDeleteOpen}
-        onOpenChange={(open) => !open && setIsBulkDeleteOpen(false)}
-      >
+      {/* Bulk delete confirmation dialog */}
+      <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-card-foreground">
-              Tens a certeza que queres remover?
+              Remover Recrutadores
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {selectedCount === 1
-                ? "O recrutador selecionado deixará de ser recrutador deste período de recrutamento."
-                : `Os ${selectedCount} recrutadores selecionados deixarão de ser recrutadores deste período de recrutamento.`}
+            <DialogDescription>
+              Tens a certeza de que pretendes remover {selectedCount}{" "}
+              {selectedCount === 1 ? "recrutador" : "recrutadores"} deste
+              recrutamento? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
-              type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => setIsBulkDeleteOpen(false)}
               disabled={isBulkDeleting}
             >
               Cancelar
             </Button>
             <Button
-              type="button"
               variant="destructive"
               onClick={handleBulkRemove}
               disabled={isBulkDeleting}
@@ -570,6 +613,15 @@ export default function RecruiterAdminClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BulkActions
+        selectedCount={selectedCount}
+        entityLabel="recrutador"
+        entityPluralLabel="recrutadores"
+        onExport={handleBulkExportCSV}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+        onClear={() => table.toggleAllRowsSelected(false)}
+      />
     </div>
   );
 }

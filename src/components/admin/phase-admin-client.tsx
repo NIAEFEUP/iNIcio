@@ -12,7 +12,14 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
-import { Plus, Search } from "lucide-react";
+import { Calendar, Plus, Search } from "lucide-react";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/data-table/view-mode-toggle";
+import { GridView } from "@/components/data-table/grid-view";
+import { GridCard } from "@/components/data-table/grid-card";
+import { setPhasesViewMode } from "@/cookies/set";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +88,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 interface PhaseAdminClientProps {
+  initialViewMode?: ViewMode;
   phases: RecruitmentPhase[];
   addPhase: (p: RecruitmentPhase) => Promise<void>;
   editPhase: (p: RecruitmentPhase) => Promise<void>;
@@ -89,6 +97,7 @@ interface PhaseAdminClientProps {
 }
 
 export default function PhaseAdminClient({
+  initialViewMode = "list",
   phases,
   addPhase,
   editPhase,
@@ -96,6 +105,11 @@ export default function PhaseAdminClient({
   defaultRecruitmentId,
 }: PhaseAdminClientProps) {
   const [phasesState, setPhasesState] = useState<RecruitmentPhase[]>(phases);
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setPhasesViewMode(mode);
+  };
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<RecruitmentPhase | null>(null);
@@ -456,6 +470,14 @@ export default function PhaseAdminClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Fases"
+        viewModeToggle={
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            listLabel="Lista"
+            gridLabel="Grelha"
+          />
+        }
         search={
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -469,18 +491,20 @@ export default function PhaseAdminClient({
         }
         actions={
           <>
-            <DataTableColumnToggle
-              table={table}
-              columnLabels={{
-                title: "Título",
-                clientIdentifier: "Identificador",
-                description: "Descrição",
-                start: "Início",
-                end: "Fim",
-                state: "Estado",
-                role: "Papel",
-              }}
-            />
+            {viewMode === "list" && (
+              <DataTableColumnToggle
+                table={table}
+                columnLabels={{
+                  title: "Título",
+                  clientIdentifier: "Identificador",
+                  description: "Descrição",
+                  start: "Início",
+                  end: "Fim",
+                  state: "Estado",
+                  role: "Papel",
+                }}
+              />
+            )}
             <Button
               type="button"
               onClick={() => {
@@ -527,9 +551,78 @@ export default function PhaseAdminClient({
 
       <DataTableView
         table={table}
-        showPagination={false}
+        viewMode={viewMode}
         emptyTitle="Sem fases"
         emptyDescription="Adiciona fases para este período de recrutamento."
+        renderGrid={(t) => (
+          <GridView
+            table={t}
+            getItemKey={(p) => String(p.id)}
+            renderCard={(p, { isSelected, onSelectChange }) => {
+              const state = getPhaseState(p, now);
+              return (
+                <GridCard
+                  avatar={
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Calendar className="size-5" />
+                    </div>
+                  }
+                  title={p.title}
+                  subtitle={ROLE_LABELS[p.role] ?? p.role}
+                  badge={
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          STATE_DOT_CLASSES[state],
+                        )}
+                      />
+                      <span className={STATE_TEXT_CLASSES[state]}>
+                        {PHASE_STATE_LABELS[state]}
+                      </span>
+                    </div>
+                  }
+                  isSelected={isSelected}
+                  onSelectChange={onSelectChange}
+                  onEdit={() => handleEdit(p)}
+                  onDelete={() => {
+                    if (p.id != null) handleDelete(p.id);
+                  }}
+                  editLabel="Editar"
+                  deleteLabel="Eliminar"
+                >
+                  <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                    {p.clientIdentifier && (
+                      <div className="flex items-center justify-between">
+                        <span>Identificador:</span>
+                        <span className="font-mono text-foreground font-medium">
+                          {p.clientIdentifier}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span>Início:</span>
+                      <span className="text-foreground">
+                        {formatDate(p.start)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Fim:</span>
+                      <span className="text-foreground">
+                        {formatDate(p.end)}
+                      </span>
+                    </div>
+                    {p.description && (
+                      <p className="mt-1 line-clamp-2 text-foreground/80 italic">
+                        {p.description}
+                      </p>
+                    )}
+                  </div>
+                </GridCard>
+              );
+            }}
+          />
+        )}
       />
 
       {/* Add phase dialog */}

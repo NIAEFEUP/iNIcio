@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import PhaseAdminClient from "@/components/admin/phase-admin-client";
 import { RecruitmentPhase } from "@/lib/db";
 import {
@@ -8,8 +9,15 @@ import {
 } from "@/lib/recruitment";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import { requireAdminSession } from "@/lib/action-guard";
+import { PHASES_VIEW_MODE_COOKIE_NAME } from "@/constants/cookies.const";
 
 export default async function RecruitmentAdmin({ searchParams }: any) {
+  const cookieStore = await cookies();
+  const initialViewMode =
+    cookieStore.get(PHASES_VIEW_MODE_COOKIE_NAME)?.value === "grid"
+      ? "grid"
+      : "list";
+
   const params = await searchParams;
   const targetRecruitment = await getTargetRecruitment();
 
@@ -51,6 +59,7 @@ export default async function RecruitmentAdmin({ searchParams }: any) {
 
   return (
     <PhaseAdminClient
+      initialViewMode={initialViewMode}
       phases={recruitmentPhases}
       addPhase={add}
       editPhase={edit}

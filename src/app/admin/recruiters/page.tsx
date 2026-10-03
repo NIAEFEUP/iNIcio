@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import RecruiterAdminClient from "@/components/admin/recruiter-admin-client";
 import {
   getUsers,
@@ -8,6 +9,7 @@ import {
 import { getRecruiterStats, type RecruiterStats } from "@/lib/recruiter";
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 import { requireAdminSession } from "@/lib/action-guard";
+import { RECRUITERS_VIEW_MODE_COOKIE_NAME } from "@/constants/cookies.const";
 
 const EMPTY_STATS: RecruiterStats = {
   availabilityMinutes: 0,
@@ -17,6 +19,12 @@ const EMPTY_STATS: RecruiterStats = {
 };
 
 export default async function RecruitersAdminPage() {
+  const cookieStore = await cookies();
+  const initialViewMode =
+    cookieStore.get(RECRUITERS_VIEW_MODE_COOKIE_NAME)?.value === "grid"
+      ? "grid"
+      : "list";
+
   const targetId = await getTargetRecruitmentId();
   const [recruiters, users, stats] = await Promise.all([
     getRecruiters(targetId),
@@ -45,6 +53,7 @@ export default async function RecruitersAdminPage() {
 
   return (
     <RecruiterAdminClient
+      initialViewMode={initialViewMode}
       recruiters={recruitersWithStats}
       users={users}
       addRecruiter={addRecruiterAction}
