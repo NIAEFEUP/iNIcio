@@ -205,6 +205,7 @@ export async function getRecruiterAgendaEvents(
 export interface TeamRecruiter {
   id: string;
   name: string;
+  email?: string | null;
   image: string | null;
 }
 
@@ -234,6 +235,7 @@ export async function getTeamAvailabilitiesData(
   const recruiters: TeamRecruiter[] = enrolledRecruiters.map((r) => ({
     id: r.user.id,
     name: r.user.name,
+    email: r.user.email,
     image: r.user.image,
   }));
 
@@ -244,6 +246,7 @@ export async function getTeamAvailabilitiesData(
     recruiter: {
       id: a.recruiter.id,
       name: a.recruiter.name,
+      email: a.recruiter.email,
       image: a.recruiter.image,
     },
   }));

@@ -3,9 +3,15 @@
 import React, { useMemo, useState } from "react";
 import { format, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
-import { CalendarClock, Clock, UserCheck, Users } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Clock,
+  Search,
+  UserCheck,
+  Users,
+} from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -22,14 +28,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
-import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ScheduleWeekGrid,
@@ -53,11 +58,15 @@ export function TeamAvailabilityCalendar({
 }: TeamAvailabilityCalendarProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => getMonday(new Date()));
   const [selectedRecruiterId, setSelectedRecruiterId] = useState<string>("all");
+  const [headerFilterOpen, setHeaderFilterOpen] = useState(false);
+  const [headerFilterSearch, setHeaderFilterSearch] = useState("");
+
   const [activeSlotModal, setActiveSlotModal] = useState<{
     date: Date;
     time: string;
     recruiters: TeamRecruiter[];
   } | null>(null);
+  const [modalSearch, setModalSearch] = useState("");
 
   // Filter by 5-day working week (Mon-Fri)
   const weekEnd = useMemo(() => {
@@ -160,32 +169,19 @@ export function TeamAvailabilityCalendar({
 
     const count = slotRecruiters.length;
 
-    // Intensity styling based on availability count
-    const intensityClass =
-      count === 1
-        ? "border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100/90 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
-        : count === 2
-          ? "border-teal-300 bg-teal-50/90 hover:bg-teal-100 dark:border-teal-800/80 dark:bg-teal-950/40 dark:hover:bg-teal-950/60"
-          : "border-primary/40 bg-primary/10 hover:bg-primary/15 dark:border-primary/50 dark:bg-primary/20 dark:hover:bg-primary/25";
-
     return (
       <button
         type="button"
-        onClick={() =>
-          setActiveSlotModal({ date, time, recruiters: slotRecruiters })
-        }
-        className={cn(
-          "group flex w-full flex-col gap-1 rounded-md border p-1.5 text-left transition-all shadow-2xs hover:shadow-xs",
-          intensityClass,
-        )}
+        onClick={() => {
+          setModalSearch("");
+          setActiveSlotModal({ date, time, recruiters: slotRecruiters });
+        }}
+        className="group flex w-full flex-col gap-1 rounded-md border border-emerald-500/25 bg-emerald-50/70 p-1.5 text-left transition-all shadow-2xs hover:bg-emerald-100/80 hover:shadow-xs dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:hover:bg-emerald-950/45 cursor-pointer"
       >
-        <div className="flex w-full items-center justify-between gap-1">
-          <Badge
-            variant="secondary"
-            className="text-[10px] px-1 py-0 font-medium"
-          >
-            {count} {count === 1 ? "disponível" : "disponíveis"}
-          </Badge>
+        <div className="flex w-full items-center justify-between gap-1 leading-none">
+          <span className="text-[11px] font-semibold tracking-tight text-emerald-700 dark:text-emerald-300">
+            {count} {count === 1 ? "Disponível" : "Disponíveis"}
+          </span>
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">
             {time}
           </span>
@@ -193,23 +189,24 @@ export function TeamAvailabilityCalendar({
 
         {/* Recruiter Avatar Stack */}
         <div className="flex items-center -space-x-1.5 mt-0.5 overflow-hidden">
-          {slotRecruiters.slice(0, 3).map((r) => (
-            <Avatar key={r.id} size="sm" className="size-5 ring-1 ring-card">
-              <AvatarImage
-                src={getStableImageUrl(r.image) || undefined}
-                alt={r.name}
-              />
-              <AvatarFallback>
-                <InitialsAvatar
-                  initials={getInitials(r.name)}
-                  size="sm"
-                  className="size-5 text-[8px]"
-                />
-              </AvatarFallback>
-            </Avatar>
-          ))}
+          {slotRecruiters.slice(0, 3).map((r) => {
+            const userPicture = getStableImageUrl(r.image);
+            return (
+              <Avatar
+                key={r.id}
+                className="size-5 rounded-full ring-1 ring-background shrink-0"
+              >
+                {userPicture ? (
+                  <AvatarImage src={userPicture} alt={r.name} />
+                ) : null}
+                <AvatarFallback className="rounded-full bg-primary/10 text-primary text-[8px] font-semibold">
+                  {getInitials(r.name || r.email || r.id)}
+                </AvatarFallback>
+              </Avatar>
+            );
+          })}
           {count > 3 && (
-            <span className="inline-flex size-5 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground ring-1 ring-card">
+            <span className="inline-flex size-5 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground ring-1 ring-background">
               +{count - 3}
             </span>
           )}
@@ -218,14 +215,40 @@ export function TeamAvailabilityCalendar({
     );
   };
 
-  const selectedRecruiterLabel = useMemo(() => {
-    if (selectedRecruiterId === "all") {
-      return `Todos os Recrutadores (${recruiters.length})`;
-    }
-    return (
-      recruiters.find((r) => r.id === selectedRecruiterId)?.name || "Recrutador"
+  const selectedRecruiter = useMemo(() => {
+    return recruiters.find((r) => r.id === selectedRecruiterId);
+  }, [recruiters, selectedRecruiterId]);
+
+  const filteredRecruitersInHeader = useMemo(() => {
+    const q = headerFilterSearch.toLowerCase().trim();
+    if (!q) return recruiters;
+    return recruiters.filter(
+      (r) =>
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.email || "").toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q),
     );
-  }, [selectedRecruiterId, recruiters]);
+  }, [recruiters, headerFilterSearch]);
+
+  const filteredModalRecruiters = useMemo(() => {
+    if (!activeSlotModal) return [];
+    const q = modalSearch.toLowerCase().trim();
+    if (!q) return activeSlotModal.recruiters;
+    return activeSlotModal.recruiters.filter(
+      (r) =>
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.email || "").toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q),
+    );
+  }, [activeSlotModal, modalSearch]);
+
+  const formattedDateTitle = useMemo(() => {
+    if (!activeSlotModal) return "";
+    const str = format(activeSlotModal.date, "EEEE, d 'de' MMMM", {
+      locale: pt,
+    });
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }, [activeSlotModal]);
 
   const stats = [
     {
@@ -256,28 +279,128 @@ export function TeamAvailabilityCalendar({
           <div className="flex flex-wrap items-center gap-2">
             <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
 
-            <Select
-              value={selectedRecruiterId}
-              onValueChange={(val) => {
-                if (val) setSelectedRecruiterId(val);
+            {/* Searchable recruiter dropdown filter */}
+            <DropdownMenu
+              open={headerFilterOpen}
+              onOpenChange={(open) => {
+                setHeaderFilterOpen(open);
+                if (!open) setHeaderFilterSearch("");
               }}
             >
-              <SelectTrigger className="w-56 h-8 text-xs">
-                <SelectValue placeholder="Filtrar por recrutador">
-                  {selectedRecruiterLabel}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  Todos os Recrutadores ({recruiters.length})
-                </SelectItem>
-                {recruiters.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {r.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <DropdownMenuTrigger className="flex items-center gap-2 h-8 px-2.5 rounded-md border border-input bg-background hover:bg-muted text-xs font-normal transition-colors outline-none cursor-pointer max-w-64">
+                {selectedRecruiterId === "all" ? (
+                  <>
+                    <Users className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">
+                      Todos os Recrutadores ({recruiters.length})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Avatar className="size-4 rounded-sm shrink-0">
+                      {selectedRecruiter?.image ? (
+                        <AvatarImage
+                          src={
+                            getStableImageUrl(selectedRecruiter.image) ||
+                            undefined
+                          }
+                          alt={selectedRecruiter.name}
+                        />
+                      ) : null}
+                      <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                        {getInitials(
+                          selectedRecruiter?.name ||
+                            selectedRecruiter?.email ||
+                            "",
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">
+                      {selectedRecruiter?.name || "Recrutador"}
+                    </span>
+                  </>
+                )}
+                <ChevronsUpDown className="size-3.5 text-muted-foreground shrink-0 ml-auto opacity-70" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 p-0">
+                <div className="p-2 border-b border-border/40">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                    <Input
+                      placeholder="Pesquisar recrutador..."
+                      value={headerFilterSearch}
+                      onChange={(e) => setHeaderFilterSearch(e.target.value)}
+                      className="h-8 pl-8 pr-2 text-xs"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSelectedRecruiterId("all");
+                      setHeaderFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                      selectedRecruiterId === "all" && "bg-accent font-medium",
+                    )}
+                  >
+                    <Users className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 truncate">
+                      Todos os Recrutadores ({recruiters.length})
+                    </span>
+                    {selectedRecruiterId === "all" && (
+                      <Check className="size-3.5 text-primary shrink-0" />
+                    )}
+                  </DropdownMenuItem>
+
+                  {filteredRecruitersInHeader.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-muted-foreground">
+                      Nenhum recrutador encontrado
+                    </div>
+                  ) : (
+                    filteredRecruitersInHeader.map((r) => {
+                      const isSelected = selectedRecruiterId === r.id;
+                      const userPicture = getStableImageUrl(r.image);
+                      return (
+                        <DropdownMenuItem
+                          key={r.id}
+                          onClick={() => {
+                            setSelectedRecruiterId(r.id);
+                            setHeaderFilterOpen(false);
+                          }}
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                            isSelected && "bg-accent font-medium",
+                          )}
+                        >
+                          <Avatar className="size-5 rounded-sm shrink-0">
+                            {userPicture ? (
+                              <AvatarImage src={userPicture} alt={r.name} />
+                            ) : null}
+                            <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                              {getInitials(r.name || r.email || r.id)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className="truncate">{r.name}</span>
+                            {r.email && (
+                              <span className="text-[10px] text-muted-foreground truncate">
+                                {r.email}
+                              </span>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <Check className="size-3.5 text-primary shrink-0" />
+                          )}
+                        </DropdownMenuItem>
+                      );
+                    })
+                  )}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />
@@ -321,61 +444,82 @@ export function TeamAvailabilityCalendar({
       <Dialog
         open={!!activeSlotModal}
         onOpenChange={(open) => {
-          if (!open) setActiveSlotModal(null);
+          if (!open) {
+            setActiveSlotModal(null);
+            setModalSearch("");
+          }
         }}
       >
         {activeSlotModal && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge
-                  variant="secondary"
-                  className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
-                >
-                  <CalendarClock className="size-3 mr-1" />
-                  {activeSlotModal.recruiters.length}{" "}
-                  {activeSlotModal.recruiters.length === 1
-                    ? "recrutador disponível"
-                    : "recrutadores disponíveis"}
-                </Badge>
-              </div>
-              <DialogTitle>
-                {format(activeSlotModal.date, "EEEE, d 'de' MMMM", {
-                  locale: pt,
-                })}
-              </DialogTitle>
-              <DialogDescription>
-                Horário: {activeSlotModal.time} —{" "}
-                {getEndTimeString(activeSlotModal.time, 30)} (30 minutos)
+              <DialogTitle>Disponibilidade no Horário</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                {formattedDateTitle} • {activeSlotModal.time} –{" "}
+                {getEndTimeString(activeSlotModal.time, 30)} (
+                {activeSlotModal.recruiters.length}{" "}
+                {activeSlotModal.recruiters.length === 1
+                  ? "recrutador disponível"
+                  : "recrutadores disponíveis"}
+                )
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex flex-col gap-2 py-2 max-h-72 overflow-y-auto">
-              {activeSlotModal.recruiters.map((r) => (
-                <div
-                  key={r.id}
-                  className="flex items-center justify-between rounded-lg border p-2.5 bg-background shadow-2xs"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Avatar className="size-8">
-                      <AvatarImage
-                        src={getStableImageUrl(r.image) || undefined}
-                        alt={r.name}
-                      />
-                      <AvatarFallback>
-                        <InitialsAvatar
-                          initials={getInitials(r.name)}
-                          size="sm"
-                        />
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs font-semibold">{r.name}</span>
+            <div className="flex flex-col gap-3 py-1">
+              {/* Modal Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  placeholder="Pesquisar por nome ou email..."
+                  className="h-8 pl-8 pr-2 text-xs"
+                  autoFocus
+                />
+              </div>
+
+              {/* Recruiter List */}
+              <div className="max-h-60 overflow-y-auto space-y-0.5">
+                {filteredModalRecruiters.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-muted-foreground">
+                    {modalSearch
+                      ? "Nenhum recrutador encontrado para esta pesquisa"
+                      : "Nenhum recrutador disponível neste horário"}
                   </div>
-                  <Badge variant="outline" className="text-[10px]">
-                    Disponível
-                  </Badge>
-                </div>
-              ))}
+                ) : (
+                  filteredModalRecruiters.map((r) => {
+                    const userPicture = getStableImageUrl(r.image);
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-2.5 rounded-md p-2 transition-colors hover:bg-muted/80"
+                      >
+                        <Avatar className="h-6 w-6 rounded-sm shrink-0">
+                          {userPicture ? (
+                            <AvatarImage src={userPicture} alt={r.name} />
+                          ) : null}
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                            {getInitials(r.name || r.email || r.id)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-medium text-xs truncate">
+                            {r.name || "Sem nome"}
+                          </span>
+                          {r.email && (
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {r.email}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium shrink-0">
+                          • Disponível
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </DialogContent>
         )}
