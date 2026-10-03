@@ -290,15 +290,6 @@ export function SlotAdminCalendar({
     [bookingsMap, dates, timeSlots],
   );
 
-  const isCellOtherType = useCallback(
-    (cell: CellPos) => {
-      const key = getCellKey(cell);
-      return otherSlotMap.has(key);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [otherSlotMap, dates, timeSlots],
-  );
-
   const getRectCells = (start: CellPos, end: CellPos): SlotCell[] => {
     const minCol = Math.min(start.col, end.col);
     const maxCol = Math.max(start.col, end.col);
@@ -329,11 +320,6 @@ export function SlotAdminCalendar({
   };
 
   const onCellsChange = (cells: SlotCell[], selected: boolean) => {
-    const otherType =
-      slotType === SlotType.interview ? SlotType.dynamic : SlotType.interview;
-    const otherTimes = new Set(
-      slots[otherType].map((s) => new Date(s.start).getTime()),
-    );
     const bookedTimes = new Set(
       (bookings[slotType] || []).map((b) => new Date(b.slot.start).getTime()),
     );
@@ -342,7 +328,7 @@ export function SlotAdminCalendar({
       const next = [...prev[slotType]];
       for (const c of cells) {
         const time = cellStart(c).getTime();
-        if (otherTimes.has(time) || bookedTimes.has(time)) continue;
+        if (bookedTimes.has(time)) continue;
 
         const idx = next.findIndex((s) => new Date(s.start).getTime() === time);
         if (selected && idx === -1) {
@@ -365,7 +351,7 @@ export function SlotAdminCalendar({
 
   const handlePointerDown = (cell: CellPos, e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    if (isCellBooked(cell) || isCellOtherType(cell)) return;
+    if (isCellBooked(cell)) return;
 
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -743,11 +729,32 @@ export function SlotAdminCalendar({
                           : "bg-emerald-600 text-white";
                       content = (
                         <div className="flex flex-col h-full w-full justify-center p-1 text-[10px]">
-                          <span className="font-semibold leading-tight truncate">
-                            {slotType === SlotType.interview
-                              ? cellBookings[0]?.candidate?.name || "Ocupado"
-                              : `${cellBookings[0]?.candidates?.length || 0} inscritos`}
-                          </span>
+                          <div className="flex items-center justify-between gap-1 leading-tight">
+                            <span className="font-semibold truncate">
+                              {slotType === SlotType.interview
+                                ? cellBookings[0]?.candidate?.name || "Ocupado"
+                                : `${cellBookings[0]?.candidates?.length || 0} inscritos`}
+                            </span>
+                            {otherSlot && (
+                              <span
+                                className={cn(
+                                  "rounded px-1 py-0.5 text-[8px] font-bold shrink-0 leading-none",
+                                  slotType === SlotType.interview
+                                    ? "bg-emerald-400 text-emerald-950"
+                                    : "bg-blue-200 text-blue-950",
+                                )}
+                                title={
+                                  slotType === SlotType.interview
+                                    ? "Dinâmica em simultâneo"
+                                    : "Entrevista em simultâneo"
+                                }
+                              >
+                                {slotType === SlotType.interview
+                                  ? "Dinâmica"
+                                  : "Entrevista"}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[9px] opacity-80">
                             {time} –{" "}
                             {getEndTimeString(
@@ -764,9 +771,30 @@ export function SlotAdminCalendar({
                           : "bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 border-emerald-500/30";
                       content = (
                         <div className="flex flex-col h-full w-full justify-center p-1 text-[10px]">
-                          <span className="font-medium text-foreground">
-                            {time} – {getEndTimeString(time, slot.duration)}
-                          </span>
+                          <div className="flex items-center justify-between gap-1 leading-tight">
+                            <span className="font-medium text-foreground truncate">
+                              {time} – {getEndTimeString(time, slot.duration)}
+                            </span>
+                            {otherSlot && (
+                              <span
+                                className={cn(
+                                  "rounded px-1 py-0.5 text-[8px] font-semibold shrink-0 leading-none",
+                                  slotType === SlotType.interview
+                                    ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
+                                    : "bg-blue-500/20 text-blue-800 dark:text-blue-300 border border-blue-500/30",
+                                )}
+                                title={
+                                  slotType === SlotType.interview
+                                    ? "Dinâmica em simultâneo"
+                                    : "Entrevista em simultâneo"
+                                }
+                              >
+                                {slotType === SlotType.interview
+                                  ? "Dinâmica"
+                                  : "Entrevista"}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[9px] text-muted-foreground">
                             {slot.quantity} vagas
                           </span>
@@ -775,13 +803,21 @@ export function SlotAdminCalendar({
                     } else if (otherSlot) {
                       cellBg =
                         slotType === SlotType.interview
-                          ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-dashed"
-                          : "bg-blue-500/10 text-blue-800 dark:text-blue-200 border-dashed";
+                          ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-dashed hover:bg-emerald-500/20"
+                          : "bg-blue-500/10 text-blue-800 dark:text-blue-200 border-dashed hover:bg-blue-500/20";
                       content = (
-                        <div className="flex h-full w-full items-center justify-center p-1 text-[9px] opacity-60">
-                          {slotType === SlotType.interview
-                            ? "Dinâmica"
-                            : "Entrevista"}
+                        <div className="flex flex-col h-full w-full justify-center p-1 text-[9px] opacity-70 hover:opacity-100 transition-opacity">
+                          <span className="truncate font-medium">
+                            {slotType === SlotType.interview
+                              ? "Dinâmica"
+                              : "Entrevista"}
+                          </span>
+                          <span className="text-[8px] opacity-75">
+                            +{" "}
+                            {slotType === SlotType.interview
+                              ? "Entrevista"
+                              : "Dinâmica"}
+                          </span>
                         </div>
                       );
                     } else if (isHovered && !isDragging) {
