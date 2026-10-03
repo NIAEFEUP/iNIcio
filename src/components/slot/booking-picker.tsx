@@ -1,13 +1,15 @@
 "use client";
 
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 import {
   assignRecruiter,
@@ -59,9 +61,11 @@ interface BookingPickerProps {
   };
   candidates: CandidateWithMeta[];
   type: SlotType;
-  selectedRecruiters: User[];
-  setSelectedRecruiters: Dispatch<SetStateAction<User[]>>;
   recruitmentId?: number;
+  onClose?: () => void;
+  // Optional backward compatibility props
+  selectedRecruiters?: User[];
+  setSelectedRecruiters?: React.Dispatch<React.SetStateAction<User[]>>;
 }
 
 export function BookingPicker({
@@ -70,10 +74,10 @@ export function BookingPicker({
   booking,
   candidates,
   type,
-  selectedRecruiters,
-  setSelectedRecruiters,
   recruitmentId,
+  onClose,
 }: BookingPickerProps) {
+  const router = useRouter();
   const effectiveRecruitmentId =
     recruitmentId ?? booking.recruitmentId ?? booking.slot?.recruitmentId;
 
@@ -83,19 +87,30 @@ export function BookingPicker({
     [startDate, duration],
   );
 
-  const {
-    recruiters: availableRecruiters,
-    isLoading: isLoadingAvailable,
-    mutate: mutateAvailable,
-  } = useAvailableRecruiters(startDate, endDate, effectiveRecruitmentId);
+  const initialIds = useMemo(() => {
+    return (booking.recruiters || [])
+      .map(
+        (r: any) =>
+          r.recruiter?.user?.id ||
+          r.recruiter?.userId ||
+          r.recruiterId ||
+          r.userId ||
+          r.id,
+      )
+      .filter(Boolean) as string[];
+  }, [booking.recruiters]);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialIds);
+  const [search, setSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { recruiters: availableRecruiters, isLoading: isLoadingAvailable } =
+    useAvailableRecruiters(startDate, endDate, effectiveRecruitmentId);
 
   const { data: teamRecruiters = [], isLoading: isLoadingTeam } = useSWR(
     effectiveRecruitmentId ? ["team-recruiters", effectiveRecruitmentId] : null,
     () => getAllTeamRecruiters(effectiveRecruitmentId),
   );
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const candidateIdSet = useMemo(
     () => new Set(candidates.map((c) => c.id)),
@@ -143,323 +158,267 @@ export function BookingPicker({
     return hasInterviewOverlap || hasDynamicOverlap;
   };
 
-  const handleAddRecruiter = async (interviewer: UserWithRecruiter) => {
-    if (actionLoadingId) return;
-    setActionLoadingId(interviewer.id);
+  const getRecruiterWarnings = (recruiter: UserWithRecruiter): string[] => {
+    const warnings: string[] = [];
+    const isAvailable = availableRecruiters.some((r) => r.id === recruiter.id);
+    const isConflict = hasConflict(recruiter);
+    const isKnown = knowsCandidate(recruiter);
 
-    try {
-      await assignRecruiter(booking.id, interviewer.id, type);
-      setSelectedRecruiters((prev) => [...prev, interviewer]);
-      mutateAvailable();
-      toast.add({
-        title: `${interviewer.name} atribuído à sessão.`,
-      });
-    } catch (err: unknown) {
-      toast.add({
-        title:
-          "Erro ao atribuir recrutador: " +
-          (err instanceof Error ? err.message : String(err)),
-      });
-    } finally {
-      setActionLoadingId(null);
+    if (!isAvailable) {
+      warnings.push("Não tem disponibilidade declarada para este horário.");
     }
-  };
-
-  const handleRemoveRecruiter = async (interviewerId: string) => {
-    if (actionLoadingId) return;
-    setActionLoadingId(interviewerId);
-
-    try {
-      await unassignRecruiter(booking.id, interviewerId, type);
-      setSelectedRecruiters((prev) =>
-        prev.filter((i) => i.id !== interviewerId),
+    if (isConflict) {
+      warnings.push("Está ocupado(a) noutra sessão neste horário.");
+    }
+    if (isKnown) {
+      warnings.push(
+        type === SlotType.dynamic && candidates.length > 1
+          ? "Declarou que conhece pelo menos um dos candidatos."
+          : "Declarou que conhece o candidato.",
       );
-      mutateAvailable();
-      toast.add({
-        title: "Recrutador removido da sessão.",
-      });
-    } catch (err: unknown) {
-      toast.add({
-        title:
-          "Erro ao remover recrutador: " +
-          (err instanceof Error ? err.message : String(err)),
-      });
-    } finally {
-      setActionLoadingId(null);
     }
+    return warnings;
   };
 
-  // Combine and sort recruiters: available for this slot first, then others
+  // Combine and sort recruiters: selected first, then available, then others
   const allRecruitersList = useMemo(() => {
-    const map = new Map<string, User>();
+    const map = new Map<string, UserWithRecruiter>();
     for (const r of availableRecruiters) {
-      map.set(r.id, r);
+      map.set(r.id, r as UserWithRecruiter);
     }
     for (const r of teamRecruiters) {
       if (!map.has(r.id)) {
-        map.set(r.id, r);
+        map.set(r.id, r as UserWithRecruiter);
       }
     }
 
     const availableIds = new Set(availableRecruiters.map((r) => r.id));
+    const selectedSet = new Set(selectedIds);
 
     return Array.from(map.values()).sort((a, b) => {
+      const aSel = selectedSet.has(a.id) ? 1 : 0;
+      const bSel = selectedSet.has(b.id) ? 1 : 0;
+      if (aSel !== bSel) return bSel - aSel;
+
       const aAvail = availableIds.has(a.id) ? 1 : 0;
       const bAvail = availableIds.has(b.id) ? 1 : 0;
       if (aAvail !== bAvail) return bAvail - aAvail;
+
       return (a.name || "").localeCompare(b.name || "");
     });
-  }, [availableRecruiters, teamRecruiters]);
+  }, [availableRecruiters, teamRecruiters, selectedIds]);
 
   const filteredRecruiters = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
+    const q = search.toLowerCase().trim();
     if (!q) return allRecruitersList;
     return allRecruitersList.filter(
       (r) =>
-        r.name?.toLowerCase().includes(q) || r.email?.toLowerCase().includes(q),
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.email || "").toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q),
     );
-  }, [allRecruitersList, searchQuery]);
+  }, [allRecruitersList, search]);
+
+  const handleRowClick = (recruiter: UserWithRecruiter) => {
+    const isSelected = selectedIds.includes(recruiter.id);
+    if (isSelected) {
+      setSelectedIds((prev) => prev.filter((item) => item !== recruiter.id));
+    } else {
+      const warnings = getRecruiterWarnings(recruiter);
+      if (warnings.length > 0) {
+        toast.add({
+          type: "warning",
+          title: `Aviso: ${recruiter.name || "Recrutador"}`,
+          description: warnings.join(" "),
+        });
+      }
+      setSelectedIds((prev) => [...prev, recruiter.id]);
+    }
+  };
+
+  const handleSave = async () => {
+    const initialSet = new Set(initialIds);
+    const selectedSet = new Set(selectedIds);
+
+    const toAdd = selectedIds.filter((id) => !initialSet.has(id));
+    const toRemove = initialIds.filter((id) => !selectedSet.has(id));
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      onClose?.();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await Promise.all([
+        ...toRemove.map((id) => unassignRecruiter(booking.id, id, type)),
+        ...toAdd.map((id) => assignRecruiter(booking.id, id, type, true)),
+      ]);
+
+      toast.add({
+        type: "success",
+        title: "Recrutadores atualizados com sucesso",
+      });
+      router.refresh();
+      onClose?.();
+    } catch (err: unknown) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title:
+          "Erro ao atualizar recrutadores: " +
+          (err instanceof Error ? err.message : String(err)),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const isLoading = isLoadingAvailable && isLoadingTeam;
 
   return (
-    <div className="flex flex-col gap-4 py-1">
-      {/* Dynamic multiple candidates overview */}
+    <div className="flex flex-col gap-3 py-1">
+      {/* Dynamic candidates banner (if dynamic with candidates) */}
       {type === SlotType.dynamic && candidates.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Candidatos ({candidates.length})
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {candidates.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1 text-xs text-foreground"
-              >
-                <Avatar size="sm" className="size-4">
-                  <AvatarImage src={getStableImageUrl(c.image) || undefined} />
-                  <AvatarFallback className="text-[9px]">
-                    {getInitials(c.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span>{c.name}</span>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-md bg-muted/30 border border-border/40 text-xs">
+          <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider">
+            Candidatos ({candidates.length}):
+          </span>
+          {candidates.map((c) => (
+            <span
+              key={c.id}
+              className="inline-flex items-center gap-1 rounded bg-background px-1.5 py-0.5 text-xs font-medium border border-border/60"
+            >
+              {c.name}
+            </span>
+          ))}
         </div>
       )}
 
-      {/* Recrutadores Atribuídos */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <span>Recrutadores Atribuídos</span>
-          <span className="font-normal text-muted-foreground tabular-nums">
-            {selectedRecruiters.length}
-          </span>
+      {/* Search Bar matching add recruiters modal */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Pesquisar por nome ou email..."
+            className="h-8 pl-8 pr-2 text-xs"
+            autoFocus
+          />
         </div>
-
-        {selectedRecruiters.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic py-1">
-            Nenhum recrutador atribuído a esta sessão.
-          </p>
-        ) : (
-          <div className="divide-y divide-border/60 rounded-md border border-border/80">
-            {selectedRecruiters.map((interviewer) => {
-              const isKnown = knowsCandidate(interviewer as UserWithRecruiter);
-
-              return (
-                <div
-                  key={interviewer.id}
-                  className="flex items-center justify-between p-2.5 gap-2"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar size="sm">
-                      <AvatarImage
-                        src={getStableImageUrl(interviewer.image) || undefined}
-                        alt={interviewer.name}
-                      />
-                      <AvatarFallback className="text-[11px] font-medium">
-                        {getInitials(interviewer.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {interviewer.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {interviewer.email}
-                        {isKnown && (
-                          <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">
-                            • Conhece o candidato
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-muted-foreground hover:text-destructive shrink-0"
-                    disabled={actionLoadingId === interviewer.id}
-                    onClick={() => handleRemoveRecruiter(interviewer.id)}
-                    title="Remover recrutador"
-                  >
-                    {actionLoadingId === interviewer.id ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <X className="size-3.5" />
-                    )}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+        {selectedIds.length > 0 && (
+          <button
+            type="button"
+            className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer shrink-0 transition-colors"
+            onClick={() => setSelectedIds([])}
+          >
+            Limpar ({selectedIds.length})
+          </button>
         )}
       </div>
 
-      <Separator className="my-1" />
-
-      {/* Adicionar Recrutador */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <span>Adicionar Recrutador</span>
-          {availableRecruiters.length > 0 && (
-            <span className="font-normal normal-case text-muted-foreground">
-              {availableRecruiters.length} disponível(is) neste horário
-            </span>
-          )}
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Procurar por nome ou email..."
-            className="pl-8 h-8 text-xs"
-          />
-        </div>
-
+      {/* Recruiter List */}
+      <div className="max-h-60 overflow-y-auto space-y-0.5">
         {isLoading ? (
           <div className="flex items-center justify-center py-6 gap-2 text-xs text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin" />
             <span>A carregar recrutadores...</span>
           </div>
         ) : filteredRecruiters.length === 0 ? (
-          <p className="text-center py-4 text-xs text-muted-foreground italic">
-            {searchQuery
-              ? "Nenhum recrutador encontrado."
-              : "Nenhum recrutador registado na equipa."}
-          </p>
+          <div className="py-6 text-center text-xs text-muted-foreground">
+            {search
+              ? "Nenhum recrutador encontrado"
+              : "Nenhum recrutador registado na equipa"}
+          </div>
         ) : (
-          <div className="divide-y divide-border/60 rounded-md border border-border/80 max-h-56 overflow-y-auto">
-            {filteredRecruiters.map((recruiter) => {
-              const isSelected = selectedRecruiters.some(
-                (r) => r.id === recruiter.id,
-              );
-              const isAvailable = availableRecruiters.some(
-                (r) => r.id === recruiter.id,
-              );
-              const isConflict = hasConflict(recruiter as UserWithRecruiter);
-              const isKnown = knowsCandidate(recruiter as UserWithRecruiter);
-              const isPending = actionLoadingId === recruiter.id;
+          filteredRecruiters.map((recruiter) => {
+            const isSelected = selectedIds.includes(recruiter.id);
+            const isAvailable = availableRecruiters.some(
+              (r) => r.id === recruiter.id,
+            );
+            const isConflict = hasConflict(recruiter);
+            const isKnown = knowsCandidate(recruiter);
+            const userPicture = getStableImageUrl(recruiter.image);
 
-              return (
-                <div
-                  key={recruiter.id}
-                  className={cn(
-                    "flex items-center justify-between p-2.5 gap-2 transition-colors",
-                    isSelected && "bg-muted/30 opacity-60",
-                  )}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar size="sm">
-                      <AvatarImage
-                        src={getStableImageUrl(recruiter.image) || undefined}
-                        alt={recruiter.name}
-                      />
-                      <AvatarFallback className="text-[11px] font-medium">
-                        {getInitials(recruiter.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {recruiter.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
-                        <span>{recruiter.email}</span>
-                        {isAvailable && (
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                            • Disponível
-                          </span>
-                        )}
-                        {isConflict && (
-                          <span className="text-destructive font-medium">
-                            • Ocupado
-                          </span>
-                        )}
-                        {isKnown && (
-                          <span className="text-amber-600 dark:text-amber-400">
-                            • Conhece candidato
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0">
-                    {isSelected ? (
-                      <span className="text-xs text-muted-foreground font-medium px-2 py-1">
-                        Atribuído
+            return (
+              <div
+                key={recruiter.id}
+                onClick={() => handleRowClick(recruiter)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md p-2 transition-colors cursor-pointer",
+                  isSelected
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted/80",
+                )}
+              >
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => handleRowClick(recruiter)}
+                  className="size-4 pointer-events-none"
+                />
+                <Avatar className="h-6 w-6 rounded-sm shrink-0">
+                  {userPicture ? (
+                    <AvatarImage src={userPicture} alt={recruiter.name} />
+                  ) : null}
+                  <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
+                    {getInitials(
+                      recruiter.name || recruiter.email || recruiter.id,
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-medium text-xs truncate">
+                    {recruiter.name || "Sem nome"}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate">
+                    <span className="truncate">{recruiter.email}</span>
+                    {isAvailable && (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium shrink-0">
+                        • Disponível
                       </span>
-                    ) : isConflict ? (
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="ghost"
-                        disabled
-                        className="h-7 text-xs text-muted-foreground"
-                        title="Recrutador já tem outra sessão marcada neste horário"
-                      >
-                        Ocupado
-                      </Button>
-                    ) : !isAvailable ? (
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="ghost"
-                        disabled
-                        className="h-7 text-xs text-muted-foreground"
-                        title="Recrutador sem disponibilidade declarada para este horário"
-                      >
-                        Indisponível
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        disabled={isPending}
-                        onClick={() =>
-                          handleAddRecruiter(recruiter as UserWithRecruiter)
-                        }
-                        className="h-7 text-xs font-medium"
-                      >
-                        {isPending ? (
-                          <Loader2 className="size-3 animate-spin mr-1" />
-                        ) : null}
-                        Atribuir
-                      </Button>
+                    )}
+                    {isConflict && (
+                      <span className="text-rose-600 dark:text-rose-400 font-medium shrink-0">
+                        • Ocupado
+                      </span>
+                    )}
+                    {!isAvailable && !isConflict && (
+                      <span className="text-muted-foreground font-medium shrink-0">
+                        • Indisponível
+                      </span>
+                    )}
+                    {isKnown && (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium shrink-0">
+                        • Conhece candidato
+                      </span>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })
         )}
       </div>
+
+      {/* Footer matching add recruiters modal */}
+      <DialogFooter className="mt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button type="button" onClick={handleSave} disabled={isSubmitting}>
+          {isSubmitting
+            ? "A guardar..."
+            : selectedIds.length > 0
+              ? `Guardar (${selectedIds.length})`
+              : "Guardar"}
+        </Button>
+      </DialogFooter>
     </div>
   );
 }

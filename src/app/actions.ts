@@ -159,6 +159,7 @@ export async function assignRecruiter(
   interviewId: number,
   userId: string,
   slotType: SlotType,
+  force: boolean = false,
 ) {
   await requireAdminSession();
 
@@ -184,23 +185,28 @@ export async function assignRecruiter(
 
       if (!target) throw new Error("Entrevista não encontrada.");
 
-      const available = await isRecruiterAvailableForSlot(
-        userId,
-        target.recruitmentId,
-        target.slot.start,
-        target.slot.duration,
-        { excludeInterviewId: interviewId },
-        tx,
-      );
+      if (!force) {
+        const available = await isRecruiterAvailableForSlot(
+          userId,
+          target.recruitmentId,
+          target.slot.start,
+          target.slot.duration,
+          { excludeInterviewId: interviewId },
+          tx,
+        );
 
-      if (!available) {
-        throw new Error("O recrutador não está disponível neste horário.");
+        if (!available) {
+          throw new Error("O recrutador não está disponível neste horário.");
+        }
       }
 
-      await tx.insert(recruiterToInterview).values({
-        recruiterId: userId,
-        interviewId,
-      });
+      await tx
+        .insert(recruiterToInterview)
+        .values({
+          recruiterId: userId,
+          interviewId,
+        })
+        .onConflictDoNothing();
     } else {
       const target = await tx.query.dynamic.findFirst({
         where: eq(dynamic.id, interviewId),
@@ -209,23 +215,28 @@ export async function assignRecruiter(
 
       if (!target) throw new Error("Dinâmica não encontrada.");
 
-      const available = await isRecruiterAvailableForSlot(
-        userId,
-        target.recruitmentId,
-        target.slot.start,
-        target.slot.duration,
-        { excludeDynamicId: interviewId },
-        tx,
-      );
+      if (!force) {
+        const available = await isRecruiterAvailableForSlot(
+          userId,
+          target.recruitmentId,
+          target.slot.start,
+          target.slot.duration,
+          { excludeDynamicId: interviewId },
+          tx,
+        );
 
-      if (!available) {
-        throw new Error("O recrutador não está disponível neste horário.");
+        if (!available) {
+          throw new Error("O recrutador não está disponível neste horário.");
+        }
       }
 
-      await tx.insert(recruiterToDynamic).values({
-        recruiterId: userId,
-        dynamicId: interviewId,
-      });
+      await tx
+        .insert(recruiterToDynamic)
+        .values({
+          recruiterId: userId,
+          dynamicId: interviewId,
+        })
+        .onConflictDoNothing();
     }
   });
 

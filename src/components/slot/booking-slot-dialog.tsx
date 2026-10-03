@@ -1,25 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  BookingPicker,
-  CandidateWithMeta,
-  UserWithRecruiter,
-} from "./booking-picker";
+import { BookingPicker, CandidateWithMeta } from "./booking-picker";
 import { SlotType } from "../admin/slot-admin-calendar";
 import type {
   Dynamic,
@@ -71,34 +63,7 @@ export default function BookingSlotDialog({
   trigger,
   children,
 }: BookingSlotDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState<boolean>(false);
-
-  const initialRecruiters = useMemo<UserWithRecruiter[]>(() => {
-    return (booking.recruiters || [])
-      .map((r: any) => {
-        if (r.recruiter?.user) {
-          return {
-            ...r.recruiter.user,
-            recruiter: r.recruiter,
-          };
-        }
-        return r.user || r;
-      })
-      .filter(Boolean);
-  }, [booking.recruiters]);
-
-  const [selectedRecruiters, setSelectedRecruiters] =
-    useState<User[]>(initialRecruiters);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
-      setSelectedRecruiters(initialRecruiters);
-    } else {
-      router.refresh();
-    }
-    setOpen(nextOpen);
-  };
 
   const candidates = useMemo<CandidateWithMeta[]>(() => {
     if ("candidate" in booking && booking.candidate?.user) {
@@ -171,7 +136,7 @@ export default function BookingSlotDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       {trigger ? (
         <div
           role="button"
@@ -206,7 +171,7 @@ export default function BookingSlotDialog({
         </button>
       )}
 
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Atribuição de Recrutadores</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
@@ -221,20 +186,9 @@ export default function BookingSlotDialog({
           candidates={candidates}
           start={startDate}
           duration={duration}
-          selectedRecruiters={selectedRecruiters}
-          setSelectedRecruiters={setSelectedRecruiters}
           recruitmentId={booking.slot?.recruitmentId}
+          onClose={() => setOpen(false)}
         />
-
-        <DialogFooter className="mt-2">
-          <DialogClose
-            render={
-              <Button type="button" variant="outline" size="sm">
-                Fechar
-              </Button>
-            }
-          />
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

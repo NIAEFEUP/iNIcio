@@ -5,9 +5,11 @@ import { addDays, format, isToday } from "date-fns";
 import { pt } from "date-fns/locale";
 import { AlertCircle, Filter, Users } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { generateTimeSlots, getMonday } from "@/lib/date";
 import { WeekNavigator } from "@/components/calendar/week-navigator";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
@@ -200,7 +202,7 @@ export default function BookingManagementClient({
                 <span>Vaga livre</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs border border-destructive bg-destructive/10" />
+                <span className="size-2.5 rounded-xs border border-rose-500 bg-rose-100 dark:bg-rose-900/60" />
                 <span>Sem recrutador</span>
               </div>
             </div>
@@ -276,65 +278,105 @@ export default function BookingManagementClient({
                         <div className="h-full w-full space-y-1">
                           {filteredBookings.length > 0 ? (
                             filteredBookings.map((booking: any) => {
-                              const title =
-                                booking.candidate?.user?.name ||
-                                `Dinâmica #${booking.id}`;
+                              const candidateObj = isInterview
+                                ? booking.candidate?.user || booking.candidate
+                                : null;
+                              const candidateName = candidateObj?.name;
+                              const candidateImage = candidateObj?.image;
                               const recruitersCount =
                                 booking.recruiters?.length || 0;
                               const isMissingRecruiter = recruitersCount === 0;
+                              const dynamicCandidateCount =
+                                booking.candidates?.length || 0;
 
                               return (
-                                <div
+                                <BookingSlotDialog
                                   key={booking.id}
-                                  className={cn(
-                                    "rounded-md border p-2 shadow-2xs text-left space-y-1.5 transition-all",
-                                    isMissingRecruiter
-                                      ? "border-destructive/60 bg-destructive/5 text-destructive dark:bg-destructive/10"
-                                      : isInterview
-                                        ? "border-blue-200 dark:border-blue-900 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100"
-                                        : "border-emerald-200 dark:border-emerald-900 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100",
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="text-xs font-semibold truncate leading-tight">
-                                      {title}
-                                    </span>
-                                  </div>
-
-                                  <BookingSlotDialog
-                                    booking={booking}
-                                    slotType={slotType}
-                                    existingSlot={booking}
-                                    trigger={
-                                      <Button
-                                        type="button"
-                                        variant={
-                                          isMissingRecruiter
-                                            ? "destructive"
-                                            : "outline"
-                                        }
-                                        size="xs"
-                                        className={cn(
-                                          "w-full h-5 text-[10px] px-1.5 justify-between font-medium",
-                                          !isMissingRecruiter &&
-                                            "bg-background/80 hover:bg-background",
-                                        )}
-                                      >
-                                        <span className="flex items-center gap-1">
-                                          {isMissingRecruiter ? (
-                                            <AlertCircle className="size-2.5" />
-                                          ) : (
-                                            <Users className="size-2.5 opacity-60" />
+                                  booking={booking}
+                                  slotType={slotType}
+                                  existingSlot={booking}
+                                  trigger={
+                                    <div
+                                      className={cn(
+                                        "group flex w-full flex-col gap-1 rounded-md border p-1.5 text-left transition-all shadow-2xs hover:shadow-xs cursor-pointer select-none",
+                                        isMissingRecruiter
+                                          ? "border-rose-500/30 bg-rose-50/70 hover:bg-rose-100/80 dark:border-rose-800/40 dark:bg-rose-950/25 dark:hover:bg-rose-950/45"
+                                          : isInterview
+                                            ? "border-blue-500/25 bg-blue-50/70 hover:bg-blue-100/80 dark:border-blue-800/40 dark:bg-blue-950/25 dark:hover:bg-blue-950/45"
+                                            : "border-emerald-500/25 bg-emerald-50/70 hover:bg-emerald-100/80 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:hover:bg-emerald-950/45",
+                                      )}
+                                    >
+                                      <div className="flex w-full items-center justify-between gap-1 leading-none">
+                                        <span
+                                          className={cn(
+                                            "text-[11px] font-semibold tracking-tight",
+                                            isMissingRecruiter
+                                              ? "text-rose-700 dark:text-rose-300"
+                                              : isInterview
+                                                ? "text-blue-700 dark:text-blue-300"
+                                                : "text-emerald-700 dark:text-emerald-300",
                                           )}
-                                          <span>Recrutadores</span>
+                                        >
+                                          {isInterview
+                                            ? "Entrevista"
+                                            : "Dinâmica"}
                                         </span>
-                                        <span className="font-semibold tabular-nums">
-                                          {recruitersCount}
-                                        </span>
-                                      </Button>
-                                    }
-                                  />
-                                </div>
+                                        {isMissingRecruiter ? (
+                                          <span className="flex items-center gap-0.5 text-[10px] font-medium text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                            <AlertCircle className="size-2.5 shrink-0" />
+                                            <span>Sem recrutador</span>
+                                          </span>
+                                        ) : (
+                                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground whitespace-nowrap">
+                                            <Users className="size-2.5 opacity-70" />
+                                            <span>{recruitersCount}</span>
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {isInterview ? (
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          {candidateObj ? (
+                                            <>
+                                              <Avatar className="size-4 shrink-0 ring-1 ring-border">
+                                                {candidateImage && (
+                                                  <AvatarImage
+                                                    src={
+                                                      getStableImageUrl(
+                                                        candidateImage,
+                                                      ) || undefined
+                                                    }
+                                                    alt={candidateName}
+                                                  />
+                                                )}
+                                                <AvatarFallback className="text-[7px]">
+                                                  {getInitials(candidateName)}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                              <span className="truncate text-xs font-medium text-foreground">
+                                                {candidateName}
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <span className="truncate text-xs text-muted-foreground italic">
+                                              Sem candidato
+                                            </span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center gap-1.5 min-w-0 text-muted-foreground">
+                                          <Users className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                          <span className="truncate text-xs font-medium text-foreground">
+                                            {dynamicCandidateCount}{" "}
+                                            {dynamicCandidateCount === 1
+                                              ? "candidato"
+                                              : "candidatos"}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  }
+                                />
                               );
                             })
                           ) : !onlyMissingRecruiters && currentSlot ? (
