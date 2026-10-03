@@ -78,6 +78,13 @@
       "when": 1790695471715,
       "tag": "0010_familiar_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791024632966,
+      "tag": "0011_wild_purifiers",
+      "breakpoints": true
     }
   ]
 }

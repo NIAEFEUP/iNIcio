@@ -1,0 +1,2 @@
+ALTER TABLE "final_message_template" ADD COLUMN "recruitment_id" integer;--> statement-breakpoint
+ALTER TABLE "final_message_template" ADD CONSTRAINT "final_message_template_recruitment_id_recruitment_id_fk" FOREIGN KEY ("recruitment_id") REFERENCES "public"."recruitment"("id") ON DELETE cascade ON UPDATE no action;

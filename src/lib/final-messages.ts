@@ -1,6 +1,6 @@
 import { finalMessageTemplate, recruitmentPhase } from "@/db/schema";
 import { db, FinalMessageTemplate } from "./db";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import {
   getLatestVotingDecisionForCandidate,
   getLatestVotingDecisionsByRecruitment,
@@ -63,12 +63,12 @@ export async function getMessage(candidateId: string, recruitmentId?: number) {
   if (result.decision === "reject") {
     return {
       decision: "rejected" as const,
-      message: await getRejectedMessage(),
+      message: await getRejectedMessage(targetId),
     };
   } else {
     return {
       decision: "approved" as const,
-      message: await getAcceptedMessage(),
+      message: await getAcceptedMessage(targetId),
     };
   }
 }
@@ -81,29 +81,50 @@ export async function getAllCandidateResults(
 
   const recruitmentIds = [...new Set(userApps.map((a) => a.recruitmentId))];
 
-  // One batched lookup each for the active recruitment, the voting decisions
-  // (per recruitment), the reveal phases and the message templates, instead of
-  // one set of queries per application.
-  const [activeRec, decisions, revealPhases, accepted, rejected] =
-    await Promise.all([
-      getActiveRecruitment(),
-      getLatestVotingDecisionsByRecruitment(candidateId, recruitmentIds),
-      db
-        .select()
-        .from(recruitmentPhase)
-        .where(
-          and(
-            inArray(recruitmentPhase.recruitmentId, recruitmentIds),
-            eq(recruitmentPhase.role, "candidate"),
-          ),
-        )
-        .orderBy(recruitmentPhase.start),
-      getAcceptedMessage(),
-      getRejectedMessage(),
-    ]);
+  // Batched lookup for active recruitment, voting decisions, reveal phases,
+  // and all relevant message templates (both recruitment-specific and default fallbacks).
+  const [activeRec, decisions, revealPhases, allTemplates] = await Promise.all([
+    getActiveRecruitment(),
+    getLatestVotingDecisionsByRecruitment(candidateId, recruitmentIds),
+    db
+      .select()
+      .from(recruitmentPhase)
+      .where(
+        and(
+          inArray(recruitmentPhase.recruitmentId, recruitmentIds),
+          eq(recruitmentPhase.role, "candidate"),
+        ),
+      )
+      .orderBy(recruitmentPhase.start),
+    db
+      .select()
+      .from(finalMessageTemplate)
+      .where(
+        or(
+          inArray(finalMessageTemplate.recruitmentId, recruitmentIds),
+          isNull(finalMessageTemplate.recruitmentId),
+        ),
+      ),
+  ]);
 
-  // A result is revealed unless the recruitment has an upcoming "resultado"
-  // phase.
+  const defaultAccepted =
+    allTemplates.find((t) => t.type === "approved" && !t.recruitmentId) ??
+    allTemplates.find((t) => t.type === "approved");
+
+  const defaultRejected =
+    allTemplates.find((t) => t.type === "rejected" && !t.recruitmentId) ??
+    allTemplates.find((t) => t.type === "rejected");
+
+  const acceptedByRec = new Map<number, (typeof allTemplates)[0]>();
+  const rejectedByRec = new Map<number, (typeof allTemplates)[0]>();
+  for (const t of allTemplates) {
+    if (t.recruitmentId) {
+      if (t.type === "approved") acceptedByRec.set(t.recruitmentId, t);
+      if (t.type === "rejected") rejectedByRec.set(t.recruitmentId, t);
+    }
+  }
+
+  // A result is revealed unless the recruitment has an upcoming "resultado" phase.
   const canReveal = new Map<number, boolean>(
     recruitmentIds.map((id) => [id, true]),
   );
@@ -141,7 +162,9 @@ export async function getAllCandidateResults(
     }
 
     const approved = votingDecision.decision !== "reject";
-    const template = approved ? accepted : rejected;
+    const template = approved
+      ? (acceptedByRec.get(app.recruitmentId) ?? defaultAccepted)
+      : (rejectedByRec.get(app.recruitmentId) ?? defaultRejected);
 
     return {
       recruitmentId: app.recruitmentId,
@@ -156,70 +179,137 @@ export async function getAllCandidateResults(
   });
 }
 
-export async function getAcceptedMessage() {
-  const message = await db
-    .select()
-    .from(finalMessageTemplate)
-    .where(eq(finalMessageTemplate.type, "approved"));
-  return message[0];
-}
-
-export async function getRejectedMessage() {
-  const message = await db
-    .select()
-    .from(finalMessageTemplate)
-    .where(eq(finalMessageTemplate.type, "rejected"));
-  return message[0];
-}
-
-export async function addAcceptedMessageTemplate(content: Array<any>) {
-  if (content.length === 0) return;
-
-  await db.transaction(async (trx) => {
-    const template = await trx.query.finalMessageTemplate.findFirst({
-      where: eq(finalMessageTemplate.type, "approved"),
+export async function getAcceptedMessage(recruitmentId?: number) {
+  if (recruitmentId) {
+    const specific = await db.query.finalMessageTemplate.findFirst({
+      where: and(
+        eq(finalMessageTemplate.type, "approved"),
+        eq(finalMessageTemplate.recruitmentId, recruitmentId),
+      ),
     });
-    if (template) {
-      await trx
-        .update(finalMessageTemplate)
-        .set({ content: content })
-        .where(eq(finalMessageTemplate.id, template.id));
-    } else {
-      await trx
-        .insert(finalMessageTemplate)
-        .values({ content: content, type: "approved" });
-    }
+    if (specific) return specific;
+  }
+
+  const defaultMsg = await db.query.finalMessageTemplate.findFirst({
+    where: and(
+      eq(finalMessageTemplate.type, "approved"),
+      isNull(finalMessageTemplate.recruitmentId),
+    ),
   });
-}
+  if (defaultMsg) return defaultMsg;
 
-export async function addRejectedMessageTemplate(content: Array<any>) {
-  if (content.length === 0) return;
-
-  await db.transaction(async (trx) => {
-    const template = await trx.query.finalMessageTemplate.findFirst({
-      where: eq(finalMessageTemplate.type, "rejected"),
-    });
-    if (template) {
-      await trx
-        .update(finalMessageTemplate)
-        .set({ content: content })
-        .where(eq(finalMessageTemplate.id, template.id));
-    } else {
-      await trx
-        .insert(finalMessageTemplate)
-        .values({ content: content, type: "rejected" });
-    }
-  });
-}
-
-export async function getAcceptedMessageTemplate(): Promise<FinalMessageTemplate> {
-  const template = (await db.query.finalMessageTemplate.findFirst({
+  return db.query.finalMessageTemplate.findFirst({
     where: eq(finalMessageTemplate.type, "approved"),
-  })) as FinalMessageTemplate;
+  });
+}
+
+export async function getRejectedMessage(recruitmentId?: number) {
+  if (recruitmentId) {
+    const specific = await db.query.finalMessageTemplate.findFirst({
+      where: and(
+        eq(finalMessageTemplate.type, "rejected"),
+        eq(finalMessageTemplate.recruitmentId, recruitmentId),
+      ),
+    });
+    if (specific) return specific;
+  }
+
+  const defaultMsg = await db.query.finalMessageTemplate.findFirst({
+    where: and(
+      eq(finalMessageTemplate.type, "rejected"),
+      isNull(finalMessageTemplate.recruitmentId),
+    ),
+  });
+  if (defaultMsg) return defaultMsg;
+
+  return db.query.finalMessageTemplate.findFirst({
+    where: eq(finalMessageTemplate.type, "rejected"),
+  });
+}
+
+export async function addAcceptedMessageTemplate(
+  content: Array<any>,
+  recruitmentId?: number,
+) {
+  if (content.length === 0) return;
+
+  await db.transaction(async (trx) => {
+    const whereClause = recruitmentId
+      ? and(
+          eq(finalMessageTemplate.type, "approved"),
+          eq(finalMessageTemplate.recruitmentId, recruitmentId),
+        )
+      : and(
+          eq(finalMessageTemplate.type, "approved"),
+          isNull(finalMessageTemplate.recruitmentId),
+        );
+
+    const template = await trx.query.finalMessageTemplate.findFirst({
+      where: whereClause,
+    });
+
+    if (template) {
+      await trx
+        .update(finalMessageTemplate)
+        .set({ content })
+        .where(eq(finalMessageTemplate.id, template.id));
+    } else {
+      await trx.insert(finalMessageTemplate).values({
+        content,
+        type: "approved",
+        recruitmentId: recruitmentId ?? null,
+      });
+    }
+  });
+}
+
+export async function addRejectedMessageTemplate(
+  content: Array<any>,
+  recruitmentId?: number,
+) {
+  if (content.length === 0) return;
+
+  await db.transaction(async (trx) => {
+    const whereClause = recruitmentId
+      ? and(
+          eq(finalMessageTemplate.type, "rejected"),
+          eq(finalMessageTemplate.recruitmentId, recruitmentId),
+        )
+      : and(
+          eq(finalMessageTemplate.type, "rejected"),
+          isNull(finalMessageTemplate.recruitmentId),
+        );
+
+    const template = await trx.query.finalMessageTemplate.findFirst({
+      where: whereClause,
+    });
+
+    if (template) {
+      await trx
+        .update(finalMessageTemplate)
+        .set({ content })
+        .where(eq(finalMessageTemplate.id, template.id));
+    } else {
+      await trx.insert(finalMessageTemplate).values({
+        content,
+        type: "rejected",
+        recruitmentId: recruitmentId ?? null,
+      });
+    }
+  });
+}
+
+export async function getAcceptedMessageTemplate(
+  recruitmentId?: number,
+): Promise<FinalMessageTemplate> {
+  const template = (await getAcceptedMessage(
+    recruitmentId,
+  )) as FinalMessageTemplate | null;
 
   if (!template) {
     return {
       id: 0,
+      recruitmentId: recruitmentId ?? null,
       content: [],
       type: "approved",
     };
@@ -228,14 +318,17 @@ export async function getAcceptedMessageTemplate(): Promise<FinalMessageTemplate
   return template;
 }
 
-export async function getRejectedMessageTemplate(): Promise<FinalMessageTemplate> {
-  const template = (await db.query.finalMessageTemplate.findFirst({
-    where: eq(finalMessageTemplate.type, "rejected"),
-  })) as FinalMessageTemplate;
+export async function getRejectedMessageTemplate(
+  recruitmentId?: number,
+): Promise<FinalMessageTemplate> {
+  const template = (await getRejectedMessage(
+    recruitmentId,
+  )) as FinalMessageTemplate | null;
 
   if (!template) {
     return {
       id: 1,
+      recruitmentId: recruitmentId ?? null,
       content: [],
       type: "rejected",
     };
