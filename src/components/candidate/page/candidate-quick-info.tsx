@@ -11,6 +11,7 @@ import type { RecruiterToCandidate, User } from "@/lib/db";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SocialLinks } from "@/components/profile/social-links";
@@ -68,29 +69,49 @@ export default function CandidateQuickInfo({
   addDynamicClassification = () => {},
   addInterviewClassification = () => {},
 }: CandidateQuickInfoProps) {
+  const { recruitmentId } = useRecruitment();
   const [checked, setChecked] = useState<boolean>(
     friends.some(
       (friend) =>
         friend.candidateId === candidate.id &&
-        friend.recruiterId === authUser?.id,
+        friend.recruiterId === authUser?.id &&
+        (recruitmentId == null || friend.recruitmentId === recruitmentId),
     ),
   );
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const addFriend = async () => {
-    setChecked(!checked);
+    if (isUpdating) return;
 
-    const result = await fetch("/api/friends", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        candidateId: candidate.id,
-      }),
-    });
+    const nextChecked = !checked;
+    setChecked(nextChecked);
+    setIsUpdating(true);
 
-    if (!result.ok) {
-      setChecked(!checked);
+    try {
+      const result = await fetch("/api/friends", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          recruitmentId: recruitmentId ?? undefined,
+        }),
+      });
+
+      if (!result.ok) {
+        setChecked(!nextChecked);
+        return;
+      }
+
+      const data = await result.json().catch(() => null);
+      if (data && typeof data.known === "boolean") {
+        setChecked(data.known);
+      }
+    } catch {
+      setChecked(!nextChecked);
+    } finally {
+      setIsUpdating(false);
     }
   };
 

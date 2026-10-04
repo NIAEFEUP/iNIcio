@@ -31,6 +31,9 @@ import { getStableImageUrl } from "@/lib/stable-image-url";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
+import { useSWRConfig } from "swr";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import { candidatesKey } from "@/lib/hooks/candidates/use-candidate-data";
 
 function useSyncedState<S>(
   value: S,
@@ -118,13 +121,18 @@ function CandidateGridCard({
   classifyInterview,
   classifyDynamic,
 }: CandidateGridCardProps) {
-  const [known, setKnown] = React.useState<boolean>(
+  const { recruitmentId } = useRecruitment();
+  const { mutate } = useSWRConfig();
+
+  const [known, setKnown] = useSyncedState<boolean>(
     friends.some(
       (friend) =>
         friend.candidateId === candidate.id &&
-        friend.recruiterId === authUser?.id,
+        friend.recruiterId === authUser?.id &&
+        (recruitmentId == null || friend.recruitmentId === recruitmentId),
     ),
   );
+  const [isUpdatingKnown, setIsUpdatingKnown] = React.useState(false);
 
   const [interviewClassification, setInterviewClassification] = useSyncedState<
     string | null | undefined
@@ -135,13 +143,38 @@ function CandidateGridCard({
   >(candidate.dynamicClassification);
 
   const toggleKnown = async () => {
-    setKnown((prev) => !prev);
-    const result = await fetch("/api/friends", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidateId: candidate.id }),
-    });
-    if (!result.ok) setKnown((prev) => !prev);
+    if (isUpdatingKnown) return;
+
+    const nextKnown = !known;
+    setKnown(nextKnown);
+    setIsUpdatingKnown(true);
+
+    try {
+      const result = await fetch("/api/friends", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          recruitmentId: recruitmentId ?? undefined,
+        }),
+      });
+
+      if (!result.ok) {
+        setKnown(!nextKnown);
+        return;
+      }
+
+      const data = await result.json().catch(() => null);
+      if (data && typeof data.known === "boolean") {
+        setKnown(data.known);
+      }
+
+      mutate(candidatesKey(recruitmentId));
+    } catch {
+      setKnown(!nextKnown);
+    } finally {
+      setIsUpdatingKnown(false);
+    }
   };
 
   const handleInterviewClassification = async (value: string) => {
