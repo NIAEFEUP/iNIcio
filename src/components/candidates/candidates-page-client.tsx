@@ -56,7 +56,7 @@ export default function CandidatesPageClient({
     <CandidatesClient
       candidates={data?.candidates ?? []}
       availableDepartments={data?.availableDepartments ?? []}
-      authUser={user ? { id: user.id } : null}
+      authUser={user ? { id: user.id, isAdmin: user.isAdmin } : null}
       initialViewMode={initialViewMode}
       initialScheduling={initialScheduling}
     />

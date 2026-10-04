@@ -26,7 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
@@ -50,7 +50,7 @@ function useSyncedState<S>(
 interface CandidateGridCardProps {
   candidate: CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   showContactInfo?: boolean;
   isSelected?: boolean;
   onSelectChange?: (selected: boolean) => void;
@@ -275,15 +275,23 @@ function CandidateGridCard({
         )
       }
       actions={
-        <div className="flex w-full items-center justify-between gap-2">
-          <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
-            <Checkbox
-              checked={known}
-              onCheckedChange={toggleKnown}
-              className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-            Conheço
-          </label>
+        <div
+          className={cn(
+            "flex w-full items-center gap-2",
+            authUser?.isAdmin ? "justify-end" : "justify-between",
+          )}
+        >
+          {!authUser?.isAdmin && (
+            <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
+              <Checkbox
+                checked={known}
+                disabled={isUpdatingKnown}
+                onCheckedChange={toggleKnown}
+                className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+              Conheço
+            </label>
+          )}
           <DecisionText decision={candidate.votingDecision?.decision ?? null} />
         </div>
       }

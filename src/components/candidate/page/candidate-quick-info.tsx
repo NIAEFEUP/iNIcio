@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { RecruiterToCandidate, User } from "@/lib/db";
+import type { RecruiterToCandidate } from "@/lib/db";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
@@ -35,7 +35,7 @@ interface CandidateQuickInfoProps {
   ) => void;
   candidateSelected?: boolean;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: User | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   hideInterviewButton?: boolean;
   hideDynamicButton?: boolean;
   showClassificationBadges?: boolean;
@@ -163,7 +163,7 @@ export default function CandidateQuickInfo({
 
       {(friendCheckboxActive || selectActionActive) && (
         <div className="mb-4 flex items-center gap-3">
-          {friendCheckboxActive && (
+          {friendCheckboxActive && !authUser?.isAdmin && (
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Checkbox

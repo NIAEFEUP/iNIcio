@@ -137,7 +137,7 @@ export function CandidateDetailClient({
         <CandidateModularInfo
           candidate={candidate}
           friends={candidate.knownRecruiters}
-          authUser={user ? { id: user.id } : null}
+          authUser={user ? { id: user.id, isAdmin: user.isAdmin } : null}
           recruitmentId={recruitmentId}
           readOnlyDynamic={true}
           readOnlyInterview={true}

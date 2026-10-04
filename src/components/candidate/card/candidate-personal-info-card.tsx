@@ -21,7 +21,7 @@ import type { RecruiterToCandidate } from "@/lib/db";
 export interface CandidatePersonalInfoCardProps {
   candidate: CandidateWithMetadata | CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   recruitmentId?: number | null;
   onToggleKnown?: (known: boolean) => void | Promise<void>;
   showKnownCheckbox?: boolean;
@@ -146,7 +146,7 @@ export function CandidatePersonalInfoCard({
               {studentNumber ? `${studentNumber}` : "Sem número de estudante"}
             </p>
 
-            {showKnownCheckbox && (
+            {showKnownCheckbox && !authUser?.isAdmin && (
               <div className="pt-1.5">
                 <label
                   htmlFor={`knows-candidate-${candidate.id}`}
