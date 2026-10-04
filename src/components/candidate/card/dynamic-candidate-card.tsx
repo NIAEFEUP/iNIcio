@@ -104,7 +104,7 @@ export function DynamicCandidateCard({
       ? "default"
       : isSmall
         ? "md"
-        : "sm";
+        : "lg";
 
   return (
     <div
@@ -128,6 +128,7 @@ export function DynamicCandidateCard({
             name={name}
             initials={initials}
             size={avatarSize}
+            avatarClassName={isUltraSmall ? "size-18" : undefined}
           />
         </div>
 
@@ -144,7 +145,9 @@ export function DynamicCandidateCard({
                     ? "text-base sm:text-lg font-bold"
                     : isMedium
                       ? "text-sm sm:text-base font-semibold"
-                      : "text-xs sm:text-sm font-semibold",
+                      : isUltraSmall
+                        ? "text-base sm:text-lg font-bold"
+                        : "text-xs sm:text-sm font-semibold",
                 )}
                 title={name}
               >

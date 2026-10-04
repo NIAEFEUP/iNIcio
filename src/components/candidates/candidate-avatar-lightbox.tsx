@@ -13,6 +13,7 @@ export interface CandidateAvatarLightboxProps {
   initials: string;
   size?: "default" | "sm" | "md" | "lg" | "xl";
   className?: string;
+  avatarClassName?: string;
 }
 
 /**
@@ -26,6 +27,7 @@ export function CandidateAvatarLightbox({
   initials,
   size = "default",
   className,
+  avatarClassName,
 }: CandidateAvatarLightboxProps) {
   const [open, setOpen] = useState(false);
   const hasPicture = Boolean(picture);
@@ -79,6 +81,7 @@ export function CandidateAvatarLightbox({
             "shrink-0 transition-opacity",
             hasPicture && "hover:opacity-95",
             avatarClasses,
+            avatarClassName,
           )}
         >
           {hasPicture && (
