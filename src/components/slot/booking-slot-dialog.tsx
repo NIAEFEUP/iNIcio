@@ -171,7 +171,7 @@ export default function BookingSlotDialog({
         </button>
       )}
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-xl md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Atribuição de Recrutadores</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">

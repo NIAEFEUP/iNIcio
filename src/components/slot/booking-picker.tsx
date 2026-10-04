@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Loader2, Search } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -18,8 +17,7 @@ import {
 } from "@/app/actions";
 import { useAvailableRecruiters } from "@/lib/hooks/use-available-recruiters";
 import { overlap } from "@/lib/date";
-import { getStableImageUrl } from "@/lib/stable-image-url";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type {
   Dynamic,
   Interview,
@@ -277,132 +275,136 @@ export function BookingPicker({
   const isLoading = isLoadingAvailable && isLoadingTeam;
 
   return (
-    <div className="flex flex-col gap-3 py-1">
-      {/* Dynamic candidates banner (if dynamic with candidates) */}
-      {type === SlotType.dynamic && candidates.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-md bg-muted/30 border border-border/40 text-xs">
-          <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider">
-            Candidatos ({candidates.length}):
-          </span>
-          {candidates.map((c) => (
-            <span
-              key={c.id}
-              className="inline-flex items-center gap-1 rounded bg-background px-1.5 py-0.5 text-xs font-medium border border-border/60"
-            >
-              {c.name}
+    <>
+      <div className="flex flex-col gap-3">
+        {/* Dynamic candidates banner (if dynamic with candidates) */}
+        {type === SlotType.dynamic && candidates.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-md bg-muted/30 border border-border/40 text-xs">
+            <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider">
+              Candidatos ({candidates.length}):
             </span>
-          ))}
-        </div>
-      )}
-
-      {/* Search Bar matching add recruiters modal */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Pesquisar por nome ou email..."
-            className="h-8 pl-8 pr-2 text-xs"
-            autoFocus
-          />
-        </div>
-        {selectedIds.length > 0 && (
-          <button
-            type="button"
-            className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer shrink-0 transition-colors"
-            onClick={() => setSelectedIds([])}
-          >
-            Limpar ({selectedIds.length})
-          </button>
-        )}
-      </div>
-
-      {/* Recruiter List */}
-      <div className="max-h-60 overflow-y-auto space-y-0.5">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-6 gap-2 text-xs text-muted-foreground">
-            <Loader2 className="size-3.5 animate-spin" />
-            <span>A carregar recrutadores...</span>
-          </div>
-        ) : filteredRecruiters.length === 0 ? (
-          <div className="py-6 text-center text-xs text-muted-foreground">
-            {search
-              ? "Nenhum recrutador encontrado"
-              : "Nenhum recrutador registado na equipa"}
-          </div>
-        ) : (
-          filteredRecruiters.map((recruiter) => {
-            const isSelected = selectedIds.includes(recruiter.id);
-            const isAvailable = availableRecruiters.some(
-              (r) => r.id === recruiter.id,
-            );
-            const isConflict = hasConflict(recruiter);
-            const isKnown = knowsCandidate(recruiter);
-            const userPicture = getStableImageUrl(recruiter.image);
-
-            return (
-              <div
-                key={recruiter.id}
-                onClick={() => handleRowClick(recruiter)}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-md p-2 transition-colors cursor-pointer",
-                  isSelected
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-muted/80",
-                )}
+            {candidates.map((c) => (
+              <span
+                key={c.id}
+                className="inline-flex items-center gap-1 rounded bg-background px-1.5 py-0.5 text-xs font-medium border border-border/60"
               >
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => handleRowClick(recruiter)}
-                  className="size-4 pointer-events-none"
-                />
-                <Avatar className="h-6 w-6 rounded-sm shrink-0">
-                  {userPicture ? (
-                    <AvatarImage src={userPicture} alt={recruiter.name} />
-                  ) : null}
-                  <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                    {getInitials(
-                      recruiter.name || recruiter.email || recruiter.id,
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="font-medium text-xs truncate">
-                    {recruiter.name || "Sem nome"}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate">
-                    <span className="truncate">{recruiter.email}</span>
-                    {isAvailable && (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium shrink-0">
-                        • Disponível
+                {c.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Search Bar matching add recruiters modal */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar por nome ou email..."
+              className="h-8 pl-8 pr-2 text-xs"
+              autoFocus
+            />
+          </div>
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer shrink-0 transition-colors"
+              onClick={() => setSelectedIds([])}
+            >
+              Limpar ({selectedIds.length})
+            </button>
+          )}
+        </div>
+
+        {/* Recruiter List */}
+        <div className="max-h-60 overflow-y-auto space-y-0.5">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6 gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>A carregar recrutadores...</span>
+            </div>
+          ) : filteredRecruiters.length === 0 ? (
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              {search
+                ? "Nenhum recrutador encontrado"
+                : "Nenhum recrutador registado na equipa"}
+            </div>
+          ) : (
+            filteredRecruiters.map((recruiter) => {
+              const isSelected = selectedIds.includes(recruiter.id);
+              const isAvailable = availableRecruiters.some(
+                (r) => r.id === recruiter.id,
+              );
+              const isConflict = hasConflict(recruiter);
+              const isKnown = knowsCandidate(recruiter);
+
+              return (
+                <div
+                  key={recruiter.id}
+                  onClick={() => handleRowClick(recruiter)}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md p-2 transition-colors cursor-pointer",
+                    isSelected
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-muted/80",
+                  )}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => handleRowClick(recruiter)}
+                    className="size-4 pointer-events-none shrink-0"
+                  />
+                  <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium text-xs truncate">
+                        {recruiter.name || "Sem nome"}
                       </span>
-                    )}
-                    {isConflict && (
-                      <span className="text-rose-600 dark:text-rose-400 font-medium shrink-0">
-                        • Ocupado
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                        {recruiter.email}
                       </span>
-                    )}
-                    {!isAvailable && !isConflict && (
-                      <span className="text-muted-foreground font-medium shrink-0">
-                        • Indisponível
-                      </span>
-                    )}
-                    {isKnown && (
-                      <span className="text-amber-600 dark:text-amber-400 font-medium shrink-0">
-                        • Conhece candidato
-                      </span>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 text-[10px] sm:text-xs">
+                      {isAvailable && (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="hidden sm:inline">Disponível</span>
+                          <span className="sm:hidden">Disp.</span>
+                        </span>
+                      )}
+                      {isConflict && (
+                        <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
+                          <span className="size-1.5 rounded-full bg-rose-500 shrink-0" />
+                          <span>Ocupado</span>
+                        </span>
+                      )}
+                      {!isAvailable && !isConflict && (
+                        <span className="inline-flex items-center gap-1 text-muted-foreground font-medium">
+                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
+                          <span className="hidden sm:inline">Indisponível</span>
+                          <span className="sm:hidden">Indisp.</span>
+                        </span>
+                      )}
+                      {isKnown && (
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                          <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                          <span className="hidden sm:inline">
+                            Conhece candidato
+                          </span>
+                          <span className="sm:hidden">Conhece</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Footer matching add recruiters modal */}
-      <DialogFooter className="mt-2">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"
@@ -419,6 +421,6 @@ export function BookingPicker({
               : "Guardar"}
         </Button>
       </DialogFooter>
-    </div>
+    </>
   );
 }

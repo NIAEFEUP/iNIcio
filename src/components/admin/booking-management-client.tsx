@@ -5,11 +5,9 @@ import { addDays, format, isToday } from "date-fns";
 import { pt } from "date-fns/locale";
 import { AlertCircle, Filter, Users } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { cn, getInitials } from "@/lib/utils";
-import { getStableImageUrl } from "@/lib/stable-image-url";
+import { cn } from "@/lib/utils";
 import { generateTimeSlots, getMonday } from "@/lib/date";
 import { WeekNavigator } from "@/components/calendar/week-navigator";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
@@ -284,7 +282,6 @@ export default function BookingManagementClient({
                                 ? booking.candidate?.user || booking.candidate
                                 : null;
                               const candidateName = candidateObj?.name;
-                              const candidateImage = candidateObj?.image;
                               const recruitersCount =
                                 booking.recruiters?.length || 0;
                               const isMissingRecruiter = recruitersCount === 0;
@@ -339,26 +336,9 @@ export default function BookingManagementClient({
                                       {isInterview ? (
                                         <div className="flex items-center gap-1.5 min-w-0">
                                           {candidateObj ? (
-                                            <>
-                                              <Avatar className="size-4 shrink-0 ring-1 ring-border">
-                                                {candidateImage && (
-                                                  <AvatarImage
-                                                    src={
-                                                      getStableImageUrl(
-                                                        candidateImage,
-                                                      ) || undefined
-                                                    }
-                                                    alt={candidateName}
-                                                  />
-                                                )}
-                                                <AvatarFallback className="text-[7px]">
-                                                  {getInitials(candidateName)}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                              <span className="truncate text-xs font-medium text-foreground">
-                                                {candidateName}
-                                              </span>
-                                            </>
+                                            <span className="truncate text-xs font-medium text-foreground">
+                                              {candidateName}
+                                            </span>
                                           ) : (
                                             <span className="truncate text-xs text-muted-foreground italic">
                                               Sem candidato
