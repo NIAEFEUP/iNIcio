@@ -23,6 +23,17 @@ export type AvailabilityOperation = {
   availability: RecruiterAvailability | NewRecruiterAvailability;
 };
 
+export interface UnassignedSessionSummary {
+  kind: "interview" | "dynamic";
+  slotStart: string;
+  candidateNames: string[];
+}
+
+export interface SaveAvailabilityResult {
+  ok: boolean;
+  unassigned: UnassignedSessionSummary[];
+}
+
 const SLOT_MINUTES = 30;
 
 interface RecruiterAvailabilityClientProps {
@@ -31,7 +42,7 @@ interface RecruiterAvailabilityClientProps {
   recruitmentId: number;
   saveAvailabilities: (
     availabilities: AvailabilityOperation[],
-  ) => Promise<boolean>;
+  ) => Promise<SaveAvailabilityResult>;
 }
 
 export default function RecruiterAvailabilityClient({
