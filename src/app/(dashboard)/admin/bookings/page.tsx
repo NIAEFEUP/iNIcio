@@ -13,15 +13,11 @@ import { getLatestRecruitment } from "@/lib/recruitment";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import getExistingSlots from "@/lib/slot";
 import { getBookings } from "@/lib/booking";
-import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
+import { getCandidateSchedulingStats } from "@/lib/candidate";
 
 export default async function BookingsAdminPage() {
   const currentRecruitment =
     (await getTargetRecruitment()) ?? (await getLatestRecruitment());
-
-  const existingSlots = await getExistingSlots(currentRecruitment?.id);
-  const bookings = await getBookings(currentRecruitment?.id);
-  const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);
 
   if (!currentRecruitment) {
     return (
@@ -43,9 +39,15 @@ export default async function BookingsAdminPage() {
     );
   }
 
+  const [existingSlots, bookings, candidateStats] = await Promise.all([
+    getExistingSlots(currentRecruitment.id),
+    getBookings(currentRecruitment.id),
+    getCandidateSchedulingStats(currentRecruitment.id),
+  ]);
+
   return (
     <BookingManagementClient
-      candidates={candidates}
+      candidateStats={candidateStats}
       bookings={bookings}
       recruitmentId={currentRecruitment.id}
       existingSlots={existingSlots}

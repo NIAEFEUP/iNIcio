@@ -11,7 +11,10 @@ import { cn } from "@/lib/utils";
 import { generateTimeSlots, getMonday } from "@/lib/date";
 import { WeekNavigator } from "@/components/calendar/week-navigator";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
-import type { CandidateListMetadata } from "@/lib/candidate";
+import type {
+  CandidateListMetadata,
+  CandidateSchedulingStats,
+} from "@/lib/candidate";
 
 import BookingSlotDialog from "../slot/booking-slot-dialog";
 import { BookingAdminStats } from "./booking-admin-stats";
@@ -21,7 +24,8 @@ import { SlotType } from "./slot-admin-calendar";
 export type ViewDaysMode = "workdays" | "fullweek";
 
 interface BookingManagementClientProps {
-  candidates: Array<CandidateListMetadata>;
+  candidates?: Array<CandidateListMetadata>;
+  candidateStats?: CandidateSchedulingStats;
   recruitmentId: number;
   existingSlots?: {
     interview: Slot[];
@@ -47,6 +51,7 @@ interface BookingManagementClientProps {
 
 export default function BookingManagementClient({
   candidates,
+  candidateStats,
   existingSlots = {
     interview: [],
     dynamic: [],
@@ -137,6 +142,7 @@ export default function BookingManagementClient({
       <BookingAdminStats
         bookings={bookings}
         candidates={candidates}
+        candidateStats={candidateStats}
         weekStart={weekStart}
         weekEnd={weekEnd}
       />

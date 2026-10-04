@@ -91,12 +91,15 @@ export async function getAllRecruiterAvailabilities(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];
 
-  return await db.query.recruiterAvailability.findMany({
-    where: eq(recruiterAvailability.recruitmentId, targetId),
-    with: {
-      recruiter: true,
-    },
-  });
+  return await db
+    .select({
+      id: recruiterAvailability.id,
+      start: recruiterAvailability.start,
+      duration: recruiterAvailability.duration,
+      recruiterId: recruiterAvailability.recruiterId,
+    })
+    .from(recruiterAvailability)
+    .where(eq(recruiterAvailability.recruitmentId, targetId));
 }
 
 export interface RecruiterStats {

@@ -36,7 +36,10 @@ export type SlotOperation = {
   type: "add" | "remove";
   slot: Slot | NewSlot;
 };
-import type { CandidateListMetadata } from "@/lib/candidate";
+import type {
+  CandidateListMetadata,
+  CandidateSchedulingStats,
+} from "@/lib/candidate";
 
 import { SlotAdminStats } from "./slot-admin-stats";
 
@@ -62,7 +65,8 @@ interface CellPos {
 type PendingSlot = Omit<Slot, "id"> & { id?: Slot["id"] };
 
 interface SlotAdminCalendarProps {
-  candidates: Array<CandidateListMetadata>;
+  candidates?: Array<CandidateListMetadata>;
+  candidateStats?: CandidateSchedulingStats;
   recruitmentId: number;
   existingSlots?: {
     interview: Slot[];
@@ -101,6 +105,7 @@ function getEndTimeString(startTime: string, durationMinutes: number): string {
 
 export function SlotAdminCalendar({
   candidates,
+  candidateStats,
   recruitmentId,
   existingSlots,
   bookings,
@@ -496,6 +501,7 @@ export function SlotAdminCalendar({
       <SlotAdminStats
         slots={slots}
         candidates={candidates}
+        candidateStats={candidateStats}
         weekStart={weekStart}
         weekEnd={weekEnd}
       />

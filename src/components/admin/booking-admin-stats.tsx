@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 
-import type { CandidateListMetadata } from "@/lib/candidate";
+import type {
+  CandidateListMetadata,
+  CandidateSchedulingStats,
+} from "@/lib/candidate";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
 import {
   AlertCircle,
@@ -35,7 +38,8 @@ interface BookingAdminStatsProps {
       }
     >;
   };
-  candidates: Array<CandidateListMetadata>;
+  candidates?: Array<CandidateListMetadata>;
+  candidateStats?: CandidateSchedulingStats;
   weekStart?: Date;
   weekEnd?: Date;
 }
@@ -43,6 +47,7 @@ interface BookingAdminStatsProps {
 export function BookingAdminStats({
   bookings,
   candidates,
+  candidateStats,
   weekStart,
   weekEnd,
 }: BookingAdminStatsProps) {
@@ -74,17 +79,24 @@ export function BookingAdminStats({
   const totalMissingRecruiters =
     interviewsMissingRecruiters + dynamicsMissingRecruiters;
 
-  const candidatesWithoutInterview = candidates.filter((c) => !c.interview);
-  const candidatesWithoutDynamic = candidates.filter((c) => !c.dynamic);
-  const candidatesWithoutEither = candidates.filter(
-    (c) => !c.interview || !c.dynamic,
-  );
+  const totalCandidates = candidateStats?.total ?? candidates?.length ?? 0;
+  const candidatesWithoutInterview =
+    candidateStats?.unmarkedInterviews ??
+    (candidates ? candidates.filter((c) => !c.interview).length : 0);
+  const candidatesWithoutDynamic =
+    candidateStats?.unmarkedDynamics ??
+    (candidates ? candidates.filter((c) => !c.dynamic).length : 0);
+  const candidatesWithoutEither =
+    candidateStats?.unmarkedEither ??
+    (candidates
+      ? candidates.filter((c) => !c.interview || !c.dynamic).length
+      : 0);
 
   const stats = [
     {
       label: "Entrevistas Agendadas",
       value: `${interviews.length}`,
-      description: `${weekInterviews.length} nesta semana • ${candidates.length - candidatesWithoutInterview.length} candidatos`,
+      description: `${weekInterviews.length} nesta semana • ${totalCandidates - candidatesWithoutInterview} candidatos`,
       icon: CalendarCheck,
     },
     {
@@ -105,10 +117,10 @@ export function BookingAdminStats({
     },
     {
       label: "Sem Marcação",
-      value: `${candidatesWithoutEither.length}`,
-      description: `${candidatesWithoutInterview.length} sem entrevista • ${candidatesWithoutDynamic.length} sem dinâmica`,
-      icon: candidatesWithoutEither.length > 0 ? UserRoundX : CheckCircle2,
-      alert: candidatesWithoutEither.length > 0,
+      value: `${candidatesWithoutEither}`,
+      description: `${candidatesWithoutInterview} sem entrevista • ${candidatesWithoutDynamic} sem dinâmica`,
+      icon: candidatesWithoutEither > 0 ? UserRoundX : CheckCircle2,
+      alert: candidatesWithoutEither > 0,
       href: "/candidates?scheduling=sem-entrevista,sem-dinamica",
     },
   ];

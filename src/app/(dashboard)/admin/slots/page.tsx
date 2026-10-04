@@ -20,7 +20,7 @@ import { slot } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import getExistingSlots from "@/lib/slot";
 import { getBookings } from "@/lib/booking";
-import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
+import { getCandidateSchedulingStats } from "@/lib/candidate";
 import { requireAdminSession } from "@/lib/action-guard";
 
 const reconcileOperations = (operations: SlotOperation[]): SlotOperation[] => {
@@ -104,10 +104,6 @@ export default async function SlotsAdminPage() {
     return getExistingSlots(currentRecruitment?.id);
   };
 
-  const existingSlots = await getExistingSlots(currentRecruitment?.id);
-  const bookings = await getBookings(currentRecruitment?.id);
-  const candidates = await getAllCandidatesWithDynamic(currentRecruitment?.id);
-
   if (!currentRecruitment) {
     return (
       <div className="flex flex-col gap-6">
@@ -128,9 +124,15 @@ export default async function SlotsAdminPage() {
     );
   }
 
+  const [existingSlots, bookings, candidateStats] = await Promise.all([
+    getExistingSlots(currentRecruitment.id),
+    getBookings(currentRecruitment.id),
+    getCandidateSchedulingStats(currentRecruitment.id),
+  ]);
+
   return (
     <SlotAdminCalendar
-      candidates={candidates}
+      candidateStats={candidateStats}
       bookings={bookings}
       recruitmentId={currentRecruitment.id}
       existingSlots={existingSlots}

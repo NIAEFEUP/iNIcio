@@ -58,7 +58,10 @@ export const recruiterToInterview = pgTable(
       .notNull()
       .references(() => interview.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.recruiterId, table.interviewId] })],
+  (table) => [
+    primaryKey({ columns: [table.recruiterId, table.interviewId] }),
+    index("recruiter_to_interview_interview_id_idx").on(table.interviewId),
+  ],
 );
 
 export const interviewRelations = relations(interview, ({ one, many }) => ({

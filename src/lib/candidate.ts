@@ -1,4 +1,10 @@
-import { application, candidate, user } from "@/db/schema";
+import {
+  application,
+  candidate,
+  candidateToDynamic,
+  interview,
+  user,
+} from "@/db/schema";
 import {
   Application,
   db,
@@ -8,12 +14,19 @@ import {
   Slot,
   User,
 } from "./db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import { FilterRestriction } from "./restriction";
 import { getActiveRecruitment } from "./recruitment";
 import { getPreviousApplicationYears } from "./previous-applications";
 import { getLatestVotingDecisionsForCandidates } from "./voting";
+
+export interface CandidateSchedulingStats {
+  total: number;
+  unmarkedInterviews: number;
+  unmarkedDynamics: number;
+  unmarkedEither: number;
+}
 
 export type CandidateApplicationSummary = Pick<
   Application,
@@ -114,6 +127,67 @@ export async function isCandidate(candidateId: string, recruitmentId?: number) {
   });
 
   return query !== null && query !== undefined;
+}
+
+export async function getCandidateSchedulingStats(
+  recruitmentId?: number,
+): Promise<CandidateSchedulingStats> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) {
+    return {
+      total: 0,
+      unmarkedInterviews: 0,
+      unmarkedDynamics: 0,
+      unmarkedEither: 0,
+    };
+  }
+
+  const rows = await db
+    .select({
+      candidateId: candidate.userId,
+      hasInterview: sql<boolean>`CASE WHEN ${interview.id} IS NOT NULL THEN true ELSE false END`,
+      hasDynamic: sql<boolean>`CASE WHEN ${candidateToDynamic.dynamicId} IS NOT NULL THEN true ELSE false END`,
+    })
+    .from(candidate)
+    .innerJoin(
+      application,
+      and(
+        eq(application.candidateId, candidate.userId),
+        eq(application.recruitmentId, targetId),
+      ),
+    )
+    .leftJoin(
+      interview,
+      and(
+        eq(interview.candidateId, candidate.userId),
+        eq(interview.recruitmentId, targetId),
+      ),
+    )
+    .leftJoin(
+      candidateToDynamic,
+      and(
+        eq(candidateToDynamic.candidateId, candidate.userId),
+        eq(candidateToDynamic.recruitmentId, targetId),
+      ),
+    )
+    .where(eq(candidate.recruitmentId, targetId));
+
+  let unmarkedInterviews = 0;
+  let unmarkedDynamics = 0;
+  let unmarkedEither = 0;
+
+  for (const row of rows) {
+    if (!row.hasInterview) unmarkedInterviews++;
+    if (!row.hasDynamic) unmarkedDynamics++;
+    if (!row.hasInterview || !row.hasDynamic) unmarkedEither++;
+  }
+
+  return {
+    total: rows.length,
+    unmarkedInterviews,
+    unmarkedDynamics,
+    unmarkedEither,
+  };
 }
 
 /**

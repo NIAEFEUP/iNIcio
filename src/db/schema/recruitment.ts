@@ -43,7 +43,10 @@ export const usersToRecruitments = pgTable(
       .notNull()
       .references(() => recruitment.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.recruitmentId] })],
+  (table) => [
+    primaryKey({ columns: [table.userId, table.recruitmentId] }),
+    index("users_to_recruitments_recruitment_id_idx").on(table.recruitmentId),
+  ],
 );
 
 export const recruitmentRelations = relations(recruitment, ({ many }) => ({

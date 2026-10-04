@@ -239,17 +239,21 @@ export async function getTeamAvailabilitiesData(
     image: r.user.image,
   }));
 
-  const availabilities: TeamAvailabilitySlot[] = rawAvailabilities.map((a) => ({
-    id: a.id,
-    start: new Date(a.start),
-    duration: a.duration,
-    recruiter: {
-      id: a.recruiter.id,
-      name: a.recruiter.name,
-      email: a.recruiter.email,
-      image: a.recruiter.image,
-    },
-  }));
+  const recruiterMap = new Map<string, TeamRecruiter>(
+    recruiters.map((r) => [r.id, r]),
+  );
+
+  const availabilities: TeamAvailabilitySlot[] = [];
+  for (const a of rawAvailabilities) {
+    const rec = recruiterMap.get(a.recruiterId);
+    if (!rec) continue;
+    availabilities.push({
+      id: a.id,
+      start: new Date(a.start),
+      duration: a.duration,
+      recruiter: rec,
+    });
+  }
 
   return { availabilities, recruiters };
 }

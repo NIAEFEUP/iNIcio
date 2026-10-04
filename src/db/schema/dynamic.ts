@@ -63,6 +63,7 @@ export const candidateToDynamic = pgTable(
       foreignColumns: [dynamic.id, dynamic.recruitmentId],
       name: "candidate_to_dynamic_dynamic_fk",
     }).onDelete("cascade"),
+    index("candidate_to_dynamic_dynamic_id_idx").on(table.dynamicId),
   ],
 );
 
@@ -76,7 +77,10 @@ export const recruiterToDynamic = pgTable(
       .notNull()
       .references(() => dynamic.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.recruiterId, table.dynamicId] })],
+  (table) => [
+    primaryKey({ columns: [table.recruiterId, table.dynamicId] }),
+    index("recruiter_to_dynamic_dynamic_id_idx").on(table.dynamicId),
+  ],
 );
 
 export const dynamicRelations = relations(dynamic, ({ many, one }) => ({

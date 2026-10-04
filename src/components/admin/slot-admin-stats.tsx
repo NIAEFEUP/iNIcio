@@ -6,7 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { CandidateListMetadata } from "@/lib/candidate";
+import type {
+  CandidateListMetadata,
+  CandidateSchedulingStats,
+} from "@/lib/candidate";
 import { Calendar, Users, UserCheck, UserX } from "lucide-react";
 import type { SlotType } from "./slot-admin-calendar";
 
@@ -18,7 +21,8 @@ interface StatsGridProps {
       Array<{ start?: Date; duration?: number; quantity?: number }> | undefined;
   };
   slotType?: SlotType | string;
-  candidates: Array<CandidateListMetadata>;
+  candidates?: Array<CandidateListMetadata>;
+  candidateStats?: CandidateSchedulingStats;
   weekStart?: Date;
   weekEnd?: Date;
 }
@@ -26,6 +30,7 @@ interface StatsGridProps {
 export function SlotAdminStats({
   slots,
   candidates,
+  candidateStats,
   weekStart,
   weekEnd,
 }: StatsGridProps) {
@@ -59,8 +64,13 @@ export function SlotAdminStats({
     0,
   );
 
-  const unmarkedInterviews = candidates.filter((c) => !c.interview).length;
-  const unmarkedDynamics = candidates.filter((c) => !c.dynamic).length;
+  const totalCandidates = candidateStats?.total ?? candidates?.length ?? 0;
+  const unmarkedInterviews =
+    candidateStats?.unmarkedInterviews ??
+    (candidates ? candidates.filter((c) => !c.interview).length : 0);
+  const unmarkedDynamics =
+    candidateStats?.unmarkedDynamics ??
+    (candidates ? candidates.filter((c) => !c.dynamic).length : 0);
 
   const stats = [
     {
@@ -78,13 +88,13 @@ export function SlotAdminStats({
     {
       label: "Entrevistas por Marcar",
       value: `${unmarkedInterviews}`,
-      description: `${candidates.length - unmarkedInterviews} de ${candidates.length} já agendadas`,
+      description: `${totalCandidates - unmarkedInterviews} de ${totalCandidates} já agendadas`,
       icon: UserCheck,
     },
     {
       label: "Dinâmicas por Marcar",
       value: `${unmarkedDynamics}`,
-      description: `${candidates.length - unmarkedDynamics} de ${candidates.length} já agendadas`,
+      description: `${totalCandidates - unmarkedDynamics} de ${totalCandidates} já agendadas`,
       icon: UserX,
     },
   ];
