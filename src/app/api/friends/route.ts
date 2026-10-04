@@ -10,6 +10,7 @@ import {
   usersToRecruitments,
 } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { isAdmin } from "@/lib/admin";
 
 import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
@@ -18,6 +19,15 @@ export async function PUT(req: Request) {
 
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Marking a candidate as known is a recruiter-only action; admins cannot do
+  // it even when they are also enrolled in the recruitment.
+  if (await isAdmin(session.user.id)) {
+    return NextResponse.json(
+      { error: "Admins cannot mark candidates as known" },
+      { status: 403 },
+    );
   }
 
   let json: any;
