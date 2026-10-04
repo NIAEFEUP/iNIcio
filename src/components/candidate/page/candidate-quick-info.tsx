@@ -7,13 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { RecruiterToCandidate } from "@/lib/db";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
-import { useState } from "react";
-import { useRecruitment } from "@/lib/contexts/recruitment-context";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { SocialLinks } from "@/components/profile/social-links";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateAcademicInfo from "../card/candidate-academic-info";
@@ -27,15 +22,12 @@ import { Button } from "@/components/ui/button";
 
 interface CandidateQuickInfoProps {
   candidate: CandidateListMetadata;
-  friendCheckboxActive?: boolean;
   selectActionActive?: boolean;
   selectActionHandler?: (
     checked: boolean,
     candidate: CandidateListMetadata,
   ) => void;
   candidateSelected?: boolean;
-  friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string; isAdmin?: boolean } | null;
   hideInterviewButton?: boolean;
   hideDynamicButton?: boolean;
   showClassificationBadges?: boolean;
@@ -53,14 +45,11 @@ interface CandidateQuickInfoProps {
 }
 
 export default function CandidateQuickInfo({
-  authUser = null,
   candidate,
-  friendCheckboxActive = false,
   showClassificationBadges = false,
   selectActionActive = false,
   selectActionHandler = () => {},
   candidateSelected = false,
-  friends = [],
   hideInterviewButton = false,
   hideDynamicButton = false,
   fullDetails = false,
@@ -69,52 +58,6 @@ export default function CandidateQuickInfo({
   addDynamicClassification = () => {},
   addInterviewClassification = () => {},
 }: CandidateQuickInfoProps) {
-  const { recruitmentId } = useRecruitment();
-  const [checked, setChecked] = useState<boolean>(
-    friends.some(
-      (friend) =>
-        friend.candidateId === candidate.id &&
-        friend.recruiterId === authUser?.id &&
-        (recruitmentId == null || friend.recruitmentId === recruitmentId),
-    ),
-  );
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const addFriend = async () => {
-    if (isUpdating) return;
-
-    const nextChecked = !checked;
-    setChecked(nextChecked);
-    setIsUpdating(true);
-
-    try {
-      const result = await fetch("/api/friends", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          candidateId: candidate.id,
-          recruitmentId: recruitmentId ?? undefined,
-        }),
-      });
-
-      if (!result.ok) {
-        setChecked(!nextChecked);
-        return;
-      }
-
-      const data = await result.json().catch(() => null);
-      if (data && typeof data.known === "boolean") {
-        setChecked(data.known);
-      }
-    } catch {
-      setChecked(!nextChecked);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const getClassificationPlaceholder = () => {
     if (
       showClassifyInterview &&
@@ -161,36 +104,15 @@ export default function CandidateQuickInfo({
         </div>
       )}
 
-      {(friendCheckboxActive || selectActionActive) && (
+      {selectActionActive && (
         <div className="mb-4 flex items-center gap-3">
-          {friendCheckboxActive && !authUser?.isAdmin && (
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Checkbox
-                  id={`knows-candidate-${candidate.id}`}
-                  className="h-5 w-5 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all duration-200"
-                  checked={checked}
-                  onCheckedChange={addFriend}
-                />
-              </div>
-              <Label
-                htmlFor={`knows-candidate-${candidate.id}`}
-                className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer hover:text-foreground transition-colors"
-              >
-                Conheço
-              </Label>
-            </div>
-          )}
-
-          {selectActionActive && (
-            <div className="flex flex-col gap-2">
-              <CandidateQuickInfoSelect
-                candidate={candidate}
-                selectActionHandler={selectActionHandler}
-                candidateSelected={candidateSelected}
-              />
-            </div>
-          )}
+          <div className="flex flex-col gap-2">
+            <CandidateQuickInfoSelect
+              candidate={candidate}
+              selectActionHandler={selectActionHandler}
+              candidateSelected={candidateSelected}
+            />
+          </div>
         </div>
       )}
 
