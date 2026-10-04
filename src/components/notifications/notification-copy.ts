@@ -44,6 +44,22 @@ export function getNotificationCopy(
         title: "Mencionaram-te num comentário",
         description: "Clica para veres os detalhes.",
       };
+    case "interviewer_unassigned": {
+      const recruiterName =
+        typeof data.recruiterName === "string" && data.recruiterName
+          ? data.recruiterName
+          : "Um recrutador";
+      const count =
+        typeof data.count === "number" && data.count > 0 ? data.count : 1;
+      return {
+        title: "Recrutador desatribuído",
+        description: `${recruiterName} deixou de estar disponível para ${count} ${
+          count === 1 ? "sessão" : "sessões"
+        }. Confirma as marcações.`,
+        actionLabel: "Ver marcações",
+        href: "/admin/bookings",
+      };
+    }
     default:
       return { title: "Nova notificação" };
   }
@@ -57,6 +73,8 @@ export function getNotificationToastType(
       return toData(notification.data).result === "accepted"
         ? "success"
         : "info";
+    case "interviewer_unassigned":
+      return "warning";
     default:
       return "info";
   }

@@ -22,7 +22,7 @@ import { Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { recruiter } from "@/db/schema";
+import { admin, notification, recruiter } from "@/db/schema";
 import {
   pruneUnavailableAssignments,
   type RemovedWindow,
@@ -87,12 +87,37 @@ export default async function RecruiterAvailabilityPage() {
         }
       }
 
-      return await pruneUnavailableAssignments(
+      const sessions = await pruneUnavailableAssignments(
         user.id,
         targetRecruitmentId,
         removedWindows,
         tx,
       );
+
+      if (sessions.length > 0) {
+        const admins = await tx.select({ userId: admin.userId }).from(admin);
+
+        if (admins.length > 0) {
+          await tx.insert(notification).values(
+            admins.map(({ userId }) => ({
+              userId,
+              type: "interviewer_unassigned",
+              data: {
+                recruitmentId: targetRecruitmentId,
+                recruiterName: user.name,
+                count: sessions.length,
+                sessions: sessions.map((session) => ({
+                  kind: session.kind,
+                  slotStart: session.slotStart.toISOString(),
+                  candidateNames: session.candidateNames,
+                })),
+              },
+            })),
+          );
+        }
+      }
+
+      return sessions;
     });
 
     if (unassigned.length > 0) {
