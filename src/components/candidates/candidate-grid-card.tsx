@@ -26,11 +26,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
+import { useSWRConfig } from "swr";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import { candidatesKey } from "@/lib/hooks/candidates/use-candidate-data";
 
 function useSyncedState<S>(
   value: S,
@@ -47,7 +50,7 @@ function useSyncedState<S>(
 interface CandidateGridCardProps {
   candidate: CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   showContactInfo?: boolean;
   isSelected?: boolean;
   onSelectChange?: (selected: boolean) => void;
@@ -118,13 +121,18 @@ function CandidateGridCard({
   classifyInterview,
   classifyDynamic,
 }: CandidateGridCardProps) {
-  const [known, setKnown] = React.useState<boolean>(
+  const { recruitmentId } = useRecruitment();
+  const { mutate } = useSWRConfig();
+
+  const [known, setKnown] = useSyncedState<boolean>(
     friends.some(
       (friend) =>
         friend.candidateId === candidate.id &&
-        friend.recruiterId === authUser?.id,
+        friend.recruiterId === authUser?.id &&
+        (recruitmentId == null || friend.recruitmentId === recruitmentId),
     ),
   );
+  const [isUpdatingKnown, setIsUpdatingKnown] = React.useState(false);
 
   const [interviewClassification, setInterviewClassification] = useSyncedState<
     string | null | undefined
@@ -135,13 +143,38 @@ function CandidateGridCard({
   >(candidate.dynamicClassification);
 
   const toggleKnown = async () => {
-    setKnown((prev) => !prev);
-    const result = await fetch("/api/friends", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidateId: candidate.id }),
-    });
-    if (!result.ok) setKnown((prev) => !prev);
+    if (isUpdatingKnown) return;
+
+    const nextKnown = !known;
+    setKnown(nextKnown);
+    setIsUpdatingKnown(true);
+
+    try {
+      const result = await fetch("/api/friends", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          recruitmentId: recruitmentId ?? undefined,
+        }),
+      });
+
+      if (!result.ok) {
+        setKnown(!nextKnown);
+        return;
+      }
+
+      const data = await result.json().catch(() => null);
+      if (data && typeof data.known === "boolean") {
+        setKnown(data.known);
+      }
+
+      mutate(candidatesKey(recruitmentId));
+    } catch {
+      setKnown(!nextKnown);
+    } finally {
+      setIsUpdatingKnown(false);
+    }
   };
 
   const handleInterviewClassification = async (value: string) => {
@@ -242,15 +275,23 @@ function CandidateGridCard({
         )
       }
       actions={
-        <div className="flex w-full items-center justify-between gap-2">
-          <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
-            <Checkbox
-              checked={known}
-              onCheckedChange={toggleKnown}
-              className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-            Conheço
-          </label>
+        <div
+          className={cn(
+            "flex w-full items-center gap-2",
+            authUser?.isAdmin ? "justify-end" : "justify-between",
+          )}
+        >
+          {!authUser?.isAdmin && (
+            <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
+              <Checkbox
+                checked={known}
+                disabled={isUpdatingKnown}
+                onCheckedChange={toggleKnown}
+                className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+              Conheço
+            </label>
+          )}
           <DecisionText decision={candidate.votingDecision?.decision ?? null} />
         </div>
       }

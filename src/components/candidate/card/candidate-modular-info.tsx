@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 export interface CandidateModularInfoProps {
   candidate: CandidateWithMetadata | CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   recruitmentId?: number | null;
   onToggleKnown?: (known: boolean) => void | Promise<void>;
   onClassifyInterview?: (value: string) => Promise<void> | void;

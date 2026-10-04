@@ -1,7 +1,6 @@
 "use server";
 
 import { getAllCandidatesWithDynamic } from "@/lib/dynamic";
-import { getSession } from "@/lib/auth";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import CandidateVotingChoiceClient from "@/components/candidate/voting/candidates-voting-client";
 import { createVotingPhase } from "@/lib/voting";
@@ -15,8 +14,6 @@ export default async function CandidateVotingCreatePage() {
   const candidates = await getAllCandidatesWithDynamic(targetId, [
     CandidateFilterRestriction.ONLY_WITH_INTERVIEW_AND_DYNAMIC,
   ]);
-
-  const session = await getSession();
 
   async function handleCandidateSelection(selectedCandidates: Array<string>) {
     "use server";
@@ -53,15 +50,6 @@ export default async function CandidateVotingCreatePage() {
       <PageHeader title="Criar votação" backHref="/candidates/voting" />
       <CandidateVotingChoiceClient
         candidates={candidates}
-        authUser={
-          session
-            ? {
-                ...session.user,
-                image: session.user.image ?? "",
-                role: session.user.role as "recruiter" | "candidate" | "admin",
-              }
-            : undefined
-        }
         availableDepartments={await getAllPossibleApplicationInterests()}
         handleCandidateSelection={handleCandidateSelection}
       />

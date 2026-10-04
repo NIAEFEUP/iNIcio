@@ -437,16 +437,6 @@ export async function deleteRecruiter(userId: string, recruitmentId?: number) {
   });
 }
 
-export async function addRecruiterToRecruitment(
-  userId: string,
-  recruitmentId: number,
-) {
-  await db
-    .insert(usersToRecruitments)
-    .values({ userId, recruitmentId })
-    .onConflictDoNothing();
-}
-
 export async function removeRecruiterFromRecruitment(
   userId: string,
   recruitmentId: number,

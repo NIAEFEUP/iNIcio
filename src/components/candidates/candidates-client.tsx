@@ -53,7 +53,7 @@ import {
 } from "@/lib/constants";
 
 interface CandidatesClientProps {
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   candidates: Array<CandidateListMetadata>;
   availableDepartments: Array<string>;
   initialViewMode?: ViewMode;
@@ -118,9 +118,10 @@ export default function CandidatesClient({
   // `user` is rebuilt on every render; keep the props and callbacks passed to
   // the memoized grid cards stable so they can bail out.
   const authUserId = authUser?.id;
-  const memoizedAuthUser = useMemo<{ id?: string } | null>(
-    () => (authUserId ? { id: authUserId } : null),
-    [authUserId],
+  const authUserIsAdmin = authUser?.isAdmin;
+  const memoizedAuthUser = useMemo<{ id?: string; isAdmin?: boolean } | null>(
+    () => (authUserId ? { id: authUserId, isAdmin: authUserIsAdmin } : null),
+    [authUserId, authUserIsAdmin],
   );
 
   useEffect(() => {

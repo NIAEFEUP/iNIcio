@@ -1,6 +1,5 @@
 "use client";
 
-import { User } from "@/lib/db";
 import { useState } from "react";
 import CandidateQuickInfo from "@/components/candidate/page/candidate-quick-info";
 
@@ -13,7 +12,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 interface CandidatesClientProps {
-  authUser: User;
   candidates: Array<CandidateListMetadata>;
   availableDepartments: Array<string>;
   handleCandidateSelection: (
@@ -22,7 +20,6 @@ interface CandidatesClientProps {
 }
 
 export default function CandidateVotingChoiceClient({
-  authUser,
   candidates,
   availableDepartments,
   handleCandidateSelection,
@@ -94,7 +91,6 @@ export default function CandidateVotingChoiceClient({
           <CandidateQuickInfo
             key={candidate.id || crypto.randomUUID()}
             candidate={candidate}
-            authUser={authUser}
             selectActionActive={true}
             selectActionHandler={(
               checked: boolean,
