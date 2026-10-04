@@ -128,9 +128,11 @@ export default function BookingManagementClient({
       <PageHeader
         title="Marcações & Entrevistas"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
-          </div>
+          <WeekNavigator
+            weekStart={weekStart}
+            onWeekChange={setWeekStart}
+            className="w-full md:w-auto"
+          />
         }
       />
 

@@ -21,20 +21,24 @@ export function ViewModeToggle({
       <Button
         variant={viewMode === "grid" ? "secondary" : "ghost"}
         size="sm"
-        className="h-7 gap-1.5 px-3 text-xs"
+        className="h-7 gap-1.5 px-2 text-xs md:px-3"
         onClick={() => onViewModeChange("grid")}
+        title={gridLabel}
+        aria-label={gridLabel}
       >
         <Grid className="size-3.5" />
-        {gridLabel}
+        <span className="hidden md:inline">{gridLabel}</span>
       </Button>
       <Button
         variant={viewMode === "list" ? "secondary" : "ghost"}
         size="sm"
-        className="h-7 gap-1.5 px-3 text-xs"
+        className="h-7 gap-1.5 px-2 text-xs md:px-3"
         onClick={() => onViewModeChange("list")}
+        title={listLabel}
+        aria-label={listLabel}
       >
         <List className="size-3.5" />
-        {listLabel}
+        <span className="hidden md:inline">{listLabel}</span>
       </Button>
     </div>
   );

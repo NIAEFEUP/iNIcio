@@ -39,28 +39,31 @@ export function WeekNavigator({
         type="button"
         variant="ghost"
         size="sm"
+        className="shrink-0"
         onClick={() => onWeekChange(getMonday(new Date()))}
       >
         Hoje
       </Button>
-      <Separator orientation="vertical" className="h-4" />
+      <Separator orientation="vertical" className="h-4 shrink-0" />
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
+        className="shrink-0"
         onClick={() => moveWeek(-1)}
         aria-label="Semana anterior"
         title="Semana anterior"
       >
         <ChevronLeft className="size-4" />
       </Button>
-      <span className="min-w-28 text-center text-xs font-medium text-muted-foreground px-2 select-none capitalize">
+      <span className="min-w-28 flex-1 text-center text-xs font-medium text-muted-foreground px-2 select-none capitalize">
         {formatWeekRange(weekStart, weekEnd)}
       </span>
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
+        className="shrink-0"
         onClick={() => moveWeek(1)}
         aria-label="Semana seguinte"
         title="Semana seguinte"

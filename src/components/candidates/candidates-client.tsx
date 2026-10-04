@@ -553,13 +553,13 @@ export default function CandidatesClient({
           />
         }
         search={
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Procurar candidato..."
-              className="h-8 w-56 pl-8 text-xs"
+              className="h-8 w-full pl-8 text-xs md:w-56"
             />
           </div>
         }

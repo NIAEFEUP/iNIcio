@@ -275,133 +275,147 @@ export function TeamAvailabilityCalendar({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Disponibilidade da Equipa"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
-
-            {/* Searchable recruiter dropdown filter */}
-            <DropdownMenu
-              open={headerFilterOpen}
-              onOpenChange={(open) => {
-                setHeaderFilterOpen(open);
-                if (!open) setHeaderFilterSearch("");
-              }}
+        viewModeToggle={
+          <DropdownMenu
+            open={headerFilterOpen}
+            onOpenChange={(open) => {
+              setHeaderFilterOpen(open);
+              if (!open) setHeaderFilterSearch("");
+            }}
+          >
+            <DropdownMenuTrigger
+              className="flex items-center gap-2 h-8 px-2 md:px-2.5 rounded-md border border-input bg-background hover:bg-muted text-xs font-normal transition-colors outline-none cursor-pointer max-w-64 shrink-0"
+              title={
+                selectedRecruiterId === "all"
+                  ? `Todos os Recrutadores (${recruiters.length})`
+                  : selectedRecruiter?.name || "Recrutador"
+              }
+              aria-label={
+                selectedRecruiterId === "all"
+                  ? `Todos os Recrutadores (${recruiters.length})`
+                  : selectedRecruiter?.name || "Recrutador"
+              }
             >
-              <DropdownMenuTrigger className="flex items-center gap-2 h-8 px-2.5 rounded-md border border-input bg-background hover:bg-muted text-xs font-normal transition-colors outline-none cursor-pointer max-w-64">
-                {selectedRecruiterId === "all" ? (
-                  <>
-                    <Users className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">
-                      Todos os Recrutadores ({recruiters.length})
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Avatar className="size-4 rounded-sm shrink-0">
-                      {selectedRecruiter?.image ? (
-                        <AvatarImage
-                          src={
-                            getStableImageUrl(selectedRecruiter.image) ||
-                            undefined
-                          }
-                          alt={selectedRecruiter.name}
-                        />
-                      ) : null}
-                      <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
-                        {getInitials(
-                          selectedRecruiter?.name ||
-                            selectedRecruiter?.email ||
-                            "",
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="truncate">
-                      {selectedRecruiter?.name || "Recrutador"}
-                    </span>
-                  </>
-                )}
-                <ChevronsUpDown className="size-3.5 text-muted-foreground shrink-0 ml-auto opacity-70" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-0">
-                <div className="p-2 border-b border-border/40">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-                    <Input
-                      placeholder="Pesquisar recrutador..."
-                      value={headerFilterSearch}
-                      onChange={(e) => setHeaderFilterSearch(e.target.value)}
-                      className="h-8 pl-8 pr-2 text-xs"
-                      autoFocus
-                    />
-                  </div>
+              {selectedRecruiterId === "all" ? (
+                <>
+                  <Users className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="hidden md:inline truncate">
+                    Todos os Recrutadores ({recruiters.length})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Avatar className="size-4 rounded-sm shrink-0">
+                    {selectedRecruiter?.image ? (
+                      <AvatarImage
+                        src={
+                          getStableImageUrl(selectedRecruiter.image) ||
+                          undefined
+                        }
+                        alt={selectedRecruiter.name}
+                      />
+                    ) : null}
+                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                      {getInitials(
+                        selectedRecruiter?.name ||
+                          selectedRecruiter?.email ||
+                          "",
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline truncate">
+                    {selectedRecruiter?.name || "Recrutador"}
+                  </span>
+                </>
+              )}
+              <ChevronsUpDown className="hidden md:inline size-3.5 text-muted-foreground shrink-0 ml-auto opacity-70" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 p-0">
+              <div className="p-2 border-b border-border/40">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Pesquisar recrutador..."
+                    value={headerFilterSearch}
+                    onChange={(e) => setHeaderFilterSearch(e.target.value)}
+                    className="h-8 pl-8 pr-2 text-xs"
+                    autoFocus
+                  />
                 </div>
-                <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSelectedRecruiterId("all");
-                      setHeaderFilterOpen(false);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
-                      selectedRecruiterId === "all" && "bg-accent font-medium",
-                    )}
-                  >
-                    <Users className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="flex-1 truncate">
-                      Todos os Recrutadores ({recruiters.length})
-                    </span>
-                    {selectedRecruiterId === "all" && (
-                      <Check className="size-3.5 text-primary shrink-0" />
-                    )}
-                  </DropdownMenuItem>
-
-                  {filteredRecruitersInHeader.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-muted-foreground">
-                      Nenhum recrutador encontrado
-                    </div>
-                  ) : (
-                    filteredRecruitersInHeader.map((r) => {
-                      const isSelected = selectedRecruiterId === r.id;
-                      const userPicture = getStableImageUrl(r.image);
-                      return (
-                        <DropdownMenuItem
-                          key={r.id}
-                          onClick={() => {
-                            setSelectedRecruiterId(r.id);
-                            setHeaderFilterOpen(false);
-                          }}
-                          className={cn(
-                            "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
-                            isSelected && "bg-accent font-medium",
-                          )}
-                        >
-                          <Avatar className="size-5 rounded-sm shrink-0">
-                            {userPicture ? (
-                              <AvatarImage src={userPicture} alt={r.name} />
-                            ) : null}
-                            <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
-                              {getInitials(r.name || r.email || r.id)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className="truncate">{r.name}</span>
-                            {r.email && (
-                              <span className="text-[10px] text-muted-foreground truncate">
-                                {r.email}
-                              </span>
-                            )}
-                          </div>
-                          {isSelected && (
-                            <Check className="size-3.5 text-primary shrink-0" />
-                          )}
-                        </DropdownMenuItem>
-                      );
-                    })
+              </div>
+              <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedRecruiterId("all");
+                    setHeaderFilterOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                    selectedRecruiterId === "all" && "bg-accent font-medium",
                   )}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                >
+                  <Users className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="flex-1 truncate">
+                    Todos os Recrutadores ({recruiters.length})
+                  </span>
+                  {selectedRecruiterId === "all" && (
+                    <Check className="size-3.5 text-primary shrink-0" />
+                  )}
+                </DropdownMenuItem>
+
+                {filteredRecruitersInHeader.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground">
+                    Nenhum recrutador encontrado
+                  </div>
+                ) : (
+                  filteredRecruitersInHeader.map((r) => {
+                    const isSelected = selectedRecruiterId === r.id;
+                    const userPicture = getStableImageUrl(r.image);
+                    return (
+                      <DropdownMenuItem
+                        key={r.id}
+                        onClick={() => {
+                          setSelectedRecruiterId(r.id);
+                          setHeaderFilterOpen(false);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                          isSelected && "bg-accent font-medium",
+                        )}
+                      >
+                        <Avatar className="size-5 rounded-sm shrink-0">
+                          {userPicture ? (
+                            <AvatarImage src={userPicture} alt={r.name} />
+                          ) : null}
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                            {getInitials(r.name || r.email || r.id)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="truncate">{r.name}</span>
+                          {r.email && (
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {r.email}
+                            </span>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <Check className="size-3.5 text-primary shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+        actions={
+          <WeekNavigator
+            weekStart={weekStart}
+            onWeekChange={setWeekStart}
+            className="w-full md:w-auto"
+          />
         }
       />
 

@@ -260,7 +260,11 @@ export function RecruiterAgendaCalendar({
           />
         }
         actions={
-          <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
+          <WeekNavigator
+            weekStart={weekStart}
+            onWeekChange={setWeekStart}
+            className="w-full md:w-auto"
+          />
         }
       />
 

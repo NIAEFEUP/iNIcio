@@ -116,110 +116,122 @@ export default function AdminFinalMessageClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Mensagens Finais"
-        actions={
-          <div className="flex items-center gap-3">
-            {activeTab === "accepted" ? (
-              <Dialog
-                open={acceptedMessageDialogOpen}
-                onOpenChange={setAcceptedMessageDialogOpen}
-              >
-                <DialogTrigger
-                  render={
-                    <Button type="button" className="h-8 px-3 text-xs gap-1.5">
-                      <RotateCcw className="size-3.5" />
+        viewModeToggle={
+          activeTab === "accepted" ? (
+            <Dialog
+              open={acceptedMessageDialogOpen}
+              onOpenChange={setAcceptedMessageDialogOpen}
+            >
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+                    title="Forçar Substituição"
+                    aria-label="Forçar Substituição"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span className="hidden md:inline">
                       Forçar Substituição
-                    </Button>
-                  }
-                />
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      Forçar substituição da mensagem de aceitação?
-                    </DialogTitle>
-                    <DialogDescription>
-                      Esta ação irá guardar e aplicar o conteúdo atual do editor
-                      como a mensagem final para candidatos aceites no
-                      recrutamento ativo
-                      {recruitmentTitle ? ` (${recruitmentTitle})` : ""}.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      disabled={isAcceptedOverriding}
-                      onClick={() => setAcceptedMessageDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      disabled={isAcceptedOverriding}
-                      onClick={handleAcceptedOverride}
-                    >
-                      {isAcceptedOverriding ? (
-                        <>
-                          <Loader2 className="size-3.5 animate-spin" />A
-                          aplicar...
-                        </>
-                      ) : (
-                        "Confirmar Substituição"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <Dialog
-                open={rejectedMessageDialogOpen}
-                onOpenChange={setRejectedMessageDialogOpen}
-              >
-                <DialogTrigger
-                  render={
-                    <Button type="button" className="h-8 px-3 text-xs gap-1.5">
-                      <RotateCcw className="size-3.5" />
+                    </span>
+                  </Button>
+                }
+              />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    Forçar substituição da mensagem de aceitação?
+                  </DialogTitle>
+                  <DialogDescription>
+                    Esta ação irá guardar e aplicar o conteúdo atual do editor
+                    como a mensagem final para candidatos aceites no
+                    recrutamento ativo
+                    {recruitmentTitle ? ` (${recruitmentTitle})` : ""}.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    disabled={isAcceptedOverriding}
+                    onClick={() => setAcceptedMessageDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={isAcceptedOverriding}
+                    onClick={handleAcceptedOverride}
+                  >
+                    {isAcceptedOverriding ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />A
+                        aplicar...
+                      </>
+                    ) : (
+                      "Confirmar Substituição"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Dialog
+              open={rejectedMessageDialogOpen}
+              onOpenChange={setRejectedMessageDialogOpen}
+            >
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+                    title="Forçar Substituição"
+                    aria-label="Forçar Substituição"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span className="hidden md:inline">
                       Forçar Substituição
-                    </Button>
-                  }
-                />
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      Forçar substituição da mensagem de rejeição?
-                    </DialogTitle>
-                    <DialogDescription>
-                      Esta ação irá guardar e aplicar o conteúdo atual do editor
-                      como a mensagem final para candidatos rejeitados no
-                      recrutamento ativo
-                      {recruitmentTitle ? ` (${recruitmentTitle})` : ""}.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      disabled={isRejectedOverriding}
-                      onClick={() => setRejectedMessageDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      disabled={isRejectedOverriding}
-                      onClick={handleRejectedOverride}
-                    >
-                      {isRejectedOverriding ? (
-                        <>
-                          <Loader2 className="size-3.5 animate-spin" />A
-                          aplicar...
-                        </>
-                      ) : (
-                        "Confirmar Substituição"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+                    </span>
+                  </Button>
+                }
+              />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    Forçar substituição da mensagem de rejeição?
+                  </DialogTitle>
+                  <DialogDescription>
+                    Esta ação irá guardar e aplicar o conteúdo atual do editor
+                    como a mensagem final para candidatos rejeitados no
+                    recrutamento ativo
+                    {recruitmentTitle ? ` (${recruitmentTitle})` : ""}.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    disabled={isRejectedOverriding}
+                    onClick={() => setRejectedMessageDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={isRejectedOverriding}
+                    onClick={handleRejectedOverride}
+                  >
+                    {isRejectedOverriding ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />A
+                        aplicar...
+                      </>
+                    ) : (
+                      "Confirmar Substituição"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )
         }
       />
 

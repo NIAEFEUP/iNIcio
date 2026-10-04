@@ -104,112 +104,122 @@ export default function AdminTemplateClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Modelos"
-        actions={
-          <div className="flex items-center gap-3">
-            {activeTab === "interview" ? (
-              <Dialog
-                open={interviewDialogOpen}
-                onOpenChange={setInterviewDialogOpen}
-              >
-                <DialogTrigger
-                  render={
-                    <Button type="button" className="h-8 px-3 text-xs gap-1.5">
-                      <RotateCcw className="size-3.5" />
+        viewModeToggle={
+          activeTab === "interview" ? (
+            <Dialog
+              open={interviewDialogOpen}
+              onOpenChange={setInterviewDialogOpen}
+            >
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+                    title="Forçar Substituição"
+                    aria-label="Forçar Substituição"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span className="hidden md:inline">
                       Forçar Substituição
-                    </Button>
-                  }
-                />
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      Forçar substituição de entrevistas?
-                    </DialogTitle>
-                    <DialogDescription>
-                      Esta ação irá substituir o conteúdo do editor de todas as
-                      entrevistas desbloqueadas no recrutamento selecionado pelo
-                      modelo atual.
-                      <br />
-                      <br />
-                      Entrevistas bloqueadas serão preservadas.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      disabled={isInterviewOverriding}
-                      onClick={() => setInterviewDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      disabled={isInterviewOverriding}
-                      onClick={handleInterviewOverride}
-                    >
-                      {isInterviewOverriding ? (
-                        <>
-                          <Loader2 className="size-3.5 animate-spin" />A
-                          aplicar...
-                        </>
-                      ) : (
-                        "Confirmar Substituição"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <Dialog
-                open={dynamicDialogOpen}
-                onOpenChange={setDynamicDialogOpen}
-              >
-                <DialogTrigger
-                  render={
-                    <Button type="button" className="h-8 px-3 text-xs gap-1.5">
-                      <RotateCcw className="size-3.5" />
+                    </span>
+                  </Button>
+                }
+              />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Forçar substituição de entrevistas?</DialogTitle>
+                  <DialogDescription>
+                    Esta ação irá substituir o conteúdo do editor de todas as
+                    entrevistas desbloqueadas no recrutamento selecionado pelo
+                    modelo atual.
+                    <br />
+                    <br />
+                    Entrevistas bloqueadas serão preservadas.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    disabled={isInterviewOverriding}
+                    onClick={() => setInterviewDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={isInterviewOverriding}
+                    onClick={handleInterviewOverride}
+                  >
+                    {isInterviewOverriding ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />A
+                        aplicar...
+                      </>
+                    ) : (
+                      "Confirmar Substituição"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Dialog
+              open={dynamicDialogOpen}
+              onOpenChange={setDynamicDialogOpen}
+            >
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+                    title="Forçar Substituição"
+                    aria-label="Forçar Substituição"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    <span className="hidden md:inline">
                       Forçar Substituição
-                    </Button>
-                  }
-                />
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Forçar substituição de dinâmicas?</DialogTitle>
-                    <DialogDescription>
-                      Esta ação irá substituir o conteúdo do editor de todas as
-                      dinâmicas desbloqueadas no recrutamento selecionado pelo
-                      modelo atual.
-                      <br />
-                      <br />
-                      Dinâmicas bloqueadas serão preservadas.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      disabled={isDynamicOverriding}
-                      onClick={() => setDynamicDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      disabled={isDynamicOverriding}
-                      onClick={handleDynamicOverride}
-                    >
-                      {isDynamicOverriding ? (
-                        <>
-                          <Loader2 className="size-3.5 animate-spin" />A
-                          aplicar...
-                        </>
-                      ) : (
-                        "Confirmar Substituição"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+                    </span>
+                  </Button>
+                }
+              />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Forçar substituição de dinâmicas?</DialogTitle>
+                  <DialogDescription>
+                    Esta ação irá substituir o conteúdo do editor de todas as
+                    dinâmicas desbloqueadas no recrutamento selecionado pelo
+                    modelo atual.
+                    <br />
+                    <br />
+                    Dinâmicas bloqueadas serão preservadas.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    disabled={isDynamicOverriding}
+                    onClick={() => setDynamicDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={isDynamicOverriding}
+                    onClick={handleDynamicOverride}
+                  >
+                    {isDynamicOverriding ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />A
+                        aplicar...
+                      </>
+                    ) : (
+                      "Confirmar Substituição"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )
         }
       />
 

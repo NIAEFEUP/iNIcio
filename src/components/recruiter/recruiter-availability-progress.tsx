@@ -186,23 +186,30 @@ export default function RecruiterAvailabilityClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Marca as tuas disponibilidades"
+        viewModeToggle={
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+            title="Guardar disponibilidades"
+            aria-label="Guardar disponibilidades"
+          >
+            {saving ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
+            <span className="hidden md:inline">Guardar</span>
+          </Button>
+        }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
-
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-            >
-              {saving ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Save className="size-3.5" />
-              )}
-              <span>Guardar</span>
-            </Button>
-          </div>
+          <WeekNavigator
+            weekStart={weekStart}
+            onWeekChange={setWeekStart}
+            className="w-full md:w-auto"
+          />
         }
       />
 

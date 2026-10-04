@@ -467,24 +467,29 @@ export function SlotAdminCalendar({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Gestão de horários & slots"
+        viewModeToggle={
+          <Button
+            size="sm"
+            onClick={handleSaveSlots}
+            disabled={!hasChanges || saving}
+            className="h-8 gap-1.5 px-2.5 md:px-3 text-xs shrink-0"
+            title="Guardar alterações"
+            aria-label="Guardar alterações"
+          >
+            {saving ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
+            <span className="hidden md:inline">Guardar</span>
+          </Button>
+        }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
-
-            <Button
-              size="sm"
-              onClick={handleSaveSlots}
-              disabled={!hasChanges || saving}
-              className="gap-1.5"
-            >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}
-              <span>Guardar</span>
-            </Button>
-          </div>
+          <WeekNavigator
+            weekStart={weekStart}
+            onWeekChange={setWeekStart}
+            className="w-full md:w-auto"
+          />
         }
       />
 
