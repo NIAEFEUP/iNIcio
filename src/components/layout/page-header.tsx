@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,9 +50,20 @@ export function PageHeader({
   inlineOnMobile,
 }: PageHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const sidebar = useSafeSidebar();
-  const canShowTrigger = showSidebarTrigger && Boolean(sidebar);
-  const hasBack = Boolean(backHref || onBack || showBack);
+
+  const isImmersivePage = pathname
+    ? /^\/candidate\/[^/]+\/interview(\/.*)?$/.test(pathname) ||
+      /^\/dynamic\/[^/]+(\/.*)?$/.test(pathname)
+    : false;
+
+  const canShowTrigger =
+    !isImmersivePage && showSidebarTrigger && Boolean(sidebar);
+  const hasBack =
+    !isImmersivePage &&
+    showBack !== false &&
+    Boolean(backHref || onBack || showBack);
 
   const handleBack = React.useCallback(() => {
     if (onBack) {
@@ -133,7 +144,7 @@ export function PageHeader({
             <div className="min-w-0 truncate">{title}</div>
           )}
           {viewModeToggle && (
-            <div className="ml-auto flex shrink-0 items-center md:ml-0 [&:has(>.hidden:only-child)]:hidden max-md:[&_button>span]:hidden max-md:[&_button]:px-2">
+            <div className="ml-auto flex shrink-0 items-center md:ml-0 empty:hidden max-md:[&:has(>.hidden:only-child)]:hidden max-md:[&_button>span]:hidden max-md:[&_button]:px-2">
               {viewModeToggle}
             </div>
           )}

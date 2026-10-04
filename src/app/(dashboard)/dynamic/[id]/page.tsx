@@ -6,7 +6,7 @@ import { useSWRConfig } from "swr";
 import { Lock, Unlock, Loader2 } from "lucide-react";
 
 import CandidateComments from "@/components/candidate/page/candidate-comments";
-import { CandidateModularInfo } from "@/components/candidate/card";
+import { DynamicCandidateCard } from "@/components/candidate/card";
 import CommentFrame from "@/components/comments/comment-frame";
 import { RealTimeEditor } from "@/components/editor/real-time-editor-dynamic-import";
 import { Badge } from "@/components/ui/badge";
@@ -98,13 +98,40 @@ export default function DynamicPage() {
     candidateId: string,
     classification: string,
   ) => {
+    const nextClassification =
+      classification === "none" ? null : classification;
+
     await classifyDynamic(candidateId, classification);
+
     mutate(
       candidateKey(candidateId, recruitmentId),
       (current: any) =>
         current
-          ? { ...current, dynamicClassification: classification }
+          ? { ...current, dynamicClassification: nextClassification }
           : current,
+      { revalidate: false },
+    );
+
+    mutate(
+      dynamicKey(dynamicId, recruitmentId, user?.id),
+      (current: any) => {
+        if (!current?.dynamic?.candidates) return current;
+        return {
+          ...current,
+          dynamic: {
+            ...current.dynamic,
+            candidates: current.dynamic.candidates.map((c: any) =>
+              c.id === candidateId
+                ? {
+                    ...c,
+                    dynamicClassification:
+                      classification === "none" ? "none" : classification,
+                  }
+                : c,
+            ),
+          },
+        };
+      },
       { revalidate: false },
     );
   };
@@ -148,9 +175,12 @@ export default function DynamicPage() {
 
   return (
     <EvaluationLayout
+      className="h-full flex-1 min-h-0"
+      sidebarClassName="space-y-0 lg:h-full lg:flex lg:flex-col min-h-0"
       header={
         <PageHeader
-          backHref="/candidates"
+          showSidebarTrigger={false}
+          showBack={false}
           title={
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -192,29 +222,41 @@ export default function DynamicPage() {
         />
       }
       sidebar={
-        <div className="space-y-2">
-          <div className="flex flex-col gap-4">
-            {dynamic.candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className="bg-card border border-border p-3 rounded-2xl"
+        <div className="flex flex-col gap-2.5 h-full min-h-0 flex-1">
+          <div className="flex items-center justify-between px-1 h-9 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Candidatos
+              </span>
+              <Badge
+                variant="outline"
+                className="h-5 px-1.5 py-0 text-[11px] font-medium border-border/60"
               >
-                <CandidateModularInfo
-                  candidate={candidate}
-                  friends={candidate.knownRecruiters}
-                  authUser={user ? { id: user.id } : null}
-                  recruitmentId={recruitmentId}
-                  showKnownCheckbox={false}
-                  showContactInfo={false}
-                  showLinks={false}
-                  showDepartmentInterests={false}
-                  showResultVoting={false}
-                  onClassifyDynamic={(value) =>
-                    handleClassifyDynamic(candidate.id, value)
-                  }
-                  readOnlyInterview={true}
-                />
-              </div>
+                {dynamic.candidates.length}
+              </Badge>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {
+                dynamic.candidates.filter(
+                  (c) =>
+                    c.dynamicClassification &&
+                    c.dynamicClassification !== "none",
+                ).length
+              }
+              /{dynamic.candidates.length} classificados
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
+            {dynamic.candidates.map((candidate) => (
+              <DynamicCandidateCard
+                key={candidate.id}
+                candidate={candidate}
+                candidateCount={dynamic.candidates.length}
+                onClassifyDynamic={(value) =>
+                  handleClassifyDynamic(candidate.id, value)
+                }
+              />
             ))}
           </div>
         </div>

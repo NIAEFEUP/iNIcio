@@ -50,8 +50,11 @@ import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avata
 import { setUsersViewMode } from "@/cookies/set";
 import { toast } from "@/components/ui/toast";
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog";
+import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
 import type { AdminUserItem } from "@/lib/admin";
 import type { Recruitment } from "@/lib/db";
+
+const USER_FILTER_KEYS = ["candidateRecruitmentIds", "recruiterRecruitmentIds"];
 
 interface Props {
   initialViewMode?: ViewMode;
@@ -74,6 +77,7 @@ interface Props {
     success: boolean;
     error?: string;
   }>;
+  initialFilters?: ColumnFiltersState;
 }
 
 function formatDate(dateStr?: string) {
@@ -97,6 +101,7 @@ export default function UserAdminClient({
   updateUser,
   deleteUser,
   sendPasswordResetEmail,
+  initialFilters = [],
 }: Props) {
   const [list, setList] = useState<AdminUserItem[]>(users || []);
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
@@ -108,7 +113,10 @@ export default function UserAdminClient({
     { id: "createdAt", desc: true },
   ]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useTableUrlFilters({
+    filterKeys: USER_FILTER_KEYS,
+    initialFilters,
+  });
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     candidateRecruitmentIds: false,
     recruiterRecruitmentIds: false,

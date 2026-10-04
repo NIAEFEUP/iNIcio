@@ -155,7 +155,8 @@ export default function InterviewPage() {
     <EvaluationLayout
       header={
         <PageHeader
-          backHref={`/candidate/${id}`}
+          showSidebarTrigger={false}
+          showBack={false}
           title={candidate.name}
           inlineOnMobile
           viewModeToggle={

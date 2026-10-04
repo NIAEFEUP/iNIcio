@@ -1,6 +1,10 @@
 "use client";
 
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
+
+import { getCandidatesReturnUrl } from "@/lib/candidate-scroll";
 
 import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
 import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
@@ -68,6 +72,18 @@ export function CandidateDetailClient({
   const { user } = useAuth();
   const { mutate } = useSWRConfig();
   const { recruitmentId } = useRecruitment();
+  const router = useRouter();
+
+  const handleBack = useCallback(() => {
+    const returnUrl = getCandidatesReturnUrl();
+    if (returnUrl) {
+      router.push(returnUrl);
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/candidates");
+    }
+  }, [router]);
 
   if (isLoading && !candidate) {
     return <PageLoading />;
@@ -106,7 +122,8 @@ export function CandidateDetailClient({
     <EvaluationLayout
       header={
         <PageHeader
-          backHref="/candidates"
+          showBack={true}
+          onBack={handleBack}
           title={candidate.name}
           inlineOnMobile
           viewModeToggle={

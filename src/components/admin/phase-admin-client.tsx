@@ -20,6 +20,7 @@ import {
 import { GridView } from "@/components/data-table/grid-view";
 import { GridCard } from "@/components/data-table/grid-card";
 import { setPhasesViewMode } from "@/cookies/set";
+import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,8 @@ const ROLE_LABELS: Record<string, string> = {
   recruiter: "Recrutador",
 };
 
+const PHASE_FILTER_KEYS = ["state", "role"];
+
 interface PhaseAdminClientProps {
   initialViewMode?: ViewMode;
   phases: RecruitmentPhase[];
@@ -94,6 +97,7 @@ interface PhaseAdminClientProps {
   editPhase: (p: RecruitmentPhase) => Promise<void>;
   deletePhase: (id: number) => Promise<void>;
   defaultRecruitmentId?: number;
+  initialFilters?: ColumnFiltersState;
 }
 
 export default function PhaseAdminClient({
@@ -103,6 +107,7 @@ export default function PhaseAdminClient({
   editPhase,
   deletePhase,
   defaultRecruitmentId,
+  initialFilters = [],
 }: PhaseAdminClientProps) {
   const [phasesState, setPhasesState] = useState<RecruitmentPhase[]>(phases);
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
@@ -126,7 +131,10 @@ export default function PhaseAdminClient({
   });
 
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useTableUrlFilters({
+    filterKeys: PHASE_FILTER_KEYS,
+    initialFilters,
+  });
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);

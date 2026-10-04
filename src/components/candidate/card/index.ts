@@ -24,3 +24,6 @@ export type {
 
 export { CandidateModularInfo } from "./candidate-modular-info";
 export type { CandidateModularInfoProps } from "./candidate-modular-info";
+
+export { DynamicCandidateCard } from "./dynamic-candidate-card";
+export type { DynamicCandidateCardProps } from "./dynamic-candidate-card";
