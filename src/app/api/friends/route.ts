@@ -87,6 +87,19 @@ export async function PUT(req: Request) {
   }
 
   const known = await db.transaction(async (tx) => {
+    // Serialize concurrent toggles for the same candidate so the
+    // find-then-write below cannot race with another request.
+    await tx
+      .select({ userId: candidate.userId })
+      .from(candidate)
+      .where(
+        and(
+          eq(candidate.userId, candidateId),
+          eq(candidate.recruitmentId, targetRecruitmentId),
+        ),
+      )
+      .for("update");
+
     const existing = await tx.query.recruiterToCandidate.findFirst({
       where: and(
         eq(recruiterToCandidate.recruiterId, session.user.id),
