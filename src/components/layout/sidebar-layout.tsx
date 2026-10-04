@@ -8,6 +8,7 @@ import { RecruitmentProvider } from "@/lib/contexts/recruitment-context";
 import type { User as UserType } from "@/hooks/use-auth";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export interface SidebarLayoutProps {
   children?: React.ReactNode;
@@ -69,8 +70,18 @@ export function SidebarLayout({
             recruitments={recruitments}
           />
         )}
-        <SidebarInset>
-          <div className="flex-1 p-6 py-4">{children}</div>
+        <SidebarInset
+          className={cn(isImmersivePage && "h-dvh max-h-dvh overflow-hidden")}
+        >
+          <div
+            className={cn(
+              "flex-1 p-6 py-4",
+              isImmersivePage &&
+                "flex flex-col h-full min-h-0 overflow-hidden p-4 sm:p-6",
+            )}
+          >
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </RecruitmentProvider>
