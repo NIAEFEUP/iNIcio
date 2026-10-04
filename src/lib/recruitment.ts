@@ -441,10 +441,13 @@ export async function addRecruiterToRecruitment(
   userId: string,
   recruitmentId: number,
 ) {
-  await db
-    .insert(usersToRecruitments)
-    .values({ userId, recruitmentId })
-    .onConflictDoNothing();
+  await db.transaction(async (tx) => {
+    await tx.insert(recruiter).values({ userId }).onConflictDoNothing();
+    await tx
+      .insert(usersToRecruitments)
+      .values({ userId, recruitmentId })
+      .onConflictDoNothing();
+  });
 }
 
 export async function removeRecruiterFromRecruitment(
