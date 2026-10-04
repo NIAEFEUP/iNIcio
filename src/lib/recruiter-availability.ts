@@ -62,56 +62,59 @@ export async function isRecruiterAvailableForSlot(
 ): Promise<boolean> {
   const slotEnd = new Date(slotStart.getTime() + slotDuration * 60_000);
 
-  const [availability, interviewConflict, dynamicConflict] = await Promise.all([
-    client
-      .select({ id: recruiterAvailability.id })
-      .from(recruiterAvailability)
-      .where(
-        availabilityOverlapCondition(
-          slotStart,
-          slotEnd,
-          recruitmentId,
-          recruiterId,
-        ),
-      )
-      .limit(1),
-    client
-      .select({ id: interview.id })
-      .from(recruiterToInterview)
-      .innerJoin(interview, eq(interview.id, recruiterToInterview.interviewId))
-      .innerJoin(slot, eq(slot.id, interview.slot))
-      .where(
-        and(
-          eq(recruiterToInterview.recruiterId, recruiterId),
-          slotOverlapCondition(slotStart, slotEnd),
-          options.excludeInterviewId !== undefined
-            ? ne(interview.id, options.excludeInterviewId)
-            : undefined,
-        ),
-      )
-      .limit(1),
-    client
-      .select({ id: dynamic.id })
-      .from(recruiterToDynamic)
-      .innerJoin(dynamic, eq(dynamic.id, recruiterToDynamic.dynamicId))
-      .innerJoin(slot, eq(slot.id, dynamic.slot))
-      .where(
-        and(
-          eq(recruiterToDynamic.recruiterId, recruiterId),
-          slotOverlapCondition(slotStart, slotEnd),
-          options.excludeDynamicId !== undefined
-            ? ne(dynamic.id, options.excludeDynamicId)
-            : undefined,
-        ),
-      )
-      .limit(1),
-  ]);
+  // Queries run sequentially: a transaction client cannot execute two queries
+  // concurrently (deprecated by `pg`), and a missing availability already
+  // short-circuits the conflict checks.
+  const availability = await client
+    .select({ id: recruiterAvailability.id })
+    .from(recruiterAvailability)
+    .where(
+      availabilityOverlapCondition(
+        slotStart,
+        slotEnd,
+        recruitmentId,
+        recruiterId,
+      ),
+    )
+    .limit(1);
 
-  return (
-    availability.length > 0 &&
-    interviewConflict.length === 0 &&
-    dynamicConflict.length === 0
-  );
+  if (availability.length === 0) return false;
+
+  const interviewConflict = await client
+    .select({ id: interview.id })
+    .from(recruiterToInterview)
+    .innerJoin(interview, eq(interview.id, recruiterToInterview.interviewId))
+    .innerJoin(slot, eq(slot.id, interview.slot))
+    .where(
+      and(
+        eq(recruiterToInterview.recruiterId, recruiterId),
+        slotOverlapCondition(slotStart, slotEnd),
+        options.excludeInterviewId !== undefined
+          ? ne(interview.id, options.excludeInterviewId)
+          : undefined,
+      ),
+    )
+    .limit(1);
+
+  if (interviewConflict.length > 0) return false;
+
+  const dynamicConflict = await client
+    .select({ id: dynamic.id })
+    .from(recruiterToDynamic)
+    .innerJoin(dynamic, eq(dynamic.id, recruiterToDynamic.dynamicId))
+    .innerJoin(slot, eq(slot.id, dynamic.slot))
+    .where(
+      and(
+        eq(recruiterToDynamic.recruiterId, recruiterId),
+        slotOverlapCondition(slotStart, slotEnd),
+        options.excludeDynamicId !== undefined
+          ? ne(dynamic.id, options.excludeDynamicId)
+          : undefined,
+      ),
+    )
+    .limit(1);
+
+  return dynamicConflict.length === 0;
 }
 
 export interface RemovedWindow {
@@ -151,40 +154,41 @@ export async function pruneUnavailableAssignments(
 ): Promise<UnassignedSession[]> {
   if (removedWindows.length === 0) return [];
 
-  const [interviewRows, dynamicRows] = await Promise.all([
-    client
-      .select({
-        id: interview.id,
-        slotStart: slot.start,
-        slotDuration: slot.duration,
-        candidateName: user.name,
-      })
-      .from(recruiterToInterview)
-      .innerJoin(interview, eq(interview.id, recruiterToInterview.interviewId))
-      .innerJoin(slot, eq(slot.id, interview.slot))
-      .innerJoin(user, eq(user.id, interview.candidateId))
-      .where(
-        and(
-          eq(recruiterToInterview.recruiterId, recruiterId),
-          eq(interview.recruitmentId, recruitmentId),
-        ),
+  // Queries run sequentially: a transaction client cannot execute two queries
+  // concurrently (deprecated by `pg`).
+  const interviewRows = await client
+    .select({
+      id: interview.id,
+      slotStart: slot.start,
+      slotDuration: slot.duration,
+      candidateName: user.name,
+    })
+    .from(recruiterToInterview)
+    .innerJoin(interview, eq(interview.id, recruiterToInterview.interviewId))
+    .innerJoin(slot, eq(slot.id, interview.slot))
+    .innerJoin(user, eq(user.id, interview.candidateId))
+    .where(
+      and(
+        eq(recruiterToInterview.recruiterId, recruiterId),
+        eq(interview.recruitmentId, recruitmentId),
       ),
-    client
-      .select({
-        id: dynamic.id,
-        slotStart: slot.start,
-        slotDuration: slot.duration,
-      })
-      .from(recruiterToDynamic)
-      .innerJoin(dynamic, eq(dynamic.id, recruiterToDynamic.dynamicId))
-      .innerJoin(slot, eq(slot.id, dynamic.slot))
-      .where(
-        and(
-          eq(recruiterToDynamic.recruiterId, recruiterId),
-          eq(dynamic.recruitmentId, recruitmentId),
-        ),
+    );
+
+  const dynamicRows = await client
+    .select({
+      id: dynamic.id,
+      slotStart: slot.start,
+      slotDuration: slot.duration,
+    })
+    .from(recruiterToDynamic)
+    .innerJoin(dynamic, eq(dynamic.id, recruiterToDynamic.dynamicId))
+    .innerJoin(slot, eq(slot.id, dynamic.slot))
+    .where(
+      and(
+        eq(recruiterToDynamic.recruiterId, recruiterId),
+        eq(dynamic.recruitmentId, recruitmentId),
       ),
-  ]);
+    );
 
   const dynamicIds = dynamicRows.map((row) => row.id);
   const dynamicCandidateRows =
