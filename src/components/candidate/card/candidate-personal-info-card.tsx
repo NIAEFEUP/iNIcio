@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { History, User } from "lucide-react";
+import { useSWRConfig } from "swr";
+import { candidateKey } from "@/lib/hooks/candidates/use-candidate-data";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -49,6 +51,7 @@ export function CandidatePersonalInfoCard({
   showKnownCheckbox = true,
   className,
 }: CandidatePersonalInfoCardProps) {
+  const { mutate } = useSWRConfig();
   const candidateFriends = candidate.knownRecruiters ?? friends;
 
   const isKnownInitially = candidateFriends.some(
@@ -87,7 +90,15 @@ export function CandidatePersonalInfoCard({
       });
       if (!response.ok) {
         setKnown(!nextKnown);
+        return;
       }
+
+      const data = await response.json().catch(() => null);
+      if (data && typeof data.known === "boolean") {
+        setKnown(data.known);
+      }
+
+      mutate(candidateKey(candidate.id, recruitmentId));
     } catch (err) {
       console.error(err);
       setKnown(!nextKnown);
