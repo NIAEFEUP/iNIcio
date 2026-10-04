@@ -10,7 +10,6 @@ import {
   Send,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -43,25 +42,7 @@ import {
   GMAIL_URL_LENGTH_WARNING,
   type EmailTemplateType,
 } from "@/lib/email-composer";
-import type { EmailRecipient } from "@/lib/email-recipients";
-import { getStableImageUrl } from "@/lib/stable-image-url";
-import { cn, getInitials } from "@/lib/utils";
-
-/** Short right-aligned summary of what is still missing for this recipient. */
-function recipientStatus(recipient: EmailRecipient): string {
-  if (!recipient.isCandidate) {
-    return `conta de ${new Date(recipient.accountCreatedAt).getFullYear()}`;
-  }
-
-  return (
-    [
-      recipient.missingInterview ? "sem entrevista" : null,
-      recipient.missingDynamic ? "sem dinâmica" : null,
-    ]
-      .filter(Boolean)
-      .join(" · ") || "sessões marcadas"
-  );
-}
+import { cn } from "@/lib/utils";
 
 interface EmailComposerDialogContentProps {
   recruitmentId?: number;
@@ -71,7 +52,8 @@ interface EmailComposerDialogContentProps {
  * The "Enviar emails" dialog body. It expects a `Dialog` root above it, which
  * the sidebar button owns so the same trigger can also host the tooltip.
  *
- * Two columns: the email itself on the left, the recipient picker on the right.
+ * Two columns on desktop: the email itself on the left, the recipient picker on the right.
+ * On mobile, tabbed between message and recipients for comfortable touch usage.
  */
 export function EmailComposerDialogContent({
   recruitmentId,
@@ -80,6 +62,9 @@ export function EmailComposerDialogContent({
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
+  const [mobileTab, setMobileTab] = React.useState<"compose" | "recipients">(
+    "compose",
+  );
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [activeType, setActiveType] = React.useState<EmailTemplateType>("all");
@@ -208,17 +193,48 @@ export function EmailComposerDialogContent({
   };
 
   return (
-    <DialogContent className="sm:max-w-3xl sm:h-[600px] flex flex-col">
-      <DialogHeader>
+    <DialogContent className="flex flex-col w-[calc(100%-2rem)] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl h-[85vh] md:h-[620px] lg:h-[640px] max-h-[90vh]">
+      <DialogHeader className="shrink-0">
         <DialogTitle>Enviar email</DialogTitle>
       </DialogHeader>
 
+      {/* Mobile Tab Switcher */}
+      {!isLoading && !loadError && (
+        <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg shrink-0 md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileTab("compose")}
+            className={cn(
+              "py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer text-center",
+              mobileTab === "compose"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Mensagem
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("recipients")}
+            className={cn(
+              "py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer text-center",
+              mobileTab === "recipients"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Destinatários ({selectedIds.size})
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground flex-1">
-          <Loader2 className="size-4 animate-spin" />A carregar candidatos...
+        <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground flex-1 min-h-0">
+          <Loader2 className="size-4 animate-spin" />
+          <span>A carregar candidatos...</span>
         </div>
       ) : loadError ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-12 text-center flex-1">
+        <div className="flex flex-col items-center justify-center gap-3 text-center flex-1 min-h-0">
           <AlertTriangle className="size-6 text-destructive" />
           <p className="text-sm text-muted-foreground">{loadError}</p>
           <Button type="button" variant="outline" onClick={() => void load()}>
@@ -226,10 +242,15 @@ export function EmailComposerDialogContent({
           </Button>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] flex-1 min-h-0">
+        <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-6 flex-1 min-h-0">
           {/* Left: the email itself */}
-          <div className="flex flex-col gap-4 min-h-0">
-            <div className="grid gap-1.5">
+          <div
+            className={cn(
+              "flex flex-col gap-4 min-h-0 flex-1",
+              mobileTab !== "compose" && "hidden md:flex",
+            )}
+          >
+            <div className="grid gap-1.5 shrink-0">
               <Label htmlFor="email-subject">Assunto</Label>
               <Input
                 id="email-subject"
@@ -239,14 +260,14 @@ export function EmailComposerDialogContent({
               />
             </div>
 
-            <div className="grid gap-1.5 flex-1 min-h-0">
+            <div className="flex flex-col gap-1.5 flex-1 min-h-0">
               <Label htmlFor="email-body">Corpo</Label>
               <Textarea
                 id="email-body"
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
                 placeholder="Corpo do email"
-                className="resize-none font-mono text-xs h-full"
+                className="flex-1 min-h-0 resize-none font-mono text-xs field-sizing-fixed overflow-y-auto"
               />
             </div>
           </div>
@@ -254,28 +275,35 @@ export function EmailComposerDialogContent({
           <Separator orientation="vertical" className="hidden md:block" />
 
           {/* Right: who to send to */}
-          <div className="flex flex-col gap-2 min-h-0">
-            <Select
-              items={EMAIL_TEMPLATE_ITEMS}
-              value={activeType}
-              onValueChange={(value) =>
-                applyQuickSend(value as EmailTemplateType)
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EMAIL_TEMPLATE_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {EMAIL_TEMPLATE_LABELS[type]} (
-                    {data?.audiences[type].length ?? 0})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div
+            className={cn(
+              "flex flex-col gap-2 min-h-0 flex-1",
+              mobileTab !== "recipients" && "hidden md:flex",
+            )}
+          >
+            <div className="shrink-0">
+              <Select
+                items={EMAIL_TEMPLATE_ITEMS}
+                value={activeType}
+                onValueChange={(value) =>
+                  applyQuickSend(value as EmailTemplateType)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EMAIL_TEMPLATE_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {EMAIL_TEMPLATE_LABELS[type]} (
+                      {data?.audiences[type].length ?? 0})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
                 <Input
@@ -296,9 +324,9 @@ export function EmailComposerDialogContent({
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-0.5 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 rounded-md border border-border/40 p-1">
               {visibleRecipients.length === 0 ? (
-                <div className="py-6 text-center text-xs text-muted-foreground">
+                <div className="flex h-full min-h-36 items-center justify-center p-6 text-center text-xs text-muted-foreground">
                   {search
                     ? "Nenhum utilizador encontrado"
                     : "Nenhum candidato neste recrutamento"}
@@ -306,7 +334,6 @@ export function EmailComposerDialogContent({
               ) : (
                 visibleRecipients.map((recipient) => {
                   const isSelected = selectedIds.has(recipient.id);
-                  const picture = getStableImageUrl(recipient.image);
 
                   return (
                     <div
@@ -321,26 +348,13 @@ export function EmailComposerDialogContent({
                     >
                       <Checkbox
                         checked={isSelected}
-                        className="size-4 pointer-events-none"
+                        className="size-4 shrink-0 pointer-events-none"
                       />
-                      <Avatar className="h-6 w-6 rounded-sm shrink-0 after:rounded-sm">
-                        {picture ? (
-                          <AvatarImage src={picture} alt={recipient.name} />
-                        ) : null}
-                        <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[10px] font-semibold">
-                          {getInitials(recipient.name)}
-                        </AvatarFallback>
-                      </Avatar>
                       <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-xs truncate">
-                            {recipient.name || "Sem nome"}
-                          </span>
-                          <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
-                            {recipientStatus(recipient)}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground truncate">
+                        <span className="font-medium text-xs truncate">
+                          {recipient.name || "Sem nome"}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground truncate">
                           {recipient.email}
                         </span>
                       </div>
@@ -350,22 +364,23 @@ export function EmailComposerDialogContent({
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground shrink-0 pt-0.5">
               {selectedIds.size} de {recipients.length} selecionados
             </p>
           </div>
         </div>
       )}
 
-      <DialogFooter className="sm:items-center sm:justify-between mt-auto">
+      <DialogFooter className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Mail className="size-3.5" />
+          <Mail className="size-3.5 shrink-0" />
           {selectedRecipients.length} em BCC
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
+            className="flex-1 sm:flex-initial"
             disabled={selectedRecipients.length === 0}
             onClick={() => void handleCopyUrl()}
           >
@@ -374,6 +389,7 @@ export function EmailComposerDialogContent({
           </Button>
           <Button
             type="button"
+            className="flex-1 sm:flex-initial"
             disabled={selectedRecipients.length === 0}
             onClick={() => {
               window.open(composeUrl, "_blank", "noopener,noreferrer");
