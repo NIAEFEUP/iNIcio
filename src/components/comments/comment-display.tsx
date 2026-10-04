@@ -61,12 +61,14 @@ export function CommentDisplay({
     comment.comment.authorId === currentUserId,
   );
 
+  const hasVotesWidget = Boolean(
+    currentUserId && onVoteComment && comment.comment?.id != null,
+  );
+
+  const isOwnComment = comment.comment?.authorId === currentUserId;
+
   const canVote = Boolean(
-    !isEditing &&
-    currentUserId &&
-    onVoteComment &&
-    comment.comment?.authorId !== currentUserId &&
-    !isAdmin,
+    hasVotesWidget && !isEditing && !isOwnComment && !isAdmin,
   );
 
   const closeEditor = () => {
@@ -199,12 +201,20 @@ export function CommentDisplay({
               <ReadOnlyBlocks blocks={comment.comment.content as Array<any>} />
             </div>
           )}
-          {canVote && (
-            <div className="flex items-center gap-1 pt-1">
+          {hasVotesWidget && (
+            <div
+              className="flex items-center gap-1 pt-1"
+              title={
+                isOwnComment
+                  ? "Não podes votar no teu próprio comentário."
+                  : undefined
+              }
+            >
               <CommentVoteButtons
                 upvotes={comment.upvotes}
                 downvotes={comment.downvotes}
                 userVote={comment.userVote}
+                disabled={!canVote}
                 onVote={(value) => {
                   if (comment.comment?.id != null) {
                     return onVoteComment(comment.comment.id, value);

@@ -10,6 +10,7 @@ interface CommentVoteButtonsProps {
   downvotes: number;
   userVote: VoteValue;
   onVote: (value: VoteValue) => void | Promise<void>;
+  disabled?: boolean;
 }
 
 export function CommentVoteButtons({
@@ -17,6 +18,7 @@ export function CommentVoteButtons({
   downvotes,
   userVote,
   onVote,
+  disabled = false,
 }: CommentVoteButtonsProps) {
   // One vote request per comment at a time: while a request is in flight,
   // further clicks are ignored so a stale response can never overwrite a
@@ -25,7 +27,7 @@ export function CommentVoteButtons({
   const [isPending, setIsPending] = useState(false);
 
   const handleVote = (value: VoteValue) => {
-    if (pendingRef.current) return;
+    if (disabled || pendingRef.current) return;
 
     pendingRef.current = true;
     setIsPending(true);
@@ -39,7 +41,7 @@ export function CommentVoteButtons({
     <div className="flex items-center gap-1">
       <Toggle
         aria-label="Upvote"
-        disabled={isPending}
+        disabled={disabled || isPending}
         pressed={userVote === 1}
         onPressedChange={(pressed) => handleVote(pressed ? 1 : null)}
         size="sm"
@@ -49,7 +51,7 @@ export function CommentVoteButtons({
       </Toggle>
       <Toggle
         aria-label="Downvote"
-        disabled={isPending}
+        disabled={disabled || isPending}
         pressed={userVote === -1}
         onPressedChange={(pressed) => handleVote(pressed ? -1 : null)}
         size="sm"
