@@ -51,6 +51,22 @@ import {
   availableCourses,
   availableCurricularYears,
 } from "@/lib/constants";
+import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
+import {
+  saveCandidatesScrollPosition,
+  useCandidatesScrollRestoration,
+} from "@/lib/candidate-scroll";
+
+const CANDIDATE_FILTER_KEYS = [
+  "course",
+  "year",
+  "previousApplications",
+  "departments",
+  "interviewClassification",
+  "dynamicClassification",
+  "decision",
+  "scheduling",
+];
 
 interface CandidatesClientProps {
   authUser?: { id?: string; isAdmin?: boolean } | null;
@@ -58,6 +74,7 @@ interface CandidatesClientProps {
   availableDepartments: Array<string>;
   initialViewMode?: ViewMode;
   initialScheduling?: string[];
+  initialFilters?: ColumnFiltersState;
 }
 
 const PREVIOUS_APPLICATION_OPTIONS = [
@@ -95,6 +112,7 @@ export default function CandidatesClient({
   availableDepartments,
   initialViewMode = "grid",
   initialScheduling = [],
+  initialFilters = [],
 }: CandidatesClientProps) {
   const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
   const setViewMode = (mode: ViewMode) => {
@@ -102,11 +120,24 @@ export default function CandidatesClient({
     setCandidatesViewMode(mode);
   };
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
-    initialScheduling.length > 0
-      ? [{ id: "scheduling", value: initialScheduling }]
-      : [],
-  );
+
+  const effectiveInitialFilters = useMemo(() => {
+    if (initialFilters && initialFilters.length > 0) {
+      return initialFilters;
+    }
+    if (initialScheduling && initialScheduling.length > 0) {
+      return [{ id: "scheduling", value: initialScheduling }];
+    }
+    return [];
+  }, [initialFilters, initialScheduling]);
+
+  const [columnFilters, setColumnFilters] = useTableUrlFilters({
+    filterKeys: CANDIDATE_FILTER_KEYS,
+    initialFilters: effectiveInitialFilters,
+  });
+
+  useCandidatesScrollRestoration();
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     previousApplications: false,
     departments: false,
@@ -157,6 +188,7 @@ export default function CandidatesClient({
                 <Link
                   href={`/candidate/${row.original.id}`}
                   className="transition-colors hover:text-primary"
+                  onClick={saveCandidatesScrollPosition}
                 >
                   {name}
                 </Link>
@@ -540,8 +572,15 @@ export default function CandidatesClient({
     return render;
   }, [memoizedAuthUser]);
 
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = (e.target as HTMLElement).closest('a[href^="/candidate/"]');
+    if (target) {
+      saveCandidatesScrollPosition();
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" onClickCapture={handleContainerClick}>
       <PageHeader
         title="Candidatos"
         viewModeToggle={

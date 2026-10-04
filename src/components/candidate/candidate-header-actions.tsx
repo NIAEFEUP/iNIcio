@@ -18,10 +18,18 @@ export function CandidateHeaderActions({
   hasInterview,
   mobile,
 }: CandidateHeaderActionsProps) {
+  const showDynamic = currentPage !== "dynamic" && Boolean(dynamicId);
+  const showInterview =
+    currentPage !== "interview" && Boolean(candidateId && hasInterview);
+
+  if (!showDynamic && !showInterview) {
+    return null;
+  }
+
   if (mobile) {
     return (
       <div className="flex w-full flex-col gap-2 md:hidden">
-        {currentPage !== "dynamic" && dynamicId && (
+        {showDynamic && (
           <Button
             nativeButton={false}
             variant="secondary"
@@ -33,7 +41,7 @@ export function CandidateHeaderActions({
           </Button>
         )}
 
-        {currentPage !== "interview" && candidateId && hasInterview && (
+        {showInterview && (
           <Button
             nativeButton={false}
             variant="secondary"
@@ -55,7 +63,7 @@ export function CandidateHeaderActions({
 
   return (
     <div className="hidden items-center gap-2 md:flex">
-      {currentPage !== "dynamic" && dynamicId && (
+      {showDynamic && (
         <Button
           nativeButton={false}
           variant="secondary"
@@ -67,7 +75,7 @@ export function CandidateHeaderActions({
         </Button>
       )}
 
-      {currentPage !== "interview" && candidateId && hasInterview && (
+      {showInterview && (
         <Button
           nativeButton={false}
           variant="secondary"

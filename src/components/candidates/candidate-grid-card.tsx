@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn, getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
+import { saveCandidatesScrollPosition } from "@/lib/candidate-scroll";
 import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
 import { ClassificationText, DecisionText } from "./candidate-text";
@@ -240,6 +241,7 @@ function CandidateGridCard({
           <Link
             href={`/candidate/${candidate.id}`}
             className="min-w-0 truncate transition-colors hover:text-primary"
+            onClick={saveCandidatesScrollPosition}
           >
             {candidate.name || "Sem nome"}
           </Link>

@@ -15,13 +15,40 @@ export const metadata = {
   description: "Gestão de contas e perfis de utilizadores da plataforma",
 };
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    candidateRecruitmentIds?: string;
+    recruiterRecruitmentIds?: string;
+  }>;
+}) {
   const currentAdmin = await requireAdminSession();
   const cookieStore = await cookies();
   const initialViewMode =
     cookieStore.get(USERS_VIEW_MODE_COOKIE_NAME)?.value === "grid"
       ? "grid"
       : "list";
+
+  const params = await searchParams;
+  const parseParam = (val?: string) =>
+    val
+      ? val
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean)
+      : [];
+
+  const initialFilters = [
+    {
+      id: "candidateRecruitmentIds",
+      value: parseParam(params.candidateRecruitmentIds),
+    },
+    {
+      id: "recruiterRecruitmentIds",
+      value: parseParam(params.recruiterRecruitmentIds),
+    },
+  ].filter((f) => (f.value as string[]).length > 0);
 
   const [users, recruitments] = await Promise.all([
     getAllAdminUsers(),
@@ -115,6 +142,7 @@ export default async function AdminUsersPage() {
       updateUser={updateUserAction}
       deleteUser={deleteUserAction}
       sendPasswordResetEmail={sendResetPasswordEmailAction}
+      initialFilters={initialFilters}
     />
   );
 }

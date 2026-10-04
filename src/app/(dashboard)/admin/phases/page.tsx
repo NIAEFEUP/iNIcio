@@ -32,6 +32,19 @@ export default async function RecruitmentAdmin({ searchParams }: any) {
 
   const recruitmentPhases = await getAllRecruitmentPhases(recruitmentId);
 
+  const parseParam = (val?: string) =>
+    val
+      ? val
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean)
+      : [];
+
+  const initialFilters = [
+    { id: "state", value: parseParam(params.state) },
+    { id: "role", value: parseParam(params.role) },
+  ].filter((f) => (f.value as string[]).length > 0);
+
   const add = async (phase: RecruitmentPhase) => {
     "use server";
     await requireAdminSession();
@@ -65,6 +78,7 @@ export default async function RecruitmentAdmin({ searchParams }: any) {
       editPhase={edit}
       deletePhase={remove}
       defaultRecruitmentId={recruitmentId}
+      initialFilters={initialFilters}
     />
   );
 }

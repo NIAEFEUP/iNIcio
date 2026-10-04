@@ -150,7 +150,8 @@ export default function DynamicPage() {
     <EvaluationLayout
       header={
         <PageHeader
-          backHref="/candidates"
+          showSidebarTrigger={false}
+          showBack={false}
           title={
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">

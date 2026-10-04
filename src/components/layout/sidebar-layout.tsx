@@ -48,21 +48,27 @@ export function SidebarLayout({
   const activeLogout = onLogout ?? auth.logout;
   const activePath = currentPath ?? pathname ?? "";
 
+  const isImmersivePage =
+    /^\/candidate\/[^/]+\/interview(\/.*)?$/.test(activePath) ||
+    /^\/dynamic\/[^/]+(\/.*)?$/.test(activePath);
+
   return (
     <RecruitmentProvider
       initialRecruitmentId={selectedRecruitmentId}
       onSelectRecruitment={onSelectRecruitment}
     >
       <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar
-          user={activeUser}
-          isAuthenticated={activeIsAuthenticated}
-          isAdmin={activeIsAdmin}
-          isRecruiter={activeIsRecruiter}
-          onLogout={activeLogout}
-          currentPath={activePath}
-          recruitments={recruitments}
-        />
+        {!isImmersivePage && (
+          <AppSidebar
+            user={activeUser}
+            isAuthenticated={activeIsAuthenticated}
+            isAdmin={activeIsAdmin}
+            isRecruiter={activeIsRecruiter}
+            onLogout={activeLogout}
+            currentPath={activePath}
+            recruitments={recruitments}
+          />
+        )}
         <SidebarInset>
           <div className="flex-1 p-6 py-4">{children}</div>
         </SidebarInset>
