@@ -69,7 +69,8 @@ export async function removeAvailability(
         eq(recruiterAvailability.recruiterId, availablity.recruiterId),
         eq(recruiterAvailability.recruitmentId, availablity.recruitmentId),
       ),
-    );
+    )
+    .returning({ id: recruiterAvailability.id });
 }
 
 export async function getAvailabilities(

@@ -23,6 +23,17 @@ export type AvailabilityOperation = {
   availability: RecruiterAvailability | NewRecruiterAvailability;
 };
 
+export interface UnassignedSessionSummary {
+  kind: "interview" | "dynamic";
+  slotStart: string;
+  candidateNames: string[];
+}
+
+export interface SaveAvailabilityResult {
+  ok: boolean;
+  unassigned: UnassignedSessionSummary[];
+}
+
 const SLOT_MINUTES = 30;
 
 interface RecruiterAvailabilityClientProps {
@@ -31,7 +42,7 @@ interface RecruiterAvailabilityClientProps {
   recruitmentId: number;
   saveAvailabilities: (
     availabilities: AvailabilityOperation[],
-  ) => Promise<boolean>;
+  ) => Promise<SaveAvailabilityResult>;
 }
 
 export default function RecruiterAvailabilityClient({
@@ -149,14 +160,27 @@ export default function RecruiterAvailabilityClient({
 
     setSaving(true);
     try {
-      const ok = await saveAvailabilities(operations);
-      if (!ok) {
+      const result = await saveAvailabilities(operations);
+      if (!result.ok) {
         toast.add({ title: "Erro ao guardar disponibilidades" });
         return;
       }
 
       setBaseline(availabilities);
-      toast.add({ title: "Disponibilidades guardadas com sucesso" });
+
+      const removed = result.unassigned.length;
+      if (removed > 0) {
+        toast.add({
+          type: "warning",
+          title: `Foste removido de ${removed} ${
+            removed === 1 ? "sessão" : "sessões"
+          }`,
+          description:
+            "A tua disponibilidade deixou de cobrir sessões em que estavas atribuído.",
+        });
+      } else {
+        toast.add({ title: "Disponibilidades guardadas com sucesso" });
+      }
     } catch {
       toast.add({ title: "Erro ao guardar disponibilidades" });
     } finally {
