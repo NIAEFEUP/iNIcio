@@ -3,15 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
+  candidateToDynamic,
   dynamic,
   interview,
   notification,
   recruiter,
   recruiterToDynamic,
   recruiterToInterview,
+  slot,
   usersToRecruitments,
 } from "@/db/schema";
-import { db, User } from "@/lib/db";
+import { db, Slot, User } from "@/lib/db";
 import { and, asc, eq, gt } from "drizzle-orm";
 import {
   getSessionUser,
@@ -21,10 +23,13 @@ import {
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { deliverPendingNotifications } from "@/lib/notification-service";
+import addInterviewWithSlot from "@/lib/interview";
+import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
 import {
   availabilityOverlapCondition,
   isRecruiterAvailableForSlot,
 } from "@/lib/recruiter-availability";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 export async function markNotificationAsRead(id: number) {
   const user = await getSessionUser();
@@ -152,6 +157,158 @@ export async function getAllTeamRecruiters(
 
   const users = results.map((r) => r.user);
   return [...new Map(users.map((u) => [u.id, u])).values()];
+}
+
+export async function adminReallocateInterview(
+  candidateId: string,
+  newSlotId: number,
+) {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    throw new Error("Não existe nenhum recrutamento selecionado.");
+  }
+
+  const targetSlot = await db.query.slot.findFirst({
+    where: and(
+      eq(slot.id, newSlotId),
+      eq(slot.recruitmentId, recruitmentId),
+      eq(slot.type, "interview"),
+    ),
+  });
+
+  if (!targetSlot) {
+    throw new Error("Horário não encontrado.");
+  }
+
+  if (targetSlot.quantity <= 0) {
+    throw new Error("Essa entrevista já não tem vagas disponíveis.");
+  }
+
+  const current = await db.query.interview.findFirst({
+    where: and(
+      eq(interview.candidateId, candidateId),
+      eq(interview.recruitmentId, recruitmentId),
+    ),
+    with: { slot: true },
+  });
+
+  if (current?.slot.id === targetSlot.id) {
+    return;
+  }
+
+  await addInterviewWithSlot(candidateId, targetSlot, recruitmentId);
+
+  await db.insert(notification).values({
+    userId: candidateId,
+    type: "interview_rescheduled",
+    data: {
+      oldStart: current?.slot.start.toISOString() ?? null,
+      newStart: targetSlot.start.toISOString(),
+      duration: targetSlot.duration,
+    },
+  });
+
+  revalidatePath("/admin/bookings");
+}
+
+export async function adminReallocateDynamic(
+  candidateId: string,
+  newSlotId: number,
+) {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    throw new Error("Não existe nenhum recrutamento selecionado.");
+  }
+
+  const targetSlot = await db.query.slot.findFirst({
+    where: and(
+      eq(slot.id, newSlotId),
+      eq(slot.recruitmentId, recruitmentId),
+      eq(slot.type, "dynamic"),
+    ),
+  });
+
+  if (!targetSlot) {
+    throw new Error("Sessão de dinâmica não encontrada.");
+  }
+
+  if (targetSlot.quantity <= 0) {
+    throw new Error("Essa sessão de dinâmica já não tem vagas disponíveis.");
+  }
+
+  const current = await db.query.candidateToDynamic.findFirst({
+    where: and(
+      eq(candidateToDynamic.candidateId, candidateId),
+      eq(candidateToDynamic.recruitmentId, recruitmentId),
+    ),
+    with: {
+      dynamic: {
+        with: { slot: true },
+      },
+    },
+  });
+
+  if (current?.dynamic.slot.id === targetSlot.id) {
+    return;
+  }
+
+  await tryToAddCandidateToDynamic(candidateId, targetSlot, recruitmentId);
+
+  await db.insert(notification).values({
+    userId: candidateId,
+    type: "dynamic_rescheduled",
+    data: {
+      oldStart: current?.dynamic.slot.start.toISOString() ?? null,
+      newStart: targetSlot.start.toISOString(),
+      duration: targetSlot.duration,
+    },
+  });
+
+  revalidatePath("/admin/bookings");
+}
+
+export async function getReallocationSlotOptions() {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    return {
+      interview: [] as Slot[],
+      dynamic: [] as Slot[],
+    };
+  }
+
+  const [interviewSlots, dynamicSlots] = await Promise.all([
+    db
+      .select()
+      .from(slot)
+      .where(
+        and(
+          eq(slot.recruitmentId, recruitmentId),
+          eq(slot.type, "interview"),
+          gt(slot.quantity, 0),
+        ),
+      ),
+    db
+      .select()
+      .from(slot)
+      .where(
+        and(
+          eq(slot.recruitmentId, recruitmentId),
+          eq(slot.type, "dynamic"),
+          gt(slot.quantity, 0),
+        ),
+      ),
+  ]);
+
+  return {
+    interview: interviewSlots,
+    dynamic: dynamicSlots,
+  };
 }
 
 export async function assignRecruiter(

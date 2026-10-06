@@ -8,7 +8,7 @@ import {
   recruiterToInterview,
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
-import { and, eq, gt, inArray } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { isRecruiterAvailableForSlot } from "./recruiter-availability";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
@@ -60,7 +60,7 @@ export default async function addInterviewWithSlot(
       if (i) {
         await trx
           .update(slot)
-          .set({ quantity: i.slot.quantity + 1 })
+          .set({ quantity: sql`${slot.quantity} + 1` })
           .where(eq(slot.id, i.slot.id));
 
         await trx
