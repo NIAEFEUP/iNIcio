@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { BookingPicker, CandidateWithMeta } from "./booking-picker";
 import ReallocationSlotPicker from "./reallocation-slot-picker";
 import {
+  adminReallocateDynamic,
   adminReallocateInterview,
   getReallocationSlotOptions,
 } from "@/app/actions";
@@ -73,8 +74,11 @@ export default function BookingSlotDialog({
   children,
 }: BookingSlotDialogProps) {
   const [open, setOpen] = useState<boolean>(false);
-  const [showMove, setShowMove] = useState<boolean>(false);
-  const [slotOptions, setSlotOptions] = useState<Slot[] | null>(null);
+  const [moveCandidateId, setMoveCandidateId] = useState<string | null>(null);
+  const [slotOptions, setSlotOptions] = useState<{
+    interview: Slot[];
+    dynamic: Slot[];
+  } | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -83,12 +87,10 @@ export default function BookingSlotDialog({
   const candidateId = booking.candidate?.user?.id;
 
   useEffect(() => {
-    if (showMove && slotOptions === null) {
-      getReallocationSlotOptions().then((result) =>
-        setSlotOptions(result.interview),
-      );
+    if (moveCandidateId && slotOptions === null) {
+      getReallocationSlotOptions().then(setSlotOptions);
     }
-  }, [showMove, slotOptions, isInterview]);
+  }, [moveCandidateId, slotOptions]);
 
   const candidates = useMemo<CandidateWithMeta[]>(() => {
     if ("candidate" in booking && booking.candidate?.user) {
@@ -163,27 +165,35 @@ export default function BookingSlotDialog({
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (!nextOpen) {
-      setShowMove(false);
+      setMoveCandidateId(null);
       setSelectedSlotId(null);
       setSlotOptions(null);
     }
   };
 
-  const handleToggleMove = () => {
-    setShowMove(!showMove);
+  const handleToggleMove = (targetCandidateId: string) => {
+    setMoveCandidateId(
+      moveCandidateId === targetCandidateId ? null : targetCandidateId,
+    );
     setSelectedSlotId(null);
   };
 
   const handleConfirmMove = () => {
-    if (!candidateId || !selectedSlotId) return;
+    if (!moveCandidateId || !selectedSlotId) return;
 
     startTransition(async () => {
       try {
-        await adminReallocateInterview(candidateId, selectedSlotId);
+        if (isInterview) {
+          await adminReallocateInterview(moveCandidateId, selectedSlotId);
+        } else {
+          await adminReallocateDynamic(moveCandidateId, selectedSlotId);
+        }
 
         toast.add({
           type: "success",
-          title: "Entrevista realocada com sucesso!",
+          title: isInterview
+            ? "Entrevista realocada com sucesso!"
+            : "Candidato realocado com sucesso!",
         });
         handleOpenChange(false);
         router.refresh();
@@ -191,7 +201,9 @@ export default function BookingSlotDialog({
         const message =
           err instanceof Error
             ? err.message
-            : "Ocorreu um erro ao realocar a entrevista.";
+            : isInterview
+              ? "Ocorreu um erro ao realocar a entrevista."
+              : "Ocorreu um erro ao realocar o candidato.";
         toast.add({ type: "error", title: message });
       }
     });
@@ -252,54 +264,120 @@ export default function BookingSlotDialog({
           onClose={() => setOpen(false)}
         />
 
-        {isInterview && candidateId && (
+        {(isInterview ? candidateId : candidates.length > 0) && (
           <div className="pt-3 border-t border-border/50 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-0.5">
-                <p className="text-sm font-semibold">Realocação de horário</p>
+                <p className="text-sm font-semibold">
+                  {isInterview
+                    ? "Realocação de horário"
+                    : "Realocação de candidato"}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Os entrevistadores podem ser removidos se não estiverem
-                  disponíveis no novo horário.
+                  {isInterview
+                    ? "Os entrevistadores podem ser removidos se não estiverem disponíveis no novo horário."
+                    : "Move um candidato desta sessão para outra sessão disponível."}
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleToggleMove}
-                disabled={isPending}
-                className="shrink-0 text-xs cursor-pointer"
-              >
-                {showMove ? "Cancelar" : "Mover"}
-              </Button>
+              {isInterview && candidateId && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleToggleMove(candidateId)}
+                  disabled={isPending}
+                  className="shrink-0 text-xs cursor-pointer"
+                >
+                  {moveCandidateId === candidateId ? "Cancelar" : "Mover"}
+                </Button>
+              )}
             </div>
 
-            {showMove && (
-              <>
-                <ReallocationSlotPicker
-                  type={slotType}
-                  slots={slotOptions ?? []}
-                  currentSlotId={booking.slot?.id}
-                  selectedSlotId={selectedSlotId}
-                  pending={isPending || slotOptions === null}
-                  onSelect={setSelectedSlotId}
-                />
+            {candidateId ? (
+              moveCandidateId === candidateId && (
+                <>
+                  <ReallocationSlotPicker
+                    type={slotType}
+                    slots={isInterview ? (slotOptions?.interview ?? []) : []}
+                    currentSlotId={booking.slot?.id}
+                    selectedSlotId={selectedSlotId}
+                    pending={isPending || slotOptions === null}
+                    onSelect={setSelectedSlotId}
+                  />
 
-                <div className="flex items-center justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleConfirmMove}
-                    disabled={!selectedSlotId || isPending}
-                    className="text-xs font-medium cursor-pointer"
+                  <div className="flex items-center justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleConfirmMove}
+                      disabled={!selectedSlotId || isPending}
+                      className="text-xs font-medium cursor-pointer"
+                    >
+                      {isPending && (
+                        <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                      )}
+                      Confirmar realocação
+                    </Button>
+                  </div>
+                </>
+              )
+            ) : (
+              <div className="space-y-2">
+                {candidates.map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card px-3 py-2"
                   >
-                    {isPending && (
-                      <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                    )}
-                    Confirmar realocação
-                  </Button>
-                </div>
-              </>
+                    <span className="truncate text-xs font-medium text-foreground">
+                      {participant.name}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={
+                        moveCandidateId === participant.id
+                          ? "secondary"
+                          : "outline"
+                      }
+                      onClick={() => handleToggleMove(participant.id)}
+                      disabled={isPending}
+                      className="shrink-0 text-xs cursor-pointer"
+                    >
+                      {moveCandidateId === participant.id
+                        ? "Cancelar"
+                        : "Mover"}
+                    </Button>
+                  </div>
+                ))}
+
+                {moveCandidateId && (
+                  <>
+                    <ReallocationSlotPicker
+                      type="dynamic"
+                      slots={slotOptions?.dynamic ?? []}
+                      currentSlotId={booking.slot?.id}
+                      selectedSlotId={selectedSlotId}
+                      pending={isPending || slotOptions === null}
+                      onSelect={setSelectedSlotId}
+                    />
+
+                    <div className="flex items-center justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleConfirmMove}
+                        disabled={!selectedSlotId || isPending}
+                        className="text-xs font-medium cursor-pointer"
+                      >
+                        {isPending && (
+                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                        )}
+                        Confirmar realocação
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         )}
