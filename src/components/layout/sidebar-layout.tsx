@@ -71,13 +71,16 @@ export function SidebarLayout({
           />
         )}
         <SidebarInset
-          className={cn(isImmersivePage && "h-dvh max-h-dvh overflow-hidden")}
+          className={cn(
+            isImmersivePage &&
+              "h-dvh max-h-dvh overflow-auto lg:overflow-hidden",
+          )}
         >
           <div
             className={cn(
               "flex-1 p-6 py-4",
               isImmersivePage &&
-                "flex flex-col h-full min-h-0 overflow-hidden p-4 sm:p-6",
+                "flex flex-col min-h-full lg:h-full lg:min-h-0 lg:overflow-hidden p-4 sm:p-6",
             )}
           >
             {children}

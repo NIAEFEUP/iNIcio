@@ -137,7 +137,7 @@ export function RecruiterAssignedHeader({
       </div>
 
       <span
-        className="font-medium text-foreground max-w-[130px] sm:max-w-[180px] md:max-w-[240px] truncate"
+        className="hidden sm:inline font-medium text-foreground max-w-[130px] md:max-w-[240px] truncate"
         title={interviewers.map((i) => i.name || fallbackRole).join(", ")}
       >
         {namesSummary}

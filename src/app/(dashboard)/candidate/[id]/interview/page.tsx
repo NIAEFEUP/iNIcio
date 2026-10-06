@@ -210,6 +210,7 @@ export default function InterviewPage() {
           recruitmentId={recruitmentId}
           showResultVoting={false}
           showKnownCheckbox={false}
+          collapseInfoOnMobile
           onClassifyInterview={(value) =>
             handleClassifyInterview(candidate.id, value)
           }

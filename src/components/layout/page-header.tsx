@@ -79,7 +79,7 @@ export function PageHeader({
         className={cn(
           "flex flex-wrap justify-between gap-4",
           inlineOnMobile
-            ? "flex-row items-center"
+            ? "flex-row items-start sm:items-center"
             : "flex-col lg:flex-row lg:items-center",
         )}
       >
@@ -165,11 +165,11 @@ export function PageHeader({
             {actions && (
               <div
                 className={cn(
-                  "flex items-center gap-2",
+                  "flex flex-wrap items-center justify-end gap-2",
                   search
                     ? "shrink-0"
                     : "w-full flex-1 min-w-0 lg:w-auto lg:flex-none",
-                  inlineOnMobile && "w-auto shrink-0",
+                  inlineOnMobile && "w-auto shrink-0 max-w-full",
                 )}
               >
                 {actions}
