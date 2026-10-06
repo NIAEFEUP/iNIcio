@@ -1,4 +1,5 @@
 import type { Notification } from "@/lib/db";
+import { getDateStringPT, getTimeString } from "@/lib/date";
 
 export type NotificationCopy = {
   title: string;
@@ -9,6 +10,27 @@ export type NotificationCopy = {
 
 function toData(data: unknown): Record<string, unknown> {
   return (data ?? {}) as Record<string, unknown>;
+}
+
+function describeRescheduled(
+  singular: string,
+  data: Record<string, unknown>,
+): string {
+  const oldStart = typeof data.oldStart === "string" ? data.oldStart : null;
+  const newStart = typeof data.newStart === "string" ? data.newStart : null;
+
+  if (!newStart) {
+    return `A tua ${singular} foi reagendada. Consulta o progresso para veres o novo horário.`;
+  }
+
+  const formatSlot = (start: string) => {
+    const date = new Date(start);
+    return `${getDateStringPT(date)} às ${getTimeString(date)}`;
+  };
+
+  return oldStart
+    ? `A tua ${singular} mudou de ${formatSlot(oldStart)} para ${formatSlot(newStart)}.`
+    : `A tua ${singular} foi marcada para ${formatSlot(newStart)}.`;
 }
 
 /** Human-readable copy shared by the notification bell and the live toasts. */
@@ -60,6 +82,20 @@ export function getNotificationCopy(
         href: "/admin/bookings",
       };
     }
+    case "interview_rescheduled":
+      return {
+        title: "Entrevista reagendada pela equipa",
+        description: describeRescheduled("entrevista", data),
+        actionLabel: "Ver progresso",
+        href: "/candidate/progress",
+      };
+    case "dynamic_rescheduled":
+      return {
+        title: "Dinâmica reagendada pela equipa",
+        description: describeRescheduled("dinâmica", data),
+        actionLabel: "Ver progresso",
+        href: "/candidate/progress",
+      };
     default:
       return { title: "Nova notificação" };
   }
