@@ -9,9 +9,10 @@ import {
   recruiter,
   recruiterToDynamic,
   recruiterToInterview,
+  slot,
   usersToRecruitments,
 } from "@/db/schema";
-import { db, User } from "@/lib/db";
+import { db, Slot, User } from "@/lib/db";
 import { and, asc, eq, gt } from "drizzle-orm";
 import {
   getSessionUser,
@@ -25,6 +26,7 @@ import {
   availabilityOverlapCondition,
   isRecruiterAvailableForSlot,
 } from "@/lib/recruiter-availability";
+import { getTargetRecruitmentId } from "@/lib/selected-recruitment";
 
 export async function markNotificationAsRead(id: number) {
   const user = await getSessionUser();
@@ -152,6 +154,32 @@ export async function getAllTeamRecruiters(
 
   const users = results.map((r) => r.user);
   return [...new Map(users.map((u) => [u.id, u])).values()];
+}
+
+export async function getReallocationSlotOptions() {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    return {
+      interview: [] as Slot[],
+    };
+  }
+
+  const slots = await db
+    .select()
+    .from(slot)
+    .where(
+      and(
+        eq(slot.recruitmentId, recruitmentId),
+        eq(slot.type, "interview"),
+        gt(slot.quantity, 0),
+      ),
+    );
+
+  return {
+    interview: slots,
+  };
 }
 
 export async function assignRecruiter(
