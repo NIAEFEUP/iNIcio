@@ -7,7 +7,7 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
 import {
   CandidateFilterRestriction,
@@ -32,7 +32,7 @@ export async function tryToAddCandidateToDynamic(
   }
 
   await db.transaction(async (trx) => {
-    const candidateDynamic = await db.query.candidateToDynamic.findFirst({
+    const candidateDynamic = await trx.query.candidateToDynamic.findFirst({
       where: and(
         eq(candidateToDynamic.candidateId, candidateId),
         eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
@@ -55,7 +55,7 @@ export async function tryToAddCandidateToDynamic(
 
       await trx
         .update(slot)
-        .set({ quantity: candidateDynamic.dynamic.slot.quantity + 1 })
+        .set({ quantity: sql`${slot.quantity} + 1` })
         .where(eq(slot.id, candidateDynamic.dynamic.slot.id));
 
       await trx
