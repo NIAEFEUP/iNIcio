@@ -3,14 +3,31 @@
 import React, { useMemo, useState } from "react";
 import { addDays, format, isToday } from "date-fns";
 import { pt } from "date-fns/locale";
-import { AlertCircle, Filter, Users } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  ChevronsUpDown,
+  Filter,
+  Search,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { cn, getInitials } from "@/lib/utils";
+import { getStableImageUrl } from "@/lib/stable-image-url";
 import { generateTimeSlots, getMonday } from "@/lib/date";
 import { WeekNavigator } from "@/components/calendar/week-navigator";
 import type { Dynamic, Interview, Slot } from "@/lib/db";
+import type { TeamRecruiter } from "@/lib/calendar";
 import type {
   CandidateListMetadata,
   CandidateSchedulingStats,
@@ -31,6 +48,7 @@ interface BookingManagementClientProps {
     interview: Slot[];
     dynamic: Slot[];
   };
+  recruiters?: TeamRecruiter[];
   bookings: {
     interview: Array<
       Interview & {
@@ -56,11 +74,15 @@ export default function BookingManagementClient({
     interview: [],
     dynamic: [],
   },
+  recruiters = [],
   bookings,
 }: BookingManagementClientProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => getMonday(new Date()));
   const [slotType, setSlotType] = useState<SlotType>(SlotType.interview);
   const [onlyMissingRecruiters, setOnlyMissingRecruiters] = useState(false);
+  const [selectedRecruiterId, setSelectedRecruiterId] = useState<string>("all");
+  const [headerFilterOpen, setHeaderFilterOpen] = useState(false);
+  const [headerFilterSearch, setHeaderFilterSearch] = useState("");
 
   // Always 5 working days (Monday to Friday)
   const dates = useMemo(() => {
@@ -124,12 +146,189 @@ export default function BookingManagementClient({
     return map;
   }, [bookings, slotType]);
 
+  const allRecruiters = useMemo(() => {
+    const map = new Map<string, TeamRecruiter>();
+    for (const r of recruiters) {
+      map.set(r.id, r);
+    }
+    const extractFromList = (list: any[]) => {
+      for (const item of list || []) {
+        for (const r of item.recruiters || []) {
+          const u = r.recruiter?.user;
+          if (u && !map.has(u.id)) {
+            map.set(u.id, {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              image: u.image,
+            });
+          }
+        }
+      }
+    };
+    extractFromList(bookings.interview);
+    extractFromList(bookings.dynamic);
+    return Array.from(map.values()).sort((a, b) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
+  }, [recruiters, bookings]);
+
+  const selectedRecruiter = useMemo(() => {
+    return allRecruiters.find((r) => r.id === selectedRecruiterId);
+  }, [allRecruiters, selectedRecruiterId]);
+
+  const filteredRecruitersInHeader = useMemo(() => {
+    const q = headerFilterSearch.toLowerCase().trim();
+    if (!q) return allRecruiters;
+    return allRecruiters.filter(
+      (r) =>
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.email || "").toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q),
+    );
+  }, [allRecruiters, headerFilterSearch]);
+
   const isInterview = slotType === SlotType.interview;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Marcações & Entrevistas"
+        viewModeToggle={
+          <DropdownMenu
+            open={headerFilterOpen}
+            onOpenChange={(open) => {
+              setHeaderFilterOpen(open);
+              if (!open) setHeaderFilterSearch("");
+            }}
+          >
+            <DropdownMenuTrigger
+              className="flex items-center gap-2 h-8 px-2 md:px-2.5 rounded-md border border-input bg-background hover:bg-muted text-xs font-normal transition-colors outline-none cursor-pointer max-w-64 shrink-0"
+              title={
+                selectedRecruiterId === "all"
+                  ? `Todos os Recrutadores (${allRecruiters.length})`
+                  : selectedRecruiter?.name || "Recrutador"
+              }
+              aria-label={
+                selectedRecruiterId === "all"
+                  ? `Todos os Recrutadores (${allRecruiters.length})`
+                  : selectedRecruiter?.name || "Recrutador"
+              }
+            >
+              {selectedRecruiterId === "all" ? (
+                <>
+                  <Users className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="hidden md:inline truncate">
+                    Todos os Recrutadores ({allRecruiters.length})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Avatar className="size-4 rounded-sm shrink-0">
+                    {selectedRecruiter?.image ? (
+                      <AvatarImage
+                        src={
+                          getStableImageUrl(selectedRecruiter.image) ||
+                          undefined
+                        }
+                        alt={selectedRecruiter.name}
+                      />
+                    ) : null}
+                    <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                      {getInitials(
+                        selectedRecruiter?.name ||
+                          selectedRecruiter?.email ||
+                          "",
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline truncate">
+                    {selectedRecruiter?.name || "Recrutador"}
+                  </span>
+                </>
+              )}
+              <ChevronsUpDown className="hidden md:inline size-3.5 text-muted-foreground shrink-0 ml-auto opacity-70" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 p-0">
+              <div className="p-2 border-b border-border/40">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Pesquisar recrutador..."
+                    value={headerFilterSearch}
+                    onChange={(e) => setHeaderFilterSearch(e.target.value)}
+                    className="h-8 pl-8 pr-2 text-xs"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedRecruiterId("all");
+                    setHeaderFilterOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                    selectedRecruiterId === "all" && "bg-accent font-medium",
+                  )}
+                >
+                  <Users className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="flex-1 truncate">
+                    Todos os Recrutadores ({allRecruiters.length})
+                  </span>
+                  {selectedRecruiterId === "all" && (
+                    <Check className="size-3.5 text-primary shrink-0" />
+                  )}
+                </DropdownMenuItem>
+
+                {filteredRecruitersInHeader.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground">
+                    Nenhum recrutador encontrado
+                  </div>
+                ) : (
+                  filteredRecruitersInHeader.map((r) => {
+                    const isSelected = selectedRecruiterId === r.id;
+                    const userPicture = getStableImageUrl(r.image);
+                    return (
+                      <DropdownMenuItem
+                        key={r.id}
+                        onClick={() => {
+                          setSelectedRecruiterId(r.id);
+                          setHeaderFilterOpen(false);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer",
+                          isSelected && "bg-accent font-medium",
+                        )}
+                      >
+                        <Avatar className="size-5 rounded-sm shrink-0">
+                          {userPicture ? (
+                            <AvatarImage src={userPicture} alt={r.name} />
+                          ) : null}
+                          <AvatarFallback className="rounded-sm bg-primary/10 text-primary text-[8px] font-semibold">
+                            {getInitials(r.name || r.email || r.id)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="truncate">{r.name}</span>
+                          {r.email && (
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {r.email}
+                            </span>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <Check className="size-3.5 text-primary shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
         actions={
           <WeekNavigator
             weekStart={weekStart}
@@ -267,11 +466,26 @@ export default function BookingManagementClient({
                     const currentSlot = currentSlots.get(cellKey);
                     const cellBookings = currentBookings.get(cellKey) || [];
 
-                    const filteredBookings = onlyMissingRecruiters
-                      ? cellBookings.filter(
-                          (b: any) => (b.recruiters?.length || 0) === 0,
-                        )
-                      : cellBookings;
+                    let filteredBookings = cellBookings;
+
+                    if (onlyMissingRecruiters) {
+                      filteredBookings = filteredBookings.filter(
+                        (b: any) => (b.recruiters?.length || 0) === 0,
+                      );
+                    }
+
+                    if (selectedRecruiterId !== "all") {
+                      filteredBookings = filteredBookings.filter((b: any) =>
+                        (b.recruiters || []).some(
+                          (r: any) =>
+                            (r.recruiter?.user?.id ||
+                              r.recruiter?.userId ||
+                              r.recruiterId ||
+                              r.userId ||
+                              r.id) === selectedRecruiterId,
+                        ),
+                      );
+                    }
 
                     return (
                       <td
@@ -367,7 +581,9 @@ export default function BookingManagementClient({
                                 />
                               );
                             })
-                          ) : !onlyMissingRecruiters && currentSlot ? (
+                          ) : !onlyMissingRecruiters &&
+                            selectedRecruiterId === "all" &&
+                            currentSlot ? (
                             <div className="h-[calc(100%-4px)] my-0.5 rounded-md border border-dashed border-border/80 bg-muted/20 p-1.5 flex flex-col justify-between text-muted-foreground select-none">
                               <div className="flex items-center justify-between text-[10px] font-medium leading-none">
                                 <span>{time}</span>
