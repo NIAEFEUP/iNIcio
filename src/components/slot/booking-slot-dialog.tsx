@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/toast";
 
 import {
   Dialog,
@@ -11,7 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { BookingPicker, CandidateWithMeta } from "./booking-picker";
+import ReallocationSlotPicker from "./reallocation-slot-picker";
+import {
+  adminReallocateInterview,
+  getReallocationSlotOptions,
+} from "@/app/actions";
 import { SlotType } from "../admin/slot-admin-calendar";
 import type {
   Dynamic,
@@ -64,6 +73,22 @@ export default function BookingSlotDialog({
   children,
 }: BookingSlotDialogProps) {
   const [open, setOpen] = useState<boolean>(false);
+  const [showMove, setShowMove] = useState<boolean>(false);
+  const [slotOptions, setSlotOptions] = useState<Slot[] | null>(null);
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const isInterview = slotType === SlotType.interview;
+  const candidateId = booking.candidate?.user?.id;
+
+  useEffect(() => {
+    if (showMove && slotOptions === null) {
+      getReallocationSlotOptions().then((result) =>
+        setSlotOptions(result.interview),
+      );
+    }
+  }, [showMove, slotOptions, isInterview]);
 
   const candidates = useMemo<CandidateWithMeta[]>(() => {
     if ("candidate" in booking && booking.candidate?.user) {
@@ -135,8 +160,45 @@ export default function BookingSlotDialog({
     return `Dinâmica #${booking.id}`;
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setShowMove(false);
+      setSelectedSlotId(null);
+      setSlotOptions(null);
+    }
+  };
+
+  const handleToggleMove = () => {
+    setShowMove(!showMove);
+    setSelectedSlotId(null);
+  };
+
+  const handleConfirmMove = () => {
+    if (!candidateId || !selectedSlotId) return;
+
+    startTransition(async () => {
+      try {
+        await adminReallocateInterview(candidateId, selectedSlotId);
+
+        toast.add({
+          type: "success",
+          title: "Entrevista realocada com sucesso!",
+        });
+        handleOpenChange(false);
+        router.refresh();
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Ocorreu um erro ao realocar a entrevista.";
+        toast.add({ type: "error", title: message });
+      }
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger ? (
         <div
           role="button"
@@ -189,6 +251,58 @@ export default function BookingSlotDialog({
           recruitmentId={booking.slot?.recruitmentId}
           onClose={() => setOpen(false)}
         />
+
+        {isInterview && candidateId && (
+          <div className="pt-3 border-t border-border/50 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold">Realocação de horário</p>
+                <p className="text-xs text-muted-foreground">
+                  Os entrevistadores podem ser removidos se não estiverem
+                  disponíveis no novo horário.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleToggleMove}
+                disabled={isPending}
+                className="shrink-0 text-xs cursor-pointer"
+              >
+                {showMove ? "Cancelar" : "Mover"}
+              </Button>
+            </div>
+
+            {showMove && (
+              <>
+                <ReallocationSlotPicker
+                  type={slotType}
+                  slots={slotOptions ?? []}
+                  currentSlotId={booking.slot?.id}
+                  selectedSlotId={selectedSlotId}
+                  pending={isPending || slotOptions === null}
+                  onSelect={setSelectedSlotId}
+                />
+
+                <div className="flex items-center justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleConfirmMove}
+                    disabled={!selectedSlotId || isPending}
+                    className="text-xs font-medium cursor-pointer"
+                  >
+                    {isPending && (
+                      <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                    )}
+                    Confirmar realocação
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
