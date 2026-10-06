@@ -23,6 +23,7 @@ import { getActiveRecruitment } from "@/lib/recruitment";
 import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { deliverPendingNotifications } from "@/lib/notification-service";
 import addInterviewWithSlot from "@/lib/interview";
+import { tryToAddCandidateToDynamic } from "@/lib/dynamic";
 import {
   availabilityOverlapCondition,
   isRecruiterAvailableForSlot,
@@ -185,6 +186,38 @@ export async function adminReallocateInterview(
   }
 
   await addInterviewWithSlot(candidateId, targetSlot, recruitmentId);
+
+  revalidatePath("/admin/bookings");
+}
+
+export async function adminReallocateDynamic(
+  candidateId: string,
+  newSlotId: number,
+) {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    throw new Error("Não existe nenhum recrutamento selecionado.");
+  }
+
+  const targetSlot = await db.query.slot.findFirst({
+    where: and(
+      eq(slot.id, newSlotId),
+      eq(slot.recruitmentId, recruitmentId),
+      eq(slot.type, "dynamic"),
+    ),
+  });
+
+  if (!targetSlot) {
+    throw new Error("Sessão de dinâmica não encontrada.");
+  }
+
+  if (targetSlot.quantity <= 0) {
+    throw new Error("Essa sessão de dinâmica já não tem vagas disponíveis.");
+  }
+
+  await tryToAddCandidateToDynamic(candidateId, targetSlot, recruitmentId);
 
   revalidatePath("/admin/bookings");
 }
