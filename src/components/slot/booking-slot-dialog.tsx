@@ -88,7 +88,11 @@ export default function BookingSlotDialog({
 
   useEffect(() => {
     if (moveCandidateId && slotOptions === null) {
-      getReallocationSlotOptions().then(setSlotOptions);
+      getReallocationSlotOptions()
+        .then(setSlotOptions)
+        .catch(() => {
+          toast.add({ type: "error", title: "Erro ao carregar horários." });
+        });
     }
   }, [moveCandidateId, slotOptions]);
 
