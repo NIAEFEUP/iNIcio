@@ -12,7 +12,7 @@ export default function CommentFrame({
   return (
     <Card
       className={cn(
-        "flex-1 h-full min-h-105 overflow-y-auto flex flex-col",
+        "flex-1 lg:h-full min-h-105 lg:overflow-y-auto flex flex-col",
         className,
       )}
     >

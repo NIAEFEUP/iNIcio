@@ -3,7 +3,6 @@
 import { CommentDisplay } from "@/components/comments/comment-display";
 import RealTimeEditor from "@/components/editor/real-time-editor";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 
@@ -230,29 +229,27 @@ export default function CandidateComments({
         </form>
       )}
 
-      <ScrollArea className="h-128 pr-2">
-        <div className="flex flex-col gap-4">
-          <div className="relative">
-            <Separator className="my-4" />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs font-medium text-muted-foreground">
-              Comentários anteriores
-            </span>
-          </div>
-
-          {commentsState?.map((comment, idx) => (
-            <CommentDisplay
-              key={`comment-${comment.comment?.id ?? `optimistic-${idx}`}`}
-              comment={comment}
-              candidate={candidate}
-              currentUserId={session?.user?.id}
-              isAdmin={session?.user?.role === "admin"}
-              onSaveEdit={onEditComment ? handleEditComment : undefined}
-              onVoteComment={onVoteComment ? handleVoteComment : undefined}
-              recruiters={recruiters}
-            />
-          ))}
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <Separator className="my-4" />
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs font-medium text-muted-foreground">
+            Comentários anteriores
+          </span>
         </div>
-      </ScrollArea>
+
+        {commentsState?.map((comment, idx) => (
+          <CommentDisplay
+            key={`comment-${comment.comment?.id ?? `optimistic-${idx}`}`}
+            comment={comment}
+            candidate={candidate}
+            currentUserId={session?.user?.id}
+            isAdmin={session?.user?.role === "admin"}
+            onSaveEdit={onEditComment ? handleEditComment : undefined}
+            onVoteComment={onVoteComment ? handleVoteComment : undefined}
+            recruiters={recruiters}
+          />
+        ))}
+      </div>
     </div>
   );
 }
