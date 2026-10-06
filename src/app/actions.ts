@@ -22,6 +22,7 @@ import {
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { fromFullUrlToPath, getFilenameUrl } from "@/lib/file-upload";
 import { deliverPendingNotifications } from "@/lib/notification-service";
+import addInterviewWithSlot from "@/lib/interview";
 import {
   availabilityOverlapCondition,
   isRecruiterAvailableForSlot,
@@ -154,6 +155,38 @@ export async function getAllTeamRecruiters(
 
   const users = results.map((r) => r.user);
   return [...new Map(users.map((u) => [u.id, u])).values()];
+}
+
+export async function adminReallocateInterview(
+  candidateId: string,
+  newSlotId: number,
+) {
+  await requireAdminSession();
+
+  const recruitmentId = await getTargetRecruitmentId();
+  if (!recruitmentId) {
+    throw new Error("Não existe nenhum recrutamento selecionado.");
+  }
+
+  const targetSlot = await db.query.slot.findFirst({
+    where: and(
+      eq(slot.id, newSlotId),
+      eq(slot.recruitmentId, recruitmentId),
+      eq(slot.type, "interview"),
+    ),
+  });
+
+  if (!targetSlot) {
+    throw new Error("Horário não encontrado.");
+  }
+
+  if (targetSlot.quantity <= 0) {
+    throw new Error("Essa entrevista já não tem vagas disponíveis.");
+  }
+
+  await addInterviewWithSlot(candidateId, targetSlot, recruitmentId);
+
+  revalidatePath("/admin/bookings");
 }
 
 export async function getReallocationSlotOptions() {
