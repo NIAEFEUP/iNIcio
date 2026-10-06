@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { SlotType } from "@/components/admin/slot-admin-calendar";
 import {
+  candidateToDynamic,
   dynamic,
   interview,
   notification,
@@ -185,7 +186,29 @@ export async function adminReallocateInterview(
     throw new Error("Essa entrevista já não tem vagas disponíveis.");
   }
 
+  const current = await db.query.interview.findFirst({
+    where: and(
+      eq(interview.candidateId, candidateId),
+      eq(interview.recruitmentId, recruitmentId),
+    ),
+    with: { slot: true },
+  });
+
+  if (current?.slot.id === targetSlot.id) {
+    return;
+  }
+
   await addInterviewWithSlot(candidateId, targetSlot, recruitmentId);
+
+  await db.insert(notification).values({
+    userId: candidateId,
+    type: "interview_rescheduled",
+    data: {
+      oldStart: current?.slot.start.toISOString() ?? null,
+      newStart: targetSlot.start.toISOString(),
+      duration: targetSlot.duration,
+    },
+  });
 
   revalidatePath("/admin/bookings");
 }
@@ -217,7 +240,33 @@ export async function adminReallocateDynamic(
     throw new Error("Essa sessão de dinâmica já não tem vagas disponíveis.");
   }
 
+  const current = await db.query.candidateToDynamic.findFirst({
+    where: and(
+      eq(candidateToDynamic.candidateId, candidateId),
+      eq(candidateToDynamic.recruitmentId, recruitmentId),
+    ),
+    with: {
+      dynamic: {
+        with: { slot: true },
+      },
+    },
+  });
+
+  if (current?.dynamic.slot.id === targetSlot.id) {
+    return;
+  }
+
   await tryToAddCandidateToDynamic(candidateId, targetSlot, recruitmentId);
+
+  await db.insert(notification).values({
+    userId: candidateId,
+    type: "dynamic_rescheduled",
+    data: {
+      oldStart: current?.dynamic.slot.start.toISOString() ?? null,
+      newStart: targetSlot.start.toISOString(),
+      duration: targetSlot.duration,
+    },
+  });
 
   revalidatePath("/admin/bookings");
 }
