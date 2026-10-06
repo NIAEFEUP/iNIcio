@@ -14,6 +14,7 @@ import { getTargetRecruitment } from "@/lib/selected-recruitment";
 import getExistingSlots from "@/lib/slot";
 import { getBookings } from "@/lib/booking";
 import { getCandidateSchedulingStats } from "@/lib/candidate";
+import { getAllRecruiters } from "@/lib/recruiter";
 
 export default async function BookingsAdminPage() {
   const currentRecruitment =
@@ -39,11 +40,20 @@ export default async function BookingsAdminPage() {
     );
   }
 
-  const [existingSlots, bookings, candidateStats] = await Promise.all([
-    getExistingSlots(currentRecruitment.id),
-    getBookings(currentRecruitment.id),
-    getCandidateSchedulingStats(currentRecruitment.id),
-  ]);
+  const [existingSlots, bookings, candidateStats, enrolledRecruiters] =
+    await Promise.all([
+      getExistingSlots(currentRecruitment.id),
+      getBookings(currentRecruitment.id),
+      getCandidateSchedulingStats(currentRecruitment.id),
+      getAllRecruiters(currentRecruitment.id),
+    ]);
+
+  const recruiters = enrolledRecruiters.map((r) => ({
+    id: r.user.id,
+    name: r.user.name,
+    email: r.user.email,
+    image: r.user.image,
+  }));
 
   return (
     <BookingManagementClient
@@ -51,6 +61,7 @@ export default async function BookingsAdminPage() {
       bookings={bookings}
       recruitmentId={currentRecruitment.id}
       existingSlots={existingSlots}
+      recruiters={recruiters}
     />
   );
 }
