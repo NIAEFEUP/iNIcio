@@ -196,22 +196,36 @@ export async function getReallocationSlotOptions() {
   if (!recruitmentId) {
     return {
       interview: [] as Slot[],
+      dynamic: [] as Slot[],
     };
   }
 
-  const slots = await db
-    .select()
-    .from(slot)
-    .where(
-      and(
-        eq(slot.recruitmentId, recruitmentId),
-        eq(slot.type, "interview"),
-        gt(slot.quantity, 0),
+  const [interviewSlots, dynamicSlots] = await Promise.all([
+    db
+      .select()
+      .from(slot)
+      .where(
+        and(
+          eq(slot.recruitmentId, recruitmentId),
+          eq(slot.type, "interview"),
+          gt(slot.quantity, 0),
+        ),
       ),
-    );
+    db
+      .select()
+      .from(slot)
+      .where(
+        and(
+          eq(slot.recruitmentId, recruitmentId),
+          eq(slot.type, "dynamic"),
+          gt(slot.quantity, 0),
+        ),
+      ),
+  ]);
 
   return {
-    interview: slots,
+    interview: interviewSlots,
+    dynamic: dynamicSlots,
   };
 }
 
