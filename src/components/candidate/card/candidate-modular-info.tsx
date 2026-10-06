@@ -34,6 +34,7 @@ export interface CandidateModularInfoProps {
   showContactInfo?: boolean;
   showLinks?: boolean;
   showAcademicStatus?: boolean;
+  collapseInfoOnMobile?: boolean;
   showDepartmentInterests?: boolean;
   showClassifications?: boolean;
   showResultVoting?: boolean;
@@ -55,6 +56,7 @@ export function CandidateModularInfo({
   showContactInfo = true,
   showLinks = true,
   showAcademicStatus = true,
+  collapseInfoOnMobile = false,
   showDepartmentInterests = true,
   showClassifications = true,
   showResultVoting = true,
@@ -97,6 +99,7 @@ export function CandidateModularInfo({
         <CandidateContactInfoCard
           email={candidate.email}
           phone={candidate.application?.phone}
+          className={cn(collapseInfoOnMobile && "hidden md:block")}
         />
       )}
 
@@ -106,6 +109,7 @@ export function CandidateModularInfo({
           githubUrl={candidate.application?.github}
           linkedinUrl={candidate.application?.linkedIn}
           websiteUrl={candidate.application?.personalWebsite}
+          className={cn(collapseInfoOnMobile && "hidden md:block")}
         />
       )}
 
@@ -114,6 +118,7 @@ export function CandidateModularInfo({
         <CandidateAcademicStatusCard
           course={candidate.application?.degree}
           year={candidate.application?.curricularYear}
+          className={cn(collapseInfoOnMobile && "hidden md:block")}
         />
       )}
 
