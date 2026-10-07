@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Calendar,
   CalendarCheck,
   CalendarClock,
+  CalendarDays,
   CalendarRange,
   Clock,
   DoorOpen,
@@ -57,7 +57,6 @@ function isActivePath(
 }
 
 export function SidebarContentComponent({
-  userId,
   isAdmin = false,
   isRecruiter = false,
   onOpenOpenDay,
@@ -66,24 +65,21 @@ export function SidebarContentComponent({
   const canRecruit = isRecruiter || isAdmin;
 
   const personalSections: NavItem[] = [
-    ...(userId
-      ? [
-          {
-            title: "A Minha Agenda",
-            path: `/calendar/${userId}`,
-            icon: Calendar,
-          },
-        ]
-      : []),
     {
-      title: "A Minha Disponibilidade",
+      title: "Progresso",
+      path: "/recruiter/progress",
+      icon: ListChecks,
+      exact: true,
+    },
+    {
+      title: "Disponibilidade",
       path: "/recruiter/availability",
       icon: CalendarClock,
     },
     {
-      title: "O Meu Progresso",
-      path: "/recruiter/progress",
-      icon: ListChecks,
+      title: "Agenda",
+      path: "/calendar",
+      icon: CalendarDays,
       exact: true,
     },
   ];

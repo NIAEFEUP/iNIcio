@@ -116,7 +116,7 @@ export default function AdminFinalMessageClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Mensagens Finais"
-        viewModeToggle={
+        actions={
           activeTab === "accepted" ? (
             <Dialog
               open={acceptedMessageDialogOpen}

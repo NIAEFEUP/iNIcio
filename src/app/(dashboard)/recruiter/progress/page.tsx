@@ -32,7 +32,7 @@ export default async function RecruiterProgress() {
   if (!targetRecruitment) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Progresso do Recrutador" />
+        <PageHeader title="Progresso" />
         <Card>
           <CardContent className="p-12 text-center text-sm text-muted-foreground">
             Não existe um recrutamento selecionado ou ativo.

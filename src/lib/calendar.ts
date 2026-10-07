@@ -33,10 +33,14 @@ export interface RecruiterAgendaEvent {
   recruiters: Array<{
     id: string;
     name: string;
+    email?: string;
     image: string | null;
   }>;
 }
 
+/**
+ * @deprecated Use `getGlobalScheduleEvents` instead.
+ */
 export async function getRecruiterAgendaEvents(
   userId: string,
   recruitmentId?: number,
@@ -191,6 +195,147 @@ export async function getRecruiterAgendaEvents(
         .map((r) => ({
           id: r.recruiter.user.id,
           name: r.recruiter.user.name,
+          email: r.recruiter.user.email,
+          image: r.recruiter.user.image,
+        })),
+    });
+  }
+
+  // Sort chronological
+  events.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  return events;
+}
+
+export async function getGlobalScheduleEvents(
+  recruitmentId?: number,
+): Promise<RecruiterAgendaEvent[]> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return [];
+
+  const [interviews, dynamics] = await Promise.all([
+    db.query.interview.findMany({
+      where: (i, { eq: eqWhere }) => {
+        if (targetId) {
+          return eqWhere(i.recruitmentId, targetId);
+        }
+        return undefined;
+      },
+      with: {
+        slot: true,
+        candidate: {
+          with: {
+            user: true,
+          },
+        },
+        recruiters: {
+          with: {
+            recruiter: {
+              with: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    db.query.dynamic.findMany({
+      where: (d, { eq: eqWhere }) => {
+        if (targetId) {
+          return eqWhere(d.recruitmentId, targetId);
+        }
+        return undefined;
+      },
+      with: {
+        slot: true,
+        candidates: {
+          with: {
+            candidate: {
+              with: {
+                user: true,
+              },
+            },
+          },
+        },
+        recruiters: {
+          with: {
+            recruiter: {
+              with: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const events: RecruiterAgendaEvent[] = [];
+
+  for (const item of interviews) {
+    if (!item.slot?.start) continue;
+    const start = new Date(item.slot.start);
+    const duration = item.slot.duration ?? 30;
+    const end = new Date(start.getTime() + duration * 60_000);
+
+    events.push({
+      id: `interview-${item.id}`,
+      type: "interview",
+      title: "Entrevista",
+      start,
+      end,
+      duration,
+      link: getCandidateInterviewLink(item.candidateId),
+      candidate: item.candidate?.user
+        ? {
+            id: item.candidate.user.id,
+            name: item.candidate.user.name,
+            email: item.candidate.user.email,
+            image: item.candidate.user.image,
+          }
+        : undefined,
+      recruiters: (item.recruiters || [])
+        .filter((r) => r?.recruiter?.user)
+        .map((r) => ({
+          id: r.recruiter.user.id,
+          name: r.recruiter.user.name,
+          email: r.recruiter.user.email,
+          image: r.recruiter.user.image,
+        })),
+    });
+  }
+
+  for (const item of dynamics) {
+    if (!item.slot?.start) continue;
+    const start = new Date(item.slot.start);
+    const duration = item.slot.duration ?? 45;
+    const end = new Date(start.getTime() + duration * 60_000);
+
+    const candidatesList = (item.candidates || [])
+      .filter((c) => c?.candidate?.user)
+      .map((c) => ({
+        id: c.candidate.user.id,
+        name: c.candidate.user.name,
+        email: c.candidate.user.email,
+        image: c.candidate.user.image,
+      }));
+
+    events.push({
+      id: `dynamic-${item.id}`,
+      type: "dynamic",
+      title: "Dinâmica",
+      start,
+      end,
+      duration,
+      link: getDynamicLink(item.id),
+      candidatesCount: candidatesList.length,
+      candidates: candidatesList,
+      recruiters: (item.recruiters || [])
+        .filter((r) => r?.recruiter?.user)
+        .map((r) => ({
+          id: r.recruiter.user.id,
+          name: r.recruiter.user.name,
+          email: r.recruiter.user.email,
           image: r.recruiter.user.image,
         })),
     });

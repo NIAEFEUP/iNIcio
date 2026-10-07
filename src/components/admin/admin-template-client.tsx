@@ -104,7 +104,7 @@ export default function AdminTemplateClient({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Modelos"
-        viewModeToggle={
+        actions={
           activeTab === "interview" ? (
             <Dialog
               open={interviewDialogOpen}
