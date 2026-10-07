@@ -79,6 +79,9 @@ export default function InterviewPage() {
     data;
   const answeredCount = applicationAnswerCount(candidate.application);
 
+  const canEditInterview =
+    Boolean(user?.isAdmin) || interviewers.some((i) => i.id === user?.id);
+
   const saveContent = async (content: unknown) => {
     await updateInterviewContent(id, content);
   };
@@ -214,6 +217,7 @@ export default function InterviewPage() {
           onClassifyInterview={(value) =>
             handleClassifyInterview(candidate.id, value)
           }
+          readOnlyInterview={!canEditInterview}
           readOnlyDynamic={true}
         />
       }

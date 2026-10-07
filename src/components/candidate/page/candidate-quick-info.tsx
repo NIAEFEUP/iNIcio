@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
 import { SocialLinks } from "@/components/profile/social-links";
@@ -17,6 +10,7 @@ import CandidateIdentityInfo from "../card/candidate-identity-info";
 import Link from "next/link";
 import CandidateQuickInfoSelect from "./candidate-quick-info-select";
 import { ClassificationBadge } from "../candidate-classification-badge";
+import { ClassificationSelect } from "@/components/candidates/classification-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -58,25 +52,6 @@ export default function CandidateQuickInfo({
   addDynamicClassification = () => {},
   addInterviewClassification = () => {},
 }: CandidateQuickInfoProps) {
-  const getClassificationPlaceholder = () => {
-    if (
-      showClassifyInterview &&
-      candidate.interviewClassification &&
-      candidate.interviewClassification !== "none"
-    ) {
-      return candidate.interviewClassification;
-    }
-    if (
-      showClassifyDynamic &&
-      candidate.dynamicClassification &&
-      candidate.dynamicClassification !== "none"
-    ) {
-      return candidate.dynamicClassification;
-    }
-
-    return "Classificação";
-  };
-
   const displayInterviewButton = candidate?.interview && !hideInterviewButton;
   const displayDynamicButton = candidate?.dynamic && !hideDynamicButton;
   const displayAnyButton = displayInterviewButton || displayDynamicButton;
@@ -154,7 +129,12 @@ export default function CandidateQuickInfo({
             <h3 className="text-xs font-semibold text-muted-foreground">
               Classificação
             </h3>
-            <Select
+            <ClassificationSelect
+              value={
+                (showClassifyInterview && candidate.interviewClassification) ||
+                (showClassifyDynamic && candidate.dynamicClassification) ||
+                null
+              }
               onValueChange={(value) => {
                 if (showClassifyInterview) {
                   addInterviewClassification(candidate.id, String(value));
@@ -163,19 +143,8 @@ export default function CandidateQuickInfo({
                   addDynamicClassification(candidate.id, String(value));
                 }
               }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={`${getClassificationPlaceholder()}`}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="muito fraco">Muito fraco</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="muito forte">Muito forte</SelectItem>
-                <SelectItem value="none">Limpar</SelectItem>
-              </SelectContent>
-            </Select>
+              triggerClassName="w-full"
+            />
           </div>
         )}
       </div>

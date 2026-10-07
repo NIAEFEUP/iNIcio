@@ -2,8 +2,16 @@
 
 import { and, eq } from "drizzle-orm";
 
-import { candidate } from "@/db/schema";
+import {
+  candidate,
+  candidateToDynamic,
+  dynamic,
+  interview,
+  recruiterToDynamic,
+  recruiterToInterview,
+} from "@/db/schema";
 import { requireRecruiterSession } from "@/lib/action-guard";
+import { isAdmin } from "@/lib/admin";
 import { submitApplicationComment } from "@/lib/application";
 import { getAllPossibleApplicationInterests } from "@/lib/application";
 import type { CandidateWithMetadata } from "@/lib/candidate";
@@ -349,7 +357,8 @@ async function classifyCandidate(
   column: "interviewClassification" | "dynamicClassification",
 ) {
   const targetId = await getTargetRecruitmentId();
-  await requireRecruiterSession(targetId);
+  const user = await requireRecruiterSession(targetId);
+  await assertCanClassify(user.id, targetId, candidateId, column);
 
   await db
     .update(candidate)
@@ -360,6 +369,53 @@ async function classifyCandidate(
         eq(candidate.recruitmentId, targetId),
       ),
     );
+}
+
+async function assertCanClassify(
+  userId: string,
+  recruitmentId: number,
+  candidateId: string,
+  column: "interviewClassification" | "dynamicClassification",
+) {
+  if (await isAdmin(userId)) return;
+
+  const assigned =
+    column === "interviewClassification"
+      ? await db
+          .select({ id: interview.id })
+          .from(interview)
+          .innerJoin(
+            recruiterToInterview,
+            eq(recruiterToInterview.interviewId, interview.id),
+          )
+          .where(
+            and(
+              eq(interview.candidateId, candidateId),
+              eq(interview.recruitmentId, recruitmentId),
+              eq(recruiterToInterview.recruiterId, userId),
+            ),
+          )
+      : await db
+          .select({ id: dynamic.id })
+          .from(candidateToDynamic)
+          .innerJoin(dynamic, eq(dynamic.id, candidateToDynamic.dynamicId))
+          .innerJoin(
+            recruiterToDynamic,
+            eq(recruiterToDynamic.dynamicId, dynamic.id),
+          )
+          .where(
+            and(
+              eq(candidateToDynamic.candidateId, candidateId),
+              eq(candidateToDynamic.recruitmentId, recruitmentId),
+              eq(recruiterToDynamic.recruiterId, userId),
+            ),
+          );
+
+  if (assigned.length === 0) {
+    throw new Error(
+      "Unauthorized: Apenas recrutadores atribuídos a esta entrevista/dinâmica podem alterar a classificação.",
+    );
+  }
 }
 
 export async function classifyInterview(

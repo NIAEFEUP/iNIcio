@@ -6,13 +6,7 @@ import { ExternalLink, History } from "lucide-react";
 
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
 import { ClassificationText } from "@/components/candidates/candidate-text";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ClassificationSelect } from "@/components/candidates/classification-select";
 import {
   Tooltip,
   TooltipContent,
@@ -234,36 +228,15 @@ export function DynamicCandidateCard({
           >
             Dinâmica:
           </span>
-          <Select
-            value={
-              dynamicClassification && dynamicClassification !== "none"
-                ? dynamicClassification
-                : ""
-            }
-            onValueChange={handleDynamicClassification}
-            disabled={readOnly}
-          >
-            <SelectTrigger
-              size="sm"
-              className={cn(
-                "h-7 w-28 text-xs font-medium px-2 transition-colors",
-                dynamicClassification === "muito forte" &&
-                  "text-emerald-600 dark:text-emerald-400 border-emerald-500/40 bg-emerald-500/5",
-                dynamicClassification === "muito fraco" &&
-                  "text-rose-600 dark:text-rose-400 border-rose-500/40 bg-rose-500/5",
-                dynamicClassification === "normal" &&
-                  "text-amber-600 dark:text-amber-400 border-amber-500/40 bg-amber-500/5",
-              )}
-            >
-              <SelectValue placeholder="Classificar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="muito fraco">Muito fraco</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="muito forte">Muito forte</SelectItem>
-              <SelectItem value="none">Limpar</SelectItem>
-            </SelectContent>
-          </Select>
+          {readOnly ? (
+            <ClassificationText level={dynamicClassification} />
+          ) : (
+            <ClassificationSelect
+              value={dynamicClassification}
+              onValueChange={handleDynamicClassification}
+              triggerClassName="h-7 w-28 px-2"
+            />
+          )}
         </div>
       </div>
     </div>
