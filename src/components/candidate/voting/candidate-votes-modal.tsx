@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, RefreshCcw, Sparkles, X } from "lucide-react";
+import { Check, Loader2, RefreshCcw, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -117,9 +117,8 @@ export function CandidateVotesModal({
 
           {/* Finished Status notice */}
           {isFinished && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
-              <Sparkles className="size-3.5 text-primary" />
-              <span>Decisão final já concluída para este candidato.</span>
+            <p className="text-xs text-muted-foreground pt-1">
+              Decisão final já concluída para este candidato.
             </p>
           )}
         </div>

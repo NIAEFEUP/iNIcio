@@ -1,16 +1,27 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  Loader2,
+  SquareSquare,
   Users,
   UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   EvaluationLayout,
   EvaluationPanel,
@@ -24,6 +35,7 @@ import CommentFrame from "@/components/comments/comment-frame";
 import {
   editApplicationComment,
   saveApplicationComment,
+  terminateVotingSessionAction,
   voteApplicationComment,
 } from "@/app/candidate/actions";
 import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
@@ -74,6 +86,7 @@ export function AdminVotingView({
   makeVoteDefinitiveAction,
   resetCandidateVotesAction,
 }: AdminVotingViewProps) {
+  const router = useRouter();
   const candidates = currentVotingPhase.candidates;
   const { user } = useAuth();
   const { mutate } = useSWRConfig();
@@ -107,10 +120,12 @@ export function AdminVotingView({
   const [votesModalOpen, setVotesModalOpen] = useState(false);
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
+  const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
 
   const [isNavigating, startTransition] = useTransition();
   const [isMakingDefinitive, setIsMakingDefinitive] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
 
   const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
     currentVotingPhase.id,
@@ -168,6 +183,10 @@ export function AdminVotingView({
   const finishedCount = Object.values(candidatesFinishedMap).filter(
     Boolean,
   ).length;
+
+  const isSessionFinished =
+    Boolean(currentVotingPhase.terminated) ||
+    (candidates.length > 0 && finishedCount === candidates.length);
 
   const handleSelectCandidate = async (newIdx: number) => {
     if (newIdx < 0 || newIdx >= candidates.length || isNavigating) return;
@@ -264,6 +283,34 @@ export function AdminVotingView({
       });
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleTerminateSession = async () => {
+    if (isTerminating) return;
+    setIsTerminating(true);
+    try {
+      const res = await terminateVotingSessionAction(currentVotingPhase.id);
+      if (res.success) {
+        toast.add({
+          type: "success",
+          title: "Sessão de votação terminada com sucesso",
+        });
+        router.push("/candidates/voting");
+      } else {
+        toast.add({
+          type: "error",
+          title: res.error || "Erro ao terminar sessão",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title: "Erro ao terminar sessão",
+      });
+    } finally {
+      setIsTerminating(false);
     }
   };
 
@@ -370,7 +417,7 @@ export function AdminVotingView({
                   </span>
                 </div>
 
-                {/* Single Option to See Votes (Opens Modal) */}
+                {/* Option to See Votes (Opens Modal) */}
                 <Button
                   variant="default"
                   size="sm"
@@ -380,6 +427,19 @@ export function AdminVotingView({
                   <Users className="size-3.5" />
                   <span>Votos ({totalVotesCount})</span>
                 </Button>
+
+                {/* Terminate Voting Phase (only shown if session is not yet terminated/finished) */}
+                {!isSessionFinished && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTerminateDialogOpen(true)}
+                    className="h-8 gap-1.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900/50"
+                  >
+                    <SquareSquare className="size-3.5" />
+                    <span>Terminar votação</span>
+                  </Button>
+                )}
               </div>
             }
           />
@@ -528,6 +588,44 @@ export function AdminVotingView({
         open={dynamicModalOpen}
         onOpenChange={setDynamicModalOpen}
       />
+
+      {/* Confirmation Modal to Terminate Voting Session */}
+      <Dialog open={terminateDialogOpen} onOpenChange={setTerminateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Terminar sessão de votação?</DialogTitle>
+            <DialogDescription>
+              Esta ação irá encerrar a sessão de votação #
+              {currentVotingPhase.id}. Os recrutadores deixarão de poder votar
+              nesta sessão e os candidatos pendentes permanecerão por decidir.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTerminateDialogOpen(false)}
+              disabled={isTerminating}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleTerminateSession}
+              disabled={isTerminating}
+              className="gap-1.5"
+            >
+              {isTerminating ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <SquareSquare className="size-3.5" />
+              )}
+              <span>Confirmar e Terminar</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

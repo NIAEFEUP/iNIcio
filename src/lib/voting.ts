@@ -47,9 +47,20 @@ export async function getCurrentVotingPhase(id: number) {
 }
 
 export async function getVotingPhaseStatus(votingPhaseId: number) {
-  return await db.query.votingPhaseStatus.findFirst({
+  const status = await db.query.votingPhaseStatus.findFirst({
     where: (vps) => eq(vps.votingPhaseId, votingPhaseId),
   });
+  if (!status) return null;
+
+  const phase = await db.query.votingPhase.findFirst({
+    where: (vp) => eq(vp.id, votingPhaseId),
+    columns: { terminated: true },
+  });
+
+  return {
+    ...status,
+    terminated: phase?.terminated ?? false,
+  };
 }
 
 import { getActiveRecruitment } from "./recruitment";
@@ -116,6 +127,7 @@ export async function getActiveVotingPhaseId(
     .where(
       and(
         eq(votingPhase.recruitmentId, targetId),
+        eq(votingPhase.terminated, false),
         eq(votingPhaseCandidate.voteFinished, false),
       ),
     )
@@ -145,6 +157,11 @@ export async function voteForCandidate(
   decision: "approve" | "reject",
 ) {
   try {
+    const vp = await db.query.votingPhase.findFirst({
+      where: eq(votingPhase.id, votingPhaseId),
+    });
+    if (!vp || vp.terminated) return false;
+
     const phaseCandidate = await db.query.votingPhaseCandidate.findFirst({
       where: and(
         eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
@@ -292,7 +309,7 @@ export async function makeCandidateVoteDefinitive(
         where: eq(votingPhase.id, votingPhaseId),
       });
 
-      if (!vp) {
+      if (!vp || vp.terminated) {
         return false;
       }
 
@@ -355,6 +372,21 @@ export async function makeCandidateVoteDefinitive(
     return true;
   } catch (e) {
     console.log(e);
+    return false;
+  }
+}
+
+export async function terminateVotingPhase(votingPhaseId: number) {
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(votingPhase)
+        .set({ terminated: true })
+        .where(eq(votingPhase.id, votingPhaseId));
+    });
+    return true;
+  } catch (e) {
+    console.error("Error terminating voting phase:", e);
     return false;
   }
 }

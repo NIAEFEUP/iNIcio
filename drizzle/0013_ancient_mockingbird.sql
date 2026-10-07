@@ -1,0 +1,1 @@
+ALTER TABLE "voting_phase" ADD COLUMN "terminated" boolean DEFAULT false NOT NULL;

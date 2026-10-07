@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
+import { Check, CheckCircle2, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
 import { getStableImageUrl } from "@/lib/stable-image-url";
@@ -73,11 +73,21 @@ export function RecruiterVotingView({
     }
   }
 
+  const isPhaseTerminated =
+    Boolean(currentVotingPhase.terminated) ||
+    Boolean(votingPhaseStatus?.terminated);
+
   const hasVotedForCurrent = votedCandidateIds.has(currentCandidate?.id);
   const isCandidateFinished = currentCandidate?.isFinished || false;
 
   const handleVote = async (decision: "approve" | "reject") => {
-    if (!currentCandidate || isSubmitting || hasVotedForCurrent) return;
+    if (
+      !currentCandidate ||
+      isSubmitting ||
+      hasVotedForCurrent ||
+      isPhaseTerminated
+    )
+      return;
 
     setIsSubmitting(true);
     try {
@@ -204,10 +214,18 @@ export function RecruiterVotingView({
 
       {/* Primary Actions Area */}
       <div className="w-full">
-        {isCandidateFinished ? (
+        {isPhaseTerminated ? (
           <div className="rounded-2xl border border-border/70 bg-muted/30 p-8 text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-primary font-semibold text-sm">
-              <Sparkles className="size-4" />
+            <div className="text-sm font-semibold text-foreground">
+              <span>Sessão de votação terminada</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Esta sessão de votação foi encerrada pela administração.
+            </p>
+          </div>
+        ) : isCandidateFinished ? (
+          <div className="rounded-2xl border border-border/70 bg-muted/30 p-8 text-center space-y-2">
+            <div className="text-sm font-semibold text-foreground">
               <span>Votação concluída</span>
             </div>
             <p className="text-xs text-muted-foreground">

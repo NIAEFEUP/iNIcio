@@ -4,7 +4,7 @@ import { VotingPhaseStatus } from "@/lib/db";
 import useSWR from "swr";
 
 interface CurrentVotingPhaseStatusResponse {
-  votingPhaseStatus: VotingPhaseStatus | null;
+  votingPhaseStatus: (VotingPhaseStatus & { terminated?: boolean }) | null;
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
