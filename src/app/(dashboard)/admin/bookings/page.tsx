@@ -23,7 +23,7 @@ export default async function BookingsAdminPage() {
   if (!currentRecruitment) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Marcações" />
+        <PageHeader title="Marcações & Entrevistas" />
         <Empty className="border-border">
           <EmptyMedia variant="icon">
             <Calendar className="size-4" />

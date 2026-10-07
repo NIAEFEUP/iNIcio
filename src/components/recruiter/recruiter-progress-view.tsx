@@ -6,6 +6,7 @@ import {
   Calendar,
   CalendarCheck,
   CalendarClock,
+  CalendarDays,
   Clock,
   ExternalLink,
   Layers,
@@ -148,7 +149,7 @@ function getPhaseAction(
     ident === "dinâmica"
   ) {
     return {
-      actionUrl: `/calendar/${userId}`,
+      actionUrl: "/calendar",
       actionLabel: "Ver agenda",
     };
   }
@@ -161,7 +162,6 @@ function getPhaseAction(
 
 export function RecruiterProgressView({
   user,
-  recruitment,
   phases,
   events,
   stats,
@@ -170,14 +170,9 @@ export function RecruiterProgressView({
   const upcomingEvents = events.filter((e) => new Date(e.start) >= now);
   const pastEvents = events.filter((e) => new Date(e.start) < now);
 
-  const totalPhases = phases.length;
-  const completedPhases = phases.filter((p) => p.checked).length;
-  const progressPercent =
-    totalPhases > 0 ? Math.round((completedPhases / totalPhases) * 100) : 0;
-
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Progresso do Recrutador" />
+      <PageHeader title="Progresso" />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -243,7 +238,7 @@ export function RecruiterProgressView({
                   variant="ghost"
                   size="sm"
                   className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  render={<Link href={`/calendar/${user.id}`} />}
+                  render={<Link href="/calendar" />}
                 >
                   Ver agenda
                   <ArrowRight className="size-3" />
@@ -410,9 +405,7 @@ export function RecruiterProgressView({
               >
                 <div className="flex items-center gap-2.5">
                   <CalendarClock className="size-4" />
-                  <span className="text-foreground">
-                    A Minha Disponibilidade
-                  </span>
+                  <span className="text-foreground">Disponibilidade</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {stats.availabilitiesCount > 0 ? (
@@ -433,11 +426,11 @@ export function RecruiterProgressView({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-between font-normal text-muted-foreground hover:text-foreground"
-                render={<Link href={`/calendar/${user.id}`} />}
+                render={<Link href="/calendar" />}
               >
                 <div className="flex items-center gap-2.5">
-                  <Calendar className="size-4" />
-                  <span className="text-foreground">A Minha Agenda</span>
+                  <CalendarDays className="size-4" />
+                  <span className="text-foreground">Agenda</span>
                 </div>
                 <ArrowRight className="size-3.5" />
               </Button>
@@ -451,7 +444,7 @@ export function RecruiterProgressView({
               >
                 <div className="flex items-center gap-2.5">
                   <UserCheck className="size-4" />
-                  <span className="text-foreground">Lista de Candidatos</span>
+                  <span className="text-foreground">Candidatos</span>
                 </div>
                 <ArrowRight className="size-3.5" />
               </Button>

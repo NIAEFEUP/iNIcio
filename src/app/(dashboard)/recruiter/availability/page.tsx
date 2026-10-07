@@ -142,7 +142,7 @@ export default async function RecruiterAvailabilityPage() {
   if (!targetRecruitment) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Marca as tuas disponibilidades" />
+        <PageHeader title="Disponibilidade" />
         <Empty className="border-border">
           <EmptyMedia variant="icon">
             <Calendar className="size-4" />
