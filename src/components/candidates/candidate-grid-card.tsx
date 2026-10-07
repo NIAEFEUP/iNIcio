@@ -12,15 +12,9 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { GridCard } from "@/components/data-table/grid-card";
 import { CandidateAvatarLightbox } from "./candidate-avatar-lightbox";
+import { ClassificationSelect } from "./classification-select";
 import {
   Tooltip,
   TooltipContent,
@@ -84,31 +78,6 @@ function InfoRow({
         {children}
       </div>
     </div>
-  );
-}
-
-function ClassificationSelect({
-  value,
-  onChange,
-}: {
-  value?: string | null;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Select
-      value={value && value !== "none" ? value : ""}
-      onValueChange={onChange}
-    >
-      <SelectTrigger className="h-7 w-28 text-xs font-medium">
-        <SelectValue placeholder="Classificar" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="muito fraco">Muito fraco</SelectItem>
-        <SelectItem value="normal">Normal</SelectItem>
-        <SelectItem value="muito forte">Muito forte</SelectItem>
-        <SelectItem value="none">Limpar</SelectItem>
-      </SelectContent>
-    </Select>
   );
 }
 
@@ -317,7 +286,8 @@ function CandidateGridCard({
         {classifyInterview ? (
           <ClassificationSelect
             value={interviewClassification}
-            onChange={handleInterviewClassification}
+            onValueChange={handleInterviewClassification}
+            triggerClassName="h-7 w-28"
           />
         ) : (
           <ClassificationText level={interviewClassification} />
@@ -330,7 +300,8 @@ function CandidateGridCard({
         {classifyDynamic ? (
           <ClassificationSelect
             value={dynamicClassification}
-            onChange={handleDynamicClassification}
+            onValueChange={handleDynamicClassification}
+            triggerClassName="h-7 w-28"
           />
         ) : (
           <ClassificationText level={dynamicClassification} />
