@@ -74,6 +74,9 @@ export default function DynamicPage() {
 
   const { dynamic, interviewers, comments, recruiters, token } = data;
 
+  const canEditDynamic =
+    Boolean(user?.isAdmin) || interviewers.some((i) => i.id === user?.id);
+
   const saveContent = async (content: unknown) => {
     await updateDynamicContent(dynamicId, content);
   };
@@ -253,6 +256,7 @@ export default function DynamicPage() {
                 key={candidate.id}
                 candidate={candidate}
                 candidateCount={dynamic.candidates.length}
+                readOnly={!canEditDynamic}
                 onClassifyDynamic={(value) =>
                   handleClassifyDynamic(candidate.id, value)
                 }
