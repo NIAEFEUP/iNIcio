@@ -80,7 +80,9 @@ export default function InterviewPage() {
   const answeredCount = applicationAnswerCount(candidate.application);
 
   const canEditInterview =
-    Boolean(user?.isAdmin) || interviewers.some((i) => i.id === user?.id);
+    Boolean(data.isAuthenticatedAdmin) ||
+    Boolean(user?.isAdmin) ||
+    interviewers.some((i) => i.id === user?.id);
 
   const saveContent = async (content: unknown) => {
     await updateInterviewContent(id, content);

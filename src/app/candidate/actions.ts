@@ -61,6 +61,7 @@ export interface InterviewData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export interface DynamicData {
@@ -69,6 +70,7 @@ export interface DynamicData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export async function loadCandidates() {
@@ -131,7 +133,15 @@ export async function loadInterview(
     `interview-${candidateId}`,
   ]);
 
-  return { candidate, interview, interviewers, comments, recruiters, token };
+  return {
+    candidate,
+    interview,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
@@ -151,7 +161,14 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
     `dynamic-${dynamicId}`,
   ]);
 
-  return { dynamic, interviewers, comments, recruiters, token };
+  return {
+    dynamic,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function saveApplicationComment(

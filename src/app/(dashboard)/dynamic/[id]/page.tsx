@@ -75,7 +75,9 @@ export default function DynamicPage() {
   const { dynamic, interviewers, comments, recruiters, token } = data;
 
   const canEditDynamic =
-    Boolean(user?.isAdmin) || interviewers.some((i) => i.id === user?.id);
+    Boolean(data.isAuthenticatedAdmin) ||
+    Boolean(user?.isAdmin) ||
+    interviewers.some((i) => i.id === user?.id);
 
   const saveContent = async (content: unknown) => {
     await updateDynamicContent(dynamicId, content);
