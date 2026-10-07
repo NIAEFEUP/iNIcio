@@ -12,11 +12,14 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { History, Search } from "lucide-react";
+import { History, Loader2, Search, Vote } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -56,6 +59,7 @@ import {
   saveCandidatesScrollPosition,
   useCandidatesScrollRestoration,
 } from "@/lib/candidate-scroll";
+import { createVotingSessionAction } from "@/app/candidate/actions";
 
 const CANDIDATE_FILTER_KEYS = [
   "course",
@@ -142,6 +146,8 @@ export default function CandidatesClient({
     previousApplications: false,
     departments: false,
   });
+  const router = useRouter();
+  const [isCreatingVoting, setIsCreatingVoting] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const isMountedRef = useRef(false);
@@ -545,6 +551,45 @@ export default function CandidatesClient({
     URL.revokeObjectURL(url);
   };
 
+  const handleCreateVotingSession = async () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    const candidateIds = selectedRows
+      .map((c) => c.id)
+      .filter((id): id is string => Boolean(id));
+
+    if (candidateIds.length === 0) return;
+
+    setIsCreatingVoting(true);
+    try {
+      const res = await createVotingSessionAction(candidateIds);
+      if (res.success && res.id) {
+        toast.add({
+          type: "success",
+          title: "Sessão de votação criada com sucesso!",
+        });
+        router.push(`/candidates/voting/${res.id}`);
+      } else {
+        toast.add({
+          type: "error",
+          title: "Erro ao criar votação",
+          description: res.error || "Ocorreu um erro inesperado",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        type: "error",
+        title: "Erro ao criar votação",
+      });
+    } finally {
+      setIsCreatingVoting(false);
+    }
+  };
+
   const renderGrid = useMemo(() => {
     const render = (t: typeof table) => (
       <GridView
@@ -752,7 +797,22 @@ export default function CandidatesClient({
         entityPluralLabel="candidatos"
         onExport={handleBulkExportCSV}
         onClear={() => table.toggleAllRowsSelected(false)}
-      />
+      >
+        {authUser?.isAdmin && (
+          <Button
+            size="sm"
+            onClick={handleCreateVotingSession}
+            disabled={isCreatingVoting}
+          >
+            {isCreatingVoting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Vote className="size-4" />
+            )}
+            Criar votação
+          </Button>
+        )}
+      </BulkActions>
     </div>
   );
 }
