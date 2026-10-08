@@ -46,8 +46,10 @@ import {
   getInterviewComments,
   getInterviewers,
   updateInterview,
+  updateInterviewById,
   updateInterviewComment,
   toggleInterviewLock,
+  toggleInterviewLockById,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
@@ -130,7 +132,7 @@ export async function loadInterview(
   ]);
 
   const token = await generateJWT(user.id, await getRole(user.id), [
-    `interview-${candidateId}`,
+    `interview-${interview.id}`,
   ]);
 
   return {
@@ -329,23 +331,57 @@ export async function voteDynamicComment(
 }
 
 export async function updateInterviewContent(
-  candidateId: string,
+  candidateOrInterviewId: string | number,
   content: unknown,
 ) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    const updated = await updateInterviewById(candidateOrInterviewId, content);
+    if (!updated) {
+      throw new Error("A entrevista está bloqueada ou não existe.");
+    }
+    return;
+  }
+
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  const updated = await updateInterview(candidateId, content, targetId);
+  const updated = await updateInterview(
+    candidateOrInterviewId,
+    content,
+    targetId,
+  );
   if (!updated) {
     throw new Error("A entrevista está bloqueada ou não existe.");
   }
 }
 
-export async function setInterviewLocked(candidateId: string, locked: boolean) {
+export async function setInterviewLocked(
+  candidateOrInterviewId: string | number,
+  locked: boolean,
+) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    await toggleInterviewLockById(candidateOrInterviewId, locked);
+    return;
+  }
+
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  await toggleInterviewLock(candidateId, locked, targetId);
+  await toggleInterviewLock(candidateOrInterviewId, locked, targetId);
 }
 
 export async function updateDynamicContent(

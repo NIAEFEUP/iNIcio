@@ -188,6 +188,19 @@ export async function updateInterview(
   return updated.length > 0;
 }
 
+export async function updateInterviewById(
+  interviewId: number,
+  content: unknown,
+): Promise<boolean> {
+  const updated = await db
+    .update(interview)
+    .set({ content })
+    .where(and(eq(interview.id, interviewId), eq(interview.locked, false)))
+    .returning({ id: interview.id });
+
+  return updated.length > 0;
+}
+
 export async function addInterviewComment(
   authorId: string,
   content: Array<any>,
@@ -355,4 +368,14 @@ export async function toggleInterviewLock(
         eq(interview.recruitmentId, targetId),
       ),
     );
+}
+
+export async function toggleInterviewLockById(
+  interviewId: number,
+  locked: boolean,
+) {
+  await db
+    .update(interview)
+    .set({ locked })
+    .where(eq(interview.id, interviewId));
 }
