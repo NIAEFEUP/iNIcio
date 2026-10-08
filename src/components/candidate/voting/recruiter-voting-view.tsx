@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, Loader2, X } from "lucide-react";
+import { Check, ExternalLink, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
+import { CandidateInterviewModal } from "./candidate-interview-modal";
+import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import { ClassificationText } from "@/components/candidates/candidate-text";
@@ -28,6 +31,7 @@ interface RecruiterVotingViewProps {
     decision: "approve" | "reject",
   ) => Promise<boolean>;
   currentUserId: string;
+  showBack?: boolean;
 }
 
 export function RecruiterVotingView({
@@ -35,6 +39,7 @@ export function RecruiterVotingView({
   recruiterVotes: initialRecruiterVotes,
   submitVoteAction,
   currentUserId,
+  showBack = false,
 }: RecruiterVotingViewProps) {
   const candidates = currentVotingPhase.candidates;
 
@@ -51,6 +56,9 @@ export function RecruiterVotingView({
     () => new Set(initialRecruiterVotes.map((v) => v.candidateId)),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [interviewModalOpen, setInterviewModalOpen] = useState(false);
+  const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
 
   // Poll status from server to sync with admin in real time
   const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
@@ -79,6 +87,16 @@ export function RecruiterVotingView({
 
   const hasVotedForCurrent = votedCandidateIds.has(currentCandidate?.id);
   const isCandidateFinished = currentCandidate?.isFinished || false;
+
+  const acceptedCount =
+    votingPhaseStatus?.accepted_candidates ??
+    currentVotingPhase.status.accepted_candidates ??
+    0;
+  const rejectedCount =
+    votingPhaseStatus?.rejected_candidates ??
+    currentVotingPhase.status.rejected_candidates ??
+    0;
+  const finishedCount = acceptedCount + rejectedCount;
 
   const handleVote = async (decision: "approve" | "reject") => {
     if (
@@ -122,167 +140,235 @@ export function RecruiterVotingView({
 
   if (!currentCandidate) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-        <p className="text-muted-foreground text-sm">
-          A aguardar pelo início da sessão de votação...
-        </p>
+      <div className="flex flex-col flex-1 min-h-[calc(100vh-8rem)]">
+        <PageHeader
+          title="Votação"
+          showBack={showBack}
+          backHref="/candidates/voting"
+          inlineOnMobile
+        />
+        <div className="flex flex-col items-center justify-center flex-1 py-20 px-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            A aguardar pelo início da sessão de votação...
+          </p>
+        </div>
       </div>
     );
   }
 
+  const degree = currentCandidate.application?.degree;
+  const curricularYear = currentCandidate.application?.curricularYear;
+
+  const hasInterview = Boolean(currentCandidate.interview);
+  const dynamicId = currentCandidate.dynamic?.dynamicId || null;
+  const hasDynamic = Boolean(dynamicId);
+
   return (
-    <div className="flex flex-col items-center max-w-lg mx-auto w-full px-2 sm:px-4 py-2 sm:py-6 gap-5">
-      {/* Top Header / Progress Info */}
-      <div className="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-          Votação em direto
-        </span>
-        <span>
-          Candidato {currentIndex + 1} de {candidates.length}
-        </span>
-      </div>
-
-      {/* Main Candidate Overview Card */}
-      <div className="w-full rounded-2xl border border-border/80 bg-card p-6 shadow-xs flex flex-col items-center text-center gap-4">
-        {/* Candidate Avatar */}
-        <CandidateAvatarLightbox
-          name={currentCandidate.name || "Candidato"}
-          picture={getStableImageUrl(currentCandidate.image)}
-          initials={getInitials(currentCandidate.name)}
-          size="xl"
-        />
-
-        {/* Candidate Identity */}
-        <div className="space-y-1 w-full">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {currentCandidate.name || "Sem nome"}
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-2 text-xs sm:text-sm text-muted-foreground">
-            {currentCandidate.application?.degree && (
-              <span className="uppercase font-medium text-foreground">
-                {currentCandidate.application.degree}
+    <div className="flex flex-col flex-1 min-h-[calc(100vh-8rem)]">
+      {/* Session Progress in Header matching Admin Layout */}
+      <PageHeader
+        title="Votação"
+        showBack={showBack}
+        backHref="/candidates/voting"
+        inlineOnMobile
+        actions={
+          <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">Progresso:</span>
+              <span className="font-semibold text-foreground">
+                {finishedCount}/{candidates.length}
               </span>
-            )}
-            {currentCandidate.application?.curricularYear && (
-              <>
-                <span>·</span>
-                <span>{currentCandidate.application.curricularYear}º ano</span>
-              </>
-            )}
-            {currentCandidate.application?.studentNumber && (
-              <>
-                <span>·</span>
-                <span>{currentCandidate.application.studentNumber}</span>
-              </>
+            </div>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+              {acceptedCount} aceites
+            </span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-rose-600 dark:text-rose-400 font-semibold">
+              {rejectedCount} rejeitados
+            </span>
+          </div>
+        }
+      />
+
+      {/* Main Content Area: Centered vertically, desktop side-by-side, mobile stacked */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 py-6 sm:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 w-full items-stretch">
+          {/* Left Column: Candidate Information */}
+          <div className="flex flex-col gap-4 justify-center">
+            {/* Avatar & Name */}
+            <div className="flex flex-col items-center text-center gap-3">
+              <CandidateAvatarLightbox
+                name={currentCandidate.name || "Candidato"}
+                picture={getStableImageUrl(currentCandidate.image)}
+                initials={getInitials(currentCandidate.name)}
+                size="xl"
+                className="size-28 sm:size-32 shadow-sm"
+                avatarClassName="size-28 sm:size-32"
+              />
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                {currentCandidate.name || "Sem nome"}
+              </h2>
+            </div>
+
+            {/* Academic Information Card (Course and Year, no "ano" text) */}
+            <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Curso
+                  </span>
+                  <span className="text-sm font-semibold text-foreground uppercase">
+                    {degree || "—"}
+                  </span>
+                </div>
+                <div className="flex flex-col text-right">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Ano Curricular
+                  </span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {curricularYear ? `${curricularYear}º` : "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Two Classification Cards with Guião open buttons */}
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Entrevista
+                  </span>
+                  {hasInterview && (
+                    <button
+                      type="button"
+                      onClick={() => setInterviewModalOpen(true)}
+                      className="text-muted-foreground/60 hover:text-foreground transition-colors p-0.5 rounded-sm hover:bg-muted inline-flex items-center justify-center cursor-pointer"
+                      title="Ver guião de entrevista"
+                      aria-label="Ver guião de entrevista"
+                    >
+                      <ExternalLink className="size-3" />
+                    </button>
+                  )}
+                </div>
+                <ClassificationText
+                  level={currentCandidate.interviewClassification}
+                  className="text-sm sm:text-base font-semibold"
+                />
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Dinâmica
+                  </span>
+                  {hasDynamic && (
+                    <button
+                      type="button"
+                      onClick={() => setDynamicModalOpen(true)}
+                      className="text-muted-foreground/60 hover:text-foreground transition-colors p-0.5 rounded-sm hover:bg-muted inline-flex items-center justify-center cursor-pointer"
+                      title="Ver guião de dinâmica"
+                      aria-label="Ver guião de dinâmica"
+                    >
+                      <ExternalLink className="size-3" />
+                    </button>
+                  )}
+                </div>
+                <ClassificationText
+                  level={currentCandidate.dynamicClassification}
+                  className="text-sm sm:text-base font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Actions */}
+          <div className="flex flex-col justify-center w-full">
+            {isPhaseTerminated ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-2 h-full min-h-[220px] shadow-xs">
+                <div className="text-base font-semibold text-foreground">
+                  Sessão de votação terminada
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Esta sessão de votação foi encerrada pela administração.
+                </p>
+              </div>
+            ) : isCandidateFinished ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-2 h-full min-h-[220px] shadow-xs">
+                <div className="text-base font-semibold text-foreground">
+                  Votação concluída
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  A votação deste candidato foi finalizada pelo administrador. A
+                  aguardar pelo próximo candidato...
+                </p>
+              </div>
+            ) : hasVotedForCurrent ? (
+              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-1.5 h-full min-h-[220px] shadow-xs">
+                <div className="text-base font-semibold text-foreground">
+                  Voto registado
+                </div>
+                <p className="text-xs text-muted-foreground max-w-xs">
+                  A aguardar pela decisão final ou pela transição para o próximo
+                  candidato...
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-1 md:flex md:flex-col gap-4 h-full">
+                {/* ACEITAR Button - Neutral card styling */}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handleVote("approve")}
+                  disabled={isSubmitting}
+                  className="h-28 sm:h-32 md:h-auto md:flex-1 w-full flex flex-col md:flex-row lg:flex-col items-center justify-center gap-2.5 text-2xl sm:text-3xl font-bold bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-2xl shadow-xs transition-all duration-150 py-6"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="size-8 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="size-8 sm:size-10 stroke-[2.5] text-emerald-600 dark:text-emerald-400" />
+                      <span>Aceitar</span>
+                    </>
+                  )}
+                </Button>
+
+                {/* REJEITAR Button - Neutral card styling */}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handleVote("reject")}
+                  disabled={isSubmitting}
+                  className="h-28 sm:h-32 md:h-auto md:flex-1 w-full flex flex-col md:flex-row lg:flex-col items-center justify-center gap-2.5 text-2xl sm:text-3xl font-bold bg-card hover:bg-rose-500/10 hover:border-rose-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-2xl shadow-xs transition-all duration-150 py-6"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="size-8 animate-spin" />
+                  ) : (
+                    <>
+                      <X className="size-8 sm:size-10 stroke-[2.5] text-rose-600 dark:text-rose-400" />
+                      <span>Rejeitar</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         </div>
-
-        {/* Classifications - Clean typography */}
-        <div className="grid grid-cols-2 gap-3 w-full pt-1">
-          <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-              Entrevista
-            </span>
-            <ClassificationText
-              level={currentCandidate.interviewClassification}
-              className="text-sm font-semibold"
-            />
-          </div>
-
-          <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-              Dinâmica
-            </span>
-            <ClassificationText
-              level={currentCandidate.dynamicClassification}
-              className="text-sm font-semibold"
-            />
-          </div>
-        </div>
-
-        {currentCandidate.application?.interests &&
-          currentCandidate.application.interests.length > 0 && (
-            <p className="text-xs text-muted-foreground pt-1">
-              <span className="font-medium text-foreground">Interesses:</span>{" "}
-              {currentCandidate.application.interests.join(", ")}
-            </p>
-          )}
       </div>
 
-      {/* Primary Actions Area */}
-      <div className="w-full">
-        {isPhaseTerminated ? (
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-8 text-center space-y-2">
-            <div className="text-sm font-semibold text-foreground">
-              <span>Sessão de votação terminada</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Esta sessão de votação foi encerrada pela administração.
-            </p>
-          </div>
-        ) : isCandidateFinished ? (
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-8 text-center space-y-2">
-            <div className="text-sm font-semibold text-foreground">
-              <span>Votação concluída</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              A votação deste candidato foi finalizada pelo administrador. A
-              aguardar pelo próximo candidato...
-            </p>
-          </div>
-        ) : hasVotedForCurrent ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 text-center space-y-2 animate-in fade-in-0 duration-200">
-            <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-lg">
-              <CheckCircle2 className="size-6" />
-              <span>Voto registado!</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              A aguardar pela decisão final ou pela transição para o próximo
-              candidato...
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 w-full pt-1">
-            {/* SIM Button - Extra Large */}
-            <Button
-              size="lg"
-              onClick={() => handleVote("approve")}
-              disabled={isSubmitting}
-              className="h-28 sm:h-36 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-extrabold bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-2xl shadow-md transition-all duration-150"
-            >
-              {isSubmitting ? (
-                <Loader2 className="size-8 animate-spin" />
-              ) : (
-                <>
-                  <Check className="size-8 sm:size-10 stroke-[3]" />
-                  <span>Sim</span>
-                </>
-              )}
-            </Button>
+      {/* Modals for Interview & Dynamic */}
+      <CandidateInterviewModal
+        candidateId={currentCandidate.id}
+        open={interviewModalOpen}
+        onOpenChange={setInterviewModalOpen}
+      />
 
-            {/* NÃO Button - Extra Large */}
-            <Button
-              size="lg"
-              variant="destructive"
-              onClick={() => handleVote("reject")}
-              disabled={isSubmitting}
-              className="h-28 sm:h-36 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-extrabold bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-2xl shadow-md transition-all duration-150"
-            >
-              {isSubmitting ? (
-                <Loader2 className="size-8 animate-spin" />
-              ) : (
-                <>
-                  <X className="size-8 sm:size-10 stroke-[3]" />
-                  <span>Não</span>
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-      </div>
+      <CandidateDynamicModal
+        dynamicId={dynamicId}
+        open={dynamicModalOpen}
+        onOpenChange={setDynamicModalOpen}
+      />
     </div>
   );
 }

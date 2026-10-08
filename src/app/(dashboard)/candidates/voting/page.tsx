@@ -1,6 +1,5 @@
 "use server";
 
-import { PageHeader } from "@/components/layout/page-header";
 import {
   getActiveVotingPhaseId,
   getCurrentVotingPhase,
@@ -68,15 +67,12 @@ export default async function CandidatesVotingPage() {
         : [];
 
       return (
-        <div className="flex flex-col gap-4">
-          <PageHeader title="Votação" />
-          <RecruiterVotingView
-            currentVotingPhase={currentVotingPhase as any}
-            recruiterVotes={recruiterVotes}
-            submitVoteAction={submitVoteAction}
-            currentUserId={session?.user.id || ""}
-          />
-        </div>
+        <RecruiterVotingView
+          currentVotingPhase={currentVotingPhase as any}
+          recruiterVotes={recruiterVotes}
+          submitVoteAction={submitVoteAction}
+          currentUserId={session?.user.id || ""}
+        />
       );
     }
   }

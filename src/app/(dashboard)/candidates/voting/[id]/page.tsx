@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PageHeader } from "@/components/layout/page-header";
 import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
 import {
@@ -123,14 +122,12 @@ export default async function CandidateVotingPage({
     : [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <PageHeader title="Votação" backHref="/candidates/voting" />
-      <RecruiterVotingView
-        currentVotingPhase={currentVotingPhase as any}
-        recruiterVotes={recruiterVotes}
-        submitVoteAction={submitVoteAction}
-        currentUserId={session?.user.id || ""}
-      />
-    </div>
+    <RecruiterVotingView
+      currentVotingPhase={currentVotingPhase as any}
+      recruiterVotes={recruiterVotes}
+      submitVoteAction={submitVoteAction}
+      currentUserId={session?.user.id || ""}
+      showBack={true}
+    />
   );
 }

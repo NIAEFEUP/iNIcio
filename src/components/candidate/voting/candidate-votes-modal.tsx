@@ -67,7 +67,7 @@ export function CandidateVotesModal({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 <Check className="size-3.5" />
-                <span>Sim</span>
+                <span>Aceitar</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">
@@ -83,7 +83,7 @@ export function CandidateVotesModal({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                 <X className="size-3.5" />
-                <span>Não</span>
+                <span>Rejeitar</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">

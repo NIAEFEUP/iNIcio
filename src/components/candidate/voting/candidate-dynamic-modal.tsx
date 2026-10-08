@@ -30,7 +30,7 @@ export function CandidateDynamicModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto p-6 sm:p-8">
+      <DialogContent className="sm:max-w-4xl w-[95vw] h-[80vh] max-h-[85vh] flex flex-col p-6 sm:p-8 overflow-hidden">
         <DialogHeader className="sr-only">
           <DialogTitle>Notas da Dinâmica</DialogTitle>
           <DialogDescription>
@@ -38,19 +38,21 @@ export function CandidateDynamicModal({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : hasContent ? (
-          <div className="w-full">
-            <ReadOnlyBlocks blocks={content as any[]} />
-          </div>
-        ) : (
-          <div className="py-16 text-center text-sm text-muted-foreground">
-            Sem notas de dinâmica registadas.
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto min-h-0 w-full">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full w-full">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : hasContent ? (
+            <div className="w-full">
+              <ReadOnlyBlocks blocks={content as any[]} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full w-full py-16 text-center text-sm text-muted-foreground">
+              Sem notas de dinâmica registadas.
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

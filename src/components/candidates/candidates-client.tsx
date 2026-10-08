@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import {
@@ -41,7 +42,7 @@ import {
 import { GridView } from "@/components/data-table/grid-view";
 import { BulkActions } from "@/components/data-table/bulk-actions";
 import { setCandidatesViewMode } from "@/cookies/set";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 
 import type { CandidateListMetadata } from "@/lib/candidate";
 import CandidateGridCard from "./candidate-grid-card";
@@ -489,10 +490,38 @@ export default function CandidatesClient({
     ]);
   };
 
-  const filteredCount = table.getFilteredRowModel().rows.length;
+  const filteredRows = table.getFilteredRowModel().rows;
+  const filteredCount = filteredRows.length;
   const selectedCount = Object.keys(rowSelection).filter(
     (k) => rowSelection[k],
   ).length;
+
+  const isAllFilteredSelected =
+    filteredCount > 0 && filteredRows.every((row) => row.getIsSelected());
+  const isSomeFilteredSelected =
+    filteredCount > 0 &&
+    !isAllFilteredSelected &&
+    filteredRows.some((row) => row.getIsSelected());
+
+  const handleToggleSelectAll = (checked: boolean | "indeterminate") => {
+    if (isAllFilteredSelected || !checked) {
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        for (const row of filteredRows) {
+          delete next[row.id];
+        }
+        return next;
+      });
+    } else {
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        for (const row of filteredRows) {
+          next[row.id] = true;
+        }
+        return next;
+      });
+    }
+  };
 
   const handleBulkExportCSV = () => {
     const selectedRows = table
@@ -773,14 +802,36 @@ export default function CandidatesClient({
         }
       />
 
-      <p
-        role="status"
-        aria-live="polite"
-        className="text-sm text-muted-foreground"
-      >
-        <span className="font-semibold text-foreground">{filteredCount}</span>{" "}
-        candidaturas
-      </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <Checkbox
+            id="select-all-candidates"
+            checked={
+              isAllFilteredSelected
+                ? true
+                : isSomeFilteredSelected
+                  ? "indeterminate"
+                  : false
+            }
+            disabled={filteredCount === 0}
+            onCheckedChange={handleToggleSelectAll}
+            aria-label="Selecionar todos os candidatos apresentados"
+          />
+          <label
+            htmlFor="select-all-candidates"
+            className={cn(
+              "text-sm select-none cursor-pointer text-muted-foreground transition-colors hover:text-foreground",
+              filteredCount === 0 && "cursor-not-allowed opacity-50",
+            )}
+          >
+            Selecionar todos (
+            <span className="font-semibold text-foreground">
+              {filteredCount}
+            </span>{" "}
+            {filteredCount === 1 ? "candidatura" : "candidaturas"})
+          </label>
+        </div>
+      </div>
 
       <DataTableView
         table={table}
