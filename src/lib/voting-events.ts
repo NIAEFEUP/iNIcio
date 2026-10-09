@@ -1,7 +1,12 @@
 import "server-only";
 
-import { and, count, eq } from "drizzle-orm";
-import { candidateVote, votingPhaseCandidate } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import {
+  candidateVote,
+  votingPhase,
+  votingPhaseCandidate,
+  votingPhaseStatus,
+} from "@/db/schema";
 import { db } from "./db";
 import { generateServerJWT } from "./jwt";
 
@@ -32,19 +37,16 @@ export type VotingEvent =
       };
     }
   | {
-      type: "candidate_finished";
-      payload: {
-        candidateId: string;
-        decision: "accept" | "reject";
-        finishedCandidates: number;
-      };
-    }
-  | {
-      type: "finished_updated";
-      payload: {
-        finishedCandidates: number;
-      };
+      type: "progress_updated";
+      payload: SessionProgress;
     };
+
+export interface SessionProgress {
+  finishedCandidateIds: string[];
+  acceptedCandidates: number;
+  rejectedCandidates: number;
+  terminated: boolean;
+}
 
 export async function broadcastVotingEvent(
   votingPhaseId: number,
@@ -103,19 +105,6 @@ async function getCandidateVoteCounts(
   return { approvedCount, rejectedCount, votedCount: votes.length };
 }
 
-async function getFinishedCandidatesCount(votingPhaseId: number) {
-  const [{ value }] = await db
-    .select({ value: count() })
-    .from(votingPhaseCandidate)
-    .where(
-      and(
-        eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
-        eq(votingPhaseCandidate.voteFinished, true),
-      ),
-    );
-  return value;
-}
-
 export async function broadcastVoteUpdated(
   votingPhaseId: number,
   candidateId: string,
@@ -157,28 +146,40 @@ export async function broadcastVotesReset(
   });
 }
 
-export async function broadcastCandidateFinished(
+async function getSessionProgress(
   votingPhaseId: number,
-  candidateId: string,
-  decision: "accept" | "reject",
-) {
-  const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
+): Promise<SessionProgress> {
+  const [phase, status, finished] = await Promise.all([
+    db.query.votingPhase.findFirst({
+      where: eq(votingPhase.id, votingPhaseId),
+      columns: { terminated: true },
+    }),
+    db.query.votingPhaseStatus.findFirst({
+      where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
+    }),
+    db.query.votingPhaseCandidate.findMany({
+      where: and(
+        eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+        eq(votingPhaseCandidate.voteFinished, true),
+      ),
+      columns: { candidateId: true },
+    }),
+  ]);
 
-  await broadcastVotingEvent(votingPhaseId, {
-    type: "candidate_finished",
-    payload: {
-      candidateId,
-      decision,
-      finishedCandidates,
-    },
-  });
+  return {
+    finishedCandidateIds: finished.map((c) => c.candidateId),
+    acceptedCandidates: status?.accepted_candidates ?? 0,
+    rejectedCandidates: status?.rejected_candidates ?? 0,
+    terminated: phase?.terminated ?? false,
+  };
 }
 
-export async function broadcastFinishedUpdated(votingPhaseId: number) {
-  const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
-
+// Sends the full session progress. The payload is absolute, so receiving it
+// twice or out of order leaves the same state.
+export async function broadcastProgress(votingPhaseId: number) {
+  const payload = await getSessionProgress(votingPhaseId);
   await broadcastVotingEvent(votingPhaseId, {
-    type: "finished_updated",
-    payload: { finishedCandidates },
+    type: "progress_updated",
+    payload,
   });
 }

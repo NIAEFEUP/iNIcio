@@ -112,9 +112,9 @@ export function useVotingWebSocket({
                 (payload.votedCount as number | undefined) ?? prev.votedCount,
               totalToVote:
                 (payload.totalToVote as number | undefined) ?? prev.totalToVote,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
+              finishedCandidates: Array.isArray(payload.finishedCandidateIds)
+                ? payload.finishedCandidateIds.length
+                : prev.finishedCandidates,
             };
           }
           case "status_changed": {
@@ -159,29 +159,12 @@ export function useVotingWebSocket({
               totalToVote:
                 (payload.totalToVote as number | undefined) ?? prev.totalToVote,
             };
-          case "candidate_finished": {
-            const finishedCandidateId = payload.candidateId as
-              string | undefined;
-            if (
-              finishedCandidateId &&
-              finishedCandidateId === prev.currentCandidateId &&
-              onCandidateFinished
-            ) {
-              onCandidateFinished(finishedCandidateId);
-            }
+          case "progress_updated":
             return {
               ...prev,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
-            };
-          }
-          case "finished_updated":
-            return {
-              ...prev,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
+              finishedCandidates: Array.isArray(payload.finishedCandidateIds)
+                ? payload.finishedCandidateIds.length
+                : prev.finishedCandidates,
             };
           case "presence_updated":
             return {

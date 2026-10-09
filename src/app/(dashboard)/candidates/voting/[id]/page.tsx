@@ -15,7 +15,7 @@ import {
   requireRecruiterSession,
 } from "@/lib/action-guard";
 import {
-  broadcastCandidateFinished,
+  broadcastProgress,
   broadcastStatusChanged,
   broadcastVoteUpdated,
   broadcastVotesReset,
@@ -108,7 +108,7 @@ export default async function CandidateVotingPage({
       candidateId,
     );
     if (ok) {
-      await broadcastCandidateFinished(votingPhaseId, candidateId, decision);
+      await broadcastProgress(votingPhaseId);
     }
     return ok;
   }

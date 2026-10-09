@@ -91,7 +91,10 @@ function getRoom(roomName) {
         rejectedCount: 0,
         votedCount: 0,
         totalToVote: 0,
-        finishedCandidates: 0,
+        finishedCandidateIds: [],
+        acceptedCandidates: 0,
+        rejectedCandidates: 0,
+        terminated: false,
       },
     };
     rooms.set(roomName, room);
@@ -125,9 +128,13 @@ function buildSnapshot(room, role) {
     },
   };
 
+  snapshot.payload.finishedCandidateIds = room.state.finishedCandidateIds;
+  snapshot.payload.acceptedCandidates = room.state.acceptedCandidates;
+  snapshot.payload.rejectedCandidates = room.state.rejectedCandidates;
+  snapshot.payload.terminated = room.state.terminated;
+
   if (room.hasVoteState) {
     snapshot.payload.votedCount = room.state.votedCount;
-    snapshot.payload.finishedCandidates = room.state.finishedCandidates;
 
     if (role === "admin") {
       snapshot.payload.approvedCount = room.state.approvedCount;
@@ -173,12 +180,13 @@ function applyEvent(room, event) {
       room.state.rejectedCount = 0;
       room.state.votedCount = 0;
       break;
-    case "candidate_finished":
-      room.state.finishedCandidates = payload.finishedCandidates ?? 0;
-      break;
-    case "finished_updated":
-      room.hasVoteState = true;
-      room.state.finishedCandidates = payload.finishedCandidates ?? 0;
+    case "progress_updated":
+      room.state.finishedCandidateIds = Array.isArray(payload.finishedCandidateIds)
+        ? payload.finishedCandidateIds
+        : [];
+      room.state.acceptedCandidates = payload.acceptedCandidates ?? 0;
+      room.state.rejectedCandidates = payload.rejectedCandidates ?? 0;
+      room.state.terminated = payload.terminated === true;
       break;
     default:
       break;

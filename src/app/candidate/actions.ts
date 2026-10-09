@@ -2,6 +2,8 @@
 
 import { and, eq } from "drizzle-orm";
 
+import { broadcastProgress } from "@/lib/voting-events";
+
 import {
   candidate,
   candidateToDynamic,
@@ -538,6 +540,12 @@ export async function terminateVotingSessionAction(
     const ok = await terminateVotingPhase(votingPhaseId);
     if (!ok) {
       return { success: false, error: "Falha ao terminar sessão de votação" };
+    }
+    try {
+      await broadcastProgress(votingPhaseId);
+    } catch (error) {
+      // The session is already terminated; clients re-sync on their next join.
+      console.error("[voting] failed to broadcast termination", error);
     }
     return { success: true };
   } catch (error) {
