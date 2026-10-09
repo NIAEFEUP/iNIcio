@@ -38,8 +38,7 @@ import {
   terminateVotingSessionAction,
   voteApplicationComment,
 } from "@/app/candidate/actions";
-import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
-import { useCurrentCandidateVotes } from "@/lib/hooks/voting/use-current-candidate-votes";
+import { useVotingWebSocket } from "@/lib/hooks/use-voting-websocket";
 import {
   applicationCommentsKey,
   useApplicationComments,
@@ -78,6 +77,12 @@ interface AdminVotingViewProps {
     votingPhaseId: number,
     candidateId: string,
   ) => Promise<void>;
+  token: string;
+  initialVoteCounts: {
+    approvedCount: number;
+    rejectedCount: number;
+    votedCount: number;
+  };
 }
 
 export function AdminVotingView({
@@ -85,6 +90,8 @@ export function AdminVotingView({
   changeCurrentVotingPhaseStatusCandidateAction,
   makeVoteDefinitiveAction,
   resetCandidateVotesAction,
+  token,
+  initialVoteCounts,
 }: AdminVotingViewProps) {
   const router = useRouter();
   const candidates = currentVotingPhase.candidates;
@@ -101,21 +108,23 @@ export function AdminVotingView({
   const [currentCandidate, setCurrentCandidate] =
     useState<CandidateVotingMetadata>(candidates[initialIdx] || candidates[0]);
 
-  const [approvedCount, setApprovedCount] = useState<number>(
-    currentVotingPhase.status.accepted_candidates || 0,
-  );
-  const [rejectedCount, setRejectedCount] = useState<number>(
-    currentVotingPhase.status.rejected_candidates || 0,
-  );
-  const [candidatesFinishedMap, setCandidatesFinishedMap] = useState<
-    Record<string, boolean>
-  >(() => {
-    const map: Record<string, boolean> = {};
-    for (const c of candidates) {
-      map[c.id] = c.isFinished || false;
-    }
-    return map;
+  const live = useVotingWebSocket({
+    votingPhaseId: currentVotingPhase.id,
+    token,
+    initial: {
+      currentCandidateId: currentVotingPhase.status.candidateId,
+      finishedCandidateIds: candidates
+        .filter((c) => c.isFinished)
+        .map((c) => c.id),
+      acceptedCandidates: currentVotingPhase.status.accepted_candidates || 0,
+      rejectedCandidates: currentVotingPhase.status.rejected_candidates || 0,
+      terminated: Boolean(currentVotingPhase.terminated),
+      approvedCount: initialVoteCounts.approvedCount,
+      rejectedCount: initialVoteCounts.rejectedCount,
+      votedCount: initialVoteCounts.votedCount,
+    },
   });
+  const finishedIds = new Set(live.finishedCandidateIds);
 
   const [votesModalOpen, setVotesModalOpen] = useState(false);
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
@@ -127,15 +136,6 @@ export function AdminVotingView({
   const [isResetting, setIsResetting] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
 
-  const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
-    currentVotingPhase.id,
-  );
-
-  const { votes, mutate: mutateVotes } = useCurrentCandidateVotes(
-    currentVotingPhase.id,
-    currentCandidate?.id || "",
-  );
-
   const { data: fullCandidateData } = useCandidateData(
     currentCandidate?.id || "",
   );
@@ -146,7 +146,7 @@ export function AdminVotingView({
   const { data: recruitersData } = useRecruiters();
 
   // Sync if status changes externally
-  const phaseCandidateId = votingPhaseStatus?.candidateId;
+  const phaseCandidateId = live.currentCandidateId ?? undefined;
   const [prevPhaseCandidateId, setPrevPhaseCandidateId] = useState<
     string | undefined
   >(phaseCandidateId);
@@ -162,13 +162,10 @@ export function AdminVotingView({
     }
   }
 
-  const isCurrentCandidateFinished =
-    candidatesFinishedMap[currentCandidate?.id] || false;
+  const isCurrentCandidateFinished = finishedIds.has(currentCandidate?.id);
 
-  const approvedVotesCount =
-    votes?.filter((v) => v.decision === "approve").length ?? 0;
-  const rejectedVotesCount =
-    votes?.filter((v) => v.decision === "reject").length ?? 0;
+  const approvedVotesCount = live.approvedCount;
+  const rejectedVotesCount = live.rejectedCount;
   const totalVotesCount = approvedVotesCount + rejectedVotesCount;
 
   const approvedPercent =
@@ -180,12 +177,10 @@ export function AdminVotingView({
       ? Math.round((rejectedVotesCount / totalVotesCount) * 100)
       : 0;
 
-  const finishedCount = Object.values(candidatesFinishedMap).filter(
-    Boolean,
-  ).length;
+  const finishedCount = candidates.filter((c) => finishedIds.has(c.id)).length;
 
   const isSessionFinished =
-    Boolean(currentVotingPhase.terminated) ||
+    live.terminated ||
     (candidates.length > 0 && finishedCount === candidates.length);
 
   const handleSelectCandidate = async (newIdx: number) => {
@@ -211,15 +206,6 @@ export function AdminVotingView({
         currentCandidate.id,
       );
       if (ok) {
-        if (decision === "accept") {
-          setApprovedCount((prev) => prev + 1);
-        } else {
-          setRejectedCount((prev) => prev + 1);
-        }
-        setCandidatesFinishedMap((prev) => ({
-          ...prev,
-          [currentCandidate.id]: true,
-        }));
         setVotesModalOpen(false);
         toast.add({
           type: "success",
@@ -233,7 +219,7 @@ export function AdminVotingView({
         const nextUnfinishedIdx = candidates.findIndex(
           (c, idx) =>
             idx > currentIndex &&
-            !candidatesFinishedMap[c.id] &&
+            !finishedIds.has(c.id) &&
             c.id !== currentCandidate.id,
         );
         if (nextUnfinishedIdx !== -1) {
@@ -266,11 +252,6 @@ export function AdminVotingView({
         currentVotingPhase.id,
         currentCandidate.id,
       );
-      setCandidatesFinishedMap((prev) => ({
-        ...prev,
-        [currentCandidate.id]: false,
-      }));
-      await mutateVotes();
       toast.add({
         type: "success",
         title: "Votos do candidato reiniciados com sucesso",
@@ -399,6 +380,12 @@ export function AdminVotingView({
             }
             actions={
               <div className="flex items-center gap-2.5 flex-wrap justify-end">
+                {!live.connected && (
+                  <span className="text-xs text-muted-foreground">
+                    A ligar ao servidor de votação…
+                  </span>
+                )}
+
                 {/* Overall Session Stats in Header */}
                 <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
                   <div className="flex items-center gap-1.5">
@@ -409,11 +396,11 @@ export function AdminVotingView({
                   </div>
                   <span className="text-muted-foreground/60">·</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {approvedCount} aceites
+                    {live.acceptedCandidates} aceites
                   </span>
                   <span className="text-muted-foreground/60">·</span>
                   <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                    {rejectedCount} rejeitados
+                    {live.rejectedCandidates} rejeitados
                   </span>
                 </div>
 

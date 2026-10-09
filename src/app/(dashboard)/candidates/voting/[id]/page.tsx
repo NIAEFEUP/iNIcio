@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
+import { getVotingRoomToken } from "@/lib/voting-room";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   deleteCandidateVotes,
+  getCandidateVotes,
   getCurrentVotingPhase,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
@@ -14,6 +16,13 @@ import {
   requireAdminSession,
   requireRecruiterSession,
 } from "@/lib/action-guard";
+import {
+  broadcastProgress,
+  broadcastStatusChanged,
+  broadcastVoteUpdated,
+  broadcastVotesReset,
+  notifyClients,
+} from "@/lib/voting-events";
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
 
@@ -39,6 +48,8 @@ export default async function CandidateVotingPage({
     redirect("/candidates/voting");
   }
 
+  const wsToken = await getVotingRoomToken(session?.user.id, numId);
+
   async function submitVoteAction(
     recruiterId: string,
     candidateId: string,
@@ -55,12 +66,16 @@ export default async function CandidateVotingPage({
     const recruiterVotes = await getRecruiterVotes(numId, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      return await voteForCandidate(
+      const ok = await voteForCandidate(
         numId,
         effectiveRecruiterId,
         candidateId,
         decision,
       );
+      if (ok) {
+        await notifyClients(() => broadcastVoteUpdated(numId, candidateId));
+      }
+      return ok;
     }
 
     return false;
@@ -73,10 +88,17 @@ export default async function CandidateVotingPage({
     "use server";
     await requireAdminSession();
 
-    return await changeCurrentVotingPhaseStatusCandidate(
+    const ok = await changeCurrentVotingPhaseStatusCandidate(
       votingPhaseId,
       candidateId,
     );
+    if (ok) {
+      await notifyClients(async () => {
+        await broadcastStatusChanged(votingPhaseId, candidateId);
+        await broadcastVoteUpdated(votingPhaseId, candidateId);
+      });
+    }
+    return ok;
   }
 
   async function makeVoteDefinitiveAction(
@@ -87,11 +109,15 @@ export default async function CandidateVotingPage({
     "use server";
     await requireAdminSession();
 
-    return await makeCandidateVoteDefinitive(
+    const ok = await makeCandidateVoteDefinitive(
       decision,
       votingPhaseId,
       candidateId,
     );
+    if (ok) {
+      await notifyClients(() => broadcastProgress(votingPhaseId));
+    }
+    return ok;
   }
 
   async function resetCandidateVotesAction(
@@ -102,9 +128,22 @@ export default async function CandidateVotingPage({
     await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
+    await notifyClients(async () => {
+      await broadcastVotesReset(votingPhaseId, candidateId);
+      // Resetting also un-finishes the candidate and adjusts the session
+      // counters, so clients need the refreshed progress too.
+      await broadcastProgress(votingPhaseId);
+    });
   }
 
   if (userIsAdmin) {
+    // Seed the admin's counts from the database so the view shows the real
+    // numbers even before the websocket delivers a snapshot (or if it cannot
+    // connect at all). Recruiters never receive these counts.
+    const initialCandidateVotes = currentVotingPhase.status.candidateId
+      ? await getCandidateVotes(numId, currentVotingPhase.status.candidateId)
+      : [];
+
     return (
       <AdminVotingView
         currentVotingPhase={currentVotingPhase as any}
@@ -113,6 +152,16 @@ export default async function CandidateVotingPage({
         }
         makeVoteDefinitiveAction={makeVoteDefinitiveAction}
         resetCandidateVotesAction={resetCandidateVotesAction}
+        token={wsToken}
+        initialVoteCounts={{
+          approvedCount: initialCandidateVotes.filter(
+            (v) => v.decision === "approve",
+          ).length,
+          rejectedCount: initialCandidateVotes.filter(
+            (v) => v.decision === "reject",
+          ).length,
+          votedCount: initialCandidateVotes.length,
+        }}
       />
     );
   }
@@ -128,6 +177,7 @@ export default async function CandidateVotingPage({
       submitVoteAction={submitVoteAction}
       currentUserId={session?.user.id || ""}
       showBack={true}
+      token={wsToken}
     />
   );
 }

@@ -23,3 +23,14 @@ export async function generateJWT(
     expiresIn: "1d",
   });
 }
+
+export async function generateServerJWT() {
+  const payload = {
+    id: "server",
+    role: "server",
+  };
+
+  return jwt.sign(payload, getSecret(), {
+    expiresIn: "1h",
+  });
+}

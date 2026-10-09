@@ -1,13 +1,15 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 import jwt from "jsonwebtoken";
 
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 import http from "http";
 import * as number from "lib0/number";
 import { setupWSConnection } from "./utils.js";
+import { addClient, broadcast } from "./voting-rooms.js";
 
-const wss = new WebSocket.Server({ noServer: true });
+const wss = new WebSocketServer({ noServer: true });
 const host = process.env.HOST || "localhost";
 const port = number.parseInt(process.env.PORT || "1234");
 const jwtSecret = process.env.JWT_SECRET;
@@ -20,7 +22,111 @@ if (!jwtSecret) {
   process.exit(1);
 }
 
-const server = http.createServer((_request, response) => {
+function writeJson(response, statusCode, body) {
+  response.writeHead(statusCode, { "Content-Type": "application/json" });
+  response.end(JSON.stringify(body));
+}
+
+function verifyToken(token) {
+  if (!token) return null;
+  try {
+    return jwt.verify(token, jwtSecret);
+  } catch {
+    return null;
+  }
+}
+
+function getTokenFromRequest(request) {
+  let queryToken = null;
+  try {
+    queryToken = new URL(request.url || "/", "http://localhost").searchParams.get(
+      "token",
+    );
+  } catch {
+    queryToken = null;
+  }
+  if (queryToken) return queryToken;
+
+  const authHeader = request.headers.authorization || "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1] : null;
+}
+
+const MAX_BROADCAST_BODY_BYTES = 64 * 1024;
+
+// Reply and close the connection. Destroying the request right after the
+// response is flushed avoids keeping an unread upload alive on the socket.
+function rejectAndClose(request, response, statusCode, body) {
+  response.writeHead(statusCode, {
+    "Content-Type": "application/json",
+    Connection: "close",
+  });
+  response.end(JSON.stringify(body), () => request.destroy());
+}
+
+function isValidBroadcast(data) {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    typeof data.room === "string" &&
+    data.room.startsWith("voting/") &&
+    typeof data.event === "object" &&
+    data.event !== null &&
+    typeof data.event.type === "string"
+  );
+}
+
+function handleBroadcast(request, response) {
+  // Authenticate before reading the body so unauthenticated clients cannot
+  // make the server buffer uploads.
+  const payload = verifyToken(getTokenFromRequest(request));
+  if (!payload || payload.role !== "server") {
+    rejectAndClose(request, response, 403, { error: "Forbidden" });
+    return;
+  }
+
+  const chunks = [];
+  let size = 0;
+  let rejected = false;
+
+  request.on("data", (chunk) => {
+    if (rejected) return;
+    size += chunk.length;
+    if (size > MAX_BROADCAST_BODY_BYTES) {
+      rejected = true;
+      rejectAndClose(request, response, 413, { error: "Payload too large" });
+      return;
+    }
+    chunks.push(chunk);
+  });
+
+  request.on("end", () => {
+    if (rejected) return;
+
+    let data;
+    try {
+      data = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+      writeJson(response, 400, { error: "Invalid JSON" });
+      return;
+    }
+
+    if (!isValidBroadcast(data)) {
+      writeJson(response, 400, { error: "Invalid room or event" });
+      return;
+    }
+
+    broadcast(data.room, data.event);
+    writeJson(response, 200, { ok: true });
+  });
+}
+
+const server = http.createServer((request, response) => {
+  if (request.method === "POST" && request.url === "/broadcast") {
+    handleBroadcast(request, response);
+    return;
+  }
+
   response.writeHead(200, { "Content-Type": "text/plain" });
   response.end("okay");
 });
@@ -41,7 +147,7 @@ server.on("upgrade", (request, socket, head) => {
     return;
   }
 
-  const token = url.searchParams.get("token");
+  const token = getTokenFromRequest(request);
   const room = decodeURIComponent(url.pathname.slice(1));
 
   if (!token || !room) {
@@ -49,14 +155,11 @@ server.on("upgrade", (request, socket, head) => {
     return;
   }
 
-  let payload;
-
   // Authenticate before upgrading: once handleUpgrade runs the 101 response is
   // already on the wire, so writing a 401 afterwards would corrupt the stream.
-  try {
-    payload = jwt.verify(token, jwtSecret);
-  } catch (error) {
-    console.error("[ws] authentication failed", error.message);
+  const payload = verifyToken(token);
+  if (!payload) {
+    console.error("[ws] authentication failed");
     reject("401 Unauthorized");
     return;
   }
@@ -71,6 +174,20 @@ server.on("upgrade", (request, socket, head) => {
   if (!Array.isArray(payload.rooms) || !payload.rooms.includes(room)) {
     console.error(`[ws] room access denied room=${room}`);
     reject("403 Forbidden");
+    return;
+  }
+
+  if (room.startsWith("voting/")) {
+    const votingPhaseId = room.replace("voting/", "");
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      console.log(`[voting] connected room=${room}`);
+      addClient(room, ws, {
+        userId: payload.id,
+        role: payload.role,
+        votingPhaseId,
+      });
+    });
     return;
   }
 

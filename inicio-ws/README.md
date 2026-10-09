@@ -1,86 +1,35 @@
-# y-websocket-server :tophat:
+# inicio-ws
 
-> Simple backend for [y-websocket](https://github.com/yjs/y-websocket)
+Websocket service used by iNIcio for two things:
 
-The Websocket Provider is a solid choice if you want a central source that
-handles authentication and authorization. Websockets also send header
-information and cookies, so you can use existing authentication mechanisms with
-this server.
+- **Collaborative editing**: y-websocket rooms used by the real-time editor.
+- **Live voting**: `voting/{votingPhaseId}` rooms that push vote and progress
+  updates to connected admins and recruiters.
 
-## Quick Start
+## Environment
 
-### Install dependencies
+| Variable       | Required | Default                    | Purpose                                   |
+| -------------- | -------- | -------------------------- | ----------------------------------------- |
+| `JWT_SECRET`   | yes      | -                          | Verifies client and server tokens         |
+| `HOST`         | no       | `localhost`                | Bind address (`0.0.0.0` in Docker)        |
+| `PORT`         | no       | `1234`                     | Listen port                               |
+| `NEXTJS_URL`   | no       | `http://localhost:3000`    | Next.js app used to sync voting rooms     |
 
-```sh
-npm i @y/websocket-server
-```
+The service refuses to start without `JWT_SECRET`.
 
-### Start a y-websocket server
+## Endpoints
 
-This repository implements a basic server that you can adopt to your specific use-case. [(source code)](./src/)
+- `ws://host:port/{room}?token=...`: client connection. The token must have
+  role `recruiter` or `admin` and list the room in its `rooms` claim.
+- `POST /broadcast`: internal endpoint used by Next.js server actions. It
+  requires a token with role `server` and a JSON body
+  `{ "room": "voting/1", "event": { ... } }`. Bodies over 64 KB are rejected.
 
-Start a y-websocket server:
-
-```sh
-HOST=localhost PORT=1234 npx y-websocket
-```
-
-### Client Code
-
-```js
-import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
-
-const doc = new Y.Doc();
-const wsProvider = new WebsocketProvider(
-  "ws://localhost:1234",
-  "my-roomname",
-  doc,
-);
-
-wsProvider.on("status", (event) => {
-  console.log(event.status); // logs "connected" or "disconnected"
-});
-```
-
-## Websocket Server
-
-Start a y-websocket server:
+## Running
 
 ```sh
-HOST=localhost PORT=1234 npx y-websocket
+npm install
+JWT_SECRET=... npm start
 ```
 
-Since npm symlinks the `y-websocket` executable from your local `./node_modules/.bin` folder, you can simply run npx. The `PORT` environment variable already defaults to 1234, and `HOST` defaults to `localhost`.
-
-### Websocket Server with Persistence
-
-Persist document updates in a LevelDB database.
-
-See [LevelDB Persistence](https://github.com/yjs/y-leveldb) for more info.
-
-```sh
-HOST=localhost PORT=1234 YPERSISTENCE=./dbDir npx y-websocket
-```
-
-### Websocket Server with HTTP callback
-
-Send a debounced callback to an HTTP server (`POST`) on document update. Note that this implementation doesn't implement a retry logic in case the `CALLBACK_URL` does not work.
-
-Can take the following ENV variables:
-
-- `CALLBACK_URL` : Callback server URL
-- `CALLBACK_DEBOUNCE_WAIT` : Debounce time between callbacks (in ms). Defaults to 2000 ms
-- `CALLBACK_DEBOUNCE_MAXWAIT` : Maximum time to wait before callback. Defaults to 10 seconds
-- `CALLBACK_TIMEOUT` : Timeout for the HTTP call. Defaults to 5 seconds
-- `CALLBACK_OBJECTS` : JSON of shared objects to get data (`'{"SHARED_OBJECT_NAME":"SHARED_OBJECT_TYPE}'`)
-
-```sh
-CALLBACK_URL=http://localhost:3000/ CALLBACK_OBJECTS='{"prosemirror":"XmlFragment"}' npm start
-```
-
-This sends a debounced callback to `localhost:3000` 2 seconds after receiving an update (default `DEBOUNCE_WAIT`) with the data of an XmlFragment named `"prosemirror"` in the body.
-
-## License
-
-[The MIT License](./LICENSE) © Kevin Jahns
+With Docker, see `docker-compose.yml` in the repository root.

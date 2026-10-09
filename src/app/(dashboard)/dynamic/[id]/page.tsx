@@ -278,7 +278,7 @@ export default function DynamicPage() {
               <EvaluationPanel>
                 <RealTimeEditor
                   token={token}
-                  key={`dynamic-editor-${dynamicId}`}
+                  key={`dynamic-editor-${dynamicId}-${dynamic.locked}`}
                   roomId={`dynamic-${dynamicId}`}
                   docId={`dynamic-${dynamicId}`}
                   userName={user?.name ?? "Anonymous"}
@@ -287,6 +287,7 @@ export default function DynamicPage() {
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
                   editable={!dynamic.locked}
+                  collab={!dynamic.locked}
                 />
               </EvaluationPanel>
             ),

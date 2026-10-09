@@ -234,7 +234,7 @@ export default function InterviewPage() {
               <EvaluationPanel>
                 <RealTimeEditor
                   token={token}
-                  key={`interview-editor-${interview.id}`}
+                  key={`interview-editor-${interview.id}-${interview.locked}`}
                   roomId={`interview-${interview.id}`}
                   docId={`interview-${interview.id}`}
                   userName={user?.name ?? "Anonymous"}
@@ -243,6 +243,7 @@ export default function InterviewPage() {
                   mentionItems={recruiters}
                   saveHandlerTimeout={250}
                   editable={!interview.locked}
+                  collab={!interview.locked}
                 />
               </EvaluationPanel>
             ),

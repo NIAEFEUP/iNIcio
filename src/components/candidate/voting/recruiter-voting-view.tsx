@@ -10,7 +10,7 @@ import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
 import { ClassificationText } from "@/components/candidates/candidate-text";
-import { useCurrentVotingPhaseStatus } from "@/lib/hooks/voting/use-current-voting-phase-status";
+import { useVotingWebSocket } from "@/lib/hooks/use-voting-websocket";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { RecruiterVote, VotingPhase } from "@/lib/db";
 import { toast } from "@/components/ui/toast";
@@ -32,6 +32,7 @@ interface RecruiterVotingViewProps {
   ) => Promise<boolean>;
   currentUserId: string;
   showBack?: boolean;
+  token: string;
 }
 
 export function RecruiterVotingView({
@@ -40,6 +41,7 @@ export function RecruiterVotingView({
   submitVoteAction,
   currentUserId,
   showBack = false,
+  token,
 }: RecruiterVotingViewProps) {
   const candidates = currentVotingPhase.candidates;
 
@@ -48,7 +50,7 @@ export function RecruiterVotingView({
     candidates.findIndex((c) => c.id === currentVotingPhase.status.candidateId),
   );
 
-  const [currentIndex, setCurrentIndex] = useState(initialIdx);
+  const [, setCurrentIndex] = useState(initialIdx);
   const [currentCandidate, setCurrentCandidate] =
     useState<CandidateVotingMetadata>(candidates[initialIdx] || candidates[0]);
 
@@ -60,12 +62,22 @@ export function RecruiterVotingView({
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
 
-  // Poll status from server to sync with admin in real time
-  const { votingPhaseStatus } = useCurrentVotingPhaseStatus(
-    currentVotingPhase.id,
-  );
+  const live = useVotingWebSocket({
+    votingPhaseId: currentVotingPhase.id,
+    token,
+    initial: {
+      currentCandidateId: currentVotingPhase.status.candidateId,
+      finishedCandidateIds: candidates
+        .filter((c) => c.isFinished)
+        .map((c) => c.id),
+      acceptedCandidates: currentVotingPhase.status.accepted_candidates || 0,
+      rejectedCandidates: currentVotingPhase.status.rejected_candidates || 0,
+      terminated: Boolean(currentVotingPhase.terminated),
+    },
+  });
+  const finishedIds = new Set(live.finishedCandidateIds);
 
-  const activeCandidateId = votingPhaseStatus?.candidateId;
+  const activeCandidateId = live.currentCandidateId ?? undefined;
   const [prevActiveCandidateId, setPrevActiveCandidateId] = useState<
     string | undefined
   >(activeCandidateId);
@@ -81,22 +93,14 @@ export function RecruiterVotingView({
     }
   }
 
-  const isPhaseTerminated =
-    Boolean(currentVotingPhase.terminated) ||
-    Boolean(votingPhaseStatus?.terminated);
+  const isPhaseTerminated = live.terminated;
 
   const hasVotedForCurrent = votedCandidateIds.has(currentCandidate?.id);
-  const isCandidateFinished = currentCandidate?.isFinished || false;
+  const isCandidateFinished = finishedIds.has(currentCandidate?.id);
 
-  const acceptedCount =
-    votingPhaseStatus?.accepted_candidates ??
-    currentVotingPhase.status.accepted_candidates ??
-    0;
-  const rejectedCount =
-    votingPhaseStatus?.rejected_candidates ??
-    currentVotingPhase.status.rejected_candidates ??
-    0;
-  const finishedCount = acceptedCount + rejectedCount;
+  const acceptedCount = live.acceptedCandidates;
+  const rejectedCount = live.rejectedCandidates;
+  const finishedCount = finishedIds.size;
 
   const handleVote = async (decision: "approve" | "reject") => {
     if (
@@ -172,21 +176,28 @@ export function RecruiterVotingView({
         backHref="/candidates/voting"
         inlineOnMobile
         actions={
-          <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
-            <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Progresso:</span>
-              <span className="font-semibold text-foreground">
-                {finishedCount}/{candidates.length}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {!live.connected && (
+              <span className="text-xs text-muted-foreground">
+                A ligar ao servidor de votação…
+              </span>
+            )}
+            <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">Progresso:</span>
+                <span className="font-semibold text-foreground">
+                  {finishedCount}/{candidates.length}
+                </span>
+              </div>
+              <span className="text-muted-foreground/60">·</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                {acceptedCount} aceites
+              </span>
+              <span className="text-muted-foreground/60">·</span>
+              <span className="text-rose-600 dark:text-rose-400 font-semibold">
+                {rejectedCount} rejeitados
               </span>
             </div>
-            <span className="text-muted-foreground/60">·</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-              {acceptedCount} aceites
-            </span>
-            <span className="text-muted-foreground/60">·</span>
-            <span className="text-rose-600 dark:text-rose-400 font-semibold">
-              {rejectedCount} rejeitados
-            </span>
           </div>
         }
       />
