@@ -128,7 +128,12 @@ export default async function CandidateVotingPage({
     await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
-    await notifyClients(() => broadcastVotesReset(votingPhaseId, candidateId));
+    await notifyClients(async () => {
+      await broadcastVotesReset(votingPhaseId, candidateId);
+      // Resetting also un-finishes the candidate and adjusts the session
+      // counters, so clients need the refreshed progress too.
+      await broadcastProgress(votingPhaseId);
+    });
   }
 
   if (userIsAdmin) {
