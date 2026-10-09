@@ -2,11 +2,19 @@
 
 import { and, eq } from "drizzle-orm";
 
-import { candidate } from "@/db/schema";
+import {
+  candidate,
+  candidateToDynamic,
+  dynamic,
+  interview,
+  recruiterToDynamic,
+  recruiterToInterview,
+} from "@/db/schema";
 import {
   requireAdminSession,
   requireRecruiterSession,
 } from "@/lib/action-guard";
+import { isAdmin } from "@/lib/admin";
 import {
   submitApplicationComment,
   getAllPossibleApplicationInterests,
@@ -46,8 +54,10 @@ import {
   getInterviewComments,
   getInterviewers,
   updateInterview,
+  updateInterviewById,
   updateInterviewComment,
   toggleInterviewLock,
+  toggleInterviewLockById,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
@@ -61,6 +71,7 @@ export interface InterviewData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export interface DynamicData {
@@ -69,6 +80,7 @@ export interface DynamicData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export async function loadCandidates() {
@@ -128,10 +140,18 @@ export async function loadInterview(
   ]);
 
   const token = await generateJWT(user.id, await getRole(user.id), [
-    `interview-${candidateId}`,
+    `interview-${interview.id}`,
   ]);
 
-  return { candidate, interview, interviewers, comments, recruiters, token };
+  return {
+    candidate,
+    interview,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
@@ -151,7 +171,14 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
     `dynamic-${dynamicId}`,
   ]);
 
-  return { dynamic, interviewers, comments, recruiters, token };
+  return {
+    dynamic,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function saveApplicationComment(
@@ -312,23 +339,57 @@ export async function voteDynamicComment(
 }
 
 export async function updateInterviewContent(
-  candidateId: string,
+  candidateOrInterviewId: string | number,
   content: unknown,
 ) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    const updated = await updateInterviewById(candidateOrInterviewId, content);
+    if (!updated) {
+      throw new Error("A entrevista está bloqueada ou não existe.");
+    }
+    return;
+  }
+
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  const updated = await updateInterview(candidateId, content, targetId);
+  const updated = await updateInterview(
+    candidateOrInterviewId,
+    content,
+    targetId,
+  );
   if (!updated) {
     throw new Error("A entrevista está bloqueada ou não existe.");
   }
 }
 
-export async function setInterviewLocked(candidateId: string, locked: boolean) {
+export async function setInterviewLocked(
+  candidateOrInterviewId: string | number,
+  locked: boolean,
+) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    await toggleInterviewLockById(candidateOrInterviewId, locked);
+    return;
+  }
+
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  await toggleInterviewLock(candidateId, locked, targetId);
+  await toggleInterviewLock(candidateOrInterviewId, locked, targetId);
 }
 
 export async function updateDynamicContent(
@@ -357,7 +418,8 @@ async function classifyCandidate(
   column: "interviewClassification" | "dynamicClassification",
 ) {
   const targetId = await getTargetRecruitmentId();
-  await requireRecruiterSession(targetId);
+  const user = await requireRecruiterSession(targetId);
+  await assertCanClassify(user.id, targetId, candidateId, column);
 
   await db
     .update(candidate)
@@ -368,6 +430,53 @@ async function classifyCandidate(
         eq(candidate.recruitmentId, targetId),
       ),
     );
+}
+
+async function assertCanClassify(
+  userId: string,
+  recruitmentId: number,
+  candidateId: string,
+  column: "interviewClassification" | "dynamicClassification",
+) {
+  if (await isAdmin(userId)) return;
+
+  const assigned =
+    column === "interviewClassification"
+      ? await db
+          .select({ id: interview.id })
+          .from(interview)
+          .innerJoin(
+            recruiterToInterview,
+            eq(recruiterToInterview.interviewId, interview.id),
+          )
+          .where(
+            and(
+              eq(interview.candidateId, candidateId),
+              eq(interview.recruitmentId, recruitmentId),
+              eq(recruiterToInterview.recruiterId, userId),
+            ),
+          )
+      : await db
+          .select({ id: dynamic.id })
+          .from(candidateToDynamic)
+          .innerJoin(dynamic, eq(dynamic.id, candidateToDynamic.dynamicId))
+          .innerJoin(
+            recruiterToDynamic,
+            eq(recruiterToDynamic.dynamicId, dynamic.id),
+          )
+          .where(
+            and(
+              eq(candidateToDynamic.candidateId, candidateId),
+              eq(candidateToDynamic.recruitmentId, recruitmentId),
+              eq(recruiterToDynamic.recruiterId, userId),
+            ),
+          );
+
+  if (assigned.length === 0) {
+    throw new Error(
+      "Unauthorized: Apenas recrutadores atribuídos a esta entrevista/dinâmica podem alterar a classificação.",
+    );
+  }
 }
 
 export async function classifyInterview(

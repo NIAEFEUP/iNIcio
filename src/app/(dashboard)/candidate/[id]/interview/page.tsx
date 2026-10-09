@@ -79,8 +79,13 @@ export default function InterviewPage() {
     data;
   const answeredCount = applicationAnswerCount(candidate.application);
 
+  const canEditInterview =
+    Boolean(data.isAuthenticatedAdmin) ||
+    Boolean(user?.isAdmin) ||
+    interviewers.some((i) => i.id === user?.id);
+
   const saveContent = async (content: unknown) => {
-    await updateInterviewContent(id, content);
+    await updateInterviewContent(interview.id, content);
   };
 
   const saveComment = async (content: Array<unknown>) => {
@@ -119,7 +124,7 @@ export default function InterviewPage() {
     setIsLocking(true);
     const newLocked = !interview.locked;
     try {
-      await setInterviewLocked(id, newLocked);
+      await setInterviewLocked(interview.id, newLocked);
       await mutate(
         interviewKey(id, recruitmentId, user?.id),
         (current: any) =>
@@ -214,6 +219,7 @@ export default function InterviewPage() {
           onClassifyInterview={(value) =>
             handleClassifyInterview(candidate.id, value)
           }
+          readOnlyInterview={!canEditInterview}
           readOnlyDynamic={true}
         />
       }
@@ -228,9 +234,9 @@ export default function InterviewPage() {
               <EvaluationPanel>
                 <RealTimeEditor
                   token={token}
-                  key={`interview-editor-${id}`}
-                  roomId={`interview-${id}`}
-                  docId={`interview-${id}`}
+                  key={`interview-editor-${interview.id}`}
+                  roomId={`interview-${interview.id}`}
+                  docId={`interview-${interview.id}`}
                   userName={user?.name ?? "Anonymous"}
                   saveHandler={saveContent}
                   entity={interview}

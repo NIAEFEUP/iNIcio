@@ -2,14 +2,8 @@
 
 import * as React from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ClassificationText } from "@/components/candidates/candidate-text";
+import { ClassificationSelect } from "@/components/candidates/classification-select";
 import { classifyDynamic, classifyInterview } from "@/app/candidate/actions";
 import { cn } from "@/lib/utils";
 
@@ -111,24 +105,11 @@ export function CandidateClassificationsCard({
             {isInterviewReadOnly ? (
               <ClassificationText level={interviewClassification} />
             ) : (
-              <Select
-                value={
-                  interviewClassification && interviewClassification !== "none"
-                    ? interviewClassification
-                    : ""
-                }
+              <ClassificationSelect
+                value={interviewClassification}
                 onValueChange={handleInterviewClassification}
-              >
-                <SelectTrigger className="h-8 w-32 text-xs font-medium">
-                  <SelectValue placeholder="Classificar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="muito fraco">Muito fraco</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="muito forte">Muito forte</SelectItem>
-                  <SelectItem value="none">Limpar</SelectItem>
-                </SelectContent>
-              </Select>
+                triggerClassName="h-8 w-32"
+              />
             )}
           </div>
         )}
@@ -139,24 +120,11 @@ export function CandidateClassificationsCard({
             {isDynamicReadOnly ? (
               <ClassificationText level={dynamicClassification} />
             ) : (
-              <Select
-                value={
-                  dynamicClassification && dynamicClassification !== "none"
-                    ? dynamicClassification
-                    : ""
-                }
+              <ClassificationSelect
+                value={dynamicClassification}
                 onValueChange={handleDynamicClassification}
-              >
-                <SelectTrigger className="h-8 w-32 text-xs font-medium">
-                  <SelectValue placeholder="Classificar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="muito fraco">Muito fraco</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="muito forte">Muito forte</SelectItem>
-                  <SelectItem value="none">Limpar</SelectItem>
-                </SelectContent>
-              </Select>
+                triggerClassName="h-8 w-32"
+              />
             )}
           </div>
         )}
