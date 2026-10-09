@@ -7,7 +7,10 @@ import {
 } from "@/lib/voting-events";
 import { getVotingPhaseStatus } from "@/lib/voting";
 
-export async function POST(request: NextRequest, context: any) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   try {
     const authHeader = request.headers.get("authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -27,7 +30,11 @@ export async function POST(request: NextRequest, context: any) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id: votingPhaseId } = await context.params;
+    const { id } = await context.params;
+    const votingPhaseId = Number(id);
+    if (!Number.isInteger(votingPhaseId)) {
+      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    }
 
     const status = await getVotingPhaseStatus(votingPhaseId);
     if (status?.candidateId) {

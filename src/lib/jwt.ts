@@ -30,7 +30,7 @@ export async function generateServerJWT() {
     role: "server",
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET, {
+  return jwt.sign(payload, getSecret(), {
     expiresIn: "1h",
   });
 }

@@ -54,8 +54,7 @@ export async function broadcastVotingEvent(
 ) {
   const url = WEBSOCKET_URL;
   if (!url) {
-    console.warn("[voting-events] NEXT_PUBLIC_WEBSOCKET_URL is not set");
-    return;
+    throw new Error("[voting-events] NEXT_PUBLIC_WEBSOCKET_URL is not set");
   }
 
   try {
