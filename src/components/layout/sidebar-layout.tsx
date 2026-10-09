@@ -8,6 +8,7 @@ import { RecruitmentProvider } from "@/lib/contexts/recruitment-context";
 import type { User as UserType } from "@/hooks/use-auth";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export interface SidebarLayoutProps {
   children?: React.ReactNode;
@@ -48,23 +49,42 @@ export function SidebarLayout({
   const activeLogout = onLogout ?? auth.logout;
   const activePath = currentPath ?? pathname ?? "";
 
+  const isImmersivePage =
+    /^\/candidate\/[^/]+\/interview(\/.*)?$/.test(activePath) ||
+    /^\/dynamic\/[^/]+(\/.*)?$/.test(activePath);
+
   return (
     <RecruitmentProvider
       initialRecruitmentId={selectedRecruitmentId}
       onSelectRecruitment={onSelectRecruitment}
     >
       <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar
-          user={activeUser}
-          isAuthenticated={activeIsAuthenticated}
-          isAdmin={activeIsAdmin}
-          isRecruiter={activeIsRecruiter}
-          onLogout={activeLogout}
-          currentPath={activePath}
-          recruitments={recruitments}
-        />
-        <SidebarInset>
-          <div className="flex-1 p-6 py-4">{children}</div>
+        {!isImmersivePage && (
+          <AppSidebar
+            user={activeUser}
+            isAuthenticated={activeIsAuthenticated}
+            isAdmin={activeIsAdmin}
+            isRecruiter={activeIsRecruiter}
+            onLogout={activeLogout}
+            currentPath={activePath}
+            recruitments={recruitments}
+          />
+        )}
+        <SidebarInset
+          className={cn(
+            isImmersivePage &&
+              "h-dvh max-h-dvh overflow-auto lg:overflow-hidden",
+          )}
+        >
+          <div
+            className={cn(
+              "flex-1 p-6 py-4",
+              isImmersivePage &&
+                "flex flex-col min-h-full lg:h-full lg:min-h-0 lg:overflow-hidden p-4 sm:p-6",
+            )}
+          >
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </RecruitmentProvider>

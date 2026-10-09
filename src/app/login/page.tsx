@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -47,6 +47,9 @@ const resetFormSchema = z.object({
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const addAccount = searchParams.get("addAccount") === "1";
+  const from = searchParams.get("from") || "/";
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,7 +87,7 @@ export default function SignIn() {
       {
         onSuccess: () => {
           setIsLoading(false);
-          router.push("/");
+          router.push(from);
           router.refresh();
         },
         onRequest: () => {
@@ -135,13 +138,24 @@ export default function SignIn() {
     <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-10 sm:py-12">
       <div className="grid w-full max-w-4xl items-center gap-12 sm:gap-16 md:grid-cols-2 lg:gap-24">
         <div className="space-y-3 text-center md:text-left">
+          {addAccount && !isResetMode && (
+            <div className="rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
+              A adicionar outra conta. A sessão atual não será terminada.
+            </div>
+          )}
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
-            {isResetMode ? "Recuperar palavra-passe" : "Iniciar Sessão"}
+            {isResetMode
+              ? "Recuperar palavra-passe"
+              : addAccount
+                ? "Adicionar conta"
+                : "Iniciar Sessão"}
           </h1>
           <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">
             {isResetMode
               ? "Introduz o email da tua conta para receberes uma ligação de recuperação."
-              : "Introduz os teus dados para acederes à tua conta."}
+              : addAccount
+                ? "Introduz os dados da conta que queres adicionar."
+                : "Introduz os teus dados para acederes à tua conta."}
           </p>
         </div>
 

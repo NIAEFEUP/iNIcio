@@ -1,0 +1,216 @@
+"use client";
+
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useSWRConfig } from "swr";
+
+import { getCandidatesReturnUrl } from "@/lib/candidate-scroll";
+
+import CandidateCurriculum from "@/components/candidate/candidate-curriculum";
+import { CandidateHeaderActions } from "@/components/candidate/candidate-header-actions";
+import {
+  CandidateNavigation,
+  type AdjacentCandidateSummary,
+} from "@/components/candidate/candidate-navigation";
+import CandidateAnswers from "@/components/candidate/page/candidate-answers";
+import CandidateComments, {
+  type Comment,
+} from "@/components/candidate/page/candidate-comments";
+import { CandidateModularInfo } from "@/components/candidate/card";
+import CommentFrame from "@/components/comments/comment-frame";
+import { PageHeader } from "@/components/layout/page-header";
+import {
+  EvaluationLayout,
+  EvaluationPanel,
+} from "@/components/layout/evaluation-layout";
+import { EvaluationTabs } from "@/components/layout/evaluation-tabs";
+import { PageLoading } from "@/components/layout/page-loading";
+import { DataErrorState } from "@/components/data-table/data-state-view";
+
+import {
+  editApplicationComment,
+  saveApplicationComment,
+  voteApplicationComment,
+} from "@/app/candidate/actions";
+import { applicationAnswerCount } from "@/lib/candidate-answers";
+import { useAuth } from "@/hooks/use-auth";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import {
+  applicationCommentsKey,
+  useApplicationComments,
+  useCandidateData,
+  useRecruiters,
+} from "@/lib/hooks/candidates/use-candidate-data";
+import type { CandidateWithMetadata } from "@/lib/candidate";
+import type { User } from "@/lib/db";
+
+interface CandidateDetailClientProps {
+  id: string;
+  initialCandidate: CandidateWithMetadata;
+  initialComments: Array<Comment>;
+  initialRecruiters: Array<User>;
+  adjacentCandidates?: {
+    prev: AdjacentCandidateSummary | null;
+    next: AdjacentCandidateSummary | null;
+  };
+}
+
+export function CandidateDetailClient({
+  id,
+  initialCandidate,
+  initialComments,
+  initialRecruiters,
+  adjacentCandidates,
+}: CandidateDetailClientProps) {
+  const {
+    data: candidate,
+    isLoading,
+    error,
+  } = useCandidateData(id, initialCandidate);
+  const { data: commentsData } = useApplicationComments(id, initialComments);
+  const { data: recruitersData } = useRecruiters(initialRecruiters);
+  const { user } = useAuth();
+  const { mutate } = useSWRConfig();
+  const { recruitmentId } = useRecruitment();
+  const router = useRouter();
+
+  const handleBack = useCallback(() => {
+    const returnUrl = getCandidatesReturnUrl();
+    if (returnUrl) {
+      router.push(returnUrl);
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/candidates");
+    }
+  }, [router]);
+
+  if (isLoading && !candidate) {
+    return <PageLoading />;
+  }
+
+  if (error || !candidate) {
+    return (
+      <DataErrorState
+        title="Candidato não encontrado"
+        message={error instanceof Error ? error.message : undefined}
+      />
+    );
+  }
+
+  const comments = commentsData ?? [];
+  const recruiters = recruitersData ?? [];
+  const answeredCount = applicationAnswerCount(candidate.application);
+
+  const saveComment = async (content: Array<unknown>) => {
+    const result = await saveApplicationComment(id, content);
+    if (result.success) {
+      mutate(applicationCommentsKey(id, recruitmentId, user?.id));
+    }
+    return result;
+  };
+
+  const editComment = async (commentId: number, content: Array<any>) => {
+    const ok = await editApplicationComment(id, commentId, content);
+    if (ok) {
+      mutate(applicationCommentsKey(id, recruitmentId, user?.id));
+    }
+    return ok;
+  };
+
+  return (
+    <EvaluationLayout
+      header={
+        <PageHeader
+          showBack={true}
+          onBack={handleBack}
+          title={candidate.name}
+          inlineOnMobile
+          viewModeToggle={
+            <CandidateHeaderActions
+              candidateId={candidate.id}
+              currentPage="candidate"
+              dynamicId={candidate.dynamic?.dynamicId}
+              hasInterview={Boolean(candidate.interview)}
+            />
+          }
+          actions={
+            <CandidateNavigation
+              currentCandidateId={candidate.id}
+              adjacentCandidates={adjacentCandidates}
+            />
+          }
+        >
+          <CandidateHeaderActions
+            candidateId={candidate.id}
+            currentPage="candidate"
+            dynamicId={candidate.dynamic?.dynamicId}
+            hasInterview={Boolean(candidate.interview)}
+            mobile
+          />
+        </PageHeader>
+      }
+      sidebar={
+        <CandidateModularInfo
+          candidate={candidate}
+          friends={candidate.knownRecruiters}
+          authUser={user ? { id: user.id, isAdmin: user.isAdmin } : null}
+          recruitmentId={recruitmentId}
+          readOnlyDynamic={true}
+          readOnlyInterview={true}
+        />
+      }
+    >
+      <EvaluationTabs
+        defaultValue="answers"
+        tabs={[
+          {
+            id: "answers",
+            label: "Respostas",
+            count: answeredCount,
+            content: (
+              <CandidateAnswers
+                key={candidate.id}
+                application={candidate.application}
+              />
+            ),
+          },
+          {
+            id: "curriculum",
+            label: "Currículo",
+            hidden: !candidate.application?.curriculum,
+            content: (
+              <EvaluationPanel>
+                <CandidateCurriculum
+                  application={candidate.application}
+                  candidateId={candidate.id}
+                />
+              </EvaluationPanel>
+            ),
+          },
+          {
+            id: "comments",
+            label: "Comentários",
+            count: comments.length,
+            content: (
+              <CommentFrame>
+                <CandidateComments
+                  candidate={candidate}
+                  type="application"
+                  comments={comments}
+                  saveToDatabase={saveComment}
+                  onEditComment={editComment}
+                  onVoteComment={voteApplicationComment.bind(
+                    null,
+                    candidate.id,
+                  )}
+                  recruiters={recruiters}
+                />
+              </CommentFrame>
+            ),
+          },
+        ]}
+      />
+    </EvaluationLayout>
+  );
+}

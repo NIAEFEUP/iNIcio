@@ -2,21 +2,52 @@
 
 import { and, eq } from "drizzle-orm";
 
-import { candidate } from "@/db/schema";
-import { requireRecruiterSession } from "@/lib/action-guard";
-import { submitApplicationComment } from "@/lib/application";
-import { getAllPossibleApplicationInterests } from "@/lib/application";
-import type { CandidateWithMetadata } from "@/lib/candidate";
-import { getCandidateWithMetadata } from "@/lib/candidate";
-import { getApplicationComments, getDynamicComments } from "@/lib/comment";
+import {
+  candidate,
+  candidateToDynamic,
+  dynamic,
+  interview,
+  recruiterToDynamic,
+  recruiterToInterview,
+} from "@/db/schema";
+import {
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
+import { isAdmin } from "@/lib/admin";
+import {
+  submitApplicationComment,
+  getAllPossibleApplicationInterests,
+} from "@/lib/application";
+import {
+  getCandidateWithMetadata,
+  type CandidateWithMetadata,
+} from "@/lib/candidate";
+import { createVotingPhase, terminateVotingPhase } from "@/lib/voting";
+import { broadcastSessionTerminated } from "@/lib/voting-events";
+import {
+  getApplicationComments,
+  getDynamicComments,
+  updateApplicationComment,
+  voteApplicationComment as libVoteApplicationComment,
+  voteInterviewComment as libVoteInterviewComment,
+  voteDynamicComment as libVoteDynamicComment,
+} from "@/lib/comment";
 import { db, User } from "@/lib/db";
 import type { Comment } from "@/components/candidate/page/candidate-comments";
+import {
+  isVoteValue,
+  type CommentVoteSummary,
+  type VoteValue,
+} from "@/lib/comment-vote";
 import {
   createDynamicComment,
   getDynamic,
   getDynamicInterviewers,
   getAllCandidatesWithDynamic,
   updateDynamic,
+  updateDynamicComment,
+  toggleDynamicLock,
 } from "@/lib/dynamic";
 import {
   addInterviewComment,
@@ -24,6 +55,10 @@ import {
   getInterviewComments,
   getInterviewers,
   updateInterview,
+  updateInterviewById,
+  updateInterviewComment,
+  toggleInterviewLock,
+  toggleInterviewLockById,
 } from "@/lib/interview";
 import { generateJWT } from "@/lib/jwt";
 import { getRecruiters } from "@/lib/recruiter";
@@ -37,6 +72,7 @@ export interface InterviewData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export interface DynamicData {
@@ -45,6 +81,7 @@ export interface DynamicData {
   comments: Array<Comment>;
   recruiters: Array<User>;
   token: string;
+  isAuthenticatedAdmin: boolean;
 }
 
 export async function loadCandidates() {
@@ -79,9 +116,9 @@ export async function loadApplicationComments(
   candidateId: string,
 ): Promise<Array<Comment>> {
   const targetId = await getTargetRecruitmentId();
-  await requireRecruiterSession(targetId);
+  const user = await requireRecruiterSession(targetId);
 
-  return getApplicationComments(candidateId, targetId);
+  return getApplicationComments(candidateId, user.id, targetId);
 }
 
 export async function loadInterview(
@@ -99,15 +136,23 @@ export async function loadInterview(
 
   const [interviewers, comments, recruiters] = await Promise.all([
     getInterviewers(interview.id),
-    getInterviewComments(interview.id),
+    getInterviewComments(interview.id, user.id),
     getRecruiters(targetId),
   ]);
 
   const token = await generateJWT(user.id, await getRole(user.id), [
-    `interview-${candidateId}`,
+    `interview-${interview.id}`,
   ]);
 
-  return { candidate, interview, interviewers, comments, recruiters, token };
+  return {
+    candidate,
+    interview,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
@@ -119,7 +164,7 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
 
   const [interviewers, comments, recruiters] = await Promise.all([
     getDynamicInterviewers(dynamic.id),
-    getDynamicComments(dynamic.id),
+    getDynamicComments(dynamic.id, user.id),
     getRecruiters(targetId),
   ]);
 
@@ -127,52 +172,225 @@ export async function loadDynamic(dynamicId: number): Promise<DynamicData> {
     `dynamic-${dynamicId}`,
   ]);
 
-  return { dynamic, interviewers, comments, recruiters, token };
+  return {
+    dynamic,
+    interviewers,
+    comments,
+    recruiters,
+    token,
+    isAuthenticatedAdmin: Boolean(await isAdmin(user.id)),
+  };
 }
 
 export async function saveApplicationComment(
   candidateId: string,
   content: Array<unknown>,
-): Promise<boolean> {
+): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
-  return submitApplicationComment(candidateId, content, user.id, targetId);
+  const id = await submitApplicationComment(
+    candidateId,
+    content,
+    user.id,
+    targetId,
+  );
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editApplicationComment(
+  candidateId: string,
+  commentId: number,
+  content: Array<unknown>,
+): Promise<boolean> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
+  const user = await requireRecruiterSession(targetId);
+
+  return updateApplicationComment(
+    commentId,
+    content,
+    user.id,
+    candidateId,
+    targetId,
+  );
 }
 
 export async function saveInterviewComment(
   candidateId: string,
   content: Array<unknown>,
-): Promise<boolean> {
+): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
-  return addInterviewComment(user.id, content, candidateId, targetId);
+  const id = await addInterviewComment(user.id, content, candidateId, targetId);
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editInterviewComment(
+  candidateId: string,
+  commentId: number,
+  content: Array<unknown>,
+): Promise<boolean> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
+  const user = await requireRecruiterSession(targetId);
+
+  return updateInterviewComment(
+    commentId,
+    content,
+    user.id,
+    candidateId,
+    targetId,
+  );
 }
 
 export async function saveDynamicComment(
   dynamicId: number,
   content: Array<unknown>,
-): Promise<boolean> {
+): Promise<{ success: boolean; id?: number }> {
   const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return { success: false };
   const user = await requireRecruiterSession(targetId);
 
   const dynamic = await getDynamic(dynamicId, targetId);
   if (!dynamic)
     throw new Error("Dynamic not found in the selected recruitment");
 
-  await createDynamicComment(dynamicId, content, user.id);
-  return true;
+  const id = await createDynamicComment(dynamicId, content, user.id);
+  return id !== null ? { success: true, id } : { success: false };
+}
+
+export async function editDynamicComment(
+  dynamicId: number,
+  commentId: number,
+  content: Array<unknown>,
+): Promise<boolean> {
+  const targetId = await getTargetRecruitmentId();
+  if (targetId === undefined) return false;
+  const user = await requireRecruiterSession(targetId);
+
+  return updateDynamicComment(commentId, content, user.id, dynamicId, targetId);
+}
+
+// Shared guard for the three vote actions: resolve the recruitment, reject
+// malformed vote values, require a recruiter session, and exclude admins.
+async function authorizeCommentVote(value: unknown) {
+  const recruitmentId = await getTargetRecruitmentId();
+  if (recruitmentId === undefined) return null;
+  if (!isVoteValue(value)) return null;
+
+  const user = await requireRecruiterSession(recruitmentId);
+  if (user.role === "admin") return null;
+
+  return { value, userId: user.id, recruitmentId };
+}
+
+export async function voteApplicationComment(
+  candidateId: string,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
+
+  return libVoteApplicationComment(
+    commentId,
+    vote.userId,
+    vote.value,
+    candidateId,
+    vote.recruitmentId,
+  );
+}
+
+export async function voteInterviewComment(
+  candidateId: string,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
+
+  return libVoteInterviewComment(
+    commentId,
+    vote.userId,
+    vote.value,
+    candidateId,
+    vote.recruitmentId,
+  );
+}
+
+export async function voteDynamicComment(
+  dynamicId: number,
+  commentId: number,
+  value: VoteValue,
+): Promise<CommentVoteSummary | null> {
+  const vote = await authorizeCommentVote(value);
+  if (!vote) return null;
+
+  return libVoteDynamicComment(
+    commentId,
+    vote.userId,
+    vote.value,
+    dynamicId,
+    vote.recruitmentId,
+  );
 }
 
 export async function updateInterviewContent(
-  candidateId: string,
+  candidateOrInterviewId: string | number,
   content: unknown,
 ) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    const updated = await updateInterviewById(candidateOrInterviewId, content);
+    if (!updated) {
+      throw new Error("A entrevista está bloqueada ou não existe.");
+    }
+    return;
+  }
+
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  await updateInterview(candidateId, content, targetId);
+  const updated = await updateInterview(
+    candidateOrInterviewId,
+    content,
+    targetId,
+  );
+  if (!updated) {
+    throw new Error("A entrevista está bloqueada ou não existe.");
+  }
+}
+
+export async function setInterviewLocked(
+  candidateOrInterviewId: string | number,
+  locked: boolean,
+) {
+  if (typeof candidateOrInterviewId === "number") {
+    const i = await db.query.interview.findFirst({
+      where: eq(interview.id, candidateOrInterviewId),
+    });
+    if (!i) {
+      throw new Error("A entrevista não existe.");
+    }
+    await requireRecruiterSession(i.recruitmentId);
+    await toggleInterviewLockById(candidateOrInterviewId, locked);
+    return;
+  }
+
+  const targetId = await getTargetRecruitmentId();
+  await requireRecruiterSession(targetId);
+
+  await toggleInterviewLock(candidateOrInterviewId, locked, targetId);
 }
 
 export async function updateDynamicContent(
@@ -182,11 +400,17 @@ export async function updateDynamicContent(
   const targetId = await getTargetRecruitmentId();
   await requireRecruiterSession(targetId);
 
-  const dynamic = await getDynamic(dynamicId, targetId);
-  if (!dynamic)
-    throw new Error("Dynamic not found in the selected recruitment");
+  const updated = await updateDynamic(dynamicId, content, targetId);
+  if (!updated) {
+    throw new Error("A dinâmica está bloqueada ou não existe.");
+  }
+}
 
-  await updateDynamic(dynamicId, content);
+export async function setDynamicLocked(dynamicId: number, locked: boolean) {
+  const targetId = await getTargetRecruitmentId();
+  await requireRecruiterSession(targetId);
+
+  await toggleDynamicLock(dynamicId, locked, targetId);
 }
 
 async function classifyCandidate(
@@ -195,7 +419,8 @@ async function classifyCandidate(
   column: "interviewClassification" | "dynamicClassification",
 ) {
   const targetId = await getTargetRecruitmentId();
-  await requireRecruiterSession(targetId);
+  const user = await requireRecruiterSession(targetId);
+  await assertCanClassify(user.id, targetId, candidateId, column);
 
   await db
     .update(candidate)
@@ -206,6 +431,53 @@ async function classifyCandidate(
         eq(candidate.recruitmentId, targetId),
       ),
     );
+}
+
+async function assertCanClassify(
+  userId: string,
+  recruitmentId: number,
+  candidateId: string,
+  column: "interviewClassification" | "dynamicClassification",
+) {
+  if (await isAdmin(userId)) return;
+
+  const assigned =
+    column === "interviewClassification"
+      ? await db
+          .select({ id: interview.id })
+          .from(interview)
+          .innerJoin(
+            recruiterToInterview,
+            eq(recruiterToInterview.interviewId, interview.id),
+          )
+          .where(
+            and(
+              eq(interview.candidateId, candidateId),
+              eq(interview.recruitmentId, recruitmentId),
+              eq(recruiterToInterview.recruiterId, userId),
+            ),
+          )
+      : await db
+          .select({ id: dynamic.id })
+          .from(candidateToDynamic)
+          .innerJoin(dynamic, eq(dynamic.id, candidateToDynamic.dynamicId))
+          .innerJoin(
+            recruiterToDynamic,
+            eq(recruiterToDynamic.dynamicId, dynamic.id),
+          )
+          .where(
+            and(
+              eq(candidateToDynamic.candidateId, candidateId),
+              eq(candidateToDynamic.recruitmentId, recruitmentId),
+              eq(recruiterToDynamic.recruiterId, userId),
+            ),
+          );
+
+  if (assigned.length === 0) {
+    throw new Error(
+      "Unauthorized: Apenas recrutadores atribuídos a esta entrevista/dinâmica podem alterar a classificação.",
+    );
+  }
 }
 
 export async function classifyInterview(
@@ -224,4 +496,58 @@ export async function classifyDynamic(
   classification: string,
 ) {
   await classifyCandidate(candidateId, classification, "dynamicClassification");
+}
+
+export async function createVotingSessionAction(
+  candidateIds: Array<string>,
+): Promise<{ success: boolean; id?: number; error?: string }> {
+  try {
+    await requireAdminSession();
+    const targetId = await getTargetRecruitmentId();
+    if (!targetId) {
+      return { success: false, error: "Nenhum recrutamento ativo selecionado" };
+    }
+
+    if (
+      !candidateIds ||
+      !Array.isArray(candidateIds) ||
+      candidateIds.length === 0
+    ) {
+      return { success: false, error: "Nenhum candidato selecionado" };
+    }
+
+    const votingPhaseId = await createVotingPhase(candidateIds, targetId);
+    if (!votingPhaseId) {
+      return { success: false, error: "Falha ao criar sessão de votação" };
+    }
+
+    return { success: true, id: votingPhaseId };
+  } catch (error) {
+    console.error("Error creating voting session:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro ao criar votação",
+    };
+  }
+}
+
+export async function terminateVotingSessionAction(
+  votingPhaseId: number,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdminSession();
+    const ok = await terminateVotingPhase(votingPhaseId);
+    if (!ok) {
+      return { success: false, error: "Falha ao terminar sessão de votação" };
+    }
+    await broadcastSessionTerminated(votingPhaseId);
+    return { success: true };
+  } catch (error) {
+    console.error("Error terminating voting session:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Erro ao terminar votação",
+    };
+  }
 }

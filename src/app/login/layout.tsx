@@ -1,17 +1,27 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function LoginLayout({
+import { useSearchParams } from "next/navigation";
+import { redirect } from "next/navigation";
+import { useSession } from "@/lib/use-session";
+
+export default function LoginLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const searchParams = useSearchParams();
+  const addAccount = searchParams.get("addAccount") === "1";
+  const { data: session, isPending } = useSession();
 
-  if (session?.user) {
+  if (!addAccount && isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (session?.user && !addAccount) {
     redirect("/");
   }
 

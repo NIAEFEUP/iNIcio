@@ -10,7 +10,7 @@ import {
   votingPhaseCandidate,
   votingPhaseStatus,
 } from "@/db/schema";
-import { getCandidateWithMetadata } from "./candidate";
+import { getCandidatesWithMetadata } from "./candidate";
 
 export async function getCurrentVotingPhase(id: number) {
   const vPhase = await db.query.votingPhase.findFirst({
@@ -23,18 +23,21 @@ export async function getCurrentVotingPhase(id: number) {
 
   if (!vPhase) return null;
 
-  const candidates = await Promise.all(
-    vPhase.candidates.map(async (c) => {
-      const candidateData = await getCandidateWithMetadata(
-        c.candidateId,
+  const candidatesById = new Map(
+    (
+      await getCandidatesWithMetadata(
+        vPhase.candidates.map((c) => c.candidateId),
         vPhase.recruitmentId,
-      );
-      return {
-        ...candidateData,
-        isFinished: await getIsVoteFinished(id, c.candidateId),
-      };
-    }),
+      )
+    ).map((c) => [c.id, c]),
   );
+
+  const candidates = vPhase.candidates
+    .map((c) => {
+      const candidate = candidatesById.get(c.candidateId);
+      return candidate ? { ...candidate, isFinished: c.voteFinished } : null;
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null);
 
   return {
     ...vPhase,
@@ -43,22 +46,21 @@ export async function getCurrentVotingPhase(id: number) {
   };
 }
 
-function getIsVoteFinished(votingPhaseId: number, candidateId: string) {
-  return db.query.votingPhaseCandidate
-    .findFirst({
-      where: (vpc) =>
-        and(
-          eq(vpc.votingPhaseId, votingPhaseId),
-          eq(vpc.candidateId, candidateId),
-        ),
-    })
-    .then((res) => res?.voteFinished || false);
-}
-
 export async function getVotingPhaseStatus(votingPhaseId: number) {
-  return await db.query.votingPhaseStatus.findFirst({
+  const status = await db.query.votingPhaseStatus.findFirst({
     where: (vps) => eq(vps.votingPhaseId, votingPhaseId),
   });
+  if (!status) return null;
+
+  const phase = await db.query.votingPhase.findFirst({
+    where: (vp) => eq(vp.id, votingPhaseId),
+    columns: { terminated: true },
+  });
+
+  return {
+    ...status,
+    terminated: phase?.terminated ?? false,
+  };
 }
 
 import { getActiveRecruitment } from "./recruitment";
@@ -66,13 +68,13 @@ import { getActiveRecruitment } from "./recruitment";
 export async function createVotingPhase(
   candidates: Array<string>,
   recruitmentId?: number,
-) {
+): Promise<number | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) {
     throw new Error("No recruitment specified or active");
   }
 
-  let votingPhaseId = null;
+  let createdId: number | null = null;
 
   try {
     await db.transaction(async (tx) => {
@@ -81,33 +83,62 @@ export async function createVotingPhase(
         .values({ recruitmentId: targetId })
         .returning({ id: votingPhase.id });
 
+      createdId = vPhase[0]?.id ?? null;
+      if (!createdId) return;
+
       for (const candidate of candidates) {
-        await tx
-          .insert(votingPhaseCandidate)
-          .values({
-            votingPhaseId: vPhase[0].id,
-            candidateId: candidate,
-            recruitmentId: targetId,
-          })
-          .returning({ id: votingPhaseCandidate.candidateId });
+        await tx.insert(votingPhaseCandidate).values({
+          votingPhaseId: createdId,
+          candidateId: candidate,
+          recruitmentId: targetId,
+        });
       }
 
-      votingPhaseId = await tx
-        .insert(votingPhaseStatus)
-        .values({
-          votingPhaseId: vPhase[0].id,
-          candidateId: candidates[0],
-          accepted_candidates: 0,
-          rejected_candidates: 0,
-        })
-        .returning({ votingPhaseId: votingPhaseStatus.votingPhaseId });
+      await tx.insert(votingPhaseStatus).values({
+        votingPhaseId: createdId,
+        candidateId: candidates[0],
+        accepted_candidates: 0,
+        rejected_candidates: 0,
+      });
     });
 
-    return votingPhaseId;
+    return createdId;
   } catch (e) {
-    console.log(e);
+    console.error("Error creating voting phase:", e);
     return null;
   }
+}
+
+export async function getActiveVotingPhaseId(
+  recruitmentId?: number,
+): Promise<number | null> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return null;
+
+  const activePhase = await db
+    .select({
+      id: votingPhase.id,
+    })
+    .from(votingPhase)
+    .innerJoin(
+      votingPhaseCandidate,
+      eq(votingPhase.id, votingPhaseCandidate.votingPhaseId),
+    )
+    .where(
+      and(
+        eq(votingPhase.recruitmentId, targetId),
+        eq(votingPhase.terminated, false),
+        eq(votingPhaseCandidate.voteFinished, false),
+      ),
+    )
+    .orderBy(desc(votingPhase.id))
+    .limit(1);
+
+  if (activePhase.length > 0) {
+    return activePhase[0].id;
+  }
+
+  return null;
 }
 
 export async function getVotingPhaseRecruitmentId(votingPhaseId: number) {
@@ -126,6 +157,11 @@ export async function voteForCandidate(
   decision: "approve" | "reject",
 ) {
   try {
+    const vp = await db.query.votingPhase.findFirst({
+      where: eq(votingPhase.id, votingPhaseId),
+    });
+    if (!vp || vp.terminated) return false;
+
     const phaseCandidate = await db.query.votingPhaseCandidate.findFirst({
       where: and(
         eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
@@ -203,6 +239,11 @@ export async function getVotingPhases(recruitmentId?: number) {
 
   return await db.query.votingPhase.findMany({
     where: (vp) => eq(vp.recruitmentId, targetId),
+    with: {
+      status: true,
+      candidates: true,
+    },
+    orderBy: (vp) => desc(vp.id),
   });
 }
 
@@ -216,6 +257,50 @@ export async function deleteCandidateVotes(
     });
 
     if (!vp) return;
+
+    const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
+      where: and(
+        eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+        eq(votingPhaseCandidate.candidateId, candidateId),
+      ),
+    });
+
+    if (vPhaseCandidate?.voteFinished) {
+      const app = await tx.query.application.findFirst({
+        where: and(
+          eq(application.candidateId, candidateId),
+          eq(application.recruitmentId, vp.recruitmentId),
+        ),
+      });
+
+      const vPhaseStatus = await tx.query.votingPhaseStatus.findFirst({
+        where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
+      });
+
+      if (vPhaseStatus) {
+        if (app?.accepted) {
+          await tx
+            .update(votingPhaseStatus)
+            .set({
+              accepted_candidates: Math.max(
+                0,
+                vPhaseStatus.accepted_candidates - 1,
+              ),
+            })
+            .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+        } else {
+          await tx
+            .update(votingPhaseStatus)
+            .set({
+              rejected_candidates: Math.max(
+                0,
+                vPhaseStatus.rejected_candidates - 1,
+              ),
+            })
+            .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+        }
+      }
+    }
 
     await tx
       .delete(candidateVote)
@@ -268,7 +353,7 @@ export async function makeCandidateVoteDefinitive(
         where: eq(votingPhase.id, votingPhaseId),
       });
 
-      if (!vp) {
+      if (!vp || vp.terminated) {
         return false;
       }
 
@@ -332,6 +417,21 @@ export async function makeCandidateVoteDefinitive(
     });
   } catch (e) {
     console.log(e);
+    return false;
+  }
+}
+
+export async function terminateVotingPhase(votingPhaseId: number) {
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(votingPhase)
+        .set({ terminated: true })
+        .where(eq(votingPhase.id, votingPhaseId));
+    });
+    return true;
+  } catch (e) {
+    console.error("Error terminating voting phase:", e);
     return false;
   }
 }
@@ -476,4 +576,122 @@ export async function getLatestVotingDecisionForCandidate(
     recruitmentId,
   );
   return decisions.get(candidateId) ?? null;
+}
+
+/**
+ * Resolves the latest voting decision of one candidate in several recruitments
+ * at once, keyed by recruitment id. Candidate metadata (application, decision
+ * reveal) is looked up in a fixed number of queries rather than per
+ * recruitment.
+ */
+export async function getLatestVotingDecisionsByRecruitment(
+  candidateId: string,
+  recruitmentIds: Array<number>,
+): Promise<Map<number, VotingDecision | null>> {
+  const decisions = new Map<number, VotingDecision | null>();
+  const uniqueIds = [...new Set(recruitmentIds)];
+  if (uniqueIds.length === 0) return decisions;
+
+  const phases = await db
+    .select({
+      recruitmentId: votingPhase.recruitmentId,
+      votingPhaseId: votingPhaseCandidate.votingPhaseId,
+      voteFinished: votingPhaseCandidate.voteFinished,
+      createdAt: votingPhase.created_at,
+    })
+    .from(votingPhaseCandidate)
+    .innerJoin(
+      votingPhase,
+      eq(votingPhase.id, votingPhaseCandidate.votingPhaseId),
+    )
+    .where(
+      and(
+        inArray(votingPhase.recruitmentId, uniqueIds),
+        eq(votingPhaseCandidate.candidateId, candidateId),
+      ),
+    )
+    .orderBy(desc(votingPhaseCandidate.votingPhaseId));
+
+  const latest = new Map<number, (typeof phases)[number]>();
+  for (const phase of phases) {
+    if (!latest.has(phase.recruitmentId)) {
+      latest.set(phase.recruitmentId, phase);
+    }
+  }
+
+  const finished = [...latest.values()].filter((p) => p.voteFinished);
+
+  const votesByPhase = new Map<number, { approve: number; reject: number }>();
+  if (finished.length > 0) {
+    const votes = await db
+      .select({
+        votingPhaseId: candidateVote.votingPhaseId,
+        decision: candidateVote.decision,
+      })
+      .from(candidateVote)
+      .where(
+        and(
+          inArray(
+            candidateVote.votingPhaseId,
+            finished.map((p) => p.votingPhaseId),
+          ),
+          eq(candidateVote.candidateId, candidateId),
+        ),
+      );
+
+    for (const vote of votes) {
+      const counts = votesByPhase.get(vote.votingPhaseId) ?? {
+        approve: 0,
+        reject: 0,
+      };
+      if (vote.decision === "approve") counts.approve += 1;
+      else counts.reject += 1;
+      votesByPhase.set(vote.votingPhaseId, counts);
+    }
+  }
+
+  const acceptedByRecruitment = new Map<number, boolean>();
+  if (finished.length > 0) {
+    const applications = await db
+      .select({
+        recruitmentId: application.recruitmentId,
+        accepted: application.accepted,
+      })
+      .from(application)
+      .where(
+        and(
+          inArray(
+            application.recruitmentId,
+            finished.map((p) => p.recruitmentId),
+          ),
+          eq(application.candidateId, candidateId),
+        ),
+      );
+    for (const app of applications) {
+      acceptedByRecruitment.set(app.recruitmentId, app.accepted);
+    }
+  }
+
+  for (const recruitmentId of uniqueIds) {
+    const phase = latest.get(recruitmentId);
+    if (!phase || !phase.voteFinished) {
+      decisions.set(recruitmentId, null);
+      continue;
+    }
+
+    const counts = votesByPhase.get(phase.votingPhaseId) ?? {
+      approve: 0,
+      reject: 0,
+    };
+    decisions.set(recruitmentId, {
+      votingPhaseId: phase.votingPhaseId,
+      voteFinished: true,
+      approveCount: counts.approve,
+      rejectCount: counts.reject,
+      decision: acceptedByRecruitment.get(recruitmentId) ? "approve" : "reject",
+      createdAt: phase.createdAt,
+    });
+  }
+
+  return decisions;
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export interface PageHeaderProps {
   onBack?: () => void;
   showBack?: boolean;
   backLabel?: string;
+  inlineOnMobile?: boolean;
 }
 
 export function PageHeader({
@@ -46,11 +47,23 @@ export function PageHeader({
   onBack,
   showBack,
   backLabel,
+  inlineOnMobile,
 }: PageHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const sidebar = useSafeSidebar();
-  const canShowTrigger = showSidebarTrigger && Boolean(sidebar);
-  const hasBack = Boolean(backHref || onBack || showBack);
+
+  const isImmersivePage = pathname
+    ? /^\/candidate\/[^/]+\/interview(\/.*)?$/.test(pathname) ||
+      /^\/dynamic\/[^/]+(\/.*)?$/.test(pathname)
+    : false;
+
+  const canShowTrigger =
+    !isImmersivePage && showSidebarTrigger && Boolean(sidebar);
+  const hasBack =
+    !isImmersivePage &&
+    showBack !== false &&
+    Boolean(backHref || onBack || showBack);
 
   const handleBack = React.useCallback(() => {
     if (onBack) {
@@ -62,10 +75,22 @@ export function PageHeader({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div className="flex flex-1 items-center gap-2">
+      <div
+        className={cn(
+          "flex flex-wrap justify-between gap-4",
+          inlineOnMobile
+            ? "flex-row items-start sm:items-center"
+            : "flex-col lg:flex-row lg:items-center",
+        )}
+      >
+        <div
+          className={cn(
+            "flex flex-1 items-center gap-2 min-w-0",
+            !inlineOnMobile && "w-full",
+          )}
+        >
           {canShowTrigger && (
-            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground shrink-0" />
           )}
 
           {hasBack &&
@@ -76,8 +101,8 @@ export function PageHeader({
                 size={backLabel ? "sm" : "icon-sm"}
                 className={
                   backLabel
-                    ? "h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    : "size-7 text-muted-foreground hover:text-foreground"
+                    ? "h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                    : "size-7 text-muted-foreground hover:text-foreground shrink-0"
                 }
                 render={<Link href={backHref} />}
                 title={backLabel || "Voltar"}
@@ -92,8 +117,8 @@ export function PageHeader({
                 size={backLabel ? "sm" : "icon"}
                 className={
                   backLabel
-                    ? "h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    : "size-7 text-muted-foreground hover:text-foreground"
+                    ? "h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                    : "size-7 text-muted-foreground hover:text-foreground shrink-0"
                 }
                 onClick={handleBack}
                 title={backLabel || "Voltar"}
@@ -105,29 +130,59 @@ export function PageHeader({
             ))}
 
           {(canShowTrigger || hasBack) && (
-            <Separator orientation="vertical" className="mx-1 h-4" />
+            <Separator orientation="vertical" className="mx-1 h-4 shrink-0" />
           )}
 
           {typeof title === "string" ? (
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            <h1
+              className="min-w-0 truncate text-xl font-semibold tracking-tight text-foreground"
+              title={title}
+            >
               {title}
             </h1>
           ) : (
-            title
+            <div className="min-w-0 truncate">{title}</div>
           )}
-          {viewModeToggle}
+          {viewModeToggle && (
+            <div className="ml-auto flex shrink-0 items-center md:ml-0 empty:hidden max-md:[&:has(>.hidden:only-child)]:hidden max-md:[&_button>span]:hidden max-md:[&_button]:px-2">
+              {viewModeToggle}
+            </div>
+          )}
         </div>
 
         {(search || actions) && (
-          <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
-            {search}
-            {actions}
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              inlineOnMobile ? "shrink-0" : "w-full lg:w-auto",
+            )}
+          >
+            {search && (
+              <div className="flex-1 min-w-0 md:w-auto md:flex-none [&>div]:w-full md:[&>div]:w-auto [&_input]:w-full md:[&_input]:w-auto">
+                {search}
+              </div>
+            )}
+            {actions && (
+              <div
+                className={cn(
+                  "flex flex-wrap items-center justify-end gap-2",
+                  search
+                    ? "shrink-0"
+                    : "w-full flex-1 min-w-0 lg:w-auto lg:flex-none",
+                  inlineOnMobile && "w-auto shrink-0 max-w-full",
+                )}
+              >
+                {actions}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {filters && (
-        <div className="flex flex-wrap items-center gap-3">{filters}</div>
+        <div className="flex flex-wrap items-center gap-3 w-full max-md:[&_button]:w-full">
+          {filters}
+        </div>
       )}
 
       {children}

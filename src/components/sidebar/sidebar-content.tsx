@@ -1,22 +1,25 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Calendar,
+  CalendarCheck,
   CalendarClock,
+  CalendarDays,
+  CalendarRange,
   Clock,
+  DoorOpen,
   FileText,
-  LayoutDashboard,
   Layers,
+  ListChecks,
   MessageSquare,
   UserCheck,
   UserCog,
-  Users,
   UsersRound,
   Vote,
 } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -25,135 +28,158 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import type { User as UserType } from "@/hooks/use-auth";
 
-interface SidebarContentProps {
-  currentPath?: string;
-  isRecruiter?: boolean;
-  isAdmin?: boolean;
-  user?: UserType | null;
-}
-
-type IconType = ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
-
-interface NavItem {
+export interface NavItem {
   title: string;
   path?: string;
-  icon: IconType;
+  icon: LucideIcon;
   exact?: boolean;
   disabled?: boolean;
+  onSelect?: () => void;
 }
 
-function isActivePath(activePath: string, path?: string, exact?: boolean) {
-  if (!path) return false;
-  if (exact || path === "/admin") return activePath === path;
-  return activePath === path || activePath.startsWith(`${path}/`);
+export interface SidebarContentProps {
+  userId?: string;
+  isAdmin?: boolean;
+  isRecruiter?: boolean;
+  currentRecruitmentId?: number;
+  onOpenOpenDay?: () => void;
+}
+
+function isActivePath(
+  currentPath: string,
+  targetPath?: string,
+  exact = false,
+): boolean {
+  if (!targetPath) return false;
+  if (exact) return currentPath === targetPath;
+  return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
 }
 
 export function SidebarContentComponent({
-  currentPath,
-  isRecruiter = false,
   isAdmin = false,
-  user,
+  isRecruiter = false,
+  onOpenOpenDay,
 }: SidebarContentProps) {
-  const pathname = usePathname();
-  const activePath = currentPath || pathname || "";
-
+  const activePath = usePathname();
   const canRecruit = isRecruiter || isAdmin;
 
-  const recruiterSections: NavItem[] = [
-    ...(!isAdmin
-      ? [
-          {
-            title: "Dashboard",
-            path: "/recruiter",
-            icon: LayoutDashboard,
-            exact: true,
-          },
-        ]
-      : []),
+  const personalSections: NavItem[] = [
     {
-      title: "Disponibilidades",
-      path: "/recruiter/availability",
-      icon: Clock,
+      title: "Progresso",
+      path: "/recruiter/progress",
+      icon: ListChecks,
+      exact: true,
     },
-    ...(user?.id
-      ? [
-          {
-            title: "Alocações",
-            path: `/calendar/${user.id}`,
-            icon: Calendar,
-          },
-        ]
-      : []),
+    {
+      title: "Disponibilidade",
+      path: "/recruiter/availability",
+      icon: CalendarClock,
+    },
+    {
+      title: "Agenda",
+      path: "/calendar",
+      icon: CalendarDays,
+      exact: true,
+    },
+  ];
+
+  const selectionSections: NavItem[] = [
     { title: "Candidatos", path: "/candidates", icon: UserCheck, exact: true },
     { title: "Votações", path: "/candidates/voting", icon: Vote },
   ];
 
-  const adminSections: NavItem[] = [
-    { title: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    {
-      title: "Disponibilidades",
-      path: "/admin/availabilities",
-      icon: CalendarClock,
-    },
+  const recruitmentManagementSections: NavItem[] = [
     { title: "Fases", path: "/admin/phases", icon: Layers },
-    { title: "Slots", path: "/admin/interviews", icon: Users },
     { title: "Recrutadores", path: "/admin/recruiters", icon: UserCog },
-  ];
-
-  const platformSections: NavItem[] = [
-    { title: "Documentos", path: "/admin/templates", icon: FileText },
+    {
+      title: "Disponibilidade da Equipa",
+      path: "/admin/availabilities",
+      icon: CalendarRange,
+    },
+    { title: "Horários & Slots", path: "/admin/slots", icon: Clock },
+    { title: "Marcações", path: "/admin/bookings", icon: CalendarCheck },
+    { title: "Modelos", path: "/admin/templates", icon: FileText },
     {
       title: "Mensagens Finais",
       path: "/admin/final-messages",
       icon: MessageSquare,
     },
-    { title: "Utilizadores", icon: UsersRound, disabled: true },
+    {
+      title: "Open Day",
+      icon: DoorOpen,
+      onSelect: onOpenOpenDay,
+    },
   ];
 
-  const renderGroup = (label: string, items: NavItem[]) => (
-    <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => {
-            const Icon = item.icon;
-            if (item.disabled) {
+  const systemSections: NavItem[] = [
+    { title: "Utilizadores", path: "/admin/users", icon: UsersRound },
+  ];
+
+  const renderGroup = (label: string, items: NavItem[]) => {
+    if (items.length === 0) return null;
+
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel>{label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {items.map((item) => {
+              const Icon = item.icon;
+              if (item.disabled) {
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      disabled
+                      tooltip={item.title}
+                      className="opacity-60 cursor-default"
+                    >
+                      <Icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              }
+              if (item.onSelect) {
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      onClick={item.onSelect}
+                      tooltip={item.title}
+                    >
+                      <Icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              }
+
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    disabled
-                    className="opacity-60 cursor-default"
+                    render={<Link href={item.path!} />}
+                    isActive={isActivePath(activePath, item.path, item.exact)}
+                    tooltip={item.title}
                   >
                     <Icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
-            }
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  render={<Link href={item.path!} />}
-                  isActive={isActivePath(activePath, item.path, item.exact)}
-                >
-                  <Icon />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
 
   return (
     <>
-      {canRecruit && renderGroup("Recrutador", recruiterSections)}
-      {isAdmin && renderGroup("Recrutamento", adminSections)}
-      {isAdmin && renderGroup("Plataforma", platformSections)}
+      {canRecruit && renderGroup("Área Pessoal", personalSections)}
+      {canRecruit && renderGroup("Seleção", selectionSections)}
+      {isAdmin &&
+        renderGroup("Gestão do Recrutamento", recruitmentManagementSections)}
+      {isAdmin && renderGroup("Sistema", systemSections)}
     </>
   );
 }

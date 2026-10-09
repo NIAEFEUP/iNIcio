@@ -1,7 +1,11 @@
 import "server-only";
 
 import { and, count, eq } from "drizzle-orm";
-import { candidateVote, votingPhaseCandidate } from "@/db/schema";
+import {
+  candidateVote,
+  votingPhaseCandidate,
+  votingPhaseStatus,
+} from "@/db/schema";
 import { db } from "./db";
 import { generateServerJWT } from "./jwt";
 
@@ -29,6 +33,9 @@ export type VotingEvent =
       payload: {
         candidateId: string;
         votedCount: number;
+        finishedCandidates?: number;
+        acceptedCount?: number;
+        rejectedCount?: number;
       };
     }
   | {
@@ -37,12 +44,22 @@ export type VotingEvent =
         candidateId: string;
         decision: "accept" | "reject";
         finishedCandidates: number;
+        acceptedCount?: number;
+        rejectedCount?: number;
       };
     }
   | {
       type: "finished_updated";
       payload: {
         finishedCandidates: number;
+        acceptedCount?: number;
+        rejectedCount?: number;
+      };
+    }
+  | {
+      type: "session_terminated";
+      payload: {
+        votingPhaseId: number;
       };
     };
 
@@ -116,6 +133,16 @@ async function getFinishedCandidatesCount(votingPhaseId: number) {
   return value;
 }
 
+async function getPhaseStatusCounts(votingPhaseId: number) {
+  const status = await db.query.votingPhaseStatus.findFirst({
+    where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
+  });
+  return {
+    acceptedCount: status?.accepted_candidates ?? 0,
+    rejectedCount: status?.rejected_candidates ?? 0,
+  };
+}
+
 export async function broadcastVoteUpdated(
   votingPhaseId: number,
   candidateId: string,
@@ -142,17 +169,25 @@ export async function broadcastStatusChanged(
     type: "status_changed",
     payload: { candidateId },
   });
+  await broadcastVoteUpdated(votingPhaseId, candidateId);
 }
 
 export async function broadcastVotesReset(
   votingPhaseId: number,
   candidateId: string,
 ) {
+  const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
+  const { acceptedCount, rejectedCount } =
+    await getPhaseStatusCounts(votingPhaseId);
+
   await broadcastVotingEvent(votingPhaseId, {
     type: "votes_reset",
     payload: {
       candidateId,
       votedCount: 0,
+      finishedCandidates,
+      acceptedCount,
+      rejectedCount,
     },
   });
 }
@@ -163,6 +198,8 @@ export async function broadcastCandidateFinished(
   decision: "accept" | "reject",
 ) {
   const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
+  const { acceptedCount, rejectedCount } =
+    await getPhaseStatusCounts(votingPhaseId);
 
   await broadcastVotingEvent(votingPhaseId, {
     type: "candidate_finished",
@@ -170,15 +207,32 @@ export async function broadcastCandidateFinished(
       candidateId,
       decision,
       finishedCandidates,
+      acceptedCount,
+      rejectedCount,
     },
   });
 }
 
 export async function broadcastFinishedUpdated(votingPhaseId: number) {
   const finishedCandidates = await getFinishedCandidatesCount(votingPhaseId);
+  const { acceptedCount, rejectedCount } =
+    await getPhaseStatusCounts(votingPhaseId);
 
   await broadcastVotingEvent(votingPhaseId, {
     type: "finished_updated",
-    payload: { finishedCandidates },
+    payload: {
+      finishedCandidates,
+      acceptedCount,
+      rejectedCount,
+    },
+  });
+}
+
+export async function broadcastSessionTerminated(votingPhaseId: number) {
+  await broadcastVotingEvent(votingPhaseId, {
+    type: "session_terminated",
+    payload: {
+      votingPhaseId,
+    },
   });
 }

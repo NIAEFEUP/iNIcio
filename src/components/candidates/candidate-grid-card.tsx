@@ -2,32 +2,33 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, Calendar, Network, SlidersHorizontal } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  History,
+  Network,
+  SlidersHorizontal,
+} from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { GridCard } from "@/components/data-table/grid-card";
-import { InitialsAvatar } from "@/components/common/initials-avatar";
-import { getInitials } from "@/lib/utils";
+import { CandidateAvatarLightbox } from "./candidate-avatar-lightbox";
+import { ClassificationSelect } from "./classification-select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn, getInitials } from "@/lib/utils";
 import { getStableImageUrl } from "@/lib/stable-image-url";
-import { CandidateWithMetadata } from "@/lib/candidate";
+import { saveCandidatesScrollPosition } from "@/lib/candidate-scroll";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { RecruiterToCandidate } from "@/lib/db";
-import { CandidatePreviousApplicationsBadge } from "./candidate-previous-applications-badge";
 import { ClassificationText, DecisionText } from "./candidate-text";
+import { useSWRConfig } from "swr";
+import { useRecruitment } from "@/lib/contexts/recruitment-context";
+import { candidatesKey } from "@/lib/hooks/candidates/use-candidate-data";
 
 function useSyncedState<S>(
   value: S,
@@ -42,10 +43,12 @@ function useSyncedState<S>(
 }
 
 interface CandidateGridCardProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
   friends?: Array<RecruiterToCandidate>;
-  authUser?: { id?: string } | null;
+  authUser?: { id?: string; isAdmin?: boolean } | null;
   showContactInfo?: boolean;
+  isSelected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
   classifyInterview?: (
     candidateId: string,
     classification: string,
@@ -78,45 +81,28 @@ function InfoRow({
   );
 }
 
-function ClassificationSelect({
-  value,
-  onChange,
-}: {
-  value?: string | null;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Select
-      value={value && value !== "none" ? value : ""}
-      onValueChange={onChange}
-    >
-      <SelectTrigger className="h-7 w-28 text-xs font-medium">
-        <SelectValue placeholder="Classificar" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="muito fraco">Muito fraco</SelectItem>
-        <SelectItem value="normal">Normal</SelectItem>
-        <SelectItem value="muito forte">Muito forte</SelectItem>
-      </SelectContent>
-    </Select>
-  );
-}
-
-export default function CandidateGridCard({
+function CandidateGridCard({
   candidate,
   friends = [],
   authUser = null,
   showContactInfo = false,
+  isSelected,
+  onSelectChange,
   classifyInterview,
   classifyDynamic,
 }: CandidateGridCardProps) {
-  const [known, setKnown] = React.useState<boolean>(
+  const { recruitmentId } = useRecruitment();
+  const { mutate } = useSWRConfig();
+
+  const [known, setKnown] = useSyncedState<boolean>(
     friends.some(
       (friend) =>
         friend.candidateId === candidate.id &&
-        friend.recruiterId === authUser?.id,
+        friend.recruiterId === authUser?.id &&
+        (recruitmentId == null || friend.recruitmentId === recruitmentId),
     ),
   );
+  const [isUpdatingKnown, setIsUpdatingKnown] = React.useState(false);
 
   const [interviewClassification, setInterviewClassification] = useSyncedState<
     string | null | undefined
@@ -127,13 +113,38 @@ export default function CandidateGridCard({
   >(candidate.dynamicClassification);
 
   const toggleKnown = async () => {
-    setKnown((prev) => !prev);
-    const result = await fetch("/api/friends", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ candidateId: candidate.id }),
-    });
-    if (!result.ok) setKnown((prev) => !prev);
+    if (isUpdatingKnown) return;
+
+    const nextKnown = !known;
+    setKnown(nextKnown);
+    setIsUpdatingKnown(true);
+
+    try {
+      const result = await fetch("/api/friends", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          recruitmentId: recruitmentId ?? undefined,
+        }),
+      });
+
+      if (!result.ok) {
+        setKnown(!nextKnown);
+        return;
+      }
+
+      const data = await result.json().catch(() => null);
+      if (data && typeof data.known === "boolean") {
+        setKnown(data.known);
+      }
+
+      mutate(candidatesKey(recruitmentId));
+    } catch {
+      setKnown(!nextKnown);
+    } finally {
+      setIsUpdatingKnown(false);
+    }
   };
 
   const handleInterviewClassification = async (value: string) => {
@@ -160,66 +171,64 @@ export default function CandidateGridCard({
     }
   };
 
-  const interests = candidate.application?.interests ?? [];
+  const interests = React.useMemo(
+    () => candidate.application?.interests ?? [],
+    [candidate.application?.interests],
+  );
   const previousApplicationYears = candidate.previousApplicationYears ?? [];
   const course = candidate.application?.degree;
   const year = candidate.application?.curricularYear;
   const picture = getStableImageUrl(candidate.image);
   const name = candidate.name || "Candidato";
+  const initials = React.useMemo(
+    () => getInitials(candidate.name),
+    [candidate.name],
+  );
   const contactLines = [
     candidate.application?.studentNumber
-      ? `nº ${candidate.application.studentNumber}`
+      ? `${candidate.application.studentNumber}`
       : null,
     candidate.application?.phone,
     candidate.email,
   ].filter(Boolean) as Array<string>;
 
   const avatar = (
-    <Dialog>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className="cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label={`Ver foto de ${name}`}
-          >
-            <Avatar className="size-14 shrink-0 ring-2 ring-border/60">
-              <AvatarImage src={picture} alt={name} className="object-cover" />
-              <AvatarFallback>
-                <InitialsAvatar
-                  className="size-full rounded-full text-base font-bold"
-                  initials={getInitials(candidate.name)}
-                />
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        }
-      />
-      <DialogContent className="w-fit max-w-[min(90vw,28rem)] bg-transparent p-2 ring-0 sm:max-w-none">
-        <DialogTitle className="sr-only">Foto de {name}</DialogTitle>
-        <Avatar className="size-64 sm:size-80 shrink-0">
-          <AvatarImage src={picture} alt={name} className="object-cover" />
-          <AvatarFallback>
-            <InitialsAvatar
-              className="size-full rounded-full text-4xl font-bold"
-              initials={getInitials(candidate.name)}
-            />
-          </AvatarFallback>
-        </Avatar>
-      </DialogContent>
-    </Dialog>
+    <CandidateAvatarLightbox
+      picture={picture}
+      name={name}
+      initials={initials}
+    />
   );
 
   return (
     <GridCard
+      isSelected={isSelected}
+      onSelectChange={onSelectChange}
       avatar={avatar}
       title={
-        <Link
-          href={`/candidate/${candidate.id}`}
-          className="transition-colors hover:text-primary"
-        >
-          {candidate.name || "Sem nome"}
-        </Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href={`/candidate/${candidate.id}`}
+            className="min-w-0 truncate transition-colors hover:text-primary"
+            onClick={saveCandidatesScrollPosition}
+          >
+            {candidate.name || "Sem nome"}
+          </Link>
+          {previousApplicationYears.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger
+                className="-ml-0.5 inline-flex shrink-0 cursor-help items-center text-muted-foreground"
+                aria-label={`Candidatou-se anteriormente em ${previousApplicationYears.join(", ")}`}
+              >
+                <History className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Candidatou-se anteriormente em{" "}
+                {previousApplicationYears.join(", ")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       }
       subtitle={
         showContactInfo && contactLines.length > 0 ? (
@@ -231,28 +240,29 @@ export default function CandidateGridCard({
             ))}
           </span>
         ) : candidate.application?.studentNumber ? (
-          `nº ${candidate.application.studentNumber}`
+          `${candidate.application.studentNumber}`
         ) : (
           "\u00A0"
         )
       }
-      badge={
-        previousApplicationYears.length > 0 ? (
-          <CandidatePreviousApplicationsBadge
-            years={previousApplicationYears}
-          />
-        ) : undefined
-      }
       actions={
-        <div className="flex w-full items-center justify-between gap-2">
-          <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
-            <Checkbox
-              checked={known}
-              onCheckedChange={toggleKnown}
-              className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-            Conheço
-          </label>
+        <div
+          className={cn(
+            "flex w-full items-center gap-2",
+            authUser?.isAdmin ? "justify-end" : "justify-between",
+          )}
+        >
+          {!authUser?.isAdmin && (
+            <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs">
+              <Checkbox
+                checked={known}
+                disabled={isUpdatingKnown}
+                onCheckedChange={toggleKnown}
+                className="h-4 w-4 border-2 border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+              Conheço
+            </label>
+          )}
           <DecisionText decision={candidate.votingDecision?.decision ?? null} />
         </div>
       }
@@ -276,7 +286,8 @@ export default function CandidateGridCard({
         {classifyInterview ? (
           <ClassificationSelect
             value={interviewClassification}
-            onChange={handleInterviewClassification}
+            onValueChange={handleInterviewClassification}
+            triggerClassName="h-7 w-28"
           />
         ) : (
           <ClassificationText level={interviewClassification} />
@@ -289,21 +300,30 @@ export default function CandidateGridCard({
         {classifyDynamic ? (
           <ClassificationSelect
             value={dynamicClassification}
-            onChange={handleDynamicClassification}
+            onValueChange={handleDynamicClassification}
+            triggerClassName="h-7 w-28"
           />
         ) : (
           <ClassificationText level={dynamicClassification} />
         )}
       </InfoRow>
       {interests.length > 0 && (
-        <InfoRow icon={<Network className="size-3.5" />} label="Departamentos">
-          {interests.map((i) => (
-            <Badge key={i} variant="secondary" className="text-[10px]">
-              {i}
-            </Badge>
-          ))}
-        </InfoRow>
+        <div className="space-y-2">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Network className="size-3.5 shrink-0" />
+            Departamentos
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {interests.map((i) => (
+              <Badge key={i} variant="secondary" className="text-[10px]">
+                {i}
+              </Badge>
+            ))}
+          </div>
+        </div>
       )}
     </GridCard>
   );
 }
+
+export default React.memo(CandidateGridCard);

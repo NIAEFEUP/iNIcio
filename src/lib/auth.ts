@@ -1,8 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { multiSession } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import { sendPasswordResetEmail } from "@/lib/email";
 import * as schema from "../db/schema/auth";
+import { cache } from "react";
+import { headers } from "next/headers";
 
 export interface User {
   id: string;
@@ -20,6 +23,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  plugins: [multiSession()],
   user: {
     additionalFields: {
       role: {
@@ -44,3 +48,21 @@ export const auth = betterAuth({
     },
   },
 });
+
+/**
+ * Resolves the session for the current request, deduplicated with
+ * `React.cache`. Layouts, pages and the navbar all need the session, so
+ * without this the same lookup ran several times per navigation. The cache is
+ * scoped to a single request, so a server action still re-authorizes.
+ */
+export const getSession = cache(async () =>
+  auth.api.getSession({ headers: await headers() }),
+);
+
+/**
+ * Same as `getSession`, for route handlers that already hold the incoming
+ * `Request` and should not reach for `next/headers`.
+ */
+export const getSessionFromRequest = cache(async (request: Request) =>
+  auth.api.getSession({ headers: request.headers }),
+);

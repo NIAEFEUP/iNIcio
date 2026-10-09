@@ -54,6 +54,9 @@ function getRoom(roomName) {
         votedCount: 0,
         totalToVote: 0,
         finishedCandidates: 0,
+        acceptedCount: 0,
+        rejectedCount: 0,
+        terminated: false,
       },
     };
     rooms.set(roomName, room);
@@ -84,12 +87,15 @@ function buildSnapshot(room, role) {
     payload: {
       currentCandidateId: room.state.currentCandidateId,
       totalToVote: room.connectedRecruiters,
+      finishedCandidates: room.state.finishedCandidates,
+      acceptedCount: room.state.acceptedCount,
+      rejectedCount: room.state.rejectedCount,
+      terminated: room.state.terminated,
     },
   };
 
   if (room.hasVoteState) {
     snapshot.payload.votedCount = room.state.votedCount;
-    snapshot.payload.finishedCandidates = room.state.finishedCandidates;
 
     if (role === "admin") {
       snapshot.payload.approvedCount = room.state.approvedCount;
@@ -134,13 +140,37 @@ function applyEvent(room, event) {
       room.state.approvedCount = 0;
       room.state.rejectedCount = 0;
       room.state.votedCount = 0;
+      if (payload.finishedCandidates !== undefined) {
+        room.state.finishedCandidates = payload.finishedCandidates;
+      }
+      if (payload.acceptedCount !== undefined) {
+        room.state.acceptedCount = payload.acceptedCount;
+      }
+      if (payload.rejectedCount !== undefined) {
+        room.state.rejectedCount = payload.rejectedCount;
+      }
       break;
     case "candidate_finished":
       room.state.finishedCandidates = payload.finishedCandidates ?? 0;
+      if (payload.acceptedCount !== undefined) {
+        room.state.acceptedCount = payload.acceptedCount;
+      }
+      if (payload.rejectedCount !== undefined) {
+        room.state.rejectedCount = payload.rejectedCount;
+      }
       break;
     case "finished_updated":
       room.hasVoteState = true;
       room.state.finishedCandidates = payload.finishedCandidates ?? 0;
+      if (payload.acceptedCount !== undefined) {
+        room.state.acceptedCount = payload.acceptedCount;
+      }
+      if (payload.rejectedCount !== undefined) {
+        room.state.rejectedCount = payload.rejectedCount;
+      }
+      break;
+    case "session_terminated":
+      room.state.terminated = true;
       break;
     default:
       break;

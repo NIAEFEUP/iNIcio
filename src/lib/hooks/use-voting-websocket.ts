@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-interface VotingWebSocketState {
+export interface VotingWebSocketState {
   connected: boolean;
   connecting: boolean;
   error: string | null;
@@ -12,20 +12,31 @@ interface VotingWebSocketState {
   votedCount: number;
   totalToVote: number;
   finishedCandidates: number;
+  acceptedCandidates: number;
+  rejectedCandidates: number;
+  isTerminated: boolean;
   presenceCount: number;
 }
 
-interface UseVotingWebSocketOptions {
+export interface UseVotingWebSocketOptions {
   votingPhaseId: number;
   token: string;
-  initialCandidateId: string | null;
-  initialApprovedCount: number;
-  initialRejectedCount: number;
-  initialVotedCount: number;
-  initialTotalToVote: number;
-  initialFinishedCandidates: number;
+  initialCandidateId?: string | null;
+  initialApprovedCount?: number;
+  initialRejectedCount?: number;
+  initialVotedCount?: number;
+  initialTotalToVote?: number;
+  initialFinishedCandidates?: number;
+  initialAcceptedCandidates?: number;
+  initialRejectedCandidates?: number;
+  initialTerminated?: boolean;
   onStatusChanged?: (candidateId: string) => void;
-  onCandidateFinished?: (candidateId: string) => void;
+  onCandidateFinished?: (
+    candidateId: string,
+    decision: "accept" | "reject",
+  ) => void;
+  onVotesReset?: (candidateId: string) => void;
+  onSessionTerminated?: () => void;
 }
 
 const INITIAL_RETRY_DELAY = 1000;
@@ -35,14 +46,19 @@ const BACKOFF_MULTIPLIER = 2;
 export function useVotingWebSocket({
   votingPhaseId,
   token,
-  initialCandidateId,
-  initialApprovedCount,
-  initialRejectedCount,
-  initialVotedCount,
-  initialTotalToVote,
-  initialFinishedCandidates,
+  initialCandidateId = null,
+  initialApprovedCount = 0,
+  initialRejectedCount = 0,
+  initialVotedCount = 0,
+  initialTotalToVote = 0,
+  initialFinishedCandidates = 0,
+  initialAcceptedCandidates = 0,
+  initialRejectedCandidates = 0,
+  initialTerminated = false,
   onStatusChanged,
   onCandidateFinished,
+  onVotesReset,
+  onSessionTerminated,
 }: UseVotingWebSocketOptions) {
   const [state, setState] = useState<VotingWebSocketState>({
     connected: false,
@@ -54,8 +70,27 @@ export function useVotingWebSocket({
     votedCount: initialVotedCount,
     totalToVote: initialTotalToVote,
     finishedCandidates: initialFinishedCandidates,
+    acceptedCandidates: initialAcceptedCandidates,
+    rejectedCandidates: initialRejectedCandidates,
+    isTerminated: initialTerminated,
     presenceCount: 0,
   });
+
+  const callbacksRef = useRef({
+    onStatusChanged,
+    onCandidateFinished,
+    onVotesReset,
+    onSessionTerminated,
+  });
+
+  useEffect(() => {
+    callbacksRef.current = {
+      onStatusChanged,
+      onCandidateFinished,
+      onVotesReset,
+      onSessionTerminated,
+    };
+  }, [onStatusChanged, onCandidateFinished, onVotesReset, onSessionTerminated]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -78,135 +113,171 @@ export function useVotingWebSocket({
     }
   }, []);
 
-  const handleMessage = useCallback(
-    (message: unknown) => {
-      if (
-        typeof message !== "object" ||
-        message === null ||
-        !("type" in message) ||
-        !("payload" in message)
-      ) {
-        return;
-      }
+  const handleMessage = useCallback((message: unknown) => {
+    if (
+      typeof message !== "object" ||
+      message === null ||
+      !("type" in message) ||
+      !("payload" in message)
+    ) {
+      return;
+    }
 
-      const { type, payload } = message as {
-        type: string;
-        payload: Record<string, unknown>;
-      };
+    const { type, payload } = message as {
+      type: string;
+      payload: Record<string, unknown>;
+    };
 
-      setState((prev) => {
-        switch (type) {
-          case "state_snapshot": {
-            const nextSnapshotCandidateId =
-              (payload.currentCandidateId as string | null) ??
-              prev.currentCandidateId;
-            if (
-              onStatusChanged &&
-              nextSnapshotCandidateId &&
-              nextSnapshotCandidateId !== prev.currentCandidateId
-            ) {
-              onStatusChanged(nextSnapshotCandidateId);
-            }
-            return {
-              ...prev,
-              currentCandidateId: nextSnapshotCandidateId,
-              approvedCount:
-                (payload.approvedCount as number | undefined) ??
-                prev.approvedCount,
-              rejectedCount:
-                (payload.rejectedCount as number | undefined) ??
-                prev.rejectedCount,
-              votedCount:
-                (payload.votedCount as number | undefined) ?? prev.votedCount,
-              totalToVote:
-                (payload.totalToVote as number | undefined) ?? prev.totalToVote,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
-            };
+    setState((prev) => {
+      switch (type) {
+        case "state_snapshot": {
+          const nextSnapshotCandidateId =
+            (payload.currentCandidateId as string | null) ??
+            prev.currentCandidateId;
+          if (
+            nextSnapshotCandidateId &&
+            nextSnapshotCandidateId !== prev.currentCandidateId
+          ) {
+            callbacksRef.current.onStatusChanged?.(nextSnapshotCandidateId);
           }
-          case "status_changed": {
-            const nextCandidateId =
-              (payload.candidateId as string | null) ?? prev.currentCandidateId;
-            if (onStatusChanged && nextCandidateId) {
-              onStatusChanged(nextCandidateId);
-            }
-            return {
-              ...prev,
-              currentCandidateId: nextCandidateId,
-            };
+          if (payload.terminated && !prev.isTerminated) {
+            callbacksRef.current.onSessionTerminated?.();
           }
-          case "vote_updated": {
-            const voteCandidateId = payload.candidateId as string | undefined;
-            if (
-              voteCandidateId &&
-              voteCandidateId !== prev.currentCandidateId
-            ) {
-              return prev;
-            }
-            return {
-              ...prev,
-              approvedCount:
-                (payload.approvedCount as number | undefined) ??
-                prev.approvedCount,
-              rejectedCount:
-                (payload.rejectedCount as number | undefined) ??
-                prev.rejectedCount,
-              votedCount:
-                (payload.votedCount as number | undefined) ?? prev.votedCount,
-              totalToVote:
-                (payload.totalToVote as number | undefined) ?? prev.totalToVote,
-            };
-          }
-          case "votes_reset":
-            return {
-              ...prev,
-              approvedCount: (payload.approvedCount as number | undefined) ?? 0,
-              rejectedCount: (payload.rejectedCount as number | undefined) ?? 0,
-              votedCount: (payload.votedCount as number | undefined) ?? 0,
-              totalToVote:
-                (payload.totalToVote as number | undefined) ?? prev.totalToVote,
-            };
-          case "candidate_finished": {
-            const finishedCandidateId = payload.candidateId as
-              string | undefined;
-            if (
-              finishedCandidateId &&
-              finishedCandidateId === prev.currentCandidateId &&
-              onCandidateFinished
-            ) {
-              onCandidateFinished(finishedCandidateId);
-            }
-            return {
-              ...prev,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
-            };
-          }
-          case "finished_updated":
-            return {
-              ...prev,
-              finishedCandidates:
-                (payload.finishedCandidates as number | undefined) ??
-                prev.finishedCandidates,
-            };
-          case "presence_updated":
-            return {
-              ...prev,
-              presenceCount:
-                (payload.count as number | undefined) ?? prev.presenceCount,
-              totalToVote:
-                (payload.recruiterCount as number | undefined) ??
-                prev.totalToVote,
-            };
-          default:
-            return prev;
+          return {
+            ...prev,
+            currentCandidateId: nextSnapshotCandidateId,
+            approvedCount:
+              (payload.approvedCount as number | undefined) ??
+              prev.approvedCount,
+            rejectedCount:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCount,
+            votedCount:
+              (payload.votedCount as number | undefined) ?? prev.votedCount,
+            totalToVote:
+              (payload.totalToVote as number | undefined) ?? prev.totalToVote,
+            finishedCandidates:
+              (payload.finishedCandidates as number | undefined) ??
+              prev.finishedCandidates,
+            acceptedCandidates:
+              (payload.acceptedCount as number | undefined) ??
+              prev.acceptedCandidates,
+            rejectedCandidates:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCandidates,
+            isTerminated:
+              (payload.terminated as boolean | undefined) ?? prev.isTerminated,
+          };
         }
-      });
-    },
-    [onStatusChanged, onCandidateFinished],
-  );
+        case "status_changed": {
+          const nextCandidateId =
+            (payload.candidateId as string | null) ?? prev.currentCandidateId;
+          if (nextCandidateId && nextCandidateId !== prev.currentCandidateId) {
+            callbacksRef.current.onStatusChanged?.(nextCandidateId);
+          }
+          return {
+            ...prev,
+            currentCandidateId: nextCandidateId,
+            approvedCount: 0,
+            rejectedCount: 0,
+            votedCount: 0,
+          };
+        }
+        case "vote_updated": {
+          const voteCandidateId = payload.candidateId as string | undefined;
+          if (voteCandidateId && voteCandidateId !== prev.currentCandidateId) {
+            return prev;
+          }
+          return {
+            ...prev,
+            approvedCount:
+              (payload.approvedCount as number | undefined) ??
+              prev.approvedCount,
+            rejectedCount:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCount,
+            votedCount:
+              (payload.votedCount as number | undefined) ?? prev.votedCount,
+          };
+        }
+        case "votes_reset": {
+          const resetCandidateId = payload.candidateId as string | undefined;
+          if (resetCandidateId) {
+            callbacksRef.current.onVotesReset?.(resetCandidateId);
+          }
+          const isSameCandidate =
+            !resetCandidateId || resetCandidateId === prev.currentCandidateId;
+          return {
+            ...prev,
+            approvedCount: isSameCandidate ? 0 : prev.approvedCount,
+            rejectedCount: isSameCandidate ? 0 : prev.rejectedCount,
+            votedCount: isSameCandidate ? 0 : prev.votedCount,
+            finishedCandidates:
+              (payload.finishedCandidates as number | undefined) ??
+              prev.finishedCandidates,
+            acceptedCandidates:
+              (payload.acceptedCount as number | undefined) ??
+              prev.acceptedCandidates,
+            rejectedCandidates:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCandidates,
+          };
+        }
+        case "candidate_finished": {
+          const finishedCandidateId = payload.candidateId as string | undefined;
+          const decision = payload.decision as "accept" | "reject" | undefined;
+          if (finishedCandidateId && decision) {
+            callbacksRef.current.onCandidateFinished?.(
+              finishedCandidateId,
+              decision,
+            );
+          }
+          return {
+            ...prev,
+            finishedCandidates:
+              (payload.finishedCandidates as number | undefined) ??
+              prev.finishedCandidates,
+            acceptedCandidates:
+              (payload.acceptedCount as number | undefined) ??
+              prev.acceptedCandidates,
+            rejectedCandidates:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCandidates,
+          };
+        }
+        case "finished_updated":
+          return {
+            ...prev,
+            finishedCandidates:
+              (payload.finishedCandidates as number | undefined) ??
+              prev.finishedCandidates,
+            acceptedCandidates:
+              (payload.acceptedCount as number | undefined) ??
+              prev.acceptedCandidates,
+            rejectedCandidates:
+              (payload.rejectedCount as number | undefined) ??
+              prev.rejectedCandidates,
+          };
+        case "session_terminated":
+          callbacksRef.current.onSessionTerminated?.();
+          return {
+            ...prev,
+            isTerminated: true,
+          };
+        case "presence_updated":
+          return {
+            ...prev,
+            presenceCount:
+              (payload.count as number | undefined) ?? prev.presenceCount,
+            totalToVote:
+              (payload.recruiterCount as number | undefined) ??
+              prev.totalToVote,
+          };
+        default:
+          return prev;
+      }
+    });
+  }, []);
 
   const connect = useCallback(() => {
     if (!votingPhaseId || !token) {
@@ -292,8 +363,6 @@ export function useVotingWebSocket({
     if (wsRef.current) {
       const ws = wsRef.current;
       wsRef.current = null;
-      // Detach handlers before closing so the old socket's onclose
-      // cannot schedule a duplicate reconnect after a manual reconnect.
       ws.onopen = null;
       ws.onmessage = null;
       ws.onerror = null;

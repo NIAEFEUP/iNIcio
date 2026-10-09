@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import {
   broadcastFinishedUpdated,
+  broadcastSessionTerminated,
   broadcastStatusChanged,
-  broadcastVoteUpdated,
 } from "@/lib/voting-events";
 import { getVotingPhaseStatus } from "@/lib/voting";
 
-export async function POST(request: NextRequest, context: any) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   try {
     const authHeader = request.headers.get("authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -27,14 +30,22 @@ export async function POST(request: NextRequest, context: any) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id: votingPhaseId } = await context.params;
+    const { id: votingPhaseIdStr } = await context.params;
+    const votingPhaseId = Number(votingPhaseIdStr);
+
+    if (isNaN(votingPhaseId)) {
+      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    }
 
     const status = await getVotingPhaseStatus(votingPhaseId);
     if (status?.candidateId) {
       await broadcastStatusChanged(votingPhaseId, status.candidateId);
-      await broadcastVoteUpdated(votingPhaseId, status.candidateId);
     }
     await broadcastFinishedUpdated(votingPhaseId);
+
+    if (status?.terminated) {
+      await broadcastSessionTerminated(votingPhaseId);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

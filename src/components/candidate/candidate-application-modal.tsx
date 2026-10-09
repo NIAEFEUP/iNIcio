@@ -33,7 +33,7 @@ export function CandidateApplicationModal({
   if (!application) return null;
 
   const formattedDate = application.submittedAt
-    ? new Date(application.submittedAt).toLocaleDateString("pt-PT", {
+    ? new Date(application.submittedAt).toLocaleString("pt-PT", {
         day: "numeric",
         month: "long",
         year: "numeric",

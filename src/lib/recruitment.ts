@@ -16,8 +16,10 @@ import {
   RECRUITMENT_PHASE_IDENTIFIERS,
   type RecruitmentState,
 } from "./recruitment-state";
+import { cache } from "react";
 
 export { RECRUITMENT_PHASE_IDENTIFIERS };
+export { getOpenDayAnnouncement } from "./open-day";
 
 export async function getLatestRecruitment() {
   return await db.query.recruitment.findFirst({
@@ -28,7 +30,7 @@ export async function getLatestRecruitment() {
   });
 }
 
-export async function getActiveRecruitment() {
+export const getActiveRecruitment = cache(async () => {
   return await db.query.recruitment.findFirst({
     where: eq(recruitment.active, true),
     orderBy: (recruitment, { desc }) => [
@@ -36,7 +38,7 @@ export async function getActiveRecruitment() {
       desc(recruitment.id),
     ],
   });
-}
+});
 
 export async function getRecruitmentById(id: number) {
   return await db.query.recruitment.findFirst({
@@ -368,17 +370,28 @@ export async function markDynamicRecruitmentPhaseAsDone(userId: string) {
   });
 }
 
-export async function addRecruiter(userId: string, recruitmentId?: number) {
+export async function addRecruiters(userIds: string[], recruitmentId?: number) {
+  const uniqueIds = Array.from(new Set(userIds)).filter(Boolean);
+  if (uniqueIds.length === 0) return;
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   await db.transaction(async (tx) => {
-    await tx.insert(recruiter).values({ userId }).onConflictDoNothing();
+    await tx
+      .insert(recruiter)
+      .values(uniqueIds.map((userId) => ({ userId })))
+      .onConflictDoNothing();
     if (targetId) {
       await tx
         .insert(usersToRecruitments)
-        .values({ userId, recruitmentId: targetId })
+        .values(
+          uniqueIds.map((userId) => ({ userId, recruitmentId: targetId })),
+        )
         .onConflictDoNothing();
     }
   });
+}
+
+export async function addRecruiter(userId: string, recruitmentId?: number) {
+  return addRecruiters([userId], recruitmentId);
 }
 
 export async function deleteRecruiter(userId: string, recruitmentId?: number) {
@@ -424,16 +437,6 @@ export async function deleteRecruiter(userId: string, recruitmentId?: number) {
   });
 }
 
-export async function addRecruiterToRecruitment(
-  userId: string,
-  recruitmentId: number,
-) {
-  await db
-    .insert(usersToRecruitments)
-    .values({ userId, recruitmentId })
-    .onConflictDoNothing();
-}
-
 export async function removeRecruiterFromRecruitment(
   userId: string,
   recruitmentId: number,
@@ -476,7 +479,7 @@ export async function getAllPlatformRecruiters() {
     .leftJoin(user, eq(user.id, recruiter.userId));
 }
 
-export async function getUsers(limit = 500) {
+export async function getUsers(limit = 1000) {
   const res = await db
     .select({
       id: user.id,

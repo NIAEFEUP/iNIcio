@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { Slot } from "./db";
 
 export const dateOptions = {
@@ -33,6 +35,32 @@ export function getTimeString(date: Date) {
   });
 }
 
+export function getMonday(d: Date = new Date()): Date {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+export function formatWeekRange(start: Date, end: Date): string {
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const startMonth = format(start, "MMM", { locale: pt });
+  const endMonth = format(end, "MMM", { locale: pt });
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+
+  if (startYear !== endYear) {
+    return `${startDay} ${startMonth} ${startYear} — ${endDay} ${endMonth} ${endYear}`;
+  }
+  if (startMonth !== endMonth) {
+    return `${startDay} ${startMonth} — ${endDay} ${endMonth} ${endYear}`;
+  }
+  return `${startDay} — ${endDay} ${startMonth} ${startYear}`;
+}
+
 export function generateDates(weekStart?: Date) {
   const base = weekStart ?? new Date();
   const monday = new Date(base);
@@ -51,6 +79,10 @@ export function generateDates(weekStart?: Date) {
   return dates;
 }
 
+// NOTE: this steps minutes by `duration` within each hour, so durations that
+// do not divide 60 (e.g. 45) produce an irregular, overlapping grid
+// (09:00, 09:45, 10:00, 10:45, ...). Kept as-is for now; changing it would
+// shift the admin slot grid times.
 export function generateTimeSlots(startHour, endHour, duration) {
   const times = [];
   for (let hour = startHour; hour <= endHour; hour++) {

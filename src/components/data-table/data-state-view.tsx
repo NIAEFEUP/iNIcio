@@ -1,13 +1,16 @@
+import { Spinner } from "@/components/ui/spinner";
+
 export interface DataLoadingStateProps {
   message?: string;
 }
 
-export function DataLoadingState({
-  message = "Loading database...",
-}: DataLoadingStateProps) {
+export function DataLoadingState({ message }: DataLoadingStateProps) {
   return (
-    <div className="flex h-64 w-full items-center justify-center rounded-lg border border-dashed">
-      <span className="text-sm text-muted-foreground">{message}</span>
+    <div className="flex h-64 w-full flex-col items-center justify-center gap-3">
+      <Spinner className="size-6 text-muted-foreground" />
+      {message && (
+        <span className="text-sm text-muted-foreground">{message}</span>
+      )}
     </div>
   );
 }
@@ -40,13 +43,15 @@ export interface DataEmptyStateProps {
 
 export function DataEmptyState({
   title = "No results found",
-  description = "Try resetting your filters or search query.",
+  description = "Try adjusting your search query or filters to find what you're looking for.",
 }: DataEmptyStateProps) {
   return (
     <div className="flex h-64 w-full flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
       <p className="text-sm font-medium text-foreground">{title}</p>
       {description && (
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+          {description}
+        </p>
       )}
     </div>
   );

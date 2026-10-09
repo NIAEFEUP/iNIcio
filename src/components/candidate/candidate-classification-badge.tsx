@@ -2,6 +2,10 @@ import type React from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import {
+  classificationBadgeClass,
+  classificationLabel,
+} from "@/components/candidates/classification-styles";
 
 interface ClassificationBadgeProps {
   label: string;
@@ -9,32 +13,10 @@ interface ClassificationBadgeProps {
   className?: string;
 }
 
-const levelConfig: Record<
-  string,
-  {
-    color: string;
-    icon: React.ReactNode;
-    label: string;
-  }
-> = {
-  "muito fraco": {
-    color:
-      "bg-red-100 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900",
-    icon: <TrendingDown className="h-3 w-3" />,
-    label: "Muito fraco",
-  },
-  normal: {
-    color:
-      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-900",
-    icon: <Minus className="h-3 w-3" />,
-    label: "Normal",
-  },
-  "muito forte": {
-    color:
-      "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-900",
-    icon: <TrendingUp className="h-3 w-3" />,
-    label: "Muito forte",
-  },
+const iconByLevel: Record<string, React.ReactNode> = {
+  "muito fraco": <TrendingDown className="h-3 w-3" />,
+  normal: <Minus className="h-3 w-3" />,
+  "muito forte": <TrendingUp className="h-3 w-3" />,
 };
 
 export function ClassificationBadge({
@@ -42,25 +24,33 @@ export function ClassificationBadge({
   level,
   className,
 }: ClassificationBadgeProps) {
-  const config = levelConfig[level] ?? {
-    color:
-      "bg-primary text-primary-foreground border-primary-200 dark:bg-primary dark:text-primary-400 dark:border-primary-900",
-    icon: <Minus className="h-3 w-3" />,
-    label: "Não classificado",
-  };
+  const displayLabel = classificationLabel(level);
 
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <span className="text-xs font-medium text-muted-foreground">
         {label}:
       </span>
-      <Badge
-        variant="outline"
-        className={cn("flex items-center gap-1 font-medium", config.color)}
-      >
-        {config.icon}
-        {config.label}
-      </Badge>
+      {displayLabel ? (
+        <Badge
+          variant="outline"
+          className={cn(
+            "flex items-center gap-1 font-medium",
+            classificationBadgeClass(level),
+          )}
+        >
+          {iconByLevel[level]}
+          {displayLabel}
+        </Badge>
+      ) : (
+        <Badge
+          variant="outline"
+          className="flex items-center gap-1 font-medium"
+        >
+          <Minus className="h-3 w-3" />
+          Não classificado
+        </Badge>
+      )}
     </div>
   );
 }

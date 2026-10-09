@@ -40,6 +40,10 @@ export type CandidateVote = typeof schema.candidateVote.$inferSelect;
 export type RecruiterVote = typeof schema.recruiterVote.$inferSelect;
 export type FinalMessageTemplate =
   typeof schema.finalMessageTemplate.$inferSelect;
+export type OpenDayAnnouncement =
+  typeof schema.openDayAnnouncement.$inferSelect;
+export type NewOpenDayAnnouncement =
+  typeof schema.openDayAnnouncement.$inferInsert;
 
 const pool =
   globalThis.pgPool ??

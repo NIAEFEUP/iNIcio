@@ -20,6 +20,7 @@ export interface DataTableViewProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   renderGrid?: (table: Table<T>) => React.ReactNode;
+  showPagination?: boolean;
 }
 
 export function DataTableView<T>({
@@ -33,8 +34,9 @@ export function DataTableView<T>({
   emptyTitle = "No results found",
   emptyDescription = "Try resetting your filters or search query.",
   renderGrid,
+  showPagination = false,
 }: DataTableViewProps<T>) {
-  const paginatedRows = table.getRowModel().rows;
+  const rows = table.getRowModel().rows;
 
   if (isLoading) {
     return <DataLoadingState message={loadingMessage} />;
@@ -44,9 +46,12 @@ export function DataTableView<T>({
     return <DataErrorState title={errorTitle} message={errorMessage} />;
   }
 
-  if (paginatedRows.length === 0) {
+  if (rows.length === 0) {
     return <DataEmptyState title={emptyTitle} description={emptyDescription} />;
   }
+
+  const hasPagination =
+    showPagination && Boolean(table.options.getPaginationRowModel);
 
   return (
     <>
@@ -55,7 +60,7 @@ export function DataTableView<T>({
       ) : (
         renderGrid(table)
       )}
-      <DataTablePagination table={table} />
+      {hasPagination && <DataTablePagination table={table} />}
     </>
   );
 }

@@ -15,16 +15,19 @@ interface RejectedMessageTemplateEditorProps {
 export default function RejectedMessageTemplateEditor({
   user,
   token,
+  addRejectedMessageTemplateAction,
   templateState,
   setTemplateState,
 }: RejectedMessageTemplateEditorProps) {
   return (
     <RealTimeEditor
       token={token}
-      key="rejected-message-editor"
-      docId="rejected-message-template-editor"
-      roomId="rejected-message-template-room"
-      userName={user.name || "Anonymous"}
+      key={`rejected-message-editor-${templateState.recruitmentId ?? "default"}`}
+      docId={`rejected-message-template-editor-${templateState.recruitmentId ?? "default"}`}
+      roomId={`rejected-message-template-room-${templateState.recruitmentId ?? "default"}`}
+      userName={user?.name || "Anonymous"}
+      saveHandler={addRejectedMessageTemplateAction}
+      saveHandlerTimeout={1000}
       onChange={(editor) => {
         setTemplateState((prev) => ({ ...prev, content: editor?.document }));
       }}
