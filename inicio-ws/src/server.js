@@ -3,13 +3,13 @@
 
 import jwt from "jsonwebtoken";
 
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 import http from "http";
 import * as number from "lib0/number";
 import { setupWSConnection } from "./utils.js";
 import { addClient, broadcast } from "./voting-rooms.js";
 
-const wss = new WebSocket.Server({ noServer: true });
+const wss = new WebSocketServer({ noServer: true });
 const host = process.env.HOST || "localhost";
 const port = number.parseInt(process.env.PORT || "1234");
 const jwtSecret = process.env.JWT_SECRET;
