@@ -37,8 +37,14 @@ function verifyToken(token) {
 }
 
 function getTokenFromRequest(request) {
-  const params = new URLSearchParams(request.url?.replace(/^.*\?/, ""));
-  const queryToken = params.get("token");
+  let queryToken = null;
+  try {
+    queryToken = new URL(request.url || "/", "http://localhost").searchParams.get(
+      "token",
+    );
+  } catch {
+    queryToken = null;
+  }
   if (queryToken) return queryToken;
 
   const authHeader = request.headers.authorization || "";
