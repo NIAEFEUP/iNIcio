@@ -23,7 +23,7 @@ export const candidatesKey = (recruitmentId?: number | null) => [
 export const candidateKey = (
   candidateId: string,
   recruitmentId?: number | null,
-) => ["candidate", recruitmentId ?? null, candidateId];
+) => (candidateId ? ["candidate", recruitmentId ?? null, candidateId] : null);
 
 export const recruitersKey = (recruitmentId?: number | null) => [
   "recruiters",
@@ -34,24 +34,33 @@ export const applicationCommentsKey = (
   candidateId: string,
   recruitmentId?: number | null,
   userId?: string,
-) => [
-  "application-comments",
-  recruitmentId ?? null,
-  candidateId,
-  userId ?? null,
-];
+) =>
+  candidateId
+    ? [
+        "application-comments",
+        recruitmentId ?? null,
+        candidateId,
+        userId ?? null,
+      ]
+    : null;
 
 export const interviewKey = (
   candidateId: string,
   recruitmentId?: number | null,
   userId?: string,
-) => ["interview", recruitmentId ?? null, candidateId, userId ?? null];
+) =>
+  candidateId
+    ? ["interview", recruitmentId ?? null, candidateId, userId ?? null]
+    : null;
 
 export const dynamicKey = (
   dynamicId: number,
   recruitmentId?: number | null,
   userId?: string,
-) => ["dynamic", recruitmentId ?? null, dynamicId, userId ?? null];
+) =>
+  dynamicId
+    ? ["dynamic", recruitmentId ?? null, dynamicId, userId ?? null]
+    : null;
 
 export function useCandidatesData(
   fallbackData?: Awaited<ReturnType<typeof loadCandidates>>,
