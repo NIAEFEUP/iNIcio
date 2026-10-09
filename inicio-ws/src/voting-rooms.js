@@ -241,7 +241,10 @@ function removeClient(roomName, client) {
   const room = rooms.get(roomName);
   if (!room) return;
 
-  room.clients.delete(client);
+  // "error", "close" and the heartbeat can all fire for one socket, so guard
+  // against removing the same client twice (which would double-decrement
+  // presence).
+  if (!room.clients.delete(client)) return;
   if (client.metadata.role === "recruiter") {
     room.connectedRecruiters = Math.max(0, room.connectedRecruiters - 1);
   }
