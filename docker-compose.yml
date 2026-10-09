@@ -34,7 +34,7 @@ services:
       - 9000:9000 # S3
       - 9001:9001 # UI
   createbuckets:
-    image: "quay.io/minio/mc:latest"
+    image: "quay.io/minio/minio:latest"
     depends_on:
       - s3
     entrypoint: >
