@@ -54,39 +54,76 @@ function getTokenFromRequest(request) {
 
 const MAX_BROADCAST_BODY_BYTES = 64 * 1024;
 
+// Reply and close the connection. Destroying the request right after the
+// response is flushed avoids keeping an unread upload alive on the socket.
+function rejectAndClose(request, response, statusCode, body) {
+  response.writeHead(statusCode, {
+    "Content-Type": "application/json",
+    Connection: "close",
+  });
+  response.end(JSON.stringify(body), () => request.destroy());
+}
+
+function isValidBroadcast(data) {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    typeof data.room === "string" &&
+    data.room.startsWith("voting/") &&
+    typeof data.event === "object" &&
+    data.event !== null &&
+    typeof data.event.type === "string"
+  );
+}
+
+function handleBroadcast(request, response) {
+  // Authenticate before reading the body so unauthenticated clients cannot
+  // make the server buffer uploads.
+  const payload = verifyToken(getTokenFromRequest(request));
+  if (!payload || payload.role !== "server") {
+    rejectAndClose(request, response, 403, { error: "Forbidden" });
+    return;
+  }
+
+  const chunks = [];
+  let size = 0;
+  let rejected = false;
+
+  request.on("data", (chunk) => {
+    if (rejected) return;
+    size += chunk.length;
+    if (size > MAX_BROADCAST_BODY_BYTES) {
+      rejected = true;
+      rejectAndClose(request, response, 413, { error: "Payload too large" });
+      return;
+    }
+    chunks.push(chunk);
+  });
+
+  request.on("end", () => {
+    if (rejected) return;
+
+    let data;
+    try {
+      data = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+      writeJson(response, 400, { error: "Invalid JSON" });
+      return;
+    }
+
+    if (!isValidBroadcast(data)) {
+      writeJson(response, 400, { error: "Invalid room or event" });
+      return;
+    }
+
+    broadcast(data.room, data.event);
+    writeJson(response, 200, { ok: true });
+  });
+}
+
 const server = http.createServer((request, response) => {
   if (request.method === "POST" && request.url === "/broadcast") {
-    let body = "";
-    request.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > MAX_BROADCAST_BODY_BYTES) {
-        writeJson(response, 413, { error: "Payload too large" });
-        request.destroy();
-      }
-    });
-    request.on("end", () => {
-      const payload = verifyToken(getTokenFromRequest(request));
-      if (!payload || payload.role !== "server") {
-        writeJson(response, 403, { error: "Forbidden" });
-        return;
-      }
-
-      let data;
-      try {
-        data = JSON.parse(body);
-      } catch {
-        writeJson(response, 400, { error: "Invalid JSON" });
-        return;
-      }
-
-      if (!data.room || !data.event) {
-        writeJson(response, 400, { error: "Missing room or event" });
-        return;
-      }
-
-      broadcast(data.room, data.event);
-      writeJson(response, 200, { ok: true });
-    });
+    handleBroadcast(request, response);
     return;
   }
 
