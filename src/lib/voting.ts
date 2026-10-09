@@ -258,6 +258,50 @@ export async function deleteCandidateVotes(
 
     if (!vp) return;
 
+    const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
+      where: and(
+        eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
+        eq(votingPhaseCandidate.candidateId, candidateId),
+      ),
+    });
+
+    if (vPhaseCandidate?.voteFinished) {
+      const app = await tx.query.application.findFirst({
+        where: and(
+          eq(application.candidateId, candidateId),
+          eq(application.recruitmentId, vp.recruitmentId),
+        ),
+      });
+
+      const vPhaseStatus = await tx.query.votingPhaseStatus.findFirst({
+        where: eq(votingPhaseStatus.votingPhaseId, votingPhaseId),
+      });
+
+      if (vPhaseStatus) {
+        if (app?.accepted) {
+          await tx
+            .update(votingPhaseStatus)
+            .set({
+              accepted_candidates: Math.max(
+                0,
+                vPhaseStatus.accepted_candidates - 1,
+              ),
+            })
+            .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+        } else {
+          await tx
+            .update(votingPhaseStatus)
+            .set({
+              rejected_candidates: Math.max(
+                0,
+                vPhaseStatus.rejected_candidates - 1,
+              ),
+            })
+            .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+        }
+      }
+    }
+
     await tx
       .delete(candidateVote)
       .where(
