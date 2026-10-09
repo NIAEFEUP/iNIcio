@@ -17,29 +17,61 @@ const readyStateOpen = 1;
 // dropped so dead connections do not keep presence counts inflated.
 const HEARTBEAT_MS = Number(process.env.WS_HEARTBEAT_MS) || 30000;
 
-function requestRoomSync(roomName) {
-  const votingPhaseId = roomName.replace("voting/", "");
+// Backoff between sync attempts. After the last retry the room stays
+// unsynced until the next client joins, which starts a new round.
+const SYNC_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000, 32000];
+const SYNC_TIMEOUT_MS = 5000;
+
+function scheduleRoomSync(room, attempt) {
+  const votingPhaseId = room.name.replace("voting/", "");
   const url = `${nextjsUrl}/api/votingphase/${votingPhaseId}/sync`;
 
+  let token;
   try {
-    const token = generateServerJWT();
-    fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          console.error("[voting] room sync failed", response.status);
-        }
-      })
-      .catch((error) => {
-        console.error("[voting] room sync error", error);
-      });
+    token = generateServerJWT();
   } catch (error) {
     console.error("[voting] failed to sign sync token", error);
+    room.syncing = false;
+    return;
   }
+
+  room.syncing = true;
+  fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(SYNC_TIMEOUT_MS),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`status ${response.status}`);
+      }
+      room.synced = true;
+      room.syncing = false;
+    })
+    .catch((error) => {
+      console.error(
+        `[voting] room sync attempt ${attempt + 1} failed`,
+        error.message,
+      );
+      room.syncing = false;
+      if (attempt >= SYNC_RETRY_DELAYS_MS.length) return;
+      if (rooms.get(room.name) !== room) return;
+
+      room.syncing = true;
+      room.syncTimer = setTimeout(() => {
+        room.syncTimer = null;
+        if (rooms.get(room.name) === room && !room.synced) {
+          scheduleRoomSync(room, attempt + 1);
+        } else {
+          room.syncing = false;
+        }
+      }, SYNC_RETRY_DELAYS_MS[attempt]);
+    });
+}
+
+function requestRoomSync(room) {
+  if (room.synced || room.syncing) return;
+  scheduleRoomSync(room, 0);
 }
 
 function getRoom(roomName) {
@@ -48,6 +80,9 @@ function getRoom(roomName) {
     room = {
       name: roomName,
       clients: new Set(),
+      synced: false,
+      syncing: false,
+      syncTimer: null,
       hasVoteState: false,
       connectedRecruiters: 0,
       state: {
@@ -60,13 +95,13 @@ function getRoom(roomName) {
       },
     };
     rooms.set(roomName, room);
-    requestRoomSync(roomName);
   }
   return room;
 }
 
 function deleteRoomIfEmpty(room) {
   if (room.clients.size === 0) {
+    if (room.syncTimer) clearTimeout(room.syncTimer);
     rooms.delete(room.name);
   }
 }
@@ -152,6 +187,7 @@ function applyEvent(room, event) {
 
 export function addClient(roomName, ws, metadata) {
   const room = getRoom(roomName);
+  requestRoomSync(room);
   const client = { ws, metadata };
   room.clients.add(client);
 
