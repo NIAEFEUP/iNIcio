@@ -10,12 +10,20 @@ import {
   recruiterToDynamic,
   recruiterToInterview,
 } from "@/db/schema";
-import { requireRecruiterSession } from "@/lib/action-guard";
+import {
+  requireAdminSession,
+  requireRecruiterSession,
+} from "@/lib/action-guard";
 import { isAdmin } from "@/lib/admin";
-import { submitApplicationComment } from "@/lib/application";
-import { getAllPossibleApplicationInterests } from "@/lib/application";
-import type { CandidateWithMetadata } from "@/lib/candidate";
-import { getCandidateWithMetadata } from "@/lib/candidate";
+import {
+  submitApplicationComment,
+  getAllPossibleApplicationInterests,
+} from "@/lib/application";
+import {
+  getCandidateWithMetadata,
+  type CandidateWithMetadata,
+} from "@/lib/candidate";
+import { createVotingPhase, terminateVotingPhase } from "@/lib/voting";
 import {
   getApplicationComments,
   getDynamicComments,
@@ -487,4 +495,57 @@ export async function classifyDynamic(
   classification: string,
 ) {
   await classifyCandidate(candidateId, classification, "dynamicClassification");
+}
+
+export async function createVotingSessionAction(
+  candidateIds: Array<string>,
+): Promise<{ success: boolean; id?: number; error?: string }> {
+  try {
+    await requireAdminSession();
+    const targetId = await getTargetRecruitmentId();
+    if (!targetId) {
+      return { success: false, error: "Nenhum recrutamento ativo selecionado" };
+    }
+
+    if (
+      !candidateIds ||
+      !Array.isArray(candidateIds) ||
+      candidateIds.length === 0
+    ) {
+      return { success: false, error: "Nenhum candidato selecionado" };
+    }
+
+    const votingPhaseId = await createVotingPhase(candidateIds, targetId);
+    if (!votingPhaseId) {
+      return { success: false, error: "Falha ao criar sessão de votação" };
+    }
+
+    return { success: true, id: votingPhaseId };
+  } catch (error) {
+    console.error("Error creating voting session:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro ao criar votação",
+    };
+  }
+}
+
+export async function terminateVotingSessionAction(
+  votingPhaseId: number,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdminSession();
+    const ok = await terminateVotingPhase(votingPhaseId);
+    if (!ok) {
+      return { success: false, error: "Falha ao terminar sessão de votação" };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error terminating voting session:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Erro ao terminar votação",
+    };
+  }
 }

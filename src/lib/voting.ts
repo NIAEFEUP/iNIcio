@@ -47,9 +47,20 @@ export async function getCurrentVotingPhase(id: number) {
 }
 
 export async function getVotingPhaseStatus(votingPhaseId: number) {
-  return await db.query.votingPhaseStatus.findFirst({
+  const status = await db.query.votingPhaseStatus.findFirst({
     where: (vps) => eq(vps.votingPhaseId, votingPhaseId),
   });
+  if (!status) return null;
+
+  const phase = await db.query.votingPhase.findFirst({
+    where: (vp) => eq(vp.id, votingPhaseId),
+    columns: { terminated: true },
+  });
+
+  return {
+    ...status,
+    terminated: phase?.terminated ?? false,
+  };
 }
 
 import { getActiveRecruitment } from "./recruitment";
@@ -57,13 +68,13 @@ import { getActiveRecruitment } from "./recruitment";
 export async function createVotingPhase(
   candidates: Array<string>,
   recruitmentId?: number,
-) {
+): Promise<number | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) {
     throw new Error("No recruitment specified or active");
   }
 
-  let votingPhaseId = null;
+  let createdId: number | null = null;
 
   try {
     await db.transaction(async (tx) => {
@@ -72,33 +83,62 @@ export async function createVotingPhase(
         .values({ recruitmentId: targetId })
         .returning({ id: votingPhase.id });
 
+      createdId = vPhase[0]?.id ?? null;
+      if (!createdId) return;
+
       for (const candidate of candidates) {
-        await tx
-          .insert(votingPhaseCandidate)
-          .values({
-            votingPhaseId: vPhase[0].id,
-            candidateId: candidate,
-            recruitmentId: targetId,
-          })
-          .returning({ id: votingPhaseCandidate.candidateId });
+        await tx.insert(votingPhaseCandidate).values({
+          votingPhaseId: createdId,
+          candidateId: candidate,
+          recruitmentId: targetId,
+        });
       }
 
-      votingPhaseId = await tx
-        .insert(votingPhaseStatus)
-        .values({
-          votingPhaseId: vPhase[0].id,
-          candidateId: candidates[0],
-          accepted_candidates: 0,
-          rejected_candidates: 0,
-        })
-        .returning({ votingPhaseId: votingPhaseStatus.votingPhaseId });
+      await tx.insert(votingPhaseStatus).values({
+        votingPhaseId: createdId,
+        candidateId: candidates[0],
+        accepted_candidates: 0,
+        rejected_candidates: 0,
+      });
     });
 
-    return votingPhaseId;
+    return createdId;
   } catch (e) {
-    console.log(e);
+    console.error("Error creating voting phase:", e);
     return null;
   }
+}
+
+export async function getActiveVotingPhaseId(
+  recruitmentId?: number,
+): Promise<number | null> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return null;
+
+  const activePhase = await db
+    .select({
+      id: votingPhase.id,
+    })
+    .from(votingPhase)
+    .innerJoin(
+      votingPhaseCandidate,
+      eq(votingPhase.id, votingPhaseCandidate.votingPhaseId),
+    )
+    .where(
+      and(
+        eq(votingPhase.recruitmentId, targetId),
+        eq(votingPhase.terminated, false),
+        eq(votingPhaseCandidate.voteFinished, false),
+      ),
+    )
+    .orderBy(desc(votingPhase.id))
+    .limit(1);
+
+  if (activePhase.length > 0) {
+    return activePhase[0].id;
+  }
+
+  return null;
 }
 
 export async function getVotingPhaseRecruitmentId(votingPhaseId: number) {
@@ -117,6 +157,11 @@ export async function voteForCandidate(
   decision: "approve" | "reject",
 ) {
   try {
+    const vp = await db.query.votingPhase.findFirst({
+      where: eq(votingPhase.id, votingPhaseId),
+    });
+    if (!vp || vp.terminated) return false;
+
     const phaseCandidate = await db.query.votingPhaseCandidate.findFirst({
       where: and(
         eq(votingPhaseCandidate.votingPhaseId, votingPhaseId),
@@ -194,6 +239,11 @@ export async function getVotingPhases(recruitmentId?: number) {
 
   return await db.query.votingPhase.findMany({
     where: (vp) => eq(vp.recruitmentId, targetId),
+    with: {
+      status: true,
+      candidates: true,
+    },
+    orderBy: (vp) => desc(vp.id),
   });
 }
 
@@ -259,7 +309,7 @@ export async function makeCandidateVoteDefinitive(
         where: eq(votingPhase.id, votingPhaseId),
       });
 
-      if (!vp) {
+      if (!vp || vp.terminated) {
         return false;
       }
 
@@ -322,6 +372,21 @@ export async function makeCandidateVoteDefinitive(
     return true;
   } catch (e) {
     console.log(e);
+    return false;
+  }
+}
+
+export async function terminateVotingPhase(votingPhaseId: number) {
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(votingPhase)
+        .set({ terminated: true })
+        .where(eq(votingPhase.id, votingPhaseId));
+    });
+    return true;
+  } catch (e) {
+    console.error("Error terminating voting phase:", e);
     return false;
   }
 }

@@ -1,32 +1,43 @@
-import { CandidateVotingSlideshow } from "@/components/candidate/voting/candidate-voting-slideshow";
-import { PageHeader } from "@/components/layout/page-header";
+import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
 import {
   changeCurrentVotingPhaseStatusCandidate,
+  deleteCandidateVotes,
   getCurrentVotingPhase,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
+  makeCandidateVoteDefinitive,
   voteForCandidate,
 } from "@/lib/voting";
-import { makeCandidateVoteDefinitive } from "@/lib/voting";
-import { deleteCandidateVotes } from "@/lib/voting";
-import { redirect } from "next/navigation";
 import {
   requireAdminSession,
   requireRecruiterSession,
 } from "@/lib/action-guard";
+import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
+import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
 
 interface CandidateVotingPageProps {
-  params: any;
+  params: Promise<{ id: string }>;
 }
 
 export default async function CandidateVotingPage({
   params,
 }: CandidateVotingPageProps) {
   const session = await getSession();
-
   const { id } = await params;
+  const numId = Number(id);
+
+  if (isNaN(numId)) {
+    redirect("/candidates/voting");
+  }
+
+  const userIsAdmin = session?.user.id ? await isAdmin(session.user.id) : false;
+
+  const currentVotingPhase = await getCurrentVotingPhase(numId);
+  if (!currentVotingPhase) {
+    redirect("/candidates/voting");
+  }
 
   async function submitVoteAction(
     recruiterId: string,
@@ -35,17 +46,17 @@ export default async function CandidateVotingPage({
   ) {
     "use server";
 
-    const recruitmentId = await getVotingPhaseRecruitmentId(id);
+    const recruitmentId = await getVotingPhaseRecruitmentId(numId);
     if (!recruitmentId) throw new Error("Voting phase not found");
 
     const user = await requireRecruiterSession(recruitmentId);
     const effectiveRecruiterId = user.id;
 
-    const recruiterVotes = await getRecruiterVotes(id, effectiveRecruiterId);
+    const recruiterVotes = await getRecruiterVotes(numId, effectiveRecruiterId);
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
       return await voteForCandidate(
-        id,
+        numId,
         effectiveRecruiterId,
         candidateId,
         decision,
@@ -83,7 +94,7 @@ export default async function CandidateVotingPage({
     );
   }
 
-  async function resetCandidateVotes(
+  async function resetCandidateVotesAction(
     votingPhaseId: number,
     candidateId: string,
   ) {
@@ -93,31 +104,30 @@ export default async function CandidateVotingPage({
     await deleteCandidateVotes(votingPhaseId, candidateId);
   }
 
-  const admin = await isAdmin(session?.user.id);
-
-  const currentVotingPhase = await getCurrentVotingPhase(id);
-  if (!currentVotingPhase) redirect("/candidates");
-
-  const recruiterVotes = await getRecruiterVotes(
-    currentVotingPhase.id,
-    session?.user.id,
-  );
-
-  return (
-    <>
-      <PageHeader title="Votação" backHref="/candidates/voting" />
-      <CandidateVotingSlideshow
-        candidates={currentVotingPhase.candidates}
-        admin={admin ? true : false}
-        currentVotingPhase={currentVotingPhase}
-        submitVoteAction={submitVoteAction}
-        resetCandidateVotes={resetCandidateVotes}
+  if (userIsAdmin) {
+    return (
+      <AdminVotingView
+        currentVotingPhase={currentVotingPhase as any}
         changeCurrentVotingPhaseStatusCandidateAction={
           changeCurrentVotingPhaseStatusCandidateAction
         }
-        recruiterVotes={recruiterVotes}
         makeVoteDefinitiveAction={makeVoteDefinitiveAction}
+        resetCandidateVotesAction={resetCandidateVotesAction}
       />
-    </>
+    );
+  }
+
+  const recruiterVotes = session?.user.id
+    ? await getRecruiterVotes(currentVotingPhase.id, session.user.id)
+    : [];
+
+  return (
+    <RecruiterVotingView
+      currentVotingPhase={currentVotingPhase as any}
+      recruiterVotes={recruiterVotes}
+      submitVoteAction={submitVoteAction}
+      currentUserId={session?.user.id || ""}
+      showBack={true}
+    />
   );
 }
