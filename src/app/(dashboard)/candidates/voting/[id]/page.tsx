@@ -23,6 +23,17 @@ import {
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
 
+// The database write has already committed when we broadcast. A broadcast
+// failure must not turn a saved vote into an error; clients re-sync on their
+// next join.
+async function notifyClients(send: () => Promise<void>) {
+  try {
+    await send();
+  } catch (error) {
+    console.error("[voting] realtime update failed", error);
+  }
+}
+
 interface CandidateVotingPageProps {
   params: Promise<{ id: string }>;
 }
@@ -68,7 +79,7 @@ export default async function CandidateVotingPage({
         decision,
       );
       if (ok) {
-        await broadcastVoteUpdated(numId, candidateId);
+        await notifyClients(() => broadcastVoteUpdated(numId, candidateId));
       }
       return ok;
     }
@@ -88,8 +99,10 @@ export default async function CandidateVotingPage({
       candidateId,
     );
     if (ok) {
-      await broadcastStatusChanged(votingPhaseId, candidateId);
-      await broadcastVoteUpdated(votingPhaseId, candidateId);
+      await notifyClients(async () => {
+        await broadcastStatusChanged(votingPhaseId, candidateId);
+        await broadcastVoteUpdated(votingPhaseId, candidateId);
+      });
     }
     return ok;
   }
@@ -108,7 +121,7 @@ export default async function CandidateVotingPage({
       candidateId,
     );
     if (ok) {
-      await broadcastProgress(votingPhaseId);
+      await notifyClients(() => broadcastProgress(votingPhaseId));
     }
     return ok;
   }
@@ -121,7 +134,7 @@ export default async function CandidateVotingPage({
     await requireAdminSession();
 
     await deleteCandidateVotes(votingPhaseId, candidateId);
-    await broadcastVotesReset(votingPhaseId, candidateId);
+    await notifyClients(() => broadcastVotesReset(votingPhaseId, candidateId));
   }
 
   if (userIsAdmin) {
