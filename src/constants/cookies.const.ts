@@ -7,4 +7,8 @@ export const SELECTED_RECRUITMENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 export const CANDIDATES_VIEW_MODE_COOKIE_NAME = "candidates_view_mode";
 export const CANDIDATES_VIEW_MODE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
+export const RECRUITERS_VIEW_MODE_COOKIE_NAME = "recruiters_view_mode";
+export const USERS_VIEW_MODE_COOKIE_NAME = "users_view_mode";
+export const PHASES_VIEW_MODE_COOKIE_NAME = "phases_view_mode";
+
 export const DEFAULT_VALUES = { theme: "dark" };

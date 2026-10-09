@@ -1,14 +1,11 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 import { submitApplicationComment } from "@/lib/application";
 import { getActiveRecruitment } from "@/lib/recruitment";
 import { isRecruiter } from "@/lib/recruiter";
 
 export async function POST(req: Request, context: any) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const { id: candidateId } = await context.params;
 

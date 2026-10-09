@@ -1,8 +1,8 @@
-import { CandidateWithMetadata } from "@/lib/candidate";
+import type { CandidateListMetadata } from "@/lib/candidate";
 import { Building2, Calendar } from "lucide-react";
 
 interface CandidateAcademicInfoProps {
-  candidate: CandidateWithMetadata;
+  candidate: CandidateListMetadata;
 }
 
 export default function CandidateAcademicInfo({
@@ -20,7 +20,7 @@ export default function CandidateAcademicInfo({
               Curso
             </p>
             <p className="text-sm font-bold text-foreground truncate">
-              {candidate?.application?.degree || "mesw"}
+              {candidate?.application?.degree || "—"}
             </p>
           </div>
         </div>
@@ -34,7 +34,7 @@ export default function CandidateAcademicInfo({
               Ano
             </p>
             <p className="text-sm font-bold text-foreground truncate">
-              {candidate?.application?.curricularYear || "3bsc"}
+              {candidate?.application?.curricularYear || "—"}
             </p>
           </div>
         </div>

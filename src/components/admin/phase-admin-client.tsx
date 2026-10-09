@@ -5,21 +5,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type PaginationState,
+  type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
-import { CalendarDays, Plus, Search } from "lucide-react";
+import { Calendar, Plus, Search } from "lucide-react";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/data-table/view-mode-toggle";
+import { GridView } from "@/components/data-table/grid-view";
+import { GridCard } from "@/components/data-table/grid-card";
+import { setPhasesViewMode } from "@/cookies/set";
+import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -43,16 +49,13 @@ import {
   DataTableSortableHeader,
   DataTableEntityCell,
   getActionsColumn,
+  getSelectColumn,
 } from "@/components/data-table/data-table-column-helpers";
-import {
-  ViewModeToggle,
-  type ViewMode,
-} from "@/components/data-table/view-mode-toggle";
-import { GridView } from "@/components/data-table/grid-view";
-import { GridCard } from "@/components/data-table/grid-card";
+import { BulkActions } from "@/components/data-table/bulk-actions";
 import { toast } from "@/components/ui/toast";
 import { RecruitmentPhase } from "@/lib/db";
 import { getPhaseState, type PhaseState } from "@/lib/recruitment-state";
+import { cn } from "@/lib/utils";
 
 const PHASE_STATE_LABELS: Record<PhaseState, string> = {
   upcoming: "Futura",
@@ -60,35 +63,58 @@ const PHASE_STATE_LABELS: Record<PhaseState, string> = {
   closed: "Terminada",
 };
 
-const PHASE_STATE_BADGE_CLASSES: Record<PhaseState, string> = {
-  open: "bg-primary text-primary-foreground",
-  upcoming: "bg-secondary text-secondary-foreground",
-  closed: "bg-secondary text-secondary-foreground",
+const STATE_DOT_CLASSES: Record<PhaseState, string> = {
+  open: "bg-emerald-500",
+  upcoming: "bg-amber-500",
+  closed: "bg-muted-foreground/40",
 };
+
+const STATE_TEXT_CLASSES: Record<PhaseState, string> = {
+  open: "text-emerald-600 dark:text-emerald-400 font-medium",
+  upcoming: "text-amber-600 dark:text-amber-400 font-medium",
+  closed: "text-muted-foreground font-normal",
+};
+
+function formatDate(value: Date | string | null | undefined) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("pt-PT", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
 
 const ROLE_LABELS: Record<string, string> = {
   candidate: "Candidato",
   recruiter: "Recrutador",
 };
 
-const PAGE_SIZE = 6;
+const PHASE_FILTER_KEYS = ["state", "role"];
 
 interface PhaseAdminClientProps {
+  initialViewMode?: ViewMode;
   phases: RecruitmentPhase[];
   addPhase: (p: RecruitmentPhase) => Promise<void>;
   editPhase: (p: RecruitmentPhase) => Promise<void>;
   deletePhase: (id: number) => Promise<void>;
   defaultRecruitmentId?: number;
+  initialFilters?: ColumnFiltersState;
 }
 
 export default function PhaseAdminClient({
+  initialViewMode = "list",
   phases,
   addPhase,
   editPhase,
   deletePhase,
   defaultRecruitmentId,
+  initialFilters = [],
 }: PhaseAdminClientProps) {
   const [phasesState, setPhasesState] = useState<RecruitmentPhase[]>(phases);
+  const [viewMode, setViewModeState] = useState<ViewMode>(initialViewMode);
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    setPhasesViewMode(mode);
+  };
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editing, setEditing] = useState<RecruitmentPhase | null>(null);
@@ -104,14 +130,15 @@ export default function PhaseAdminClient({
     recruitmentId: defaultRecruitmentId?.toString() ?? "",
   });
 
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
+  const [columnFilters, setColumnFilters] = useTableUrlFilters({
+    filterKeys: PHASE_FILTER_KEYS,
+    initialFilters,
   });
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const isMountedRef = useRef(false);
   useEffect(() => {
     isMountedRef.current = true;
@@ -218,21 +245,25 @@ export default function PhaseAdminClient({
   );
 
   const columns = useMemo<ColumnDef<RecruitmentPhase>[]>(() => {
-    const symlessDate = (value: Date | null) =>
-      value
-        ? new Date(value).toLocaleString("pt-PT", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })
-        : "-";
-
     return [
+      getSelectColumn<RecruitmentPhase>(),
       {
         accessorKey: "title",
         header: ({ column }) => (
           <DataTableSortableHeader column={column} title="Título" />
         ),
         cell: ({ row }) => <DataTableEntityCell name={row.original.title} />,
+      },
+      {
+        accessorKey: "clientIdentifier",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Identificador" />
+        ),
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.clientIdentifier || "-"}
+          </span>
+        ),
       },
       {
         id: "description",
@@ -253,7 +284,7 @@ export default function PhaseAdminClient({
         ),
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
-            {symlessDate(row.original.start)}
+            {formatDate(row.original.start)}
           </span>
         ),
       },
@@ -264,26 +295,30 @@ export default function PhaseAdminClient({
         ),
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
-            {symlessDate(row.original.end)}
+            {formatDate(row.original.end)}
           </span>
         ),
       },
       {
         id: "state",
         accessorFn: (p) => getPhaseState(p, now),
-        header: "Estado",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Estado" />
+        ),
         cell: ({ row }) => {
           const state = getPhaseState(row.original, now);
           return (
-            <div className="flex flex-col items-start gap-1">
-              <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
+            <div className="flex items-center gap-2 text-sm">
+              <span
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  STATE_DOT_CLASSES[state],
+                )}
+                aria-hidden="true"
+              />
+              <span className={STATE_TEXT_CLASSES[state]}>
                 {PHASE_STATE_LABELS[state]}
-              </Badge>
-              {state === "open" && row.original.end && (
-                <span className="text-xs text-muted-foreground">
-                  termina {new Date(row.original.end).toLocaleString("pt-PT")}
-                </span>
-              )}
+              </span>
             </div>
           );
         },
@@ -295,12 +330,19 @@ export default function PhaseAdminClient({
       },
       {
         accessorKey: "role",
-        header: "Papel",
+        header: ({ column }) => (
+          <DataTableSortableHeader column={column} title="Papel" />
+        ),
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {ROLE_LABELS[row.original.role] ?? row.original.role}
           </span>
         ),
+        sortingFn: (rowA, rowB) => {
+          const a = ROLE_LABELS[rowA.original.role] ?? rowA.original.role;
+          const b = ROLE_LABELS[rowB.original.role] ?? rowB.original.role;
+          return a.localeCompare(b, "pt");
+        },
         filterFn: (row, _id, value: string[]) => {
           if (!value || value.length === 0) return true;
           return value.includes(row.original.role);
@@ -319,8 +361,7 @@ export default function PhaseAdminClient({
   const table = useReactTable({
     data: phasesState,
     columns,
-    state: { sorting, columnFilters, globalFilter, pagination },
-    autoResetPageIndex: false,
+    state: { sorting, columnFilters, globalFilter, rowSelection },
     onSortingChange: (u) => {
       if (isMountedRef.current) setSorting(u);
     },
@@ -330,13 +371,12 @@ export default function PhaseAdminClient({
     onGlobalFilterChange: (u) => {
       if (isMountedRef.current) setGlobalFilter(u);
     },
-    onPaginationChange: (u) => {
-      if (isMountedRef.current) setPagination(u);
+    onRowSelectionChange: (u) => {
+      if (isMountedRef.current) setRowSelection(u);
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const selectedStates =
@@ -360,34 +400,78 @@ export default function PhaseAdminClient({
     ]);
   };
 
-  const renderCard = (p: RecruitmentPhase) => {
-    const state = getPhaseState(p, now);
-    return (
-      <GridCard
-        title={p.title}
-        subtitle={p.clientIdentifier}
-        badge={
-          <Badge className={PHASE_STATE_BADGE_CLASSES[state]}>
-            {PHASE_STATE_LABELS[state]}
-          </Badge>
-        }
-        onEdit={() => handleEdit(p)}
-        onDelete={() => {
-          if (p.id != null) handleDelete(p.id);
-        }}
-      >
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <CalendarDays className="size-3.5" />
-          <span>
-            {p.start ? new Date(p.start).toLocaleString("pt-PT") : "Sem início"}{" "}
-            — {p.end ? new Date(p.end).toLocaleString("pt-PT") : "sem fim"}
-          </span>
-        </div>
-        <div className="text-muted-foreground">
-          {ROLE_LABELS[p.role] ?? p.role}
-        </div>
-      </GridCard>
+  const selectedCount = Object.keys(rowSelection).filter(
+    (k) => rowSelection[k],
+  ).length;
+
+  const handleBulkExportCSV = () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    const headers = [
+      "ID",
+      "Título",
+      "Descrição",
+      "Início",
+      "Fim",
+      "Papel",
+      "Identificador",
+    ];
+
+    const rows = selectedRows.map((p) => {
+      return [
+        `"${p.id ?? ""}"`,
+        `"${(p.title || "").replace(/"/g, '""')}"`,
+        `"${(p.description || "").replace(/"/g, '""')}"`,
+        `"${p.start ? new Date(p.start).toISOString() : ""}"`,
+        `"${p.end ? new Date(p.end).toISOString() : ""}"`,
+        `"${ROLE_LABELS[p.role] ?? p.role}"`,
+        `"${(p.clientIdentifier || "").replace(/"/g, '""')}"`,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) => r.join(",")),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `fases_${new Date().toISOString().slice(0, 10)}.csv`,
     );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedRows = table
+      .getSelectedRowModel()
+      .rows.map((r) => r.original);
+    if (selectedRows.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const ids = selectedRows
+        .map((p) => p.id)
+        .filter((id): id is number => id != null);
+      await Promise.all(ids.map((id) => deletePhase(id)));
+      setPhasesState((prev) => prev.filter((p) => !ids.includes(p.id!)));
+      table.toggleAllRowsSelected(false);
+      toast.add({ title: "Fases apagadas com sucesso" });
+    } catch (err) {
+      console.error(err);
+      toast.add({ title: "Ocorreu um erro ao apagar as fases" });
+    } finally {
+      setIsBulkDeleting(false);
+      setIsBulkDeleteOpen(false);
+    }
   };
 
   return (
@@ -403,29 +487,32 @@ export default function PhaseAdminClient({
           />
         }
         search={
-          <div className="relative">
+          <div className="relative w-full md:w-auto">
             <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Procurar fase..."
-              className="h-8 w-56 pl-8 text-xs"
+              className="h-8 w-full pl-8 text-xs md:w-56"
             />
           </div>
         }
         actions={
           <>
-            <DataTableColumnToggle
-              table={table}
-              columnLabels={{
-                title: "Título",
-                description: "Descrição",
-                start: "Início",
-                end: "Fim",
-                state: "Estado",
-                role: "Papel",
-              }}
-            />
+            {viewMode === "list" && (
+              <DataTableColumnToggle
+                table={table}
+                columnLabels={{
+                  title: "Título",
+                  clientIdentifier: "Identificador",
+                  description: "Descrição",
+                  start: "Início",
+                  end: "Fim",
+                  state: "Estado",
+                  role: "Papel",
+                }}
+              />
+            )}
             <Button
               type="button"
               onClick={() => {
@@ -479,7 +566,69 @@ export default function PhaseAdminClient({
           <GridView
             table={t}
             getItemKey={(p) => String(p.id)}
-            renderCard={renderCard}
+            renderCard={(p, { isSelected, onSelectChange }) => {
+              const state = getPhaseState(p, now);
+              return (
+                <GridCard
+                  avatar={
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Calendar className="size-5" />
+                    </div>
+                  }
+                  title={p.title}
+                  subtitle={ROLE_LABELS[p.role] ?? p.role}
+                  badge={
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          STATE_DOT_CLASSES[state],
+                        )}
+                      />
+                      <span className={STATE_TEXT_CLASSES[state]}>
+                        {PHASE_STATE_LABELS[state]}
+                      </span>
+                    </div>
+                  }
+                  isSelected={isSelected}
+                  onSelectChange={onSelectChange}
+                  onEdit={() => handleEdit(p)}
+                  onDelete={() => {
+                    if (p.id != null) handleDelete(p.id);
+                  }}
+                  editLabel="Editar"
+                  deleteLabel="Eliminar"
+                >
+                  <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                    {p.clientIdentifier && (
+                      <div className="flex items-center justify-between">
+                        <span>Identificador:</span>
+                        <span className="font-mono text-foreground font-medium">
+                          {p.clientIdentifier}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span>Início:</span>
+                      <span className="text-foreground">
+                        {formatDate(p.start)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Fim:</span>
+                      <span className="text-foreground">
+                        {formatDate(p.end)}
+                      </span>
+                    </div>
+                    {p.description && (
+                      <p className="mt-1 line-clamp-2 text-foreground/80 italic">
+                        {p.description}
+                      </p>
+                    )}
+                  </div>
+                </GridCard>
+              );
+            }}
           />
         )}
       />
@@ -532,7 +681,6 @@ export default function PhaseAdminClient({
                     }))
                   }
                   className="col-span-3 bg-input border-border text-foreground"
-                  required
                 />
               </div>
 
@@ -680,7 +828,6 @@ export default function PhaseAdminClient({
                     }))
                   }
                   className="col-span-3 bg-input border-border text-foreground"
-                  required
                 />
               </div>
 
@@ -769,6 +916,53 @@ export default function PhaseAdminClient({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk actions toolbar */}
+      <BulkActions
+        selectedCount={selectedCount}
+        entityLabel="fase"
+        entityPluralLabel="fases"
+        onExport={handleBulkExportCSV}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+        onClear={() => table.toggleAllRowsSelected(false)}
+      />
+
+      {/* Confirm bulk delete dialog */}
+      <Dialog
+        open={isBulkDeleteOpen}
+        onOpenChange={(open) => !open && setIsBulkDeleteOpen(false)}
+      >
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-card-foreground">
+              Tens a certeza que queres apagar?
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedCount === 1
+                ? "Esta fase será eliminada permanentemente."
+                : `Estas ${selectedCount} fases serão eliminadas permanentemente.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsBulkDeleteOpen(false)}
+              disabled={isBulkDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+            >
+              {isBulkDeleting ? "A apagar..." : "Apagar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -7,13 +7,13 @@ import {
   recruiterToDynamic,
 } from "@/db/schema";
 import { db, DynamicTemplate, Slot } from "./db";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { getFilenameUrl } from "./file-upload";
-import { application } from "@/db/schema";
 import {
   CandidateFilterRestriction,
   candidateFilterRestrictions,
-  CandidateWithMetadata,
+  CandidateListMetadata,
+  getCandidatesWithMetadata,
 } from "./candidate";
 import { getLatestVotingDecisionsForCandidates } from "./voting";
 import { getActiveRecruitment } from "./recruitment";
@@ -32,7 +32,7 @@ export async function tryToAddCandidateToDynamic(
   }
 
   await db.transaction(async (trx) => {
-    const candidateDynamic = await db.query.candidateToDynamic.findFirst({
+    const candidateDynamic = await trx.query.candidateToDynamic.findFirst({
       where: and(
         eq(candidateToDynamic.candidateId, candidateId),
         eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
@@ -47,9 +47,15 @@ export async function tryToAddCandidateToDynamic(
     });
 
     if (candidateDynamic) {
+      // Selecting the current slot is a no-op. Deleting the now-empty dynamic
+      // below would destroy its content/comments and recruiter assignments.
+      if (candidateDynamic.dynamic.slot.id === slotParam.id) {
+        return;
+      }
+
       await trx
         .update(slot)
-        .set({ quantity: candidateDynamic.dynamic.slot.quantity + 1 })
+        .set({ quantity: sql`${slot.quantity} + 1` })
         .where(eq(slot.id, candidateDynamic.dynamic.slot.id));
 
       await trx
@@ -60,6 +66,19 @@ export async function tryToAddCandidateToDynamic(
             eq(candidateToDynamic.recruitmentId, targetRecruitmentId),
           ),
         );
+
+      // A session with no candidates left is dead weight: drop it so its
+      // recruiters stop showing up as a phantom booking.
+      const remaining = await trx
+        .select({ candidateId: candidateToDynamic.candidateId })
+        .from(candidateToDynamic)
+        .where(eq(candidateToDynamic.dynamicId, candidateDynamic.dynamicId));
+
+      if (remaining.length === 0) {
+        await trx
+          .delete(dynamic)
+          .where(eq(dynamic.id, candidateDynamic.dynamicId));
+      }
     }
 
     const s = await trx
@@ -255,26 +274,102 @@ export async function getCandidateDynamic(
   });
 }
 
-export async function updateDynamic(dynamicId: number, content: unknown) {
-  await db.update(dynamic).set({ content }).where(eq(dynamic.id, dynamicId));
+export async function updateDynamic(
+  dynamicId: number,
+  content: unknown,
+  recruitmentId?: number,
+): Promise<boolean> {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return false;
+
+  const updated = await db
+    .update(dynamic)
+    .set({ content })
+    .where(
+      and(
+        eq(dynamic.id, dynamicId),
+        eq(dynamic.recruitmentId, targetId),
+        eq(dynamic.locked, false),
+      ),
+    )
+    .returning({ id: dynamic.id });
+
+  return updated.length > 0;
+}
+
+export async function toggleDynamicLock(
+  dynamicId: number,
+  locked: boolean,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return;
+
+  await db
+    .update(dynamic)
+    .set({ locked })
+    .where(and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, targetId)));
 }
 
 export async function createDynamicComment(
   dynamicId: number,
   content: Array<any>,
   authorId: string,
-) {
-  await db.insert(dynamicComment).values({
-    content: content,
-    dynamicId: dynamicId,
-    authorId: authorId,
+): Promise<number | null> {
+  return await db.transaction(async (trx) => {
+    try {
+      const inserted = await trx
+        .insert(dynamicComment)
+        .values({
+          content: content,
+          dynamicId: dynamicId,
+          authorId: authorId,
+        })
+        .returning({ id: dynamicComment.id });
+
+      return inserted[0]?.id ?? null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   });
+}
+
+export async function updateDynamicComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+  dynamicId: number,
+  recruitmentId: number,
+): Promise<boolean> {
+  const d = await db
+    .select({ id: dynamic.id })
+    .from(dynamic)
+    .where(
+      and(eq(dynamic.id, dynamicId), eq(dynamic.recruitmentId, recruitmentId)),
+    );
+
+  if (d.length === 0) return false;
+
+  const updated = await db
+    .update(dynamicComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(dynamicComment.id, commentId),
+        eq(dynamicComment.authorId, authorId),
+        eq(dynamicComment.dynamicId, d[0].id),
+      ),
+    )
+    .returning({ id: dynamicComment.id });
+
+  return updated.length > 0;
 }
 
 export async function getAllCandidatesWithDynamic(
   recruitmentIdOrRestrictions?: number | Array<CandidateFilterRestriction>,
   restrictionsParam?: Array<CandidateFilterRestriction>,
-): Promise<Array<CandidateWithMetadata>> {
+): Promise<Array<CandidateListMetadata>> {
   const recruitmentId =
     typeof recruitmentIdOrRestrictions === "number"
       ? recruitmentIdOrRestrictions
@@ -283,102 +378,27 @@ export async function getAllCandidatesWithDynamic(
     ? recruitmentIdOrRestrictions
     : restrictionsParam;
 
-  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return [];
-
-  const candidates = await db.query.candidate.findMany({
-    where: (candidateTable, { eq, and, exists }) =>
-      and(
-        eq(candidateTable.recruitmentId, targetId),
-        exists(
-          db
-            .select()
-            .from(application)
-            .where(
-              and(
-                eq(application.candidateId, candidateTable.userId),
-                eq(application.recruitmentId, targetId),
-              ),
-            ),
-        ),
-      ),
-    with: {
-      user: true,
-      interview: true,
-      dynamic: {
-        with: {
-          dynamic: {
-            with: {
-              slot: true,
-            },
-          },
-        },
-      },
-      application: {
-        with: {
-          interests: true,
-        },
-      },
-      knownRecruiters: true,
-    },
-  });
-
-  candidates.sort(
-    (a, b) => (a.application?.id ?? 0) - (b.application?.id ?? 0),
-  );
-
-  const previousApplicationYears = await getPreviousApplicationYears(
-    candidates.map((c) => ({
-      userId: c.userId,
-      studentNumber: c.application?.studentNumber,
-    })),
-    targetId,
-  );
-
-  const votingDecisions = await getLatestVotingDecisionsForCandidates(
-    candidates.map((c) => c.userId),
-    targetId,
-  );
-
-  const res: Array<CandidateWithMetadata> = await Promise.all(
-    candidates.map(async (c) => {
-      return {
-        ...c.user,
-        image: await getFilenameUrl(c.user?.image),
-        dynamic: c.dynamic as CandidateWithMetadata["dynamic"],
-        interview: c.interview as CandidateWithMetadata["interview"],
-        interviewClassification: c.interviewClassification ?? "none",
-        dynamicClassification: c.dynamicClassification ?? "none",
-        application: c.application
-          ? {
-              ...c.application,
-              curriculum: await getFilenameUrl(c.application?.curriculum),
-              interests: c.application?.interests.map((i) => i.interest),
-            }
-          : null,
-        knownRecruiters: c.knownRecruiters,
-        votingDecision: votingDecisions.get(c.userId) ?? null,
-        previousApplicationYears: previousApplicationYears.get(c.userId) ?? [],
-      };
-    }),
-  );
+  const res = await getCandidatesWithMetadata(undefined, recruitmentId);
 
   let filtered = res;
   for (const restriction of restrictions ?? []) {
     filtered = candidateFilterRestrictions[restriction](filtered);
   }
 
-  return Promise.resolve(filtered);
+  return filtered;
 }
 
 export async function addDynamicTemplate(content: Array<any>) {
   if (content.length === 0) return;
 
   await db.transaction(async (trx) => {
-    const template = await trx.query.dynamicTemplate.findFirst();
+    const [template] = await trx.select().from(dynamicTemplate).limit(1);
 
     if (template) {
-      await trx.update(dynamicTemplate).set({ content: content });
+      await trx
+        .update(dynamicTemplate)
+        .set({ content: content })
+        .where(eq(dynamicTemplate.id, template.id));
       return;
     }
 
@@ -387,8 +407,7 @@ export async function addDynamicTemplate(content: Array<any>) {
 }
 
 export async function getDynamicTemplate(): Promise<DynamicTemplate> {
-  const template =
-    (await db.query.dynamicTemplate.findFirst()) as DynamicTemplate;
+  const [template] = await db.select().from(dynamicTemplate).limit(1);
 
   if (!template) {
     return {

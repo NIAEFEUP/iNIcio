@@ -1,12 +1,9 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { isRecruiter } from "@/lib/recruiter";
-import { headers } from "next/headers";
 
 export async function getSessionUser() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     throw new Error("Unauthorized: Authentication required");

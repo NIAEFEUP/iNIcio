@@ -12,7 +12,9 @@ export interface CandidateAnswersProps {
 export default function CandidateAnswers({
   application,
 }: CandidateAnswersProps) {
-  const [openItems, setOpenItems] = useState<number[]>([]);
+  const [openItems, setOpenItems] = useState<number[]>(() =>
+    applicationAnswers.map((_, idx) => idx),
+  );
 
   const toggleItem = (id: number) => {
     setOpenItems((prev) =>

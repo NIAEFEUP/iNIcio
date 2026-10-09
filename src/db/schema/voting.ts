@@ -22,6 +22,7 @@ export const votingPhase = pgTable(
       .notNull()
       .references(() => recruitment.id, { onDelete: "cascade" }),
     created_at: timestamp("created_at").defaultNow(),
+    terminated: boolean("terminated").notNull().default(false),
   },
   (table) => [
     unique("voting_phase_id_recruitment_unique").on(

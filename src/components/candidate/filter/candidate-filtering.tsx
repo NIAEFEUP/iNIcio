@@ -16,8 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { CandidateWithMetadata } from "@/lib/candidate";
-import { User } from "@/lib/db";
+import type { CandidateListMetadata } from "@/lib/candidate";
 
 import {
   availableClassifications,
@@ -34,8 +33,8 @@ type CandidatesPageFilter = {
 };
 
 interface CandidateFilteringProps {
-  candidates: Array<CandidateWithMetadata>;
-  setFilteredCandidates: Dispatch<SetStateAction<Array<User>>>;
+  candidates: Array<CandidateListMetadata>;
+  setFilteredCandidates: Dispatch<SetStateAction<Array<CandidateListMetadata>>>;
   availableDepartments: Array<string>;
 }
 

@@ -134,7 +134,7 @@ export async function submitApplicationComment(
   content: Array<any>,
   authorId: string,
   recruitmentId?: number,
-): Promise<boolean> {
+): Promise<number | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   const whereClause = targetId
     ? and(
@@ -145,7 +145,7 @@ export async function submitApplicationComment(
 
   const app = await db.select().from(application).where(whereClause);
 
-  if (app.length === 0) return false;
+  if (app.length === 0) return null;
 
   try {
     return await db.transaction(async (tx) => {
@@ -172,10 +172,10 @@ export async function submitApplicationComment(
         });
       }
 
-      return true;
+      return id[0]?.id ?? null;
     });
   } catch (e) {
     console.error(e);
-    return false;
+    return null;
   }
 }

@@ -1,14 +1,18 @@
 import {
   interview,
   interviewComment,
+  interviewCommentVote,
   interviewTemplate,
+  recruiter,
   slot,
   recruiterToInterview,
 } from "@/db/schema";
 import { db, InterviewTemplate, Slot } from "./db";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
+import { isRecruiterAvailableForSlot } from "./recruiter-availability";
 import { getFilenameUrl } from "./file-upload";
 import { Comment } from "@/components/candidate/page/candidate-comments";
+import { EMPTY_COMMENT_VOTE, loadCommentVotes } from "./comment-vote";
 import { getActiveRecruitment } from "./recruitment";
 
 export default async function addInterviewWithSlot(
@@ -56,13 +60,56 @@ export default async function addInterviewWithSlot(
       if (i) {
         await trx
           .update(slot)
-          .set({ quantity: i.slot.quantity + 1 })
+          .set({ quantity: sql`${slot.quantity} + 1` })
           .where(eq(slot.id, i.slot.id));
 
         await trx
           .update(interview)
           .set({ slot: slotParam.id })
           .where(eq(interview.id, i.id));
+
+        // Assigned interviewers may no longer be free at the new slot,
+        // so remove the ones that cannot cover it.
+        const assigned = await trx
+          .select({ recruiterId: recruiterToInterview.recruiterId })
+          .from(recruiterToInterview)
+          .where(eq(recruiterToInterview.interviewId, i.id));
+
+        // Lock the assigned recruiters before re-validating, in a stable order
+        // so a concurrent reschedule/assignment cannot slip through the check.
+        const recruiterIds = [
+          ...new Set(assigned.map((a) => a.recruiterId)),
+        ].sort();
+        if (recruiterIds.length > 0) {
+          await trx
+            .select({ userId: recruiter.userId })
+            .from(recruiter)
+            .where(inArray(recruiter.userId, recruiterIds))
+            .orderBy(recruiter.userId)
+            .for("update");
+        }
+
+        for (const { recruiterId } of assigned) {
+          const stillAvailable = await isRecruiterAvailableForSlot(
+            recruiterId,
+            targetRecruitmentId,
+            s[0].start,
+            s[0].duration,
+            { excludeInterviewId: i.id },
+            trx,
+          );
+
+          if (!stillAvailable) {
+            await trx
+              .delete(recruiterToInterview)
+              .where(
+                and(
+                  eq(recruiterToInterview.interviewId, i.id),
+                  eq(recruiterToInterview.recruiterId, recruiterId),
+                ),
+              );
+          }
+        }
       } else {
         const interviewTemplate = await trx.query.interviewTemplate.findFirst();
 
@@ -120,21 +167,38 @@ export async function updateInterview(
   candidateId: string,
   content: unknown,
   recruitmentId?: number,
-) {
+): Promise<boolean> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return;
+  if (!targetId) return false;
 
-  await db.transaction(async (trx) => {
-    await trx
+  const updated = await db.transaction(async (trx) => {
+    return trx
       .update(interview)
       .set({ content: content })
       .where(
         and(
           eq(interview.candidateId, candidateId),
           eq(interview.recruitmentId, targetId),
+          eq(interview.locked, false),
         ),
-      );
+      )
+      .returning({ id: interview.id });
   });
+
+  return updated.length > 0;
+}
+
+export async function updateInterviewById(
+  interviewId: number,
+  content: unknown,
+): Promise<boolean> {
+  const updated = await db
+    .update(interview)
+    .set({ content })
+    .where(and(eq(interview.id, interviewId), eq(interview.locked, false)))
+    .returning({ id: interview.id });
+
+  return updated.length > 0;
 }
 
 export async function addInterviewComment(
@@ -142,9 +206,9 @@ export async function addInterviewComment(
   content: Array<any>,
   candidateId: string,
   recruitmentId?: number,
-): Promise<boolean> {
+): Promise<number | null> {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
-  if (!targetId) return false;
+  if (!targetId) return null;
 
   return await db.transaction(async (trx) => {
     const i = await trx
@@ -158,31 +222,71 @@ export async function addInterviewComment(
       )
       .for("update");
 
-    if (i.length === 0) return false;
+    if (i.length === 0) return null;
 
     try {
-      await trx.insert(interviewComment).values({
-        content,
-        authorId,
-        interviewId: i[0].id,
-      });
+      const inserted = await trx
+        .insert(interviewComment)
+        .values({
+          content,
+          authorId,
+          interviewId: i[0].id,
+        })
+        .returning({ id: interviewComment.id });
 
-      return true;
+      return inserted[0]?.id ?? null;
     } catch (e) {
       console.error(e);
-      return false;
+      return null;
     }
   });
+}
+
+export async function updateInterviewComment(
+  commentId: number,
+  content: Array<any>,
+  authorId: string,
+  candidateId: string,
+  recruitmentId: number,
+): Promise<boolean> {
+  const i = await db
+    .select({ id: interview.id })
+    .from(interview)
+    .where(
+      and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, recruitmentId),
+      ),
+    );
+
+  if (i.length === 0) return false;
+
+  const updated = await db
+    .update(interviewComment)
+    .set({ content, editedAt: new Date() })
+    .where(
+      and(
+        eq(interviewComment.id, commentId),
+        eq(interviewComment.authorId, authorId),
+        eq(interviewComment.interviewId, i[0].id),
+      ),
+    )
+    .returning({ id: interviewComment.id });
+
+  return updated.length > 0;
 }
 
 export async function addInterviewTemplate(content: Array<any>) {
   if (content.length === 0) return;
 
   await db.transaction(async (trx) => {
-    const template = await trx.query.interviewTemplate.findFirst();
+    const [template] = await trx.select().from(interviewTemplate).limit(1);
 
     if (template) {
-      await trx.update(interviewTemplate).set({ content: content });
+      await trx
+        .update(interviewTemplate)
+        .set({ content: content })
+        .where(eq(interviewTemplate.id, template.id));
     } else {
       await trx.insert(interviewTemplate).values({ content: content });
     }
@@ -190,8 +294,7 @@ export async function addInterviewTemplate(content: Array<any>) {
 }
 
 export async function getInterviewTemplate(): Promise<InterviewTemplate> {
-  const template =
-    (await db.query.interviewTemplate.findFirst()) as InterviewTemplate;
+  const [template] = await db.select().from(interviewTemplate).limit(1);
 
   if (!template) {
     return {
@@ -209,6 +312,7 @@ export function getCandidateInterviewLink(candidateId: string) {
 
 export async function getInterviewComments(
   interviewId: number,
+  userId: string,
 ): Promise<Array<Comment>> {
   const comments = await db.query.interviewComment.findMany({
     where: eq(interviewComment.interviewId, interviewId),
@@ -221,6 +325,12 @@ export async function getInterviewComments(
     },
   });
 
+  const votes = await loadCommentVotes(
+    interviewCommentVote,
+    comments.map((c) => c.id),
+    userId,
+  );
+
   return await Promise.all(
     comments.map(async (c): Promise<Comment> => ({
       user: {
@@ -231,10 +341,41 @@ export async function getInterviewComments(
         id: c.id,
         content: c.content,
         createdAt: c.createdAt,
+        editedAt: c.editedAt,
         interviewId: c.interviewId,
         authorId: c.authorId,
       },
       type: "interview",
+      ...(votes.get(c.id) ?? EMPTY_COMMENT_VOTE),
     })),
   );
+}
+
+export async function toggleInterviewLock(
+  candidateId: string,
+  locked: boolean,
+  recruitmentId?: number,
+) {
+  const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
+  if (!targetId) return;
+
+  await db
+    .update(interview)
+    .set({ locked })
+    .where(
+      and(
+        eq(interview.candidateId, candidateId),
+        eq(interview.recruitmentId, targetId),
+      ),
+    );
+}
+
+export async function toggleInterviewLockById(
+  interviewId: number,
+  locked: boolean,
+) {
+  await db
+    .update(interview)
+    .set({ locked })
+    .where(eq(interview.id, interviewId));
 }

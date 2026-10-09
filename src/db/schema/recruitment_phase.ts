@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   pgTable,
   primaryKey,
@@ -28,6 +29,7 @@ export const slot = pgTable(
   },
   (table) => [
     unique("slot_id_recruitment_unique").on(table.id, table.recruitmentId),
+    index("slot_recruitment_id_idx").on(table.recruitmentId),
   ],
 );
 
@@ -51,6 +53,7 @@ export const recruiterAvailability = pgTable(
       table.recruiterId,
       table.recruitmentId,
     ),
+    index("recruiter_avail_recruitment_id_idx").on(table.recruitmentId),
   ],
 );
 

@@ -50,6 +50,55 @@
       "when": 1790069044100,
       "tag": "0006_striped_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790421786703,
+      "tag": "0007_sturdy_champions",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790504515251,
+      "tag": "0008_clear_alice",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790509236213,
+      "tag": "0009_numerous_mother_askani",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790695471715,
+      "tag": "0010_familiar_iron_monger",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791024632966,
+      "tag": "0011_wild_purifiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791143342609,
+      "tag": "0012_small_charles_xavier",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791382354885,
+      "tag": "0013_ancient_mockingbird",
+      "breakpoints": true
     }
   ]
 }

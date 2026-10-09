@@ -9,6 +9,7 @@ import {
   primaryKey,
   unique,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { candidate, recruiter } from "./user_roles";
 import { dynamicComment } from "./comment";
@@ -26,6 +27,7 @@ export const dynamic = pgTable(
     slot: integer("slot_id")
       .notNull()
       .references(() => slot.id),
+    locked: boolean("locked").notNull().default(false),
   },
   (table) => [
     unique("dynamic_id_recruitment_unique").on(table.id, table.recruitmentId),
@@ -61,6 +63,7 @@ export const candidateToDynamic = pgTable(
       foreignColumns: [dynamic.id, dynamic.recruitmentId],
       name: "candidate_to_dynamic_dynamic_fk",
     }).onDelete("cascade"),
+    index("candidate_to_dynamic_dynamic_id_idx").on(table.dynamicId),
   ],
 );
 
@@ -74,7 +77,10 @@ export const recruiterToDynamic = pgTable(
       .notNull()
       .references(() => dynamic.id, { onDelete: "cascade" }),
   },
-  (table) => [primaryKey({ columns: [table.recruiterId, table.dynamicId] })],
+  (table) => [
+    primaryKey({ columns: [table.recruiterId, table.dynamicId] }),
+    index("recruiter_to_dynamic_dynamic_id_idx").on(table.dynamicId),
+  ],
 );
 
 export const dynamicRelations = relations(dynamic, ({ many, one }) => ({
