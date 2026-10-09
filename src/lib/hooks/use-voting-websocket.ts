@@ -59,7 +59,6 @@ export function useVotingWebSocket({
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryDelayRef = useRef(INITIAL_RETRY_DELAY);
   const intentionallyClosedRef = useRef(false);
   const connectRef = useRef<() => void>(() => {});
@@ -68,13 +67,6 @@ export function useVotingWebSocket({
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
-    }
-  }, []);
-
-  const clearPing = useCallback(() => {
-    if (pingIntervalRef.current) {
-      clearInterval(pingIntervalRef.current);
-      pingIntervalRef.current = null;
     }
   }, []);
 
@@ -237,17 +229,18 @@ export function useVotingWebSocket({
         connecting: false,
         error: null,
       }));
-
-      pingIntervalRef.current = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "pong" }));
-        }
-      }, 30000);
     };
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
+        // The server pings every heartbeat interval; answer so it keeps us.
+        if (message?.type === "ping") {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "pong" }));
+          }
+          return;
+        }
         handleMessage(message);
       } catch {
         // ignore malformed messages
@@ -262,7 +255,6 @@ export function useVotingWebSocket({
     };
 
     ws.onclose = () => {
-      clearPing();
       setState((prev) => ({
         ...prev,
         connected: false,
@@ -279,7 +271,7 @@ export function useVotingWebSocket({
         }, retryDelayRef.current);
       }
     };
-  }, [votingPhaseId, token, clearPing, clearReconnect, handleMessage]);
+  }, [votingPhaseId, token, clearReconnect, handleMessage]);
 
   useEffect(() => {
     connectRef.current = connect;
@@ -288,7 +280,6 @@ export function useVotingWebSocket({
   const disconnect = useCallback(() => {
     intentionallyClosedRef.current = true;
     clearReconnect();
-    clearPing();
     if (wsRef.current) {
       const ws = wsRef.current;
       wsRef.current = null;
@@ -300,7 +291,7 @@ export function useVotingWebSocket({
       ws.onclose = null;
       ws.close();
     }
-  }, [clearPing, clearReconnect]);
+  }, [clearReconnect]);
 
   const reconnect = useCallback(() => {
     disconnect();

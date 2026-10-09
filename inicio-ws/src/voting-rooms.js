@@ -13,6 +13,9 @@ const rooms = new Map();
 const nextjsUrl = process.env.NEXTJS_URL || "http://localhost:3000";
 
 const readyStateOpen = 1;
+// Clients must answer each ping. A socket that misses a whole interval is
+// dropped so dead connections do not keep presence counts inflated.
+const HEARTBEAT_MS = Number(process.env.WS_HEARTBEAT_MS) || 30000;
 
 function requestRoomSync(roomName) {
   const votingPhaseId = roomName.replace("voting/", "");
@@ -172,15 +175,22 @@ export function addClient(roomName, ws, metadata) {
     removeClient(roomName, client);
   });
 
-  const pingInterval = setInterval(() => {
-    if (ws.readyState === readyStateOpen) {
-      send(ws, { type: "ping" });
-    } else {
-      clearInterval(pingInterval);
+  client.alive = true;
+  const heartbeat = setInterval(() => {
+    if (ws.readyState !== readyStateOpen) {
+      clearInterval(heartbeat);
+      return;
     }
-  }, 30000);
+    if (!client.alive) {
+      console.warn("[voting] client missed heartbeat, dropping");
+      ws.terminate();
+      return;
+    }
+    client.alive = false;
+    send(ws, { type: "ping" });
+  }, HEARTBEAT_MS);
 
-  ws.on("close", () => clearInterval(pingInterval));
+  ws.on("close", () => clearInterval(heartbeat));
 }
 
 function removeClient(roomName, client) {
@@ -221,6 +231,7 @@ function handleClientMessage(room, client, data) {
   }
 
   if (message.type === "pong") {
+    client.alive = true;
     return;
   }
 
