@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
-import { generateJWT } from "@/lib/jwt";
-import { isRecruiter } from "@/lib/recruiter";
+import { getVotingRoomToken } from "@/lib/voting-room";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   deleteCandidateVotes,
@@ -21,20 +20,10 @@ import {
   broadcastStatusChanged,
   broadcastVoteUpdated,
   broadcastVotesReset,
+  notifyClients,
 } from "@/lib/voting-events";
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
-
-// The database write has already committed when we broadcast. A broadcast
-// failure must not turn a saved vote into an error; clients re-sync on their
-// next join.
-async function notifyClients(send: () => Promise<void>) {
-  try {
-    await send();
-  } catch (error) {
-    console.error("[voting] realtime update failed", error);
-  }
-}
 
 interface CandidateVotingPageProps {
   params: Promise<{ id: string }>;
@@ -58,19 +47,7 @@ export default async function CandidateVotingPage({
     redirect("/candidates/voting");
   }
 
-  // The websocket room token carries the role the server should use. The
-  // role comes from the same checks the rest of the page uses, never from
-  // "not admin means recruiter".
-  const votingRecruitmentId = await getVotingPhaseRecruitmentId(numId);
-  const userIsRecruiter =
-    session?.user.id && votingRecruitmentId
-      ? await isRecruiter(session.user.id, votingRecruitmentId)
-      : false;
-  const wsRole = userIsAdmin ? "admin" : userIsRecruiter ? "recruiter" : null;
-  const wsToken =
-    session?.user.id && wsRole
-      ? await generateJWT(session.user.id, wsRole, [`voting/${numId}`])
-      : "";
+  const wsToken = await getVotingRoomToken(session?.user.id, numId);
 
   async function submitVoteAction(
     recruiterId: string,
@@ -178,6 +155,7 @@ export default async function CandidateVotingPage({
       submitVoteAction={submitVoteAction}
       currentUserId={session?.user.id || ""}
       showBack={true}
+      token={wsToken}
     />
   );
 }

@@ -13,6 +13,8 @@ import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { requireRecruiterSession } from "@/lib/action-guard";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
+import { broadcastVoteUpdated, notifyClients } from "@/lib/voting-events";
+import { getVotingRoomToken } from "@/lib/voting-room";
 import { CandidateVotingSessionsList } from "@/components/candidate/voting/candidate-voting-sessions-list";
 
 export default async function CandidatesVotingPage() {
@@ -46,12 +48,18 @@ export default async function CandidatesVotingPage() {
     );
 
     if (!recruiterVotes.find((v) => v.candidateId === candidateId)) {
-      return await voteForCandidate(
+      const ok = await voteForCandidate(
         activeVotingPhaseId,
         effectiveRecruiterId,
         candidateId,
         decision,
       );
+      if (ok) {
+        await notifyClients(() =>
+          broadcastVoteUpdated(activeVotingPhaseId, candidateId),
+        );
+      }
+      return ok;
     }
 
     return false;
@@ -66,12 +74,18 @@ export default async function CandidatesVotingPage() {
         ? await getRecruiterVotes(currentVotingPhase.id, session.user.id)
         : [];
 
+      const wsToken = await getVotingRoomToken(
+        session?.user.id,
+        currentVotingPhase.id,
+      );
+
       return (
         <RecruiterVotingView
           currentVotingPhase={currentVotingPhase as any}
           recruiterVotes={recruiterVotes}
           submitVoteAction={submitVoteAction}
           currentUserId={session?.user.id || ""}
+          token={wsToken}
         />
       );
     }

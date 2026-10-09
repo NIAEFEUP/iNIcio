@@ -182,3 +182,14 @@ export async function broadcastProgress(votingPhaseId: number) {
     payload,
   });
 }
+
+// The database write has already committed when we broadcast. A broadcast
+// failure must not turn a saved vote into an error; clients re-sync on their
+// next join.
+export async function notifyClients(send: () => Promise<void>) {
+  try {
+    await send();
+  } catch (error) {
+    console.error("[voting] realtime update failed", error);
+  }
+}
