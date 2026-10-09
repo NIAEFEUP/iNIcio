@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
+import { generateJWT } from "@/lib/jwt";
+import { isRecruiter } from "@/lib/recruiter";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   deleteCandidateVotes,
@@ -55,6 +57,20 @@ export default async function CandidateVotingPage({
   if (!currentVotingPhase) {
     redirect("/candidates/voting");
   }
+
+  // The websocket room token carries the role the server should use. The
+  // role comes from the same checks the rest of the page uses, never from
+  // "not admin means recruiter".
+  const votingRecruitmentId = await getVotingPhaseRecruitmentId(numId);
+  const userIsRecruiter =
+    session?.user.id && votingRecruitmentId
+      ? await isRecruiter(session.user.id, votingRecruitmentId)
+      : false;
+  const wsRole = userIsAdmin ? "admin" : userIsRecruiter ? "recruiter" : null;
+  const wsToken =
+    session?.user.id && wsRole
+      ? await generateJWT(session.user.id, wsRole, [`voting/${numId}`])
+      : "";
 
   async function submitVoteAction(
     recruiterId: string,
@@ -146,6 +162,7 @@ export default async function CandidateVotingPage({
         }
         makeVoteDefinitiveAction={makeVoteDefinitiveAction}
         resetCandidateVotesAction={resetCandidateVotesAction}
+        token={wsToken}
       />
     );
   }
