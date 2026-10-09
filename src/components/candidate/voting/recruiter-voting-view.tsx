@@ -50,7 +50,6 @@ export function RecruiterVotingView({
     candidates.findIndex((c) => c.id === currentVotingPhase.status.candidateId),
   );
 
-  const [currentIndex, setCurrentIndex] = useState(initialIdx);
   const [currentCandidate, setCurrentCandidate] =
     useState<CandidateVotingMetadata>(candidates[initialIdx] || candidates[0]);
 
@@ -83,10 +82,9 @@ export function RecruiterVotingView({
       currentVotingPhase.status.rejected_candidates || 0,
     initialTerminated: Boolean(currentVotingPhase.terminated),
     onStatusChanged: (newCandidateId) => {
-      const newIdx = candidates.findIndex((c) => c.id === newCandidateId);
-      if (newIdx !== -1) {
-        setCurrentIndex(newIdx);
-        setCurrentCandidate(candidates[newIdx]);
+      const newCandidate = candidates.find((c) => c.id === newCandidateId);
+      if (newCandidate) {
+        setCurrentCandidate(newCandidate);
       }
     },
     onCandidateFinished: (finishedCandidateId) => {
