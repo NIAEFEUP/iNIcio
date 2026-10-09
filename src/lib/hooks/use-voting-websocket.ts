@@ -25,6 +25,10 @@ export interface VotingLiveInitial {
   acceptedCandidates: number;
   rejectedCandidates: number;
   terminated: boolean;
+  /** Server-rendered counts for the current candidate (admins only). */
+  approvedCount?: number;
+  rejectedCount?: number;
+  votedCount?: number;
 }
 
 interface UseVotingWebSocketOptions {
@@ -58,9 +62,9 @@ export function createInitialLiveState(
     connecting: true,
     error: null,
     currentCandidateId: initial.currentCandidateId,
-    approvedCount: 0,
-    rejectedCount: 0,
-    votedCount: 0,
+    approvedCount: initial.approvedCount ?? 0,
+    rejectedCount: initial.rejectedCount ?? 0,
+    votedCount: initial.votedCount ?? 0,
     recruitersConnected: 0,
     presenceCount: 0,
     finishedCandidateIds: initial.finishedCandidateIds,

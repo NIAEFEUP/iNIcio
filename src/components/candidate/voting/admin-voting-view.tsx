@@ -78,6 +78,11 @@ interface AdminVotingViewProps {
     candidateId: string,
   ) => Promise<void>;
   token: string;
+  initialVoteCounts: {
+    approvedCount: number;
+    rejectedCount: number;
+    votedCount: number;
+  };
 }
 
 export function AdminVotingView({
@@ -86,6 +91,7 @@ export function AdminVotingView({
   makeVoteDefinitiveAction,
   resetCandidateVotesAction,
   token,
+  initialVoteCounts,
 }: AdminVotingViewProps) {
   const router = useRouter();
   const candidates = currentVotingPhase.candidates;
@@ -113,6 +119,9 @@ export function AdminVotingView({
       acceptedCandidates: currentVotingPhase.status.accepted_candidates || 0,
       rejectedCandidates: currentVotingPhase.status.rejected_candidates || 0,
       terminated: Boolean(currentVotingPhase.terminated),
+      approvedCount: initialVoteCounts.approvedCount,
+      rejectedCount: initialVoteCounts.rejectedCount,
+      votedCount: initialVoteCounts.votedCount,
     },
   });
   const finishedIds = new Set(live.finishedCandidateIds);

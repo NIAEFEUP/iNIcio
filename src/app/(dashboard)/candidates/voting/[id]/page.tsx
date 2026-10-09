@@ -5,6 +5,7 @@ import { getVotingRoomToken } from "@/lib/voting-room";
 import {
   changeCurrentVotingPhaseStatusCandidate,
   deleteCandidateVotes,
+  getCandidateVotes,
   getCurrentVotingPhase,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
@@ -131,6 +132,13 @@ export default async function CandidateVotingPage({
   }
 
   if (userIsAdmin) {
+    // Seed the admin's counts from the database so the view shows the real
+    // numbers even before the websocket delivers a snapshot (or if it cannot
+    // connect at all). Recruiters never receive these counts.
+    const initialCandidateVotes = currentVotingPhase.status.candidateId
+      ? await getCandidateVotes(numId, currentVotingPhase.status.candidateId)
+      : [];
+
     return (
       <AdminVotingView
         currentVotingPhase={currentVotingPhase as any}
@@ -140,6 +148,15 @@ export default async function CandidateVotingPage({
         makeVoteDefinitiveAction={makeVoteDefinitiveAction}
         resetCandidateVotesAction={resetCandidateVotesAction}
         token={wsToken}
+        initialVoteCounts={{
+          approvedCount: initialCandidateVotes.filter(
+            (v) => v.decision === "approve",
+          ).length,
+          rejectedCount: initialCandidateVotes.filter(
+            (v) => v.decision === "reject",
+          ).length,
+          votedCount: initialCandidateVotes.length,
+        }}
       />
     );
   }
