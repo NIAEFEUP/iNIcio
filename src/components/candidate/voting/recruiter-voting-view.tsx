@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, ExternalLink, Loader2, X } from "lucide-react";
+import { Check, ExternalLink, Loader2, Mail, Phone, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
+import { CandidateLinksCard } from "@/components/candidate/candidate-links-card";
 import { CandidateInterviewModal } from "./candidate-interview-modal";
 import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { getStableImageUrl } from "@/lib/stable-image-url";
@@ -167,6 +168,9 @@ export function RecruiterVotingView({
   const hasInterview = Boolean(currentCandidate.interview);
   const dynamicId = currentCandidate.dynamic?.dynamicId || null;
   const hasDynamic = Boolean(dynamicId);
+  const application = currentCandidate.application;
+  const email = currentCandidate.email;
+  const phone = application?.phone;
 
   return (
     <div className="flex flex-col flex-1 min-h-[calc(100vh-8rem)]">
@@ -253,6 +257,52 @@ export function RecruiterVotingView({
                 </div>
               </div>
             </div>
+
+            {/* Links + contacts to inform the decision */}
+            <CandidateLinksCard
+              githubUrl={application?.github}
+              linkedinUrl={application?.linkedIn}
+              websiteUrl={application?.personalWebsite}
+            />
+            {(email || phone) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  <span>Contactos</span>
+                </div>
+                <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-3 text-xs">
+                  {email && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                        <Mail className="size-3.5" />
+                        <span>Email</span>
+                      </span>
+                      <a
+                        href={`mailto:${email}`}
+                        className="font-medium text-foreground hover:text-primary transition-colors truncate max-w-[65%] text-right"
+                        title={email}
+                      >
+                        {email}
+                      </a>
+                    </div>
+                  )}
+                  {phone && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                        <Phone className="size-3.5" />
+                        <span>Telefone</span>
+                      </span>
+                      <a
+                        href={`tel:${phone}`}
+                        className="font-medium text-foreground hover:text-primary transition-colors"
+                        title={phone}
+                      >
+                        {phone}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Two Classification Cards with Guião open buttons */}
             <div className="grid grid-cols-2 gap-3 w-full">
