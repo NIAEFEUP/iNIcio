@@ -86,14 +86,42 @@ export function NotificationLive({ initialMaxId = 0 }: NotificationLiveProps) {
     };
 
     const onFocus = () => void check();
+
+    const startInterval = () => {
+      if (interval) return;
+      interval = setInterval(() => void check(), POLL_INTERVAL_MS);
+    };
+    const stopInterval = () => {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+    };
+
+    // Only poll while the tab is visible. Background tabs (common on voting
+    // day) stop hitting the server; returning to the tab checks immediately
+    // and resumes the interval.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void check();
+        startInterval();
+      } else {
+        stopInterval();
+      }
+    };
+
     window.addEventListener("focus", onFocus);
-    void check();
-    interval = setInterval(() => void check(), POLL_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    if (document.visibilityState === "visible") {
+      void check();
+      startInterval();
+    }
 
     return () => {
       cancelled = true;
-      if (interval) clearInterval(interval);
+      stopInterval();
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [userId, router]);
 
