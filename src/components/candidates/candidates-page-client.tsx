@@ -35,8 +35,18 @@ export default function CandidatesPageClient({
   const { recruitmentId } = useRecruitment();
   const { user } = useAuth();
 
+  // The session's `role` is not the authorization source of truth for
+  // platform admins: access is granted by the server-side admin membership
+  // check. Keep that server-confirmed value after the client session hydrates
+  // for this same user; otherwise a valid admin can briefly (and permanently
+  // for legacy accounts) lose admin-only actions such as creating a vote.
   const authUser = user
-    ? { id: user.id, isAdmin: user.isAdmin }
+    ? {
+        id: user.id,
+        isAdmin:
+          user.isAdmin ||
+          (user.id === initialAuthUser?.id && initialAuthUser.isAdmin),
+      }
     : initialAuthUser;
 
   useEffect(() => {
