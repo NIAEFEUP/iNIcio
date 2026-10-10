@@ -515,20 +515,19 @@ export function RecruiterVotingView({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-1 md:flex md:flex-col gap-4 h-full">
+              <div className="grid grid-cols-2 gap-3">
                 {/* ACEITAR Button - Neutral card styling */}
                 <Button
                   variant="outline"
-                  size="lg"
                   onClick={() => handleVote("approve")}
                   disabled={isSubmitting}
-                  className="h-28 sm:h-32 md:h-auto md:flex-1 w-full flex flex-col md:flex-row lg:flex-col items-center justify-center gap-2.5 text-2xl sm:text-3xl font-bold bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-2xl shadow-xs transition-all duration-150 py-6"
+                  className="h-12 w-full flex flex-row items-center justify-center gap-2 text-base font-semibold bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="size-8 animate-spin" />
+                    <Loader2 className="size-5 animate-spin" />
                   ) : (
                     <>
-                      <Check className="size-8 sm:size-10 stroke-[2.5] text-emerald-600 dark:text-emerald-400" />
+                      <Check className="size-5 stroke-[2.5] text-emerald-600 dark:text-emerald-400" />
                       <span>Aceitar</span>
                     </>
                   )}
@@ -537,16 +536,15 @@ export function RecruiterVotingView({
                 {/* REJEITAR Button - Neutral card styling */}
                 <Button
                   variant="outline"
-                  size="lg"
                   onClick={() => handleVote("reject")}
                   disabled={isSubmitting}
-                  className="h-28 sm:h-32 md:h-auto md:flex-1 w-full flex flex-col md:flex-row lg:flex-col items-center justify-center gap-2.5 text-2xl sm:text-3xl font-bold bg-card hover:bg-rose-500/10 hover:border-rose-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-2xl shadow-xs transition-all duration-150 py-6"
+                  className="h-12 w-full flex flex-row items-center justify-center gap-2 text-base font-semibold bg-card hover:bg-rose-500/10 hover:border-rose-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="size-8 animate-spin" />
+                    <Loader2 className="size-5 animate-spin" />
                   ) : (
                     <>
-                      <X className="size-8 sm:size-10 stroke-[2.5] text-rose-600 dark:text-rose-400" />
+                      <X className="size-5 stroke-[2.5] text-rose-600 dark:text-rose-400" />
                       <span>Rejeitar</span>
                     </>
                   )}
