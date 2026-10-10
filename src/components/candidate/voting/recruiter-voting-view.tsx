@@ -10,6 +10,7 @@ import {
   History,
   Loader2,
   Mail,
+  MessageSquareText,
   Phone,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { RecruiterVote, User, VotingPhase } from "@/lib/db";
 import { FacilitatorChips } from "./candidate-facilitators";
 import { CandidateAnswersModal } from "./candidate-answers-modal";
+import { CandidateCommentsModal } from "./candidate-comments-modal";
 import { toast } from "@/components/ui/toast";
 
 interface RecruiterVotingViewProps {
@@ -78,6 +80,7 @@ export function RecruiterVotingView({
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
   const [answersModalOpen, setAnswersModalOpen] = useState(false);
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
 
   const live = useVotingWebSocket({
     votingPhaseId: currentVotingPhase.id,
@@ -222,6 +225,15 @@ export function RecruiterVotingView({
             >
               <ClipboardList className="size-3.5" />
               <span>Respostas</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCommentsModalOpen(true)}
+              className="h-8 gap-1.5 text-xs"
+            >
+              <MessageSquareText className="size-3.5" />
+              <span>Comentários</span>
             </Button>
             {application?.curriculum && (
               <a
@@ -563,6 +575,13 @@ export function RecruiterVotingView({
         application={application}
         open={answersModalOpen}
         onOpenChange={setAnswersModalOpen}
+      />
+
+      <CandidateCommentsModal
+        candidateId={currentCandidate.id}
+        candidateName={currentCandidate.name || "Candidato"}
+        open={commentsModalOpen}
+        onOpenChange={setCommentsModalOpen}
       />
     </div>
   );
