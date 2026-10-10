@@ -23,7 +23,8 @@ import { getInitials } from "@/lib/utils";
 import { ClassificationText } from "@/components/candidates/candidate-text";
 import { useVotingWebSocket } from "@/lib/hooks/use-voting-websocket";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
-import type { RecruiterVote, VotingPhase } from "@/lib/db";
+import type { RecruiterVote, User, VotingPhase } from "@/lib/db";
+import { FacilitatorChips } from "./candidate-facilitators";
 import { toast } from "@/components/ui/toast";
 
 interface RecruiterVotingViewProps {
@@ -44,6 +45,7 @@ interface RecruiterVotingViewProps {
   currentUserId: string;
   showBack?: boolean;
   token: string;
+  facilitators: Record<string, { interviewers: User[]; facilitators: User[] }>;
 }
 
 export function RecruiterVotingView({
@@ -53,6 +55,7 @@ export function RecruiterVotingView({
   currentUserId,
   showBack = false,
   token,
+  facilitators,
 }: RecruiterVotingViewProps) {
   const candidates = currentVotingPhase.candidates;
 
@@ -354,6 +357,37 @@ export function RecruiterVotingView({
                 </div>
               </div>
             )}
+
+            {/* Who ran the interview / dynamic */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                <span>Equipa</span>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-[11px] font-medium text-muted-foreground">
+                    Entrevista
+                  </span>
+                  <FacilitatorChips
+                    users={
+                      facilitators[currentCandidate.id]?.interviewers ?? []
+                    }
+                    emptyLabel="Sem entrevistadores atribuídos"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-[11px] font-medium text-muted-foreground">
+                    Dinâmica
+                  </span>
+                  <FacilitatorChips
+                    users={
+                      facilitators[currentCandidate.id]?.facilitators ?? []
+                    }
+                    emptyLabel="Sem facilitadores atribuídos"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Two Classification Cards with notes + full-page links */}
             <div className="grid grid-cols-2 gap-3 w-full">

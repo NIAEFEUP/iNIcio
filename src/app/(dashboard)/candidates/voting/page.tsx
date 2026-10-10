@@ -15,6 +15,7 @@ import { requireRecruiterSession } from "@/lib/action-guard";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
 import { broadcastVoteUpdated, notifyClients } from "@/lib/voting-events";
 import { getVotingRoomToken } from "@/lib/voting-room";
+import { getCandidateFacilitators } from "@/lib/voting-facilitators";
 import { CandidateVotingSessionsList } from "@/components/candidate/voting/candidate-voting-sessions-list";
 
 export default async function CandidatesVotingPage() {
@@ -79,6 +80,10 @@ export default async function CandidatesVotingPage() {
         currentVotingPhase.id,
       );
 
+      const facilitators = await getCandidateFacilitators(
+        currentVotingPhase.candidates,
+      );
+
       return (
         <RecruiterVotingView
           currentVotingPhase={currentVotingPhase as any}
@@ -86,6 +91,7 @@ export default async function CandidatesVotingPage() {
           submitVoteAction={submitVoteAction}
           currentUserId={session?.user.id || ""}
           token={wsToken}
+          facilitators={facilitators}
         />
       );
     }

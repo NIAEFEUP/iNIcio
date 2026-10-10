@@ -191,6 +191,10 @@ export default async function CandidateVotingPage({
     ? await getRecruiterVotes(currentVotingPhase.id, session.user.id)
     : [];
 
+  const facilitators = await getCandidateFacilitators(
+    currentVotingPhase.candidates,
+  );
+
   return (
     <RecruiterVotingView
       currentVotingPhase={currentVotingPhase as any}
@@ -199,6 +203,7 @@ export default async function CandidateVotingPage({
       currentUserId={session?.user.id || ""}
       showBack={true}
       token={wsToken}
+      facilitators={facilitators}
     />
   );
 }
