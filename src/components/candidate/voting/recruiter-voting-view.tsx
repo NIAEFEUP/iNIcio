@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, ExternalLink, Loader2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
 import { CandidateInterviewModal } from "./candidate-interview-modal";
@@ -182,6 +183,15 @@ export function RecruiterVotingView({
                 A ligar ao servidor de votação…
               </span>
             )}
+            <Link
+              href={`/candidate/${currentCandidate.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
+            >
+              <ExternalLink className="size-3.5" />
+              <span>Ver página</span>
+            </Link>
             <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
               <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">Progresso:</span>
