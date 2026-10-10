@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import {
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   FileText,
   Loader2,
   SquareSquare,
   Users,
   UsersRound,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Dialog,
@@ -403,6 +405,17 @@ export function AdminVotingView({
                     {live.rejectedCandidates} rejeitados
                   </span>
                 </div>
+
+                {/* Open the candidate's full detail page in a new tab */}
+                <Link
+                  href={`/candidate/${currentCandidate.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
+                >
+                  <ExternalLink className="size-3.5" />
+                  <span>Ver página</span>
+                </Link>
 
                 {/* Option to See Votes (Opens Modal) */}
                 <Button
