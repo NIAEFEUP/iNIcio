@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SWRProvider } from "@/components/providers/swr-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -33,10 +34,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NavbarController />
-          <main className="grow flex flex-col">{children}</main>
-          <Footer />
-          <Toaster />
+          <SWRProvider>
+            <NavbarController />
+            <main className="grow flex flex-col">{children}</main>
+            <Footer />
+            <Toaster />
+          </SWRProvider>
         </ThemeProvider>
       </body>
     </html>
