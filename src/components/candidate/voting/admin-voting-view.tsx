@@ -388,6 +388,18 @@ export function AdminVotingView({
                   </span>
                 )}
 
+                {/* Live presence: recruiters connected right now */}
+                <div
+                  className="flex items-center gap-1.5 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium"
+                  title="Recrutadores ligados neste momento"
+                >
+                  <Users className="size-3.5 text-muted-foreground" />
+                  <span className="font-semibold text-foreground">
+                    {live.recruitersConnected}
+                  </span>
+                  <span className="text-muted-foreground">ligados</span>
+                </div>
+
                 {/* Overall Session Stats in Header */}
                 <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
                   <div className="flex items-center gap-1.5">
