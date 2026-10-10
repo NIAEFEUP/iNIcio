@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, ExternalLink, Loader2, Mail, Phone, X } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  History,
+  Loader2,
+  Mail,
+  Phone,
+  X,
+} from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { CandidateAvatarLightbox } from "@/components/candidates/candidate-avatar-lightbox";
@@ -186,6 +194,18 @@ export function RecruiterVotingView({
               <span className="text-xs text-muted-foreground">
                 A ligar ao servidor de votação…
               </span>
+            )}
+            {(currentCandidate.previousApplicationYears?.length ?? 0) > 0 && (
+              <div
+                className="flex items-center gap-1.5 text-xs rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 shadow-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+                title="Candidatou-se anteriormente"
+              >
+                <History className="size-3.5" />
+                <span>
+                  Re-candidato ·{" "}
+                  {currentCandidate.previousApplicationYears.join(", ")}
+                </span>
+              </div>
             )}
             <Link
               href={`/candidate/${currentCandidate.id}`}
