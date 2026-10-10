@@ -7,6 +7,7 @@ import {
   deleteCandidateVotes,
   getCandidateVotes,
   getCurrentVotingPhase,
+  getPhaseVoterParticipation,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
   makeCandidateVoteDefinitive,
@@ -26,6 +27,7 @@ import {
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
 import { getCandidateFacilitators } from "@/lib/voting-facilitators";
+import { getRecruiters } from "@/lib/recruiter";
 
 interface CandidateVotingPageProps {
   params: Promise<{ id: string }>;
@@ -149,6 +151,13 @@ export default async function CandidateVotingPage({
       currentVotingPhase.candidates,
     );
 
+    const [recruiters, voterIdsByCandidate] = await Promise.all([
+      getVotingPhaseRecruitmentId(numId).then((recruitmentId) =>
+        recruitmentId ? getRecruiters(recruitmentId) : [],
+      ),
+      getPhaseVoterParticipation(numId),
+    ]);
+
     return (
       <AdminVotingView
         currentVotingPhase={currentVotingPhase as any}
@@ -168,6 +177,8 @@ export default async function CandidateVotingPage({
           votedCount: initialCandidateVotes.length,
         }}
         facilitators={facilitators}
+        votingRecruiters={recruiters}
+        voterIdsByCandidate={voterIdsByCandidate}
       />
     );
   }

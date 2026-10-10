@@ -88,6 +88,8 @@ interface AdminVotingViewProps {
     votedCount: number;
   };
   facilitators: Record<string, { interviewers: User[]; facilitators: User[] }>;
+  votingRecruiters: User[];
+  voterIdsByCandidate: Record<string, string[]>;
 }
 
 export function AdminVotingView({
@@ -98,6 +100,8 @@ export function AdminVotingView({
   token,
   initialVoteCounts,
   facilitators,
+  votingRecruiters,
+  voterIdsByCandidate,
 }: AdminVotingViewProps) {
   const router = useRouter();
   const candidates = currentVotingPhase.candidates;
@@ -621,6 +625,8 @@ export function AdminVotingView({
         onOpenChange={setVotesModalOpen}
         onMakeDefinitive={handleMakeDefinitive}
         onResetVotes={handleResetVotes}
+        recruiters={votingRecruiters}
+        voterIds={voterIdsByCandidate[currentCandidate.id] ?? []}
       />
 
       {/* Modals for Interview & Dynamic (pure editor blocks) */}

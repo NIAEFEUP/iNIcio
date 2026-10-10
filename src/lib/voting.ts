@@ -233,6 +233,25 @@ export async function getCandidateVotes(
   });
 }
 
+/**
+ * Recruiters that already cast a vote, per candidate. Reveals participation
+ * (who voted) but never the vote value, preserving anonymity.
+ */
+export async function getPhaseVoterParticipation(
+  votingPhaseId: number,
+): Promise<Record<string, string[]>> {
+  const rows = await db.query.recruiterVote.findMany({
+    where: eq(recruiterVote.votingPhaseId, votingPhaseId),
+    columns: { candidateId: true, recruiterId: true },
+  });
+
+  const byCandidate: Record<string, string[]> = {};
+  for (const row of rows) {
+    (byCandidate[row.candidateId] ??= []).push(row.recruiterId);
+  }
+  return byCandidate;
+}
+
 export async function getVotingPhases(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];
