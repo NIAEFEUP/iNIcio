@@ -25,6 +25,7 @@ import {
 } from "@/lib/voting-events";
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
+import { getCandidateFacilitators } from "@/lib/voting-facilitators";
 
 interface CandidateVotingPageProps {
   params: Promise<{ id: string }>;
@@ -144,6 +145,10 @@ export default async function CandidateVotingPage({
       ? await getCandidateVotes(numId, currentVotingPhase.status.candidateId)
       : [];
 
+    const facilitators = await getCandidateFacilitators(
+      currentVotingPhase.candidates,
+    );
+
     return (
       <AdminVotingView
         currentVotingPhase={currentVotingPhase as any}
@@ -162,6 +167,7 @@ export default async function CandidateVotingPage({
           ).length,
           votedCount: initialCandidateVotes.length,
         }}
+        facilitators={facilitators}
       />
     );
   }

@@ -55,8 +55,9 @@ import { CandidateInterviewModal } from "./candidate-interview-modal";
 import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { CandidateVotesModal } from "./candidate-votes-modal";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
-import type { Application, VotingPhase } from "@/lib/db";
+import type { Application, User, VotingPhase } from "@/lib/db";
 import { toast } from "@/components/ui/toast";
+import { FacilitatorChips } from "./candidate-facilitators";
 
 interface AdminVotingViewProps {
   currentVotingPhase: VotingPhase & {
@@ -86,6 +87,7 @@ interface AdminVotingViewProps {
     rejectedCount: number;
     votedCount: number;
   };
+  facilitators: Record<string, { interviewers: User[]; facilitators: User[] }>;
 }
 
 export function AdminVotingView({
@@ -95,6 +97,7 @@ export function AdminVotingView({
   resetCandidateVotesAction,
   token,
   initialVoteCounts,
+  facilitators,
 }: AdminVotingViewProps) {
   const router = useRouter();
   const candidates = currentVotingPhase.candidates;
@@ -494,36 +497,52 @@ export function AdminVotingView({
               </div>
 
               <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-3.5 text-xs">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground font-medium">
-                    Entrevista
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-28 text-xs font-medium gap-1.5"
-                    disabled={!hasInterview}
-                    onClick={() => setInterviewModalOpen(true)}
-                  >
-                    <FileText className="size-3.5 text-muted-foreground" />
-                    <span>Ver guião</span>
-                  </Button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground font-medium">
+                      Entrevista
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-28 text-xs font-medium gap-1.5"
+                      disabled={!hasInterview}
+                      onClick={() => setInterviewModalOpen(true)}
+                    >
+                      <FileText className="size-3.5 text-muted-foreground" />
+                      <span>Ver guião</span>
+                    </Button>
+                  </div>
+                  <FacilitatorChips
+                    users={
+                      facilitators[currentCandidate.id]?.interviewers ?? []
+                    }
+                    emptyLabel="Sem entrevistadores atribuídos"
+                  />
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground font-medium">
-                    Dinâmica
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-28 text-xs font-medium gap-1.5"
-                    disabled={!hasDynamic}
-                    onClick={() => setDynamicModalOpen(true)}
-                  >
-                    <UsersRound className="size-3.5 text-muted-foreground" />
-                    <span>Ver guião</span>
-                  </Button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground font-medium">
+                      Dinâmica
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-28 text-xs font-medium gap-1.5"
+                      disabled={!hasDynamic}
+                      onClick={() => setDynamicModalOpen(true)}
+                    >
+                      <UsersRound className="size-3.5 text-muted-foreground" />
+                      <span>Ver guião</span>
+                    </Button>
+                  </div>
+                  <FacilitatorChips
+                    users={
+                      facilitators[currentCandidate.id]?.facilitators ?? []
+                    }
+                    emptyLabel="Sem facilitadores atribuídos"
+                  />
                 </div>
               </div>
             </div>
