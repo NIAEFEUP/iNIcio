@@ -252,6 +252,34 @@ export async function getPhaseVoterParticipation(
   return byCandidate;
 }
 
+/** Approve/reject/total vote counts per candidate, for the whole phase. */
+export async function getPhaseCandidateVoteCounts(
+  votingPhaseId: number,
+): Promise<
+  Record<string, { approved: number; rejected: number; voted: number }>
+> {
+  const rows = await db.query.candidateVote.findMany({
+    where: eq(candidateVote.votingPhaseId, votingPhaseId),
+    columns: { candidateId: true, decision: true },
+  });
+
+  const byCandidate: Record<
+    string,
+    { approved: number; rejected: number; voted: number }
+  > = {};
+  for (const row of rows) {
+    const entry = (byCandidate[row.candidateId] ??= {
+      approved: 0,
+      rejected: 0,
+      voted: 0,
+    });
+    if (row.decision === "approve") entry.approved += 1;
+    else entry.rejected += 1;
+    entry.voted += 1;
+  }
+  return byCandidate;
+}
+
 export async function getVotingPhases(recruitmentId?: number) {
   const targetId = recruitmentId ?? (await getActiveRecruitment())?.id;
   if (!targetId) return [];

@@ -7,6 +7,7 @@ import {
   deleteCandidateVotes,
   getCandidateVotes,
   getCurrentVotingPhase,
+  getPhaseCandidateVoteCounts,
   getPhaseVoterParticipation,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
@@ -151,12 +152,14 @@ export default async function CandidateVotingPage({
       currentVotingPhase.candidates,
     );
 
-    const [recruiters, voterIdsByCandidate] = await Promise.all([
-      getVotingPhaseRecruitmentId(numId).then((recruitmentId) =>
-        recruitmentId ? getRecruiters(recruitmentId) : [],
-      ),
-      getPhaseVoterParticipation(numId),
-    ]);
+    const [recruiters, voterIdsByCandidate, voteCountsByCandidate] =
+      await Promise.all([
+        getVotingPhaseRecruitmentId(numId).then((recruitmentId) =>
+          recruitmentId ? getRecruiters(recruitmentId) : [],
+        ),
+        getPhaseVoterParticipation(numId),
+        getPhaseCandidateVoteCounts(numId),
+      ]);
 
     return (
       <AdminVotingView
@@ -179,6 +182,7 @@ export default async function CandidateVotingPage({
         facilitators={facilitators}
         votingRecruiters={recruiters}
         voterIdsByCandidate={voterIdsByCandidate}
+        voteCountsByCandidate={voteCountsByCandidate}
       />
     );
   }

@@ -10,6 +10,7 @@ import {
   ExternalLink,
   FileText,
   History,
+  List,
   Loader2,
   SquareSquare,
   Users,
@@ -57,6 +58,13 @@ import { CandidateVotesModal } from "./candidate-votes-modal";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { Application, User, VotingPhase } from "@/lib/db";
 import { toast } from "@/components/ui/toast";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { FacilitatorChips } from "./candidate-facilitators";
 
 interface AdminVotingViewProps {
@@ -90,6 +98,10 @@ interface AdminVotingViewProps {
   facilitators: Record<string, { interviewers: User[]; facilitators: User[] }>;
   votingRecruiters: User[];
   voterIdsByCandidate: Record<string, string[]>;
+  voteCountsByCandidate: Record<
+    string,
+    { approved: number; rejected: number; voted: number }
+  >;
 }
 
 export function AdminVotingView({
@@ -102,6 +114,7 @@ export function AdminVotingView({
   facilitators,
   votingRecruiters,
   voterIdsByCandidate,
+  voteCountsByCandidate,
 }: AdminVotingViewProps) {
   const router = useRouter();
   const candidates = currentVotingPhase.candidates;
@@ -140,6 +153,7 @@ export function AdminVotingView({
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
 
   const [isNavigating, startTransition] = useTransition();
   const [isMakingDefinitive, setIsMakingDefinitive] = useState(false);
@@ -441,6 +455,17 @@ export function AdminVotingView({
                   </span>
                 </div>
 
+                {/* Candidate overview / jump list */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setListOpen(true)}
+                  className="h-8 gap-1.5 text-xs"
+                >
+                  <List className="size-3.5" />
+                  <span>Lista</span>
+                </Button>
+
                 {/* Open the candidate's full detail page in a new tab */}
                 <Link
                   href={`/candidate/${currentCandidate.id}`}
@@ -679,6 +704,96 @@ export function AdminVotingView({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Candidate overview / jump list */}
+      <Sheet open={listOpen} onOpenChange={setListOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md overflow-y-auto"
+        >
+          <SheetHeader>
+            <SheetTitle>Candidatos ({candidates.length})</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            {candidates.map((candidate, idx) => {
+              const counts = voteCountsByCandidate[candidate.id] ?? {
+                approved: 0,
+                rejected: 0,
+                voted: 0,
+              };
+              const finished = finishedIds.has(candidate.id);
+              const isCurrent = candidate.id === currentCandidate.id;
+              const total = counts.approved + counts.rejected;
+              const approvedPct =
+                total > 0 ? Math.round((counts.approved / total) * 100) : 0;
+
+              return (
+                <button
+                  key={candidate.id}
+                  type="button"
+                  onClick={() => {
+                    handleSelectCandidate(idx);
+                    setListOpen(false);
+                  }}
+                  className={cn(
+                    "w-full rounded-lg border border-border/70 bg-card p-3 text-left transition-colors hover:bg-muted/50",
+                    isCurrent && "border-primary ring-1 ring-primary/30",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      {candidate.name || "Sem nome"}
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
+                        finished
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                          : counts.voted > 0
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {finished
+                        ? "Concluído"
+                        : counts.voted > 0
+                          ? "Com votos"
+                          : "Pendente"}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>Entrevista: {candidate.interviewClassification}</span>
+                    <span>·</span>
+                    <span>Dinâmica: {candidate.dynamicClassification}</span>
+                  </div>
+                  {counts.voted > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="bg-emerald-500"
+                          style={{ width: `${approvedPct}%` }}
+                        />
+                        <div
+                          className="bg-rose-500"
+                          style={{ width: `${100 - approvedPct}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          {counts.approved} aceitar
+                        </span>
+                        <span className="text-rose-600 dark:text-rose-400">
+                          {counts.rejected} rejeitar
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
