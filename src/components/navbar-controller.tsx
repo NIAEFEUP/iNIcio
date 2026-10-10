@@ -25,9 +25,12 @@ export default async function NavbarController() {
 
   const showProgress = !!activeRecruitment && hasActiveApplication;
 
-  const candidateResults = session?.user?.id
-    ? await getAllCandidateResults(session.user.id)
-    : [];
+  // Candidate results only matter to candidates. Skipping this for
+  // recruiters/admins avoids a heavy query on every page they load.
+  const candidateResults =
+    hasActiveApplication && session?.user?.id
+      ? await getAllCandidateResults(session.user.id)
+      : [];
 
   const hasResultsToShow = candidateResults.some(
     (r) => r.decision === "approved" || r.decision === "rejected",

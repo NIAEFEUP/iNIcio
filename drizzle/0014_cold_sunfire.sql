@@ -1,0 +1,2 @@
+CREATE INDEX "notification_user_read_idx" ON "notification" USING btree ("user_id","is_read");--> statement-breakpoint
+CREATE INDEX "candidate_vote_phase_candidate_idx" ON "candidate_vote" USING btree ("voting_phase_id","candidate_id");

@@ -8,6 +8,7 @@ import {
   primaryKey,
   unique,
   foreignKey,
+  index,
 } from "drizzle-orm/pg-core";
 import { recruitment } from "./recruitment";
 import { user } from "./auth";
@@ -92,17 +93,26 @@ export const votingPhaseCandidateRelations = relations(
   }),
 );
 
-export const candidateVote = pgTable("candidate_vote", {
-  votingPhaseId: integer("voting_phase_id")
-    .notNull()
-    .references(() => votingPhase.id, { onDelete: "cascade" }),
-  candidateId: text("candidate_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  decision: text("decision", { enum: ["approve", "reject"] })
-    .notNull()
-    .default("approve"),
-});
+export const candidateVote = pgTable(
+  "candidate_vote",
+  {
+    votingPhaseId: integer("voting_phase_id")
+      .notNull()
+      .references(() => votingPhase.id, { onDelete: "cascade" }),
+    candidateId: text("candidate_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    decision: text("decision", { enum: ["approve", "reject"] })
+      .notNull()
+      .default("approve"),
+  },
+  (table) => [
+    index("candidate_vote_phase_candidate_idx").on(
+      table.votingPhaseId,
+      table.candidateId,
+    ),
+  ],
+);
 
 // Registers if recruiter voted for a candidate
 // but it does not store the value of the vote itself
