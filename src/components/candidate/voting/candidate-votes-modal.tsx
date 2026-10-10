@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { User } from "@/lib/db";
 
 interface CandidateVotesModalProps {
   candidateName: string;
@@ -26,6 +27,8 @@ interface CandidateVotesModalProps {
   onOpenChange: (open: boolean) => void;
   onMakeDefinitive: (decision: "accept" | "reject") => Promise<void> | void;
   onResetVotes: () => Promise<void> | void;
+  recruiters: User[];
+  voterIds: string[];
 }
 
 export function CandidateVotesModal({
@@ -42,7 +45,13 @@ export function CandidateVotesModal({
   onOpenChange,
   onMakeDefinitive,
   onResetVotes,
+  recruiters,
+  voterIds,
 }: CandidateVotesModalProps) {
+  const voterSet = new Set(voterIds);
+  const voters = recruiters.filter((recruiter) => voterSet.has(recruiter.id));
+  const missing = recruiters.filter((recruiter) => !voterSet.has(recruiter.id));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -120,6 +129,35 @@ export function CandidateVotesModal({
             <p className="text-xs text-muted-foreground pt-1">
               Decisão final já concluída para este candidato.
             </p>
+          )}
+
+          {/* Participation: who voted / who hasn't (never the vote value) */}
+          {recruiters.length > 0 && (
+            <div className="space-y-1.5 border-t border-border/60 pt-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Participação
+              </div>
+              <p className="text-xs">
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  Votaram ({voters.length}):
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  {voters.length > 0
+                    ? voters.map((v) => v.name).join(", ")
+                    : "—"}
+                </span>
+              </p>
+              <p className="text-xs">
+                <span className="font-medium text-amber-600 dark:text-amber-400">
+                  Faltam ({missing.length}):
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  {missing.length > 0
+                    ? missing.map((v) => v.name).join(", ")
+                    : "—"}
+                </span>
+              </p>
+            </div>
           )}
         </div>
 

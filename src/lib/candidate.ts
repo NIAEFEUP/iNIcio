@@ -43,6 +43,12 @@ export type CandidateApplicationSummary = Pick<
   | "curricularYear"
   | "curriculum"
   | "accepted"
+  | "experience"
+  | "motivation"
+  | "selfPromotion"
+  | "interestJustification"
+  | "recruitmentFirstInteraction"
+  | "suggestions"
 > & {
   interests: string[];
 };
@@ -271,6 +277,12 @@ export async function getCandidatesWithMetadata(
           curricularYear: true,
           curriculum: true,
           accepted: true,
+          experience: true,
+          motivation: true,
+          selfPromotion: true,
+          interestJustification: true,
+          recruitmentFirstInteraction: true,
+          suggestions: true,
         },
         with: {
           interests: true,

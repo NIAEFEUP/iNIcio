@@ -7,6 +7,8 @@ import {
   deleteCandidateVotes,
   getCandidateVotes,
   getCurrentVotingPhase,
+  getPhaseCandidateVoteCounts,
+  getPhaseVoterParticipation,
   getRecruiterVotes,
   getVotingPhaseRecruitmentId,
   makeCandidateVoteDefinitive,
@@ -25,6 +27,8 @@ import {
 } from "@/lib/voting-events";
 import { AdminVotingView } from "@/components/candidate/voting/admin-voting-view";
 import { RecruiterVotingView } from "@/components/candidate/voting/recruiter-voting-view";
+import { getCandidateFacilitators } from "@/lib/voting-facilitators";
+import { getRecruiters } from "@/lib/recruiter";
 
 interface CandidateVotingPageProps {
   params: Promise<{ id: string }>;
@@ -144,6 +148,19 @@ export default async function CandidateVotingPage({
       ? await getCandidateVotes(numId, currentVotingPhase.status.candidateId)
       : [];
 
+    const facilitators = await getCandidateFacilitators(
+      currentVotingPhase.candidates,
+    );
+
+    const [recruiters, voterIdsByCandidate, voteCountsByCandidate] =
+      await Promise.all([
+        getVotingPhaseRecruitmentId(numId).then((recruitmentId) =>
+          recruitmentId ? getRecruiters(recruitmentId) : [],
+        ),
+        getPhaseVoterParticipation(numId),
+        getPhaseCandidateVoteCounts(numId),
+      ]);
+
     return (
       <AdminVotingView
         currentVotingPhase={currentVotingPhase as any}
@@ -162,6 +179,10 @@ export default async function CandidateVotingPage({
           ).length,
           votedCount: initialCandidateVotes.length,
         }}
+        facilitators={facilitators}
+        votingRecruiters={recruiters}
+        voterIdsByCandidate={voterIdsByCandidate}
+        voteCountsByCandidate={voteCountsByCandidate}
       />
     );
   }
@@ -169,6 +190,10 @@ export default async function CandidateVotingPage({
   const recruiterVotes = session?.user.id
     ? await getRecruiterVotes(currentVotingPhase.id, session.user.id)
     : [];
+
+  const facilitators = await getCandidateFacilitators(
+    currentVotingPhase.candidates,
+  );
 
   return (
     <RecruiterVotingView
@@ -178,6 +203,7 @@ export default async function CandidateVotingPage({
       currentUserId={session?.user.id || ""}
       showBack={true}
       token={wsToken}
+      facilitators={facilitators}
     />
   );
 }
