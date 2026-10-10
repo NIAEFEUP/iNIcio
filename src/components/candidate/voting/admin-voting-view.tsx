@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ExternalLink,
   FileText,
+  History,
   Loader2,
   SquareSquare,
   Users,
@@ -386,6 +387,21 @@ export function AdminVotingView({
                   <span className="text-xs text-muted-foreground">
                     A ligar ao servidor de votação…
                   </span>
+                )}
+
+                {/* Re-candidature: applied in previous recruitments */}
+                {(currentCandidate.previousApplicationYears?.length ?? 0) >
+                  0 && (
+                  <div
+                    className="flex items-center gap-1.5 text-xs rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 shadow-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+                    title="Candidatou-se anteriormente"
+                  >
+                    <History className="size-3.5" />
+                    <span>
+                      Re-candidato ·{" "}
+                      {currentCandidate.previousApplicationYears.join(", ")}
+                    </span>
+                  </div>
                 )}
 
                 {/* Live presence: recruiters connected right now */}
