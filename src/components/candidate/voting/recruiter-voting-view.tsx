@@ -355,52 +355,72 @@ export function RecruiterVotingView({
               </div>
             )}
 
-            {/* Two Classification Cards with Guião open buttons */}
+            {/* Two Classification Cards with notes + full-page links */}
             <div className="grid grid-cols-2 gap-3 w-full">
               <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Entrevista
-                  </span>
-                  {hasInterview && (
-                    <button
-                      type="button"
-                      onClick={() => setInterviewModalOpen(true)}
-                      className="text-muted-foreground/60 hover:text-foreground transition-colors p-0.5 rounded-sm hover:bg-muted inline-flex items-center justify-center cursor-pointer"
-                      title="Ver guião de entrevista"
-                      aria-label="Ver guião de entrevista"
-                    >
-                      <ExternalLink className="size-3" />
-                    </button>
-                  )}
-                </div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Entrevista
+                </span>
                 <ClassificationText
                   level={currentCandidate.interviewClassification}
                   className="text-sm sm:text-base font-semibold"
                 />
+                {hasInterview && (
+                  <div className="flex items-center justify-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setInterviewModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+                      title="Ver notas da entrevista"
+                    >
+                      <FileText className="size-3" />
+                      <span>Notas</span>
+                    </button>
+                    <Link
+                      href={`/candidate/${currentCandidate.id}/interview`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      title="Abrir página da entrevista"
+                    >
+                      <ExternalLink className="size-3" />
+                      <span>Página</span>
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Dinâmica
-                  </span>
-                  {hasDynamic && (
-                    <button
-                      type="button"
-                      onClick={() => setDynamicModalOpen(true)}
-                      className="text-muted-foreground/60 hover:text-foreground transition-colors p-0.5 rounded-sm hover:bg-muted inline-flex items-center justify-center cursor-pointer"
-                      title="Ver guião de dinâmica"
-                      aria-label="Ver guião de dinâmica"
-                    >
-                      <ExternalLink className="size-3" />
-                    </button>
-                  )}
-                </div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Dinâmica
+                </span>
                 <ClassificationText
                   level={currentCandidate.dynamicClassification}
                   className="text-sm sm:text-base font-semibold"
                 />
+                {hasDynamic && (
+                  <div className="flex items-center justify-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setDynamicModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+                      title="Ver notas da dinâmica"
+                    >
+                      <FileText className="size-3" />
+                      <span>Notas</span>
+                    </button>
+                    <Link
+                      href={`/dynamic/${dynamicId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      title="Abrir página da dinâmica"
+                    >
+                      <ExternalLink className="size-3" />
+                      <span>Página</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
