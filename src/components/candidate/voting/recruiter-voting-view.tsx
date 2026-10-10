@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Check,
   ExternalLink,
+  FileText,
   History,
   Loader2,
   Mail,
@@ -206,6 +207,17 @@ export function RecruiterVotingView({
                   {currentCandidate.previousApplicationYears.join(", ")}
                 </span>
               </div>
+            )}
+            {application?.curriculum && (
+              <a
+                href={application.curriculum}
+                target="_blank"
+                rel="noreferrer"
+                className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
+              >
+                <FileText className="size-3.5" />
+                <span>Ver currículo</span>
+              </a>
             )}
             <Link
               href={`/candidate/${currentCandidate.id}`}
