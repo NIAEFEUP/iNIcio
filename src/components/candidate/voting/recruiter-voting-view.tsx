@@ -304,6 +304,25 @@ export function RecruiterVotingView({
               </div>
             )}
 
+            {/* Department interests */}
+            {(application?.interests?.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  <span>Departamentos de interesse</span>
+                </div>
+                <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs flex flex-wrap gap-1.5">
+                  {application?.interests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Two Classification Cards with Guião open buttons */}
             <div className="grid grid-cols-2 gap-3 w-full">
               <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
