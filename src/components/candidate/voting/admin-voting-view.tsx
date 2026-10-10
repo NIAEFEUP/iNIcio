@@ -196,10 +196,9 @@ export function AdminVotingView({
     totalVotesCount > 0
       ? Math.round((approvedVotesCount / totalVotesCount) * 100)
       : 0;
-  const rejectedPercent =
-    totalVotesCount > 0
-      ? Math.round((rejectedVotesCount / totalVotesCount) * 100)
-      : 0;
+  // Derive the second rounded value from the first so the displayed
+  // percentages and their progress bar always add up to exactly 100%.
+  const rejectedPercent = totalVotesCount > 0 ? 100 - approvedPercent : 0;
 
   const finishedCount = candidates.filter((c) => finishedIds.has(c.id)).length;
 

@@ -85,19 +85,34 @@ export function reduceVotingMessage(
   const p = message.payload;
 
   switch (message.type) {
-    case "state_snapshot":
+    case "state_snapshot": {
+      // A newly-created room sends its first snapshot before its asynchronous
+      // database sync completes. That snapshot intentionally has no vote
+      // totals or phase state yet. Keep the server-rendered state until the
+      // subsequent status/vote events deliver the authoritative values.
+      if (typeof p.votedCount !== "number") {
+        return {
+          ...prev,
+          recruitersConnected: numberOr(
+            p.totalToVote,
+            prev.recruitersConnected,
+          ),
+        };
+      }
+
       return {
         ...prev,
         currentCandidateId: (p.currentCandidateId as string | null) ?? null,
         recruitersConnected: numberOr(p.totalToVote, prev.recruitersConnected),
         approvedCount: numberOr(p.approvedCount, 0),
         rejectedCount: numberOr(p.rejectedCount, 0),
-        votedCount: numberOr(p.votedCount, 0),
+        votedCount: p.votedCount,
         finishedCandidateIds: idList(p.finishedCandidateIds, []),
         acceptedCandidates: numberOr(p.acceptedCandidates, 0),
         rejectedCandidates: numberOr(p.rejectedCandidates, 0),
         terminated: p.terminated === true,
       };
+    }
 
     case "status_changed":
       return {
