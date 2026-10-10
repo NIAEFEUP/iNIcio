@@ -16,6 +16,10 @@ const readyStateOpen = 1;
 // Clients must answer each ping. A socket that misses a whole interval is
 // dropped so dead connections do not keep presence counts inflated.
 const HEARTBEAT_MS = Number(process.env.WS_HEARTBEAT_MS) || 30000;
+// Coalesce presence updates so a burst of joins/leaves produces one broadcast
+// per window instead of one per client.
+const PRESENCE_THROTTLE_MS =
+  Number(process.env.WS_PRESENCE_THROTTLE_MS) || 250;
 
 // Backoff between sync attempts. After the last retry the room stays
 // unsynced until the next client joins, which starts a new round.
@@ -80,6 +84,7 @@ function getRoom(roomName) {
     room = {
       name: roomName,
       clients: new Set(),
+      presenceTimer: null,
       synced: false,
       syncing: false,
       syncTimer: null,
@@ -105,6 +110,7 @@ function getRoom(roomName) {
 function deleteRoomIfEmpty(room) {
   if (room.clients.size === 0) {
     if (room.syncTimer) clearTimeout(room.syncTimer);
+    if (room.presenceTimer) clearTimeout(room.presenceTimer);
     rooms.delete(room.name);
   }
 }
@@ -193,6 +199,21 @@ function applyEvent(room, event) {
   }
 }
 
+function schedulePresenceBroadcast(room) {
+  if (room.presenceTimer) return;
+  room.presenceTimer = setTimeout(() => {
+    room.presenceTimer = null;
+    if (rooms.get(room.name) !== room) return;
+    broadcast(room, {
+      type: "presence_updated",
+      payload: {
+        count: room.clients.size,
+        recruiterCount: room.connectedRecruiters,
+      },
+    });
+  }, PRESENCE_THROTTLE_MS);
+}
+
 export function addClient(roomName, ws, metadata) {
   const room = getRoom(roomName);
   requestRoomSync(room);
@@ -204,13 +225,7 @@ export function addClient(roomName, ws, metadata) {
   }
 
   send(ws, buildSnapshot(room, metadata.role));
-  broadcast(room, {
-    type: "presence_updated",
-    payload: {
-      count: room.clients.size,
-      recruiterCount: room.connectedRecruiters,
-    },
-  });
+  schedulePresenceBroadcast(room);
 
   ws.on("close", () => removeClient(roomName, client));
   ws.on("message", (data) => handleClientMessage(room, client, data));
@@ -252,13 +267,7 @@ function removeClient(roomName, client) {
 
   const activeRoom = rooms.get(roomName);
   if (activeRoom) {
-    broadcast(activeRoom, {
-      type: "presence_updated",
-      payload: {
-        count: activeRoom.clients.size,
-        recruiterCount: activeRoom.connectedRecruiters,
-      },
-    });
+    schedulePresenceBroadcast(activeRoom);
   }
 
   try {
