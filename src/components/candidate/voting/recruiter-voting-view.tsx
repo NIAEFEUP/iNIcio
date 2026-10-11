@@ -257,7 +257,6 @@ export function RecruiterVotingView({
                   <History
                     className="size-5 text-amber-600 dark:text-amber-400 shrink-0"
                     aria-label="Re-candidato"
-                    title={`Re-candidato · ${currentCandidate.previousApplicationYears.join(", ")}`}
                   />
                 )}
               </div>
