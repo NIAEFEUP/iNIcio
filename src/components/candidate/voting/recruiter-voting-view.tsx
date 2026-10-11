@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
+  Ban,
   Check,
+  CheckCircle2,
   ClipboardList,
-  ExternalLink,
+  Clock,
   FileText,
   History,
   Loader2,
   Mail,
   MessageSquareText,
   Phone,
+  Vote,
   X,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -22,14 +24,14 @@ import { CandidateInterviewModal } from "./candidate-interview-modal";
 import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { getStableImageUrl } from "@/lib/stable-image-url";
 import { getInitials } from "@/lib/utils";
-import { ClassificationText } from "@/components/candidates/candidate-text";
 import { useVotingWebSocket } from "@/lib/hooks/use-voting-websocket";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { RecruiterVote, User, VotingPhase } from "@/lib/db";
-import { FacilitatorChips } from "./candidate-facilitators";
 import { CandidateAnswersModal } from "./candidate-answers-modal";
 import { CandidateCommentsModal } from "./candidate-comments-modal";
 import { toast } from "@/components/ui/toast";
+import { CandidateEvaluationGuidesCard } from "./candidate-evaluation-guides-card";
+import { VotingSessionDrawer } from "./voting-session-drawer";
 
 interface RecruiterVotingViewProps {
   currentVotingPhase: VotingPhase & {
@@ -84,6 +86,7 @@ export function RecruiterVotingView({
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
   const [answersModalOpen, setAnswersModalOpen] = useState(false);
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
 
   const live = useVotingWebSocket({
     votingPhaseId: currentVotingPhase.id,
@@ -215,81 +218,26 @@ export function RecruiterVotingView({
                 A ligar ao servidor de votação…
               </span>
             )}
-            {(currentCandidate.previousApplicationYears?.length ?? 0) > 0 && (
-              <div
-                className="flex items-center gap-1.5 text-xs rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 shadow-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
-                title="Candidatou-se anteriormente"
-              >
-                <History className="size-3.5" />
-                <span>
-                  Re-candidato ·{" "}
-                  {currentCandidate.previousApplicationYears.join(", ")}
-                </span>
-              </div>
-            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setAnswersModalOpen(true)}
+              onClick={() => setSessionDrawerOpen(true)}
               className="h-8 gap-1.5 text-xs"
             >
-              <ClipboardList className="size-3.5" />
-              <span>Respostas</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCommentsModalOpen(true)}
-              className="h-8 gap-1.5 text-xs"
-            >
-              <MessageSquareText className="size-3.5" />
-              <span>Comentários</span>
-            </Button>
-            {application?.curriculum && (
-              <a
-                href={application.curriculum}
-                target="_blank"
-                rel="noreferrer"
-                className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
-              >
-                <FileText className="size-3.5" />
-                <span>Ver currículo</span>
-              </a>
-            )}
-            <Link
-              href={`/candidate/${currentCandidate.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
-            >
-              <ExternalLink className="size-3.5" />
-              <span>Ver página</span>
-            </Link>
-            <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Progresso:</span>
-                <span className="font-semibold text-foreground">
-                  {finishedCount}/{candidates.length}
-                </span>
-              </div>
-              <span className="text-muted-foreground/60">·</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                {acceptedCount} aceites
+              <Vote className="size-3.5" />
+              <span>
+                Sessão · {finishedCount}/{candidates.length}
               </span>
-              <span className="text-muted-foreground/60">·</span>
-              <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                {rejectedCount} rejeitados
-              </span>
-            </div>
+            </Button>
           </div>
         }
       />
 
-      {/* Main Content Area: Centered vertically, desktop side-by-side, mobile stacked */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 py-6 sm:py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 w-full items-stretch">
-          {/* Left Column: Candidate Information */}
-          <div className="flex flex-col gap-4 justify-center">
+      {/* Main Content Area: Main info first, then split layout on desktop */}
+      <div className="flex-1 flex flex-col items-center w-full max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex flex-col gap-5 w-full">
+          {/* Main Candidate Information */}
+          <div className="flex flex-col gap-4 w-full items-center">
             {/* Avatar & Name */}
             <div className="flex flex-col items-center text-center gap-3">
               <CandidateAvatarLightbox
@@ -300,267 +248,236 @@ export function RecruiterVotingView({
                 className="size-28 sm:size-32 shadow-sm"
                 avatarClassName="size-28 sm:size-32"
               />
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {currentCandidate.name || "Sem nome"}
-              </h2>
-            </div>
-
-            {/* Academic Information Card (Course and Year, no "ano" text) */}
-            <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Curso
-                  </span>
-                  <span className="text-sm font-semibold text-foreground uppercase">
-                    {degree || "—"}
-                  </span>
-                </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Ano Curricular
-                  </span>
-                  <span className="text-sm font-semibold text-foreground">
-                    {curricularYear ? `${curricularYear}º` : "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Links + contacts to inform the decision */}
-            <CandidateLinksCard
-              githubUrl={application?.github}
-              linkedinUrl={application?.linkedIn}
-              websiteUrl={application?.personalWebsite}
-            />
-            {(email || phone) && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                  <span>Contactos</span>
-                </div>
-                <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-3 text-xs">
-                  {email && (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
-                        <Mail className="size-3.5" />
-                        <span>Email</span>
-                      </span>
-                      <a
-                        href={`mailto:${email}`}
-                        className="font-medium text-foreground hover:text-primary transition-colors truncate max-w-[65%] text-right"
-                        title={email}
-                      >
-                        {email}
-                      </a>
-                    </div>
-                  )}
-                  {phone && (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
-                        <Phone className="size-3.5" />
-                        <span>Telefone</span>
-                      </span>
-                      <a
-                        href={`tel:${phone}`}
-                        className="font-medium text-foreground hover:text-primary transition-colors"
-                        title={phone}
-                      >
-                        {phone}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Department interests */}
-            {(application?.interests?.length ?? 0) > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                  <span>Departamentos de interesse</span>
-                </div>
-                <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs flex flex-wrap gap-1.5">
-                  {application?.interests.map((interest) => (
-                    <span
-                      key={interest}
-                      className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground"
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Who ran the interview / dynamic */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                <span>Equipa</span>
-              </div>
-              <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-[11px] font-medium text-muted-foreground">
-                    Entrevista
-                  </span>
-                  <FacilitatorChips
-                    users={
-                      facilitators[currentCandidate.id]?.interviewers ?? []
-                    }
-                    emptyLabel="Sem entrevistadores atribuídos"
+              <div className="flex items-center gap-2 justify-center">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  {currentCandidate.name || "Sem nome"}
+                </h2>
+                {(currentCandidate.previousApplicationYears?.length ?? 0) >
+                  0 && (
+                  <History
+                    className="size-5 text-amber-600 dark:text-amber-400 shrink-0"
+                    aria-label="Re-candidato"
+                    title={`Re-candidato · ${currentCandidate.previousApplicationYears.join(", ")}`}
                   />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-[11px] font-medium text-muted-foreground">
-                    Dinâmica
-                  </span>
-                  <FacilitatorChips
-                    users={
-                      facilitators[currentCandidate.id]?.facilitators ?? []
-                    }
-                    emptyLabel="Sem facilitadores atribuídos"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Two Classification Cards with notes + full-page links */}
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Entrevista
-                </span>
-                <ClassificationText
-                  level={currentCandidate.interviewClassification}
-                  className="text-sm sm:text-base font-semibold"
-                />
-                {hasInterview && (
-                  <div className="flex items-center justify-center gap-2 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setInterviewModalOpen(true)}
-                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-                      title="Ver notas da entrevista"
-                    >
-                      <FileText className="size-3" />
-                      <span>Notas</span>
-                    </button>
-                    <Link
-                      href={`/candidate/${currentCandidate.id}/interview`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title="Abrir página da entrevista"
-                    >
-                      <ExternalLink className="size-3" />
-                      <span>Página</span>
-                    </Link>
-                  </div>
                 )}
               </div>
+            </div>
 
-              <div className="rounded-xl border border-border/70 bg-card p-3.5 text-center shadow-xs flex flex-col items-center justify-center gap-1.5">
+            {/* Academic Information (Course and Year, no card) */}
+            <div className="flex items-center justify-center gap-6 sm:gap-8 text-center">
+              <div className="flex flex-col">
                 <span className="text-xs font-medium text-muted-foreground">
-                  Dinâmica
+                  Curso
                 </span>
-                <ClassificationText
-                  level={currentCandidate.dynamicClassification}
-                  className="text-sm sm:text-base font-semibold"
-                />
-                {hasDynamic && (
-                  <div className="flex items-center justify-center gap-2 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setDynamicModalOpen(true)}
-                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-                      title="Ver notas da dinâmica"
-                    >
-                      <FileText className="size-3" />
-                      <span>Notas</span>
-                    </button>
-                    <Link
-                      href={`/dynamic/${dynamicId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      title="Abrir página da dinâmica"
-                    >
-                      <ExternalLink className="size-3" />
-                      <span>Página</span>
-                    </Link>
-                  </div>
-                )}
+                <span className="text-sm font-semibold text-foreground uppercase">
+                  {degree || "—"}
+                </span>
               </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Ano Curricular
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  {curricularYear ? `${curricularYear}º` : "—"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2 w-full max-w-2xl">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAnswersModalOpen(true)}
+                className="flex-1 sm:flex-none h-9 gap-1.5 text-xs"
+              >
+                <ClipboardList className="size-3.5" />
+                <span>Respostas</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCommentsModalOpen(true)}
+                className="flex-1 sm:flex-none h-9 gap-1.5 text-xs"
+              >
+                <MessageSquareText className="size-3.5" />
+                <span>Comentários</span>
+              </Button>
+              {application?.curriculum && (
+                <a
+                  href={application.curriculum}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${buttonVariants({ variant: "outline", size: "sm" })} flex-1 sm:flex-none h-9 gap-1.5 text-xs`}
+                >
+                  <FileText className="size-3.5" />
+                  <span>Currículo</span>
+                </a>
+              )}
             </div>
           </div>
 
-          {/* Right Column: Actions */}
-          <div className="flex flex-col justify-center w-full">
-            {isPhaseTerminated ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-2 h-full min-h-[220px] shadow-xs">
-                <div className="text-base font-semibold text-foreground">
-                  Sessão de votação terminada
+          {/* Split layout: Secondary info (left) and Vote buttons (right) on desktop */}
+          <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+            {/* Secondary Information - Left Column on Desktop */}
+            <div className="flex flex-col gap-3 w-full order-2 lg:order-1">
+              <CandidateEvaluationGuidesCard
+                hasInterview={hasInterview}
+                hasDynamic={hasDynamic}
+                interviewClassification={
+                  currentCandidate.interviewClassification
+                }
+                dynamicClassification={currentCandidate.dynamicClassification}
+                interviewers={
+                  facilitators[currentCandidate.id]?.interviewers ?? []
+                }
+                dynamicFacilitators={
+                  facilitators[currentCandidate.id]?.facilitators ?? []
+                }
+                onOpenInterview={() => setInterviewModalOpen(true)}
+                onOpenDynamic={() => setDynamicModalOpen(true)}
+              />
+              <CandidateLinksCard
+                githubUrl={application?.github}
+                linkedinUrl={application?.linkedIn}
+                websiteUrl={application?.personalWebsite}
+              />
+              {(email || phone) && (
+                <div className="space-y-2">
+                  <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Contactos
+                  </div>
+                  <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-xs space-y-3 text-xs">
+                    {email && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                          <Mail className="size-3.5" />
+                          Email
+                        </span>
+                        <a
+                          href={`mailto:${email}`}
+                          className="max-w-[65%] truncate text-right font-medium text-foreground hover:text-primary"
+                          title={email}
+                        >
+                          {email}
+                        </a>
+                      </div>
+                    )}
+                    {phone && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                          <Phone className="size-3.5" />
+                          Telefone
+                        </span>
+                        <a
+                          href={`tel:${phone}`}
+                          className="font-medium text-foreground hover:text-primary"
+                          title={phone}
+                        >
+                          {phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Esta sessão de votação foi encerrada pela administração.
-                </p>
-              </div>
-            ) : isCandidateFinished ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-2 h-full min-h-[220px] shadow-xs">
-                <div className="text-base font-semibold text-foreground">
-                  Votação concluída
+              )}
+              {(application?.interests?.length ?? 0) > 0 && (
+                <div className="space-y-2">
+                  <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Departamentos de interesse
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/70 bg-card p-3.5 shadow-xs">
+                    {application?.interests.map((interest) => (
+                      <span
+                        key={interest}
+                        className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  A votação deste candidato foi finalizada pelo administrador. A
-                  aguardar pelo próximo candidato...
-                </p>
-              </div>
-            ) : hasVotedForCurrent ? (
-              <div className="rounded-2xl border border-border/70 bg-card p-8 flex flex-col items-center justify-center text-center space-y-1.5 h-full min-h-[220px] shadow-xs">
-                <div className="text-base font-semibold text-foreground">
-                  Voto registado
-                </div>
-                <p className="text-xs text-muted-foreground max-w-xs">
-                  A aguardar pela decisão final ou pela transição para o próximo
-                  candidato...
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {/* ACEITAR Button - Neutral card styling */}
-                <Button
-                  variant="outline"
-                  onClick={() => handleVote("approve")}
-                  disabled={isSubmitting}
-                  className="h-20 w-full flex flex-row items-center justify-center gap-2.5 text-xl font-semibold bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="size-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="size-6 stroke-[2.5] text-emerald-600 dark:text-emerald-400" />
-                      <span>Aceitar</span>
-                    </>
-                  )}
-                </Button>
+              )}
+            </div>
 
-                {/* REJEITAR Button - Neutral card styling */}
-                <Button
-                  variant="outline"
-                  onClick={() => handleVote("reject")}
-                  disabled={isSubmitting}
-                  className="h-20 w-full flex flex-row items-center justify-center gap-2.5 text-xl font-semibold bg-card hover:bg-rose-500/10 hover:border-rose-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="size-5 animate-spin" />
+            {/* Vote Actions - Right Column on Desktop */}
+            <div className="flex flex-col items-center w-full order-1 lg:order-2 lg:sticky lg:top-6">
+              <div className="w-full max-w-lg lg:max-w-none">
+                <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-xs w-full">
+                  <p className="text-sm font-semibold text-foreground text-center mb-3">
+                    Registar o teu voto
+                  </p>
+                  {isPhaseTerminated ? (
+                    <div className="rounded-xl border border-border/70 bg-muted/20 p-6 flex flex-col items-center justify-center text-center space-y-2 min-h-[180px]">
+                      <Ban className="size-6 text-muted-foreground" />
+                      <div className="text-base font-semibold text-foreground">
+                        Sessão de votação terminada
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Esta sessão de votação foi encerrada pela administração.
+                      </p>
+                    </div>
+                  ) : isCandidateFinished ? (
+                    <div className="rounded-xl border border-border/70 bg-muted/20 p-6 flex flex-col items-center justify-center text-center space-y-2 min-h-[180px]">
+                      <Clock className="size-6 text-muted-foreground" />
+                      <div className="text-base font-semibold text-foreground">
+                        Votação concluída
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        A votação deste candidato foi finalizada pelo
+                        administrador. A aguardar pelo próximo candidato...
+                      </p>
+                    </div>
+                  ) : hasVotedForCurrent ? (
+                    <div className="rounded-xl border border-border/70 bg-muted/20 p-6 flex flex-col items-center justify-center text-center space-y-2 min-h-[180px]">
+                      <CheckCircle2 className="size-6 text-emerald-600 dark:text-emerald-400" />
+                      <div className="text-base font-semibold text-foreground">
+                        Voto registado
+                      </div>
+                      <p className="text-xs text-muted-foreground max-w-xs">
+                        A aguardar pela decisão final ou pela transição para o
+                        próximo candidato...
+                      </p>
+                    </div>
                   ) : (
-                    <>
-                      <X className="size-6 stroke-[2.5] text-rose-600 dark:text-rose-400" />
-                      <span>Rejeitar</span>
-                    </>
+                    <div className="flex flex-col gap-3 w-full">
+                      {/* ACEITAR Button - Neutral card styling */}
+                      <Button
+                        variant="outline"
+                        onClick={() => handleVote("approve")}
+                        disabled={isSubmitting}
+                        className="h-14 sm:h-13 w-full flex flex-row items-center justify-center gap-2 text-base font-semibold bg-card hover:bg-emerald-500/10 hover:border-emerald-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="size-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Check className="size-5 stroke-[2.5] text-emerald-600 dark:text-emerald-400" />
+                            <span>Aceitar</span>
+                          </>
+                        )}
+                      </Button>
+
+                      {/* REJEITAR Button - Neutral card styling */}
+                      <Button
+                        variant="outline"
+                        onClick={() => handleVote("reject")}
+                        disabled={isSubmitting}
+                        className="h-14 sm:h-13 w-full flex flex-row items-center justify-center gap-2 text-base font-semibold bg-card hover:bg-rose-500/10 hover:border-rose-500/30 text-foreground border-2 border-border/80 active:scale-[0.98] rounded-xl shadow-xs transition-all duration-150"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="size-5 animate-spin" />
+                        ) : (
+                          <>
+                            <X className="size-5 stroke-[2.5] text-rose-600 dark:text-rose-400" />
+                            <span>Rejeitar</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   )}
-                </Button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -590,6 +507,25 @@ export function RecruiterVotingView({
         candidateName={currentCandidate.name || "Candidato"}
         open={commentsModalOpen}
         onOpenChange={setCommentsModalOpen}
+      />
+
+      <VotingSessionDrawer
+        open={sessionDrawerOpen}
+        onOpenChange={setSessionDrawerOpen}
+        candidates={candidates}
+        currentCandidateId={currentCandidate.id}
+        onSelectCandidate={(index) => {
+          setCurrentIndex(index);
+          setCurrentCandidate(candidates[index]);
+        }}
+        finishedCandidateIds={finishedIds}
+        voteCountsByCandidate={live.voteCountsByCandidate}
+        acceptedCandidates={acceptedCount}
+        rejectedCandidates={rejectedCount}
+        recruitersConnected={live.recruitersConnected}
+        isTerminated={live.terminated}
+        onOpenTerminateDialog={() => {}}
+        showAdminActions={false}
       />
     </div>
   );

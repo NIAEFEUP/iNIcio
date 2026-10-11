@@ -31,6 +31,7 @@ interface VotingSessionDrawerProps {
   recruitersConnected: number;
   isTerminated: boolean;
   onOpenTerminateDialog: () => void;
+  showAdminActions?: boolean;
 }
 
 export function VotingSessionDrawer({
@@ -46,6 +47,7 @@ export function VotingSessionDrawer({
   recruitersConnected,
   isTerminated,
   onOpenTerminateDialog,
+  showAdminActions = true,
 }: VotingSessionDrawerProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -177,19 +179,26 @@ export function VotingSessionDrawer({
                     : 0;
 
                 return (
-                  <button
+                  <div
                     key={candidate.id}
-                    type="button"
-                    onClick={() => {
-                      onSelectCandidate(originalIndex);
-                      onOpenChange(false);
-                    }}
                     className={cn(
-                      "w-full rounded-xl border p-3.5 text-left transition-all",
+                      "w-full rounded-xl border p-3.5 text-left",
                       isCurrent
                         ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs"
-                        : "border-border/70 bg-card hover:bg-muted/40 hover:border-border",
+                        : "border-border/70 bg-card",
+                      showAdminActions &&
+                        "transition-all hover:bg-muted/40 hover:border-border cursor-pointer",
                     )}
+                    onClick={
+                      showAdminActions
+                        ? () => {
+                            onSelectCandidate(originalIndex);
+                            onOpenChange(false);
+                          }
+                        : undefined
+                    }
+                    role={showAdminActions ? "button" : undefined}
+                    tabIndex={showAdminActions ? 0 : undefined}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
@@ -253,13 +262,13 @@ export function VotingSessionDrawer({
                             </span>
                           </div>
                         </div>
-                      ) : (
+                      ) : showAdminActions ? (
                         <div className="text-[11px] text-muted-foreground/80 italic">
                           Sem votos submetidos
                         </div>
-                      )}
+                      ) : null}
                     </div>
-                  </button>
+                  </div>
                 );
               })
             )}
@@ -267,26 +276,28 @@ export function VotingSessionDrawer({
         </div>
 
         {/* Footer: End Session Button */}
-        <div className="p-4 border-t border-border/70 bg-card mt-auto shrink-0">
-          {!isTerminated ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                onOpenChange(false);
-                onOpenTerminateDialog();
-              }}
-              className="w-full h-8.5 gap-2 text-xs font-semibold shadow-xs"
-            >
-              <SquareSquare className="size-3.5" />
-              <span>Terminar sessão de votação</span>
-            </Button>
-          ) : (
-            <div className="text-center text-xs text-muted-foreground py-1 font-medium">
-              Esta sessão de votação está terminada.
-            </div>
-          )}
-        </div>
+        {showAdminActions && (
+          <div className="p-4 border-t border-border/70 bg-card mt-auto shrink-0">
+            {!isTerminated ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onOpenTerminateDialog();
+                }}
+                className="w-full h-8.5 gap-2 text-xs font-semibold shadow-xs"
+              >
+                <SquareSquare className="size-3.5" />
+                <span>Terminar sessão de votação</span>
+              </Button>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-1 font-medium">
+                Esta sessão de votação está terminada.
+              </div>
+            )}
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
