@@ -1,22 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
 import {
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  FileText,
-  History,
-  List,
   Loader2,
   SquareSquare,
   Users,
-  UsersRound,
+  Vote,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Dialog,
@@ -55,17 +50,11 @@ import { applicationAnswerCount } from "@/lib/candidate-answers";
 import { CandidateInterviewModal } from "./candidate-interview-modal";
 import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { CandidateVotesModal } from "./candidate-votes-modal";
+import { CandidateEvaluationGuidesCard } from "./candidate-evaluation-guides-card";
+import { VotingSessionDrawer } from "./voting-session-drawer";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { Application, User, VotingPhase } from "@/lib/db";
 import { toast } from "@/components/ui/toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { FacilitatorChips } from "./candidate-facilitators";
 
 interface AdminVotingViewProps {
   currentVotingPhase: VotingPhase & {
@@ -155,7 +144,7 @@ export function AdminVotingView({
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
-  const [listOpen, setListOpen] = useState(false);
+  const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
 
   const [isNavigating, startTransition] = useTransition();
   const [isMakingDefinitive, setIsMakingDefinitive] = useState(false);
@@ -201,12 +190,6 @@ export function AdminVotingView({
   // Derive the second rounded value from the first so the displayed
   // percentages and their progress bar always add up to exactly 100%.
   const rejectedPercent = totalVotesCount > 0 ? 100 - approvedPercent : 0;
-
-  const finishedCount = candidates.filter((c) => finishedIds.has(c.id)).length;
-
-  const isSessionFinished =
-    live.terminated ||
-    (candidates.length > 0 && finishedCount === candidates.length);
 
   const handleSelectCandidate = async (newIdx: number) => {
     if (newIdx < 0 || newIdx >= candidates.length || isNavigating) return;
@@ -379,7 +362,6 @@ export function AdminVotingView({
           <PageHeader
             showBack={true}
             backHref="/candidates/voting"
-            backLabel="Votações"
             title={currentCandidate.name || "Candidato"}
             inlineOnMobile
             viewModeToggle={
@@ -412,110 +394,41 @@ export function AdminVotingView({
               </div>
             }
             actions={
-              <div className="flex items-center gap-2.5 flex-wrap justify-end">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
                 {!live.connected && (
                   <span className="text-xs text-muted-foreground">
-                    A ligar ao servidor de votação…
+                    A ligar…
                   </span>
                 )}
 
-                {/* Re-candidature: applied in previous recruitments */}
-                {(currentCandidate.previousApplicationYears?.length ?? 0) >
-                  0 && (
-                  <div
-                    className="flex items-center gap-1.5 text-xs rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 shadow-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
-                    title="Candidatou-se anteriormente"
-                  >
-                    <History className="size-3.5" />
-                    <span>
-                      Re-candidato ·{" "}
-                      {currentCandidate.previousApplicationYears.join(", ")}
-                    </span>
-                  </div>
-                )}
-
-                {/* Live presence: recruiters connected right now */}
-                <div
-                  className="flex items-center gap-1.5 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium"
-                  title="Recrutadores ligados neste momento"
-                >
-                  <Users className="size-3.5 text-muted-foreground" />
-                  <span className="font-semibold text-foreground">
-                    {live.recruitersConnected}
-                  </span>
-                  <span className="text-muted-foreground">ligados</span>
-                </div>
-
-                {/* Overall Session Stats in Header */}
-                <div className="flex items-center gap-2 text-xs rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-xs font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-muted-foreground">Progresso:</span>
-                    <span className="font-semibold text-foreground">
-                      {finishedCount}/{candidates.length}
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground/60">·</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {live.acceptedCandidates} aceites
-                  </span>
-                  <span className="text-muted-foreground/60">·</span>
-                  <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                    {live.rejectedCandidates} rejeitados
-                  </span>
-                </div>
-
-                {/* Candidate overview / jump list */}
+                {/* Voting Session button to open drawer with progress, overview of all votes & end session */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setListOpen(true)}
-                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => setSessionDrawerOpen(true)}
+                  className="h-8 gap-1.5 text-xs font-medium"
                 >
-                  <List className="size-3.5" />
-                  <span>Lista</span>
+                  <Vote className="size-3.5" />
+                  <span>Sessão de Votação</span>
                 </Button>
-
-                {/* Open the candidate's full detail page in a new tab */}
-                <Link
-                  href={`/candidate/${currentCandidate.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`${buttonVariants({ variant: "outline", size: "sm" })} h-8 gap-1.5 text-xs`}
-                >
-                  <ExternalLink className="size-3.5" />
-                  <span>Ver página</span>
-                </Link>
 
                 {/* Option to See Votes (Opens Modal) */}
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => setVotesModalOpen(true)}
-                  className="h-8 gap-2 text-xs font-semibold shadow-xs"
+                  className="h-8 gap-1.5 text-xs font-semibold shadow-xs"
                 >
                   <Users className="size-3.5" />
                   <span>Votos ({totalVotesCount})</span>
                 </Button>
-
-                {/* Terminate Voting Phase (only shown if session is not yet terminated/finished) */}
-                {!isSessionFinished && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTerminateDialogOpen(true)}
-                    className="h-8 gap-1.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900/50"
-                  >
-                    <SquareSquare className="size-3.5" />
-                    <span>Terminar votação</span>
-                  </Button>
-                )}
               </div>
             }
           />
         }
         sidebar={
           <div className="flex flex-col gap-5">
-            {/* Candidate Modular Info (100% Read-only during voting) */}
+            {/* Candidate Modular Info (100% Read-only during voting, classifications moved to guides card) */}
             <CandidateModularInfo
               candidate={effectiveCandidate}
               friends={currentCandidate.knownRecruiters}
@@ -525,65 +438,31 @@ export function AdminVotingView({
               readOnlyInterview={true}
               readOnlyDynamic={true}
               showKnownCheckbox={false}
+              showClassifications={false}
               showResultVoting={false}
             />
 
-            {/* Guias de Avaliação Card (below classifications, same card style) */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                <span>Guias de Avaliação</span>
-              </div>
-
-              <div className="rounded-xl border border-border/70 bg-card p-4 shadow-xs space-y-3.5 text-xs">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground font-medium">
-                      Entrevista
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-28 text-xs font-medium gap-1.5"
-                      disabled={!hasInterview}
-                      onClick={() => setInterviewModalOpen(true)}
-                    >
-                      <FileText className="size-3.5 text-muted-foreground" />
-                      <span>Ver guião</span>
-                    </Button>
-                  </div>
-                  <FacilitatorChips
-                    users={
-                      facilitators[currentCandidate.id]?.interviewers ?? []
-                    }
-                    emptyLabel="Sem entrevistadores atribuídos"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground font-medium">
-                      Dinâmica
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-28 text-xs font-medium gap-1.5"
-                      disabled={!hasDynamic}
-                      onClick={() => setDynamicModalOpen(true)}
-                    >
-                      <UsersRound className="size-3.5 text-muted-foreground" />
-                      <span>Ver guião</span>
-                    </Button>
-                  </div>
-                  <FacilitatorChips
-                    users={
-                      facilitators[currentCandidate.id]?.facilitators ?? []
-                    }
-                    emptyLabel="Sem facilitadores atribuídos"
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Guias de Avaliação Card */}
+            <CandidateEvaluationGuidesCard
+              hasInterview={hasInterview}
+              hasDynamic={hasDynamic}
+              interviewClassification={
+                effectiveCandidate.interviewClassification ??
+                currentCandidate.interviewClassification
+              }
+              dynamicClassification={
+                effectiveCandidate.dynamicClassification ??
+                currentCandidate.dynamicClassification
+              }
+              interviewers={
+                facilitators[currentCandidate.id]?.interviewers ?? []
+              }
+              dynamicFacilitators={
+                facilitators[currentCandidate.id]?.facilitators ?? []
+              }
+              onOpenInterview={() => setInterviewModalOpen(true)}
+              onOpenDynamic={() => setDynamicModalOpen(true)}
+            />
           </div>
         }
       >
@@ -715,96 +594,22 @@ export function AdminVotingView({
         </DialogContent>
       </Dialog>
 
-      {/* Candidate overview / jump list */}
-      <Sheet open={listOpen} onOpenChange={setListOpen}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-md overflow-y-auto"
-        >
-          <SheetHeader>
-            <SheetTitle>Candidatos ({candidates.length})</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-col gap-2 px-4 pb-4">
-            {candidates.map((candidate, idx) => {
-              const counts = live.voteCountsByCandidate[candidate.id] ??
-                voteCountsByCandidate[candidate.id] ?? {
-                  approved: 0,
-                  rejected: 0,
-                  voted: 0,
-                };
-              const finished = finishedIds.has(candidate.id);
-              const isCurrent = candidate.id === currentCandidate.id;
-              const total = counts.approved + counts.rejected;
-              const approvedPct =
-                total > 0 ? Math.round((counts.approved / total) * 100) : 0;
-
-              return (
-                <button
-                  key={candidate.id}
-                  type="button"
-                  onClick={() => {
-                    handleSelectCandidate(idx);
-                    setListOpen(false);
-                  }}
-                  className={cn(
-                    "w-full rounded-lg border border-border/70 bg-card p-3 text-left transition-colors hover:bg-muted/50",
-                    isCurrent && "border-primary ring-1 ring-primary/30",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-foreground">
-                      {candidate.name || "Sem nome"}
-                    </span>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                        finished
-                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                          : counts.voted > 0
-                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                            : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {finished
-                        ? "Concluído"
-                        : counts.voted > 0
-                          ? "Com votos"
-                          : "Pendente"}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span>Entrevista: {candidate.interviewClassification}</span>
-                    <span>·</span>
-                    <span>Dinâmica: {candidate.dynamicClassification}</span>
-                  </div>
-                  {counts.voted > 0 && (
-                    <div className="mt-2 space-y-1">
-                      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="bg-emerald-500"
-                          style={{ width: `${approvedPct}%` }}
-                        />
-                        <div
-                          className="bg-rose-500"
-                          style={{ width: `${100 - approvedPct}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          {counts.approved} aceitar
-                        </span>
-                        <span className="text-rose-600 dark:text-rose-400">
-                          {counts.rejected} rejeitar
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Voting session drawer: quick glance of all candidate votes, progress and end session */}
+      <VotingSessionDrawer
+        open={sessionDrawerOpen}
+        onOpenChange={setSessionDrawerOpen}
+        votingPhaseId={currentVotingPhase.id}
+        candidates={candidates}
+        currentCandidateId={currentCandidate.id}
+        onSelectCandidate={handleSelectCandidate}
+        finishedCandidateIds={finishedIds}
+        voteCountsByCandidate={live.voteCountsByCandidate}
+        acceptedCandidates={live.acceptedCandidates}
+        rejectedCandidates={live.rejectedCandidates}
+        recruitersConnected={live.recruitersConnected}
+        isTerminated={live.terminated}
+        onOpenTerminateDialog={() => setTerminateDialogOpen(true)}
+      />
     </>
   );
 }
