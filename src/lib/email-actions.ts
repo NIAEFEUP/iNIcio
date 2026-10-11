@@ -17,15 +17,31 @@ import { getTargetRecruitment } from "@/lib/selected-recruitment";
 export type EmailComposerData = EmailRecipientsPayload & {
   /** Whether the current user may use the "Enviar via API" (Resend) action. */
   isAdmin: boolean;
+  /**
+   * The recruitment the composer operates on. Recipients and the inserted
+   * final-message templates always correspond to this same recruitment.
+   */
+  recruitmentId: number;
 };
 
+/**
+ * Resolves the recruitment the composer operates on. The server-side selection
+ * (`getTargetRecruitment`: the sidebar cookie, else the active recruitment) is
+ * authoritative — it is the exact source the admin "Mensagens finais" page uses
+ * to scope its templates — so the recipients and the inserted templates always
+ * correspond to the selected recruitment. The client-passed id is only a
+ * fallback for when no selection or active recruitment exists.
+ */
 async function resolveTargetRecruitment(recruitmentId?: number) {
+  const target = await getTargetRecruitment();
+  if (target) return target;
+
   if (recruitmentId) {
     const selected = await getRecruitmentById(recruitmentId);
     if (selected) return selected;
   }
 
-  return getTargetRecruitment();
+  return null;
 }
 
 /**
@@ -48,7 +64,7 @@ export async function getEmailComposerData(
     isAdmin(sessionUser.id),
   ]);
 
-  return { ...payload, isAdmin: Boolean(admin) };
+  return { ...payload, isAdmin: Boolean(admin), recruitmentId: target.id };
 }
 
 export interface SendEmailViaApiInput {

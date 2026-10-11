@@ -255,7 +255,7 @@ export function EmailComposerDialogContent({
 
     try {
       const result = await sendEmailViaApi({
-        recruitmentId,
+        recruitmentId: data?.recruitmentId,
         recipientIds: selectedRecipients.map((recipient) => recipient.id),
         subject,
         html: editor.blocksToHTMLLossy(editor.document),
@@ -288,7 +288,9 @@ export function EmailComposerDialogContent({
     if (!content) {
       setTemplatesLoading(true);
       try {
-        const result = await getFinalMessageTemplateContent(recruitmentId);
+        const result = await getFinalMessageTemplateContent(
+          data?.recruitmentId,
+        );
         if (!result) {
           toast.add({
             type: "error",
