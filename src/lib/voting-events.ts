@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import {
   candidateVote,
+  recruiterVote,
   votingPhase,
   votingPhaseCandidate,
   votingPhaseStatus,
@@ -27,6 +28,7 @@ export type VotingEvent =
         approvedCount: number;
         rejectedCount: number;
         votedCount: number;
+        voterIds: string[];
       };
     }
   | {
@@ -108,8 +110,17 @@ export async function broadcastVoteUpdated(
   votingPhaseId: number,
   candidateId: string,
 ) {
-  const { approvedCount, rejectedCount, votedCount } =
-    await getCandidateVoteCounts(votingPhaseId, candidateId);
+  const [{ approvedCount, rejectedCount, votedCount }, participation] =
+    await Promise.all([
+      getCandidateVoteCounts(votingPhaseId, candidateId),
+      db.query.recruiterVote.findMany({
+        where: and(
+          eq(recruiterVote.votingPhaseId, votingPhaseId),
+          eq(recruiterVote.candidateId, candidateId),
+        ),
+        columns: { recruiterId: true },
+      }),
+    ]);
 
   await broadcastVotingEvent(votingPhaseId, {
     type: "vote_updated",
@@ -118,6 +129,7 @@ export async function broadcastVoteUpdated(
       approvedCount,
       rejectedCount,
       votedCount,
+      voterIds: participation.map((row) => row.recruiterId),
     },
   });
 }

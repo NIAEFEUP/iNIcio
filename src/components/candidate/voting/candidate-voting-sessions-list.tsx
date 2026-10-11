@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -83,6 +83,11 @@ export function CandidateVotingSessionsList({
 
   const [terminatingId, setTerminatingId] = useState<number | null>(null);
   const [isTerminating, setIsTerminating] = useState(false);
+
+  useEffect(() => {
+    const refreshTimer = setInterval(() => router.refresh(), 5000);
+    return () => clearInterval(refreshTimer);
+  }, [router]);
 
   const selectedStates = useMemo(() => {
     const filter = columnFilters.find((f) => f.id === "state");
@@ -234,7 +239,8 @@ export function CandidateVotingSessionsList({
           const total = vp.candidates?.length ?? 0;
           const finished =
             vp.candidates?.filter((c) => c.voteFinished).length ?? 0;
-          const isFinished = total > 0 && finished === total;
+          const isFinished =
+            Boolean(vp.terminated) || (total > 0 && finished === total);
 
           return (
             <div className="flex items-center justify-end gap-1.5">

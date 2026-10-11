@@ -21,6 +21,7 @@ interface CandidateVotesModalProps {
   approvedPercent: number;
   rejectedPercent: number;
   isFinished: boolean;
+  isReadOnly?: boolean;
   isMakingDefinitive: boolean;
   isResetting: boolean;
   open: boolean;
@@ -39,6 +40,7 @@ export function CandidateVotesModal({
   approvedPercent,
   rejectedPercent,
   isFinished,
+  isReadOnly = false,
   isMakingDefinitive,
   isResetting,
   open,
@@ -167,7 +169,7 @@ export function CandidateVotesModal({
               variant="ghost"
               size="sm"
               onClick={onResetVotes}
-              disabled={isResetting}
+              disabled={isResetting || isReadOnly}
               className="text-xs text-muted-foreground hover:text-foreground gap-1.5 h-8 px-2"
             >
               <RefreshCcw
@@ -184,7 +186,7 @@ export function CandidateVotesModal({
                   variant="destructive"
                   size="sm"
                   onClick={() => onMakeDefinitive("reject")}
-                  disabled={isMakingDefinitive}
+                  disabled={isMakingDefinitive || isReadOnly}
                   className="gap-1.5 text-xs h-8"
                 >
                   {isMakingDefinitive ? (
@@ -197,7 +199,7 @@ export function CandidateVotesModal({
                 <Button
                   size="sm"
                   onClick={() => onMakeDefinitive("accept")}
-                  disabled={isMakingDefinitive}
+                  disabled={isMakingDefinitive || isReadOnly}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs h-8"
                 >
                   {isMakingDefinitive ? (
@@ -214,7 +216,7 @@ export function CandidateVotesModal({
                   variant="outline"
                   size="sm"
                   onClick={onResetVotes}
-                  disabled={isResetting}
+                  disabled={isResetting || isReadOnly}
                   className="text-xs h-8"
                 >
                   Reabrir votação

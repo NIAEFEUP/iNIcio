@@ -72,9 +72,12 @@ export function RecruiterVotingView({
   const [currentCandidate, setCurrentCandidate] =
     useState<CandidateVotingMetadata>(candidates[initialIdx] || candidates[0]);
 
-  const [votedCandidateIds, setVotedCandidateIds] = useState<Set<string>>(
-    () => new Set(initialRecruiterVotes.map((v) => v.candidateId)),
+  const votedCandidateIds = new Set(
+    initialRecruiterVotes.map((v) => v.candidateId),
   );
+  const [votedAtResetVersion, setVotedAtResetVersion] = useState<
+    Record<string, number>
+  >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
@@ -115,7 +118,11 @@ export function RecruiterVotingView({
 
   const isPhaseTerminated = live.terminated;
 
-  const hasVotedForCurrent = votedCandidateIds.has(currentCandidate?.id);
+  const currentResetVersion =
+    live.resetVersionsByCandidate[currentCandidate?.id] ?? 0;
+  const hasVotedForCurrent =
+    votedAtResetVersion[currentCandidate?.id] === currentResetVersion ||
+    (currentResetVersion === 0 && votedCandidateIds.has(currentCandidate?.id));
   const isCandidateFinished = finishedIds.has(currentCandidate?.id);
 
   const acceptedCount = live.acceptedCandidates;
@@ -140,7 +147,10 @@ export function RecruiterVotingView({
       );
 
       if (ok) {
-        setVotedCandidateIds((prev) => new Set([...prev, currentCandidate.id]));
+        setVotedAtResetVersion((prev) => ({
+          ...prev,
+          [currentCandidate.id]: currentResetVersion,
+        }));
         toast.add({
           type: "success",
           title: "Voto submetido com sucesso!",

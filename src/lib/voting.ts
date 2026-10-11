@@ -197,16 +197,20 @@ export async function changeCurrentVotingPhaseStatusCandidate(
   candidateId: string,
 ) {
   try {
-    await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
+      const phase = await tx.query.votingPhase.findFirst({
+        where: eq(votingPhase.id, votingPhaseId),
+        columns: { terminated: true },
+      });
+      if (!phase || phase.terminated) return false;
       await tx
         .update(votingPhaseStatus)
         .set({
           candidateId,
         })
         .where(eq(votingPhaseStatus.votingPhaseId, votingPhaseId));
+      return true;
     });
-
-    return true;
   } catch (e) {
     console.log(e);
     return false;
@@ -297,13 +301,13 @@ export async function getVotingPhases(recruitmentId?: number) {
 export async function deleteCandidateVotes(
   votingPhaseId: number,
   candidateId: string,
-) {
-  await db.transaction(async (tx) => {
+): Promise<boolean> {
+  return await db.transaction(async (tx) => {
     const vp = await tx.query.votingPhase.findFirst({
       where: eq(votingPhase.id, votingPhaseId),
     });
 
-    if (!vp) return;
+    if (!vp || vp.terminated) return false;
 
     const vPhaseCandidate = await tx.query.votingPhaseCandidate.findFirst({
       where: and(
@@ -386,6 +390,7 @@ export async function deleteCandidateVotes(
           eq(application.recruitmentId, vp.recruitmentId),
         ),
       );
+    return true;
   });
 }
 

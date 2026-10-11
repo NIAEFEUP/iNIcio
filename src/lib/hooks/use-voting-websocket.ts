@@ -17,6 +17,12 @@ export interface VotingLiveState {
   acceptedCandidates: number;
   rejectedCandidates: number;
   terminated: boolean;
+  voterIdsByCandidate: Record<string, string[]>;
+  voteCountsByCandidate: Record<
+    string,
+    { approved: number; rejected: number; voted: number }
+  >;
+  resetVersionsByCandidate: Record<string, number>;
 }
 
 export interface VotingLiveInitial {
@@ -29,6 +35,11 @@ export interface VotingLiveInitial {
   approvedCount?: number;
   rejectedCount?: number;
   votedCount?: number;
+  voterIdsByCandidate?: Record<string, string[]>;
+  voteCountsByCandidate?: Record<
+    string,
+    { approved: number; rejected: number; voted: number }
+  >;
 }
 
 interface UseVotingWebSocketOptions {
@@ -71,6 +82,9 @@ export function createInitialLiveState(
     acceptedCandidates: initial.acceptedCandidates,
     rejectedCandidates: initial.rejectedCandidates,
     terminated: initial.terminated,
+    voterIdsByCandidate: initial.voterIdsByCandidate ?? {},
+    voteCountsByCandidate: initial.voteCountsByCandidate ?? {},
+    resetVersionsByCandidate: {},
   };
 }
 
@@ -111,6 +125,12 @@ export function reduceVotingMessage(
         acceptedCandidates: numberOr(p.acceptedCandidates, 0),
         rejectedCandidates: numberOr(p.rejectedCandidates, 0),
         terminated: p.terminated === true,
+        voterIdsByCandidate:
+          (p.voterIdsByCandidate as Record<string, string[]>) ??
+          prev.voterIdsByCandidate,
+        voteCountsByCandidate:
+          (p.voteCountsByCandidate as VotingLiveState["voteCountsByCandidate"]) ??
+          prev.voteCountsByCandidate,
       };
     }
 
@@ -130,11 +150,49 @@ export function reduceVotingMessage(
         approvedCount: numberOr(p.approvedCount, prev.approvedCount),
         rejectedCount: numberOr(p.rejectedCount, prev.rejectedCount),
         votedCount: numberOr(p.votedCount, prev.votedCount),
+        voterIdsByCandidate: Array.isArray(p.voterIds)
+          ? {
+              ...prev.voterIdsByCandidate,
+              [p.candidateId as string]: p.voterIds as string[],
+            }
+          : prev.voterIdsByCandidate,
+        voteCountsByCandidate: {
+          ...prev.voteCountsByCandidate,
+          [p.candidateId as string]: {
+            approved: numberOr(p.approvedCount, 0),
+            rejected: numberOr(p.rejectedCount, 0),
+            voted: numberOr(p.votedCount, 0),
+          },
+        },
       };
 
     case "votes_reset":
-      if (p.candidateId !== prev.currentCandidateId) return prev;
-      return { ...prev, approvedCount: 0, rejectedCount: 0, votedCount: 0 };
+      if (typeof p.candidateId !== "string") return prev;
+      {
+        const version = (prev.resetVersionsByCandidate[p.candidateId] ?? 0) + 1;
+        const resetVersionsByCandidate = {
+          ...prev.resetVersionsByCandidate,
+          [p.candidateId]: version,
+        };
+        if (p.candidateId !== prev.currentCandidateId) {
+          return { ...prev, resetVersionsByCandidate };
+        }
+        return {
+          ...prev,
+          approvedCount: 0,
+          rejectedCount: 0,
+          votedCount: 0,
+          resetVersionsByCandidate,
+          voterIdsByCandidate: {
+            ...prev.voterIdsByCandidate,
+            [p.candidateId as string]: [],
+          },
+          voteCountsByCandidate: {
+            ...prev.voteCountsByCandidate,
+            [p.candidateId as string]: { approved: 0, rejected: 0, voted: 0 },
+          },
+        };
+      }
 
     case "progress_updated":
       return {

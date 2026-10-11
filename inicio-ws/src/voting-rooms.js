@@ -153,7 +153,7 @@ function buildSnapshot(room, role) {
 
 function buildEventForRole(event, role) {
   if (role !== "admin") {
-    const { approvedCount, rejectedCount, ...rest } = event.payload || {};
+    const { approvedCount, rejectedCount, voterIds, ...rest } = event.payload || {};
     return { ...event, payload: rest };
   }
   return event;
@@ -182,9 +182,11 @@ function applyEvent(room, event) {
       break;
     case "votes_reset":
       room.hasVoteState = true;
-      room.state.approvedCount = 0;
-      room.state.rejectedCount = 0;
-      room.state.votedCount = 0;
+      if (!payload.candidateId || payload.candidateId === room.state.currentCandidateId) {
+        room.state.approvedCount = 0;
+        room.state.rejectedCount = 0;
+        room.state.votedCount = 0;
+      }
       break;
     case "progress_updated":
       room.state.finishedCandidateIds = Array.isArray(payload.finishedCandidateIds)

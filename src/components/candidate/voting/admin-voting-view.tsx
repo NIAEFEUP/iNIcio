@@ -88,7 +88,7 @@ interface AdminVotingViewProps {
   resetCandidateVotesAction: (
     votingPhaseId: number,
     candidateId: string,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   token: string;
   initialVoteCounts: {
     approvedCount: number;
@@ -145,6 +145,8 @@ export function AdminVotingView({
       approvedCount: initialVoteCounts.approvedCount,
       rejectedCount: initialVoteCounts.rejectedCount,
       votedCount: initialVoteCounts.votedCount,
+      voterIdsByCandidate,
+      voteCountsByCandidate,
     },
   });
   const finishedIds = new Set(live.finishedCandidateIds);
@@ -212,6 +214,7 @@ export function AdminVotingView({
     startTransition(async () => {
       setCurrentIndex(newIdx);
       setCurrentCandidate(targetCandidate);
+      if (live.terminated) return;
       await changeCurrentVotingPhaseStatusCandidateAction(
         currentVotingPhase.id,
         targetCandidate.id,
@@ -271,10 +274,17 @@ export function AdminVotingView({
     if (!currentCandidate || isResetting) return;
     setIsResetting(true);
     try {
-      await resetCandidateVotesAction(
+      const reset = await resetCandidateVotesAction(
         currentVotingPhase.id,
         currentCandidate.id,
       );
+      if (!reset) {
+        toast.add({
+          type: "error",
+          title: "Não foi possível reiniciar os votos",
+        });
+        return;
+      }
       toast.add({
         type: "success",
         title: "Votos do candidato reiniciados com sucesso",
@@ -643,6 +653,7 @@ export function AdminVotingView({
         approvedPercent={approvedPercent}
         rejectedPercent={rejectedPercent}
         isFinished={isCurrentCandidateFinished}
+        isReadOnly={live.terminated}
         isMakingDefinitive={isMakingDefinitive}
         isResetting={isResetting}
         open={votesModalOpen}
@@ -650,7 +661,7 @@ export function AdminVotingView({
         onMakeDefinitive={handleMakeDefinitive}
         onResetVotes={handleResetVotes}
         recruiters={votingRecruiters}
-        voterIds={voterIdsByCandidate[currentCandidate.id] ?? []}
+        voterIds={live.voterIdsByCandidate[currentCandidate.id] ?? []}
       />
 
       {/* Modals for Interview & Dynamic (pure editor blocks) */}
@@ -715,11 +726,12 @@ export function AdminVotingView({
           </SheetHeader>
           <div className="flex flex-col gap-2 px-4 pb-4">
             {candidates.map((candidate, idx) => {
-              const counts = voteCountsByCandidate[candidate.id] ?? {
-                approved: 0,
-                rejected: 0,
-                voted: 0,
-              };
+              const counts = live.voteCountsByCandidate[candidate.id] ??
+                voteCountsByCandidate[candidate.id] ?? {
+                  approved: 0,
+                  rejected: 0,
+                  voted: 0,
+                };
               const finished = finishedIds.has(candidate.id);
               const isCurrent = candidate.id === currentCandidate.id;
               const total = counts.approved + counts.rejected;
