@@ -54,7 +54,7 @@ export function CandidateEvaluationGuidesCard({
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             {interviewers.length > 0 ? (
               <>
                 <div className="flex -space-x-1.5 shrink-0 overflow-hidden">
@@ -79,14 +79,14 @@ export function CandidateEvaluationGuidesCard({
                   )}
                 </div>
                 <span
-                  className="truncate text-xs text-muted-foreground font-medium"
+                  className="truncate text-xs text-muted-foreground font-medium min-w-0"
                   title={interviewers.map((u) => u.name).join(", ")}
                 >
                   {interviewers.map((u) => u.name).join(", ")}
                 </span>
               </>
             ) : (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground truncate">
                 Sem entrevistadores atribuídos
               </span>
             )}
@@ -110,7 +110,7 @@ export function CandidateEvaluationGuidesCard({
               <span>Ver guião</span>
             </Button>
           </div>
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             {dynamicFacilitators.length > 0 ? (
               <>
                 <div className="flex -space-x-1.5 shrink-0 overflow-hidden">
@@ -135,14 +135,14 @@ export function CandidateEvaluationGuidesCard({
                   )}
                 </div>
                 <span
-                  className="truncate text-xs text-muted-foreground font-medium"
+                  className="truncate text-xs text-muted-foreground font-medium min-w-0"
                   title={dynamicFacilitators.map((u) => u.name).join(", ")}
                 >
                   {dynamicFacilitators.map((u) => u.name).join(", ")}
                 </span>
               </>
             ) : (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground truncate">
                 Sem facilitadores atribuídos
               </span>
             )}

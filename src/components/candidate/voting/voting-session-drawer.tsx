@@ -105,7 +105,7 @@ export function VotingSessionDrawer({
             </span>
           </div>
 
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="hidden sm:block h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
               className="h-full bg-primary transition-all duration-300 rounded-full"
               style={{ width: `${finishedPercent}%` }}
@@ -240,34 +240,37 @@ export function VotingSessionDrawer({
                       </span>
                     </div>
 
-                    <div className="mt-2.5">
-                      {counts.voted > 0 ? (
-                        <div className="space-y-1.5">
-                          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="bg-emerald-500 transition-all duration-300"
-                              style={{ width: `${approvedPct}%` }}
-                            />
-                            <div
-                              className="bg-rose-500 transition-all duration-300"
-                              style={{ width: `${100 - approvedPct}%` }}
-                            />
+                    {showAdminActions && (
+                      <div className="mt-2.5">
+                        {counts.voted > 0 ? (
+                          <div className="space-y-1.5">
+                            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="bg-emerald-500 transition-all duration-300"
+                                style={{ width: `${approvedPct}%` }}
+                              />
+                              <div
+                                className="bg-rose-500 transition-all duration-300"
+                                style={{ width: `${100 - approvedPct}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                {counts.approved} aceitar ({approvedPct}%)
+                              </span>
+                              <span className="font-medium text-rose-600 dark:text-rose-400">
+                                {counts.rejected} rejeitar ({100 - approvedPct}
+                                %)
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                              {counts.approved} aceitar ({approvedPct}%)
-                            </span>
-                            <span className="font-medium text-rose-600 dark:text-rose-400">
-                              {counts.rejected} rejeitar ({100 - approvedPct}%)
-                            </span>
+                        ) : (
+                          <div className="text-[11px] text-muted-foreground/80 italic">
+                            Sem votos submetidos
                           </div>
-                        </div>
-                      ) : showAdminActions ? (
-                        <div className="text-[11px] text-muted-foreground/80 italic">
-                          Sem votos submetidos
-                        </div>
-                      ) : null}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })

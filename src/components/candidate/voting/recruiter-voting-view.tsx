@@ -380,15 +380,16 @@ export function RecruiterVotingView({
                 </div>
               )}
               {(application?.interests?.length ?? 0) > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <div className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Departamentos de interesse
                   </div>
-                  <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/70 bg-card p-3.5 shadow-xs">
+                  <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/70 bg-card p-3.5 shadow-xs overflow-hidden">
                     {application?.interests.map((interest) => (
                       <span
                         key={interest}
-                        className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground"
+                        className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground max-w-full truncate"
+                        title={interest}
                       >
                         {interest}
                       </span>
