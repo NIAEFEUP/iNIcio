@@ -7,6 +7,10 @@ import {
   getEmailRecipients,
   type EmailRecipientsPayload,
 } from "@/lib/email-recipients";
+import {
+  getAcceptedMessageTemplate,
+  getRejectedMessageTemplate,
+} from "@/lib/final-messages";
 import { getRecruitmentById } from "@/lib/recruitment";
 import { getTargetRecruitment } from "@/lib/selected-recruitment";
 
@@ -51,7 +55,10 @@ export interface SendEmailViaApiInput {
   recruitmentId?: number;
   recipientIds: string[];
   subject: string;
-  body: string;
+  /** Rich-text HTML of the body, rendered by the composer's editor. */
+  html: string;
+  /** Plain-text version of the body. */
+  text: string;
 }
 
 /**
@@ -63,7 +70,8 @@ export async function sendEmailViaApi({
   recruitmentId,
   recipientIds,
   subject,
-  body,
+  html,
+  text,
 }: SendEmailViaApiInput): Promise<{ sent: number }> {
   const target = await resolveTargetRecruitment(recruitmentId);
   if (!target) {
@@ -78,13 +86,14 @@ export async function sendEmailViaApi({
   }
 
   const trimmedSubject = subject.trim();
-  const trimmedBody = body.trim();
+  const trimmedHtml = html.trim();
+  const trimmedText = text.trim();
 
   if (!trimmedSubject) {
     throw new Error("O assunto do email é obrigatório.");
   }
 
-  if (!trimmedBody) {
+  if (!trimmedHtml) {
     throw new Error("O corpo do email é obrigatório.");
   }
 
@@ -118,6 +127,36 @@ export async function sendEmailViaApi({
   return sendRecruitmentEmails({
     recipients: emails,
     subject: trimmedSubject,
-    body: trimmedBody,
+    html: trimmedHtml,
+    text: trimmedText,
   });
+}
+
+export interface FinalMessageTemplateContent {
+  accepted: unknown[];
+  rejected: unknown[];
+}
+
+/**
+ * The accepted/rejected final message template content, so an admin can insert
+ * them into the email body. Recruiters (non-admins) get `null`.
+ */
+export async function getFinalMessageTemplateContent(
+  recruitmentId?: number,
+): Promise<FinalMessageTemplateContent | null> {
+  const target = await resolveTargetRecruitment(recruitmentId);
+  if (!target) return null;
+
+  const sessionUser = await requireRecruiterSession(target.id);
+  if (!(await isAdmin(sessionUser.id))) return null;
+
+  const [accepted, rejected] = await Promise.all([
+    getAcceptedMessageTemplate(target.id),
+    getRejectedMessageTemplate(target.id),
+  ]);
+
+  return {
+    accepted: (accepted?.content ?? []) as unknown[],
+    rejected: (rejected?.content ?? []) as unknown[],
+  };
 }

@@ -78,15 +78,24 @@ export async function sendPasswordResetEmail({
 /** Resend's batch endpoint accepts at most 100 emails per request. */
 const RESEND_BATCH_LIMIT = 100;
 
-/** Escapes the composer's plain-text body and keeps its line breaks. */
-function plainTextToHtml(body: string) {
-  return escapeHtml(body).replace(/\r?\n/g, "<br />");
+/** Wraps the composer's rich-text HTML in a light, branded email layout. */
+function buildRecruitmentEmailHtml(contentHtml: string) {
+  return `
+    <div style="background-color:#f8f7f5;margin:0;padding:32px 16px;font-family:Arial,sans-serif;color:#242424;font-size:14px;line-height:1.6;">
+      <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border:1px solid #eeeeee;border-radius:12px;padding:32px;">
+        ${contentHtml}
+      </div>
+    </div>
+  `;
 }
 
 export interface SendRecruitmentEmailsData {
   recipients: string[];
   subject: string;
-  body: string;
+  /** Rich-text (BlockNote) HTML rendered by the composer. */
+  html: string;
+  /** Plain-text fallback of the body for clients without HTML. */
+  text: string;
 }
 
 /**
@@ -97,7 +106,8 @@ export interface SendRecruitmentEmailsData {
 export async function sendRecruitmentEmails({
   recipients,
   subject,
-  body,
+  html,
+  text,
 }: SendRecruitmentEmailsData) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -114,7 +124,7 @@ export async function sendRecruitmentEmails({
     throw new Error("Nenhum destinatário selecionado");
   }
 
-  const html = plainTextToHtml(body);
+  const wrappedHtml = buildRecruitmentEmailHtml(html);
   let sent = 0;
 
   for (let i = 0; i < emails.length; i += RESEND_BATCH_LIMIT) {
@@ -131,8 +141,8 @@ export async function sendRecruitmentEmails({
           from,
           to: [to],
           subject,
-          html,
-          text: body,
+          html: wrappedHtml,
+          text,
         })),
       ),
     });

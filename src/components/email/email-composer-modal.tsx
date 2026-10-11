@@ -3,7 +3,10 @@
 import * as React from "react";
 import {
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   ClipboardCopy,
+  FileText,
   Loader2,
   Mail,
   Search,
@@ -14,14 +17,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EmailBodyEditor } from "@/components/email/email-body-editor-dynamic";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -29,33 +40,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import {
   getEmailComposerData,
+  getFinalMessageTemplateContent,
   sendEmailViaApi,
   type EmailComposerData,
 } from "@/lib/email-actions";
 import {
+  blocksToPlainText,
   buildGmailComposeUrl,
   EMAIL_TEMPLATE_ITEMS,
   EMAIL_TEMPLATE_LABELS,
   EMAIL_TEMPLATE_TYPES,
   GMAIL_URL_LENGTH_WARNING,
+  normalizeEmailBlocks,
   type EmailTemplateType,
 } from "@/lib/email-composer";
+import { isDocumentEmpty } from "@/lib/text-editor";
 import { cn } from "@/lib/utils";
 
 interface EmailComposerDialogContentProps {
   recruitmentId?: number;
 }
 
+type ComposerStep = "recipients" | "compose";
+
+type TemplateKey = "accepted" | "rejected";
+
 /**
  * The "Enviar emails" dialog body. It expects a `Dialog` root above it, which
  * the sidebar button owns so the same trigger can also host the tooltip.
  *
- * Two columns on desktop: the email itself on the left, the recipient picker on the right.
- * On mobile, tabbed between message and recipients for comfortable touch usage.
+ * Two steps:
+ *   1. "recipients" — pick who receives the email (quick-send + search + list).
+ *   2. "compose" — email-friendly layout with BCC count, subject and a
+ *      rich-text body. Any typed body is preserved when going back a step.
  */
 export function EmailComposerDialogContent({
   recruitmentId,
@@ -64,15 +84,21 @@ export function EmailComposerDialogContent({
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
-  const [mobileTab, setMobileTab] = React.useState<"compose" | "recipients">(
-    "compose",
-  );
+  const [step, setStep] = React.useState<ComposerStep>("recipients");
   const [search, setSearch] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [activeType, setActiveType] = React.useState<EmailTemplateType>("all");
   const [subject, setSubject] = React.useState("");
-  const [body, setBody] = React.useState("");
+  const [bodyText, setBodyText] = React.useState("");
+
   const [isSending, setIsSending] = React.useState(false);
+  const bodyEditorRef = React.useRef<any | null>(null);
+
+  const [templates, setTemplates] = React.useState<{
+    accepted: unknown[];
+    rejected: unknown[];
+  } | null>(null);
+  const [templatesLoading, setTemplatesLoading] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -155,15 +181,20 @@ export function EmailComposerDialogContent({
     });
   }, []);
 
+  const handleEditorChange = React.useCallback((editor: any) => {
+    const text = blocksToPlainText(editor.document);
+    setBodyText((previous) => (previous === text ? previous : text));
+  }, []);
+
   const composeUrl = React.useMemo(() => {
     if (!data) return "";
 
     return buildGmailComposeUrl({
       recipients: selectedRecipients.map((recipient) => recipient.email),
       subject,
-      body,
+      body: bodyText,
     });
-  }, [body, data, selectedRecipients, subject]);
+  }, [bodyText, data, selectedRecipients, subject]);
 
   const warnAboutLongUrl = () => {
     if (composeUrl.length <= GMAIL_URL_LENGTH_WARNING) return;
@@ -195,15 +226,30 @@ export function EmailComposerDialogContent({
     warnAboutLongUrl();
   };
 
+  const openGmail = () => {
+    window.open(composeUrl, "_blank", "noopener,noreferrer");
+    warnAboutLongUrl();
+  };
+
   const canSendViaApi =
     Boolean(data?.isAdmin) &&
     selectedRecipients.length > 0 &&
     subject.trim().length > 0 &&
-    body.trim().length > 0 &&
+    bodyText.trim().length > 0 &&
     !isSending;
 
   const handleSendViaApi = async () => {
     if (!canSendViaApi) return;
+
+    const editor = bodyEditorRef.current;
+    if (!editor) {
+      toast.add({
+        type: "error",
+        title: "Editor não pronto",
+        description: "Tenta novamente daqui a uns segundos.",
+      });
+      return;
+    }
 
     setIsSending(true);
 
@@ -212,7 +258,8 @@ export function EmailComposerDialogContent({
         recruitmentId,
         recipientIds: selectedRecipients.map((recipient) => recipient.id),
         subject,
-        body,
+        html: editor.blocksToHTMLLossy(editor.document),
+        text: blocksToPlainText(editor.document),
       });
 
       const suffix = result.sent === 1 ? "" : "s";
@@ -233,41 +280,80 @@ export function EmailComposerDialogContent({
     }
   };
 
+  const insertTemplate = async (key: TemplateKey) => {
+    const editor = bodyEditorRef.current;
+    if (!editor) return;
+
+    let content = templates?.[key];
+    if (!content) {
+      setTemplatesLoading(true);
+      try {
+        const result = await getFinalMessageTemplateContent(recruitmentId);
+        if (!result) {
+          toast.add({
+            type: "error",
+            title: "Não foi possível carregar os templates",
+          });
+          return;
+        }
+        setTemplates(result);
+        content = result[key];
+      } catch (error) {
+        console.error(error);
+        toast.add({
+          type: "error",
+          title: "Não foi possível carregar os templates",
+        });
+        return;
+      } finally {
+        setTemplatesLoading(false);
+      }
+    }
+
+    const blocks = normalizeEmailBlocks(content ?? []);
+    if (blocks.length === 0) {
+      toast.add({
+        type: "info",
+        title: "Template vazio",
+        description: "Ainda não há conteúdo neste template.",
+      });
+      return;
+    }
+
+    if (isDocumentEmpty(editor.document)) {
+      editor.replaceBlocks(editor.document, blocks);
+    } else {
+      const reference = editor.document[editor.document.length - 1] ?? null;
+      if (reference) editor.insertBlocks(blocks, reference, "after");
+      else editor.replaceBlocks(editor.document, blocks);
+    }
+
+    setBodyText(blocksToPlainText(editor.document));
+    toast.add({
+      type: "success",
+      title: "Template inserido",
+      description:
+        key === "accepted"
+          ? "Mensagem de aceite adicionada ao corpo do email."
+          : "Mensagem de rejeição adicionada ao corpo do email.",
+    });
+  };
+
+  const bccCountLabel =
+    selectedRecipients.length === 1
+      ? "1 destinatário em BCC"
+      : `${selectedRecipients.length} destinatários em BCC`;
+
   return (
-    <DialogContent className="flex flex-col w-[calc(100%-2rem)] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl h-[85vh] md:h-[620px] lg:h-[640px] max-h-[90vh]">
+    <DialogContent className="flex flex-col w-[calc(100%-2rem)] sm:w-full sm:max-w-2xl md:max-w-4xl h-[85vh] md:h-[620px] max-h-[90vh]">
       <DialogHeader className="shrink-0">
         <DialogTitle>Enviar email</DialogTitle>
+        <DialogDescription>
+          {step === "recipients"
+            ? "Escolhe quem vai receber o email."
+            : "Escreve o assunto e o corpo do email."}
+        </DialogDescription>
       </DialogHeader>
-
-      {/* Mobile Tab Switcher */}
-      {!isLoading && !loadError && (
-        <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg shrink-0 md:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileTab("compose")}
-            className={cn(
-              "py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer text-center",
-              mobileTab === "compose"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Mensagem
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("recipients")}
-            className={cn(
-              "py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer text-center",
-              mobileTab === "recipients"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Destinatários ({selectedIds.size})
-          </button>
-        </div>
-      )}
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground flex-1 min-h-0">
@@ -283,43 +369,12 @@ export function EmailComposerDialogContent({
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-6 flex-1 min-h-0">
-          {/* Left: the email itself */}
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Step 1 — candidate selection */}
           <div
             className={cn(
-              "flex flex-col gap-4 min-h-0 flex-1",
-              mobileTab !== "compose" && "hidden md:flex",
-            )}
-          >
-            <div className="grid gap-1.5 shrink-0">
-              <Label htmlFor="email-subject">Assunto</Label>
-              <Input
-                id="email-subject"
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-                placeholder="Assunto do email"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5 flex-1 min-h-0">
-              <Label htmlFor="email-body">Corpo</Label>
-              <Textarea
-                id="email-body"
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-                placeholder="Corpo do email"
-                className="flex-1 min-h-0 resize-none font-mono text-xs field-sizing-fixed overflow-y-auto"
-              />
-            </div>
-          </div>
-
-          <Separator orientation="vertical" className="hidden md:block" />
-
-          {/* Right: who to send to */}
-          <div
-            className={cn(
-              "flex flex-col gap-2 min-h-0 flex-1",
-              mobileTab !== "recipients" && "hidden md:flex",
+              "flex flex-col gap-3 flex-1 min-h-0",
+              step !== "recipients" && "hidden",
             )}
           >
             <div className="shrink-0">
@@ -414,60 +469,173 @@ export function EmailComposerDialogContent({
                 })
               )}
             </div>
+          </div>
 
-            <p className="text-xs text-muted-foreground shrink-0 pt-0.5">
-              {selectedIds.size} de {recipients.length} selecionados
-            </p>
+          {/* Step 2 — email layout */}
+          <div
+            className={cn(
+              "flex flex-col gap-3 flex-1 min-h-0",
+              step !== "compose" && "hidden",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-muted/40 px-3 py-2 shrink-0">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Mail className="size-3.5 shrink-0" />
+                {bccCountLabel}
+              </span>
+              <button
+                type="button"
+                onClick={() => setStep("recipients")}
+                className="text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer shrink-0 transition-colors"
+              >
+                Alterar destinatários
+              </button>
+            </div>
+
+            <div className="grid gap-1.5 shrink-0">
+              <Label htmlFor="email-subject">Assunto</Label>
+              <Input
+                id="email-subject"
+                value={subject}
+                onChange={(event) => setSubject(event.target.value)}
+                placeholder="Assunto do email"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1 min-h-0">
+              <div className="flex items-center justify-between gap-2 shrink-0">
+                <Label>Corpo</Label>
+                {data?.isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={templatesLoading}
+                        >
+                          <FileText className="size-3.5" />
+                          Inserir template
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem
+                        disabled={templatesLoading}
+                        onClick={() => void insertTemplate("accepted")}
+                      >
+                        Mensagem de aceite
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={templatesLoading}
+                        onClick={() => void insertTemplate("rejected")}
+                      >
+                        Mensagem de rejeição
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+              <div className="flex-1 min-h-0">
+                <EmailBodyEditor
+                  editorRef={bodyEditorRef}
+                  onChange={handleEditorChange}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      <DialogFooter className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Mail className="size-3.5 shrink-0" />
-          {selectedRecipients.length} em BCC
-        </span>
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 sm:flex-initial"
-            disabled={selectedRecipients.length === 0}
-            onClick={() => void handleCopyUrl()}
-          >
-            <ClipboardCopy className="size-4" />
-            Copiar URL
-          </Button>
-          <Button
-            type="button"
-            className="flex-1 sm:flex-initial"
-            disabled={selectedRecipients.length === 0}
-            onClick={() => {
-              window.open(composeUrl, "_blank", "noopener,noreferrer");
-              warnAboutLongUrl();
-            }}
-          >
-            <Send className="size-4" />
-            Abrir no Gmail
-          </Button>
-          {data?.isAdmin && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="flex-1 sm:flex-initial"
-              disabled={!canSendViaApi}
-              onClick={() => void handleSendViaApi()}
-            >
-              {isSending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Send className="size-4" />
-              )}
-              Enviar via API
-            </Button>
+      {!isLoading && !loadError && (
+        <DialogFooter
+          className={cn(
+            "flex-col sm:flex-row sm:items-center gap-3 mt-auto",
+            step === "recipients" && "sm:justify-between",
           )}
-        </div>
-      </DialogFooter>
+        >
+          {step === "recipients" ? (
+            <>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Mail className="size-3.5 shrink-0" />
+                {selectedIds.size} de {recipients.length} selecionados
+              </span>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <DialogClose
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 sm:flex-initial"
+                    />
+                  }
+                >
+                  Cancelar
+                </DialogClose>
+                <Button
+                  type="button"
+                  className="flex-1 sm:flex-initial"
+                  disabled={selectedIds.size === 0}
+                  onClick={() => setStep("compose")}
+                >
+                  <ArrowRight className="size-4" />
+                  Seguinte
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 sm:flex-initial"
+                  onClick={() => setStep("recipients")}
+                >
+                  <ArrowLeft className="size-4" />
+                  Voltar
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 sm:flex-initial"
+                  disabled={selectedRecipients.length === 0}
+                  onClick={() => void handleCopyUrl()}
+                >
+                  <ClipboardCopy className="size-4" />
+                  Copiar URL
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 sm:flex-initial"
+                  disabled={selectedRecipients.length === 0}
+                  onClick={openGmail}
+                >
+                  <Send className="size-4" />
+                  Abrir no Gmail
+                </Button>
+                {data?.isAdmin && (
+                  <Button
+                    type="button"
+                    className="flex-1 sm:flex-initial"
+                    disabled={!canSendViaApi}
+                    onClick={() => void handleSendViaApi()}
+                  >
+                    {isSending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Send className="size-4" />
+                    )}
+                    Enviar via API
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </DialogFooter>
+      )}
     </DialogContent>
   );
 }
