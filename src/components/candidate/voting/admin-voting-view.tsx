@@ -52,6 +52,7 @@ import { CandidateDynamicModal } from "./candidate-dynamic-modal";
 import { CandidateVotesModal } from "./candidate-votes-modal";
 import { CandidateEvaluationGuidesCard } from "./candidate-evaluation-guides-card";
 import { VotingSessionDrawer } from "./voting-session-drawer";
+import { AcceptanceConfetti } from "./acceptance-confetti";
 import type { CandidateVotingMetadata } from "@/lib/candidate";
 import type { Application, User, VotingPhase } from "@/lib/db";
 import { toast } from "@/components/ui/toast";
@@ -145,6 +146,7 @@ export function AdminVotingView({
   const [dynamicModalOpen, setDynamicModalOpen] = useState(false);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
+  const [confettiKey, setConfettiKey] = useState(0);
 
   const [isNavigating, startTransition] = useTransition();
   const [isMakingDefinitive, setIsMakingDefinitive] = useState(false);
@@ -216,6 +218,9 @@ export function AdminVotingView({
       );
       if (ok) {
         setVotesModalOpen(false);
+        if (decision === "accept") {
+          setConfettiKey((key) => key + 1);
+        }
         toast.add({
           type: "success",
           title:
@@ -357,6 +362,7 @@ export function AdminVotingView({
 
   return (
     <>
+      {confettiKey > 0 && <AcceptanceConfetti key={confettiKey} />}
       <EvaluationLayout
         header={
           <PageHeader

@@ -129,6 +129,33 @@
   }
 }
 
+@keyframes acceptance-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -2rem, 0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(3rem, 110vh, 0) rotate(720deg);
+  }
+}
+
+.acceptance-confetti {
+  animation-name: acceptance-confetti-fall;
+  animation-timing-function: cubic-bezier(0.15, 0.7, 0.35, 1);
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acceptance-confetti {
+    animation: none;
+    display: none;
+  }
+}
+
 /* BlockNote editor container & theme variables */
 .bn-container.bn-root {
   --bn-colors-editor-background: transparent;
