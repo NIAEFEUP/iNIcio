@@ -9,6 +9,8 @@
  */
 export const EMAIL_TEMPLATE_TYPES = [
   "all",
+  "accepted",
+  "rejected",
   "not_applied",
   "no_interview",
   "no_dynamic",
@@ -20,6 +22,8 @@ export type EmailTemplateType = (typeof EMAIL_TEMPLATE_TYPES)[number];
 /** Name of each audience, shown in the quick-send selector. */
 export const EMAIL_TEMPLATE_LABELS: Record<EmailTemplateType, string> = {
   all: "Todos os candidatos",
+  accepted: "Candidatos aceites",
+  rejected: "Candidatos rejeitados",
   not_applied: "Não candidataram este ano",
   no_interview: "Sem entrevista marcada",
   no_dynamic: "Sem dinâmica marcada",

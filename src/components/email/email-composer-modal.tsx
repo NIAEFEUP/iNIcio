@@ -10,6 +10,7 @@ import {
   Send,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import {
   getEmailComposerData,
+  sendEmailViaApi,
   type EmailComposerData,
 } from "@/lib/email-actions";
 import {
@@ -70,6 +72,7 @@ export function EmailComposerDialogContent({
   const [activeType, setActiveType] = React.useState<EmailTemplateType>("all");
   const [subject, setSubject] = React.useState("");
   const [body, setBody] = React.useState("");
+  const [isSending, setIsSending] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -190,6 +193,44 @@ export function EmailComposerDialogContent({
     }
 
     warnAboutLongUrl();
+  };
+
+  const canSendViaApi =
+    Boolean(data?.isAdmin) &&
+    selectedRecipients.length > 0 &&
+    subject.trim().length > 0 &&
+    body.trim().length > 0 &&
+    !isSending;
+
+  const handleSendViaApi = async () => {
+    if (!canSendViaApi) return;
+
+    setIsSending(true);
+
+    try {
+      const result = await sendEmailViaApi({
+        recruitmentId,
+        recipientIds: selectedRecipients.map((recipient) => recipient.id),
+        subject,
+        body,
+      });
+
+      const suffix = result.sent === 1 ? "" : "s";
+      toast.add({
+        type: "success",
+        title: "Emails enviados",
+        description: `${result.sent} email${suffix} enviado${suffix} via API.`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.add({
+        type: "error",
+        title: "Não foi possível enviar os emails",
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -358,6 +399,16 @@ export function EmailComposerDialogContent({
                           {recipient.email}
                         </span>
                       </div>
+                      {recipient.decision === "approve" && (
+                        <Badge className="shrink-0 border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                          Aceite
+                        </Badge>
+                      )}
+                      {recipient.decision === "reject" && (
+                        <Badge variant="destructive" className="shrink-0">
+                          Rejeitado
+                        </Badge>
+                      )}
                     </div>
                   );
                 })
@@ -376,7 +427,7 @@ export function EmailComposerDialogContent({
           <Mail className="size-3.5 shrink-0" />
           {selectedRecipients.length} em BCC
         </span>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
             type="button"
             variant="outline"
@@ -399,6 +450,22 @@ export function EmailComposerDialogContent({
             <Send className="size-4" />
             Abrir no Gmail
           </Button>
+          {data?.isAdmin && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1 sm:flex-initial"
+              disabled={!canSendViaApi}
+              onClick={() => void handleSendViaApi()}
+            >
+              {isSending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
+              Enviar via API
+            </Button>
+          )}
         </div>
       </DialogFooter>
     </DialogContent>

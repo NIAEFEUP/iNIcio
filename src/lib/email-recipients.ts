@@ -2,6 +2,7 @@ import { and, eq, gte, notExists } from "drizzle-orm";
 import { candidate, user, usersToRecruitments } from "@/db/schema";
 import { db } from "@/lib/db";
 import type { EmailTemplateType } from "@/lib/email-composer";
+import { getLatestVotingDecisionsForCandidates } from "@/lib/voting";
 
 export interface EmailRecipient {
   id: string;
@@ -16,6 +17,11 @@ export interface EmailRecipient {
   /** Candidates of this recruitment that are still missing a booking. */
   missingInterview: boolean;
   missingDynamic: boolean;
+  /**
+   * Latest voting decision for the candidate, or `null` while the vote is still
+   * open / pending. `approve` maps to "aceite" and `reject` to "rejeitado".
+   */
+  decision: "approve" | "reject" | null;
 }
 
 export interface EmailRecipientsPayload {
@@ -53,6 +59,13 @@ export async function getEmailRecipients({
     },
   });
 
+  // Resolve the voting decision (aceite/rejeitado) of every candidate in one
+  // go so the composer can offer "accepted"/"rejected" audiences and badges.
+  const decisions = await getLatestVotingDecisionsForCandidates(
+    candidates.map((row) => row.userId),
+    recruitmentId,
+  );
+
   const candidateRecipients: EmailRecipient[] = candidates.map((row) => ({
     id: row.user.id,
     name: row.user.name,
@@ -63,6 +76,7 @@ export async function getEmailRecipients({
     isCandidate: true,
     missingInterview: !row.interview,
     missingDynamic: !row.dynamic,
+    decision: decisions.get(row.userId)?.decision ?? null,
   }));
 
   // Candidate accounts created this year that never became candidates of this
@@ -99,6 +113,7 @@ export async function getEmailRecipients({
     isCandidate: false,
     missingInterview: false,
     missingDynamic: false,
+    decision: null,
   }));
 
   // Get recruiters for this recruitment to exclude them
@@ -122,6 +137,14 @@ export async function getEmailRecipients({
 
   const audiences: Record<EmailTemplateType, string[]> = {
     all: candidatesFor((recipient) => !recruiterIds.has(recipient.id)),
+    accepted: candidatesFor(
+      (recipient) =>
+        recipient.decision === "approve" && !recruiterIds.has(recipient.id),
+    ),
+    rejected: candidatesFor(
+      (recipient) =>
+        recipient.decision === "reject" && !recruiterIds.has(recipient.id),
+    ),
     not_applied: nonCandidateRecipients
       .filter(
         (recipient) =>

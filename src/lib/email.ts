@@ -74,3 +74,80 @@ export async function sendPasswordResetEmail({
     throw new Error("Não foi possível enviar o email de recuperação");
   }
 }
+
+/** Resend's batch endpoint accepts at most 100 emails per request. */
+const RESEND_BATCH_LIMIT = 100;
+
+/** Escapes the composer's plain-text body and keeps its line breaks. */
+function plainTextToHtml(body: string) {
+  return escapeHtml(body).replace(/\r?\n/g, "<br />");
+}
+
+export interface SendRecruitmentEmailsData {
+  recipients: string[];
+  subject: string;
+  body: string;
+}
+
+/**
+ * Sends one copy of the composer email to each recipient through Resend. Uses
+ * the batch endpoint so a large audience goes out in as few requests as
+ * possible, and so recipients never see each other's addresses.
+ */
+export async function sendRecruitmentEmails({
+  recipients,
+  subject,
+  body,
+}: SendRecruitmentEmailsData) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+
+  if (!apiKey || !from) {
+    throw new Error("RESEND_API_KEY e EMAIL_FROM têm de estar configurados");
+  }
+
+  const emails = [
+    ...new Set(recipients.map((email) => email.trim()).filter(Boolean)),
+  ];
+
+  if (emails.length === 0) {
+    throw new Error("Nenhum destinatário selecionado");
+  }
+
+  const html = plainTextToHtml(body);
+  let sent = 0;
+
+  for (let i = 0; i < emails.length; i += RESEND_BATCH_LIMIT) {
+    const batch = emails.slice(i, i + RESEND_BATCH_LIMIT);
+
+    const response = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+        batch.map((to) => ({
+          from,
+          to: [to],
+          subject,
+          html,
+          text: body,
+        })),
+      ),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      throw new Error(
+        `Não foi possível enviar os emails (Resend: ${response.status}${
+          detail ? ` ${detail}` : ""
+        })`,
+      );
+    }
+
+    sent += batch.length;
+  }
+
+  return { sent };
+}
