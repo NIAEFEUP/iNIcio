@@ -4,6 +4,14 @@ type PasswordResetEmailData = {
   url: string;
 };
 
+const DEFAULT_EMAIL_FROM_NAME = "Recrutamento | NIAEFEUP";
+
+function withFromName(address: string) {
+  if (address.includes("<")) return address;
+  const name = process.env.EMAIL_FROM_NAME?.trim() || DEFAULT_EMAIL_FROM_NAME;
+  return `${name} <${address}>`;
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -116,6 +124,8 @@ export async function sendRecruitmentEmails({
     throw new Error("RESEND_API_KEY e EMAIL_FROM têm de estar configurados");
   }
 
+  const fromWithName = withFromName(from);
+
   const emails = [
     ...new Set(recipients.map((email) => email.trim()).filter(Boolean)),
   ];
@@ -138,7 +148,7 @@ export async function sendRecruitmentEmails({
       },
       body: JSON.stringify(
         batch.map((to) => ({
-          from,
+          from: fromWithName,
           to: [to],
           subject,
           html: wrappedHtml,
