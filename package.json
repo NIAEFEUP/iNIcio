@@ -57,7 +57,7 @@
     "react-pdf": "^10.2.0",
     "react-resizable-panels": "^4.12.4",
     "react-spinners": "^0.17.0",
-    "recharts": "^3.8.0",
+    "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "shadcn": "^4.21.0",
     "swr": "^2.5.1",
